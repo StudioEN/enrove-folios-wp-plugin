@@ -69,6 +69,7 @@ class Module extends BaseModule {
 			if (!$this->is_top_bar_active()) {
 				return;
 			}
+			
 
 			$this->add_frontend_settings();
 

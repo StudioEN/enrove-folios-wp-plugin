@@ -147,8 +147,6 @@ class Plugin {
 
 		
 		add_filter('rewrite_rules_array', function ($rules) {
-			echo 11111;
-
 			$new_rules = array(
 				'groove-preview/?$' => 'index.php?preview=true',
 			);

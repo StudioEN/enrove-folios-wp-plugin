@@ -24,6 +24,8 @@
       $this->add_post_action('save_groove_folio_draft', 'save_folio_draft');
       $this->add_post_action('save_groove_folio', 'save_folio');
 
+      
+      
       $this->left_button_items = [array(
         'text' => 'Add Page',
         'type' => '',
@@ -33,7 +35,7 @@
       $this->right_button_items = [array(
         'text' => 'Preview',
         'type' => 'blank',
-        'link' => '/?post_type=groove_folio&preview=true&p=' . (isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '')
+        'link' => '/?theme_id='. (isset($_REQUEST['theme_id']) ? $_REQUEST['theme_id'] : '') .'post_type=groove_folio&preview=true&p=' . (isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '')
       ), array(
         'text' => 'Save Draft',
         'type' => 'secondary',

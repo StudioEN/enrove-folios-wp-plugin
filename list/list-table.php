@@ -266,6 +266,7 @@ class List_Table extends \WP_List_Table {
 		$all_args        = array( 
       'page' => $this->page::PAGE_ID,
 			'folio_id' => isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : null,
+			'theme_id' => isset($_REQUEST['theme_id']) ? $_REQUEST['theme_id'] : null,
 			'tab_key' => isset($_REQUEST['tab_key']) ? $_REQUEST['tab_key'] : null,
     );
 		$mine            = '';
@@ -283,6 +284,7 @@ class List_Table extends \WP_List_Table {
 			$mine_args = array(
 				'post_type' => $post_type,
 				'author'    => $current_user_id,
+				'theme_id' => isset($_REQUEST['theme_id']) ? $_REQUEST['theme_id'] : null,
 				'folio_id'	=> isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : null,
 				'tab_key' => isset($_REQUEST['tab_key']) ? $_REQUEST['tab_key'] : null,
 			);
@@ -346,7 +348,8 @@ class List_Table extends \WP_List_Table {
 				'post_status' => $status_name,
 				'page' => $this->page::PAGE_ID,
 				'tab_key' => isset($_REQUEST['tab_key']) ? $_REQUEST['tab_key'] : null,
-				'folio_id' => isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : null
+				'folio_id' => isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : null,
+				'theme_id' => isset($_REQUEST['theme_id']) ? $_REQUEST['theme_id'] : null
 			);
 
 			$status_label = sprintf(

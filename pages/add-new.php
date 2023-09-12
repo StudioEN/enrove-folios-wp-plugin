@@ -4,6 +4,8 @@
   use Groove\Pages\Overview;
   use Groove\Menu\Menu_Manager;
   use Groove\Menu\Add_New_Menu_Item;
+
+  use Groove\Themes\Default_Themes;
   
 
   if ( ! defined( 'ABSPATH' ) ) {
@@ -65,18 +67,8 @@
     }
 
     public function display__themes () {
-      $themes = [
-        array(
-          'ID' => 'theme-1',
-          'coverURL' => $this->get_images_assets_url('theme-cover-01.png'),
-          'name' => 'Folio Starter'
-        ),
-        array(
-          'ID' => 'theme-2',
-          'coverURL' => $this->get_images_assets_url('theme-cover-02.png'),
-          'name' => 'Groove eBook'
-        ),
-      ];
+      $array = new Default_Themes();
+      $themes = $array->get_themes();
 
       echo '<script>window.GROOVE_THEME_ID = "'. $themes[0]['ID'] .'";</script>'
 
@@ -87,7 +79,7 @@
             <?php
               foreach ($themes as $theme) {
                 echo '<div class="g-folio__theme" data-theme-id="'. $theme['ID'] .'">';
-                echo '<div class="g-folio__theme-cover"><img src="'. $theme['coverURL'] .'" /></div>';
+                echo '<div class="g-folio__theme-thumb"><img src="'. $theme['thumbnail_url'] .'" /></div>';
                 echo '<div class="g-folio__theme-name">'. $theme['name'] .'</div>';
                 echo '</div>';
               }

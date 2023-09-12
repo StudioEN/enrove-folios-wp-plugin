@@ -1,8 +1,4 @@
 <?php
-use Groove\Themes\Default_Themes;
-use Groove\Themes\Theme_2;
-use Groove\Themes\Theme_Data;
-use Groove\Themes\Theme_1;
 function get_the_wp_query ($args) {
 	$wp_query = new \WP_Query($args);
 	return $wp_query;
@@ -42,40 +38,30 @@ function get_the_block_template () {
 	global $wp_embed;
 	$post_type = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : '';
 	$folio_id = isset($_REQUEST['p']) ? $_REQUEST['p'] : '';
-	$theme_id = isset($_REQUEST['theme_id']) ? $_REQUEST['theme_id'] : 'theme-1';
 
 	if ($post_type !== 'groove_folio') {
 		return '<h1>' . esc_html__( 'No matching template found' ) . '</h1>';
 	}
 
 	$folio = get_the_folio($folio_id)->post;
-	$meta = get_post_meta($folio_id);
-	$theme_id = $meta['theme_id'][0];
 	$pages = get_the_folio_pages($folio_id) ->posts;
 
-	$default_themes = new Default_Themes();
-	$themes_data = $default_themes->get_themes();
-	$current_theme_data = $themes_data[$theme_id];
+	$html = '<h1>'. $folio->post_title .'</h1>';
 
-	echo get_the_author_meta('name', $folio->post_author);
-
-	$data = new Theme_Data(
-		$theme_id,
-		$folio->post_title,
-		$folio->subtitle,
-		$current_theme_data['cover_url'],
-		$current_theme_data['logo_url'],
-		get_the_author_meta('user_login', $folio->post_author)
-	);
-
-	if ($theme_id == 'theme-1') {
-		$theme = new Theme_1($data);
-		$theme->display_theme();
-	} else {
-		$theme = new Theme_2($data);
-		$theme->display_theme();
+	
+	foreach ($pages as $page) {
+		$content = $page->post_content;
+		$content = $wp_embed->autoembed( $content );
+		$content = shortcode_unautop( $content );
+		$content = do_blocks( $content );
+		$content = wptexturize( $content );
+		$content = convert_smilies( $content );
+		$content = wp_filter_content_tags( $content, 'template' );
+		$content = str_replace( ']]>', ']]&gt;', $content );
+		$html = $html . '<div class="g-folio__blocks" >'. $content .'</div>';
 	}
-
+	
+	return '<div class="g-folio__site" style="width: 650px;margin: auto">'. $html .'</div>';
 }
 /**
  * Template canvas file to render the current 'wp_template'.
@@ -92,7 +78,7 @@ $template_html = get_the_block_template();
 <html <?php language_attributes(); ?>>
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>" />
-	<?php wp_head();  ?>
+	<?php wp_head(); ?>
 </head>
 
 <body <?php body_class(); ?>>
