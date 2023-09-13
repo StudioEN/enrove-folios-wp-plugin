@@ -51,6 +51,7 @@ class Theme_Page_2 extends Assets {
 
         <div class="g-folio__theme-page-nav-bar">
           <button class="g-folio__theme-page-nav-button"></button>
+          <div class="g-folio__theme-page-name"><?= $theme_name ?></div>
         </div>
         <nav class="g-folio__theme-page-nav">
           <div class="g-folio__theme-page-nav-content">
