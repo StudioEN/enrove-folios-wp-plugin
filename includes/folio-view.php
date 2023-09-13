@@ -57,14 +57,14 @@ function get_the_block_template () {
 	$themes_data = $default_themes->get_themes();
 	$current_theme_data = $themes_data[$theme_id];
 
-	echo get_the_author_meta('name', $folio->post_author);
-
 	$data = new Theme_Data(
 		$theme_id,
 		$folio->post_title,
 		$folio->subtitle,
+		$pages,
 		$current_theme_data['cover_url'],
 		$current_theme_data['logo_url'],
+		$current_theme_data['name'],
 		get_the_author_meta('user_login', $folio->post_author)
 	);
 

@@ -1,0 +1,80 @@
+<?php
+namespace Groove\Themes;
+use Groove\Modules\Assets;
+
+class Theme_Page_2 extends Assets {
+  public $data;
+  public function __construct($data) {
+    $this->data = $data;
+    
+    add_action( 'wp_enqueue_scripts', [$this, 'ensure_script'] );
+  }
+
+  public function ensure_script () {
+    wp_enqueue_style( 'groove', $this->get_css_assets_url( 'groove-main', null, 'default', true ), [], GROOVE_VERSION);	
+    wp_enqueue_script( 'groove', $this->get_js_assets_url( 'groove-main' ), ['jquery'], GROOVE_VERSION, true);
+  }
+
+  function display_theme () {
+    
+
+    $data = $this->data;
+    $title = $data->title;
+    $feature_image = $data->feature_image;
+    $theme_name = $data->theme_name;
+    $pages = $data->pages;
+
+    $count = count($pages);
+  ?>
+    <div class="g-folio__theme-2-page">
+      <main class="g-folio__theme-page-main">
+
+        <div class="g-folio__theme-page-nav-bar">
+          <button class="g-folio__theme-page-nav-button"></button>
+        </div>
+        <nav class="g-folio__theme-page-nav">
+          <div class="g-folio__theme-page-nav-content">
+            <button class="g-folio__theme-page-nav-close"></button>
+            <h3 class="g-folio__theme-page-nav-name"><?= $theme_name ?></h3>
+            <label class="g-folio__theme-page-nav-label">CONTENTS</label>
+            <div class="g-folio__theme-page-navs">
+              <div class="g-folio__theme-page-nav-item">
+              <i class="g-folio__theme-page-nav-item-order">1</i>Overview
+              </div>
+              <?
+                $index = 2;
+                foreach ($pages as $page) {
+                  ?>
+                    <div class="g-folio__theme-page-nav-item">
+                      <i class="g-folio__theme-page-nav-item-order"><?= $index ?></i>
+                      <?= $page->post_title ?>
+                    </div>
+                  <?
+                  $index = $index + 1;
+                }
+              ?>
+              <div class="g-folio__theme-page-nav-item">
+                <i class="g-folio__theme-page-nav-item-order"><?= $count + 2 ?></i>Next steps
+              </div>
+            </div>
+          </div>
+        </nav>
+        <div class="g-folio__theme-page-body">
+          <div class="g-folio__theme-page-main">
+            <h1 class="g-folio__theme-page-title"><?= $title ?></h1>
+            <div class="g-folio__theme-page-content">
+  
+            </div>
+          </div>
+          <div class="g-folio__theme-page-sidebar">
+  
+          </div>
+        </div>
+      </main>
+      <div class="g-folio__theme-page-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site" href="/">StudioEN</a></div>
+    </div>
+  <?php
+  }
+}
+
+?>

@@ -1,4 +1,9 @@
 <?php
+use Groove\Themes\Default_Themes;
+use Groove\Themes\Theme_Page_2;
+use Groove\Themes\Theme_Data;
+use Groove\Themes\Theme_Page_Data;
+
 function get_the_wp_query ($args) {
 	$wp_query = new \WP_Query($args);
 	return $wp_query;
@@ -19,26 +24,36 @@ function get_the_block_template () {
 	global $wp_embed;
 	$post_type = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : '';
 	$folio_id = isset($_REQUEST['p']) ? $_REQUEST['p'] : '';
+	$theme_id = isset($_REQUEST['theme_id']) ? $_REQUEST['theme_id'] : 'theme-1';
 
 	if ($post_type !== 'groove_folio_page') {
 		return '<h1>' . esc_html__( 'No matching template found' ) . '</h1>';
 	}
 
 	$page = get_the_folio_page($folio_id) ->post;
+	$meta = get_post_meta($folio_id);
+	$theme_id = $meta['theme_id'][0];
 
-	$html = '<h1>'. $page->post_title .'</h1>';
+	$default_themes = new Default_Themes();
+	$themes_data = $default_themes->get_themes();
+	$current_theme_data = $themes_data[$theme_id];
 
-	$content = $page->post_content;
-	$content = $wp_embed->autoembed( $content );
-	$content = shortcode_unautop( $content );
-	$content = do_blocks( $content );
-	$content = wptexturize( $content );
-	$content = convert_smilies( $content );
-	$content = wp_filter_content_tags( $content, 'template' );
-	$content = str_replace( ']]>', ']]&gt;', $content );
-	$html = $html . '<div class="g-folio__blocks" >'. $content .'</div>';
-	
-	return '<div class="g-folio__site" style="width: 650px;margin: auto">'. $html .'</div>';
+	$data = new Theme_Page_Data(
+		$theme_id,
+		$page->post_title,
+		array(),
+		$current_theme_data['cover_url'],
+		$current_theme_data['logo_url'],
+	);
+
+	if ($theme_id == 'theme-1') {
+		$theme = new Theme_Page_2($data);
+		$theme->display_theme();
+	} else {
+		$theme = new Theme_Page_2($data);
+		$theme->display_theme();
+	}
+
 }
 /**
  * Template canvas file to render the current 'wp_template'.
