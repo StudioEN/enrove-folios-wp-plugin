@@ -41,6 +41,7 @@ function get_the_block_template () {
 	$data = new Theme_Page_Data(
 		$theme_id,
 		$page->post_title,
+		$page,
 		array(),
 		$current_theme_data['cover_url'],
 		$current_theme_data['logo_url'],

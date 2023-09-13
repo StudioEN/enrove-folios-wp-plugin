@@ -15,6 +15,23 @@ class Theme_Page_2 extends Assets {
     wp_enqueue_script( 'groove', $this->get_js_assets_url( 'groove-main' ), ['jquery'], GROOVE_VERSION, true);
   }
 
+  function get_content () {
+    global $wp_embed;
+
+    $data = $this->data;
+    $page = $data->page;
+    $content = $page->post_content;
+		$content = $wp_embed->autoembed( $content );
+		$content = shortcode_unautop( $content );
+		$content = do_blocks( $content );
+		$content = wptexturize( $content );
+		$content = convert_smilies( $content );
+		$content = wp_filter_content_tags( $content, 'template' );
+		$content = str_replace( ']]>', ']]&gt;', $content );
+
+    return $content;
+  }
+
   function display_theme () {
     
 
@@ -23,6 +40,9 @@ class Theme_Page_2 extends Assets {
     $feature_image = $data->feature_image;
     $theme_name = $data->theme_name;
     $pages = $data->pages;
+    $page = $data->page;
+
+    $content = $this->get_content();
 
     $count = count($pages);
   ?>
@@ -61,9 +81,17 @@ class Theme_Page_2 extends Assets {
         </nav>
         <div class="g-folio__theme-page-body">
           <div class="g-folio__theme-page-main">
-            <h1 class="g-folio__theme-page-title"><?= $title ?></h1>
-            <div class="g-folio__theme-page-content">
-  
+            <div class="g-folio__theme-page-container">
+
+              <h1 class="g-folio__theme-page-title"><?= $title ?></h1>
+              <div class="g-folio__theme-page-content">
+                <?= $content ?>
+              </div>
+              <nav class="g-folio__theme-page-footer">
+                <div class="g-folio__theme-page-prev"></div>
+                <div class="g-folio__theme-page-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site" href="/">StudioEN</a></div>
+                <div class="g-folio__theme-page-next"></div>
+              </nav>
             </div>
           </div>
           <div class="g-folio__theme-page-sidebar">
@@ -71,7 +99,6 @@ class Theme_Page_2 extends Assets {
           </div>
         </div>
       </main>
-      <div class="g-folio__theme-page-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site" href="/">StudioEN</a></div>
     </div>
   <?php
   }
