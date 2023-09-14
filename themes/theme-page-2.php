@@ -15,6 +15,26 @@ class Theme_Page_2 extends Assets {
     wp_enqueue_script( 'groove', $this->get_js_assets_url( 'groove-main' ), ['jquery'], GROOVE_VERSION, true);
   }
 
+  function display_catalogs () {
+    global $wp_embed;
+    $data = $this->data;
+    $page = $data->page;
+    $content = $page->post_content;
+   
+    $blocks = parse_blocks($content);
+
+    echo '<div class="g-folio__theme-page-catalogs-content">';
+    
+    foreach ($blocks as $block) {
+      if ($block['blockName'] === 'core/heading') {
+        $title = $block['innerContent'][0];
+        echo '<a href="#'. 1 .'" class="g-folio__theme-page-catalog">' . $title . '</a>';
+      }
+    }
+
+    echo '</div>';
+  }
+
   function get_content () {
     global $wp_embed;
 
@@ -81,7 +101,7 @@ class Theme_Page_2 extends Assets {
           </div>
         </nav>
         <div class="g-folio__theme-page-body">
-          <div class="g-folio__theme-page-main">
+          <div class="g-folio__theme-page-center">
             <div class="g-folio__theme-page-container">
 
               <h1 class="g-folio__theme-page-title"><?= $title ?></h1>
@@ -94,9 +114,12 @@ class Theme_Page_2 extends Assets {
                 <div class="g-folio__theme-page-next"></div>
               </nav>
             </div>
-          </div>
-          <div class="g-folio__theme-page-sidebar">
-  
+            <div class="g-folio__theme-page-sidebar">
+              <div class="g-folio__theme-page-catalogs">
+                <label class="g-folio__theme-page-catalogs-label">SECTION</label>
+                <? $this->display_catalogs(); ?>
+              </div>
+            </div>
           </div>
         </div>
       </main>
