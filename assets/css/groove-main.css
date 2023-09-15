@@ -517,6 +517,10 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   cursor: pointer;
 }
 
+.g-folio__theme-2 .g-folio__theme-nav-item-link {
+  text-decoration: none;
+}
+
 .g-folio__theme-2 .g-folio__theme-nav-item::after {
   content: "";
   background-color: #F0F0F1;
@@ -561,6 +565,8 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-height: 100vh;
+  overflow: scroll;
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-center {
@@ -594,6 +600,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   background-size: 24px 24px;
   border: none;
   outline: none;
+  cursor: pointer;
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-nav-close {
@@ -614,6 +621,20 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   padding: 24px;
   background: #fff;
   box-sizing: border-box;
+  transform: translateX(-100%);
+  transition: all .3s;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav.visible {
+  width: 360px;;
+  padding: 24px;
+  background: #fff;
+  box-sizing: border-box;
+  transform: translateX(0);
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-nav-name {
@@ -634,6 +655,10 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   justify-content: flex-start;
   position: relative;
   cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-item-link {
+  text-decoration: none;
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-nav-item::after {
@@ -670,7 +695,6 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   left: 0;
   top: 0;
   bottom: 0;
-  display: none;
 }
 
 
@@ -709,10 +733,8 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-powerby {
-  justify-self: center;
-  align-items: center;
-  display: flex;
-  font-size: 12px;
+  text-align: center;
+  font-size: 14px;
   line-height: 1.25;
   font-weight: 400;
   padding: 24px 0;
@@ -741,7 +763,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   margin-top: 200px;
 }
 
-.g-folio__theme-2-page .g-folio__theme-page-catalog {
+.g-folio__theme-2-page .g-folio__theme-page-catalog a {
   color: #fff;
   font-size: 14px;
   word-wrap: break-word;
@@ -751,6 +773,44 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 .g-folio__theme-2-page .g-folio__theme-page-catalog h2 {
   color: #fff;
   font-size: 14px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-prev .g-folio__theme-page-arrow {
+  transform: rotate(-180deg);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-next,
+.g-folio__theme-2-page .g-folio__theme-page-prev {
+  display: flex;
+  font-size: 14px;
+  color: #fff;
+  padding: 24px 0;
+  line-height: 1.25;
+  font-weight: 400;
+  align-items: center;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-arrow {
+  display: inline-block;
+  background: url('../images/theme-arrow-2.png') center center no-repeat;
+  background-size: 24px 24px;
+  height: 24px;
+  width: 24px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-next a,
+.g-folio__theme-2-page .g-folio__theme-page-prev a {
+  color: #fff;
+  cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-next {
+  justify-content: flex-end;
+}
+
+.g-folio__theme-2-page .g-folio__theme-site {
+  color: #fff;
+  margin-left: 2px;
 }
 
 @media screen and (max-width: 960px) {

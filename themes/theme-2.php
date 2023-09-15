@@ -3,6 +3,14 @@ namespace Groove\Themes;
 
 
 class Theme_2 extends Base_Theme {
+  public $subtittle;
+
+  function get_page_data () {
+    $page = parent::get_page_data();
+
+    $this->subtitle = $page->subtitle;
+  }
+
   function display_nav () {
   ?>
     <nav class="g-folio__theme-nav">
@@ -15,12 +23,12 @@ class Theme_2 extends Base_Theme {
             $index = 1;
             foreach ($this->pages as $page) {
               ?>
-                <a href="/?post_type=groove_folio_page&preview=true&p=<?= $page->ID ?>">
+                <a class="g-folio__theme-nav-item-link" href="/?folio_id=<?= $this->id ?>&post_type=groove_folio_page&preview=true&p=<?= $page->ID ?>">
                   <div class="g-folio__theme-nav-item">
                     <i class="g-folio__theme-nav-item-order"><?= $index ?></i>
                     <?= $page->post_title ?>
                   </div>
-                <a>
+                </a>
               <?
               $index = $index + 1;
             }

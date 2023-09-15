@@ -101,5 +101,13 @@ jQuery(function () {
     jQuery('.g-folio__theme-nav-close').click(function () {
       jQuery('.g-folio__theme-nav').removeClass('visible')
     })
+
+    jQuery('.g-folio__theme-page-nav-button').click(function () {
+      jQuery('.g-folio__theme-page-nav').addClass('visible')
+    })
+    
+    jQuery('.g-folio__theme-page-nav-close').click(function () {
+      jQuery('.g-folio__theme-page-nav').removeClass('visible')
+    })
   }
 })

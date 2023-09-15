@@ -6,7 +6,7 @@ abstract class Base_Theme extends Assets {
   public $id;
   public $post_type;
   public $title;
-  public $subtitle;
+  public $content;
   public $author;
   public $pages;
   public $theme_id;
@@ -24,7 +24,7 @@ abstract class Base_Theme extends Assets {
   public function ensure_script () {
     if (is_preview()) {
       echo '<script>window.GROOVE_IS_PREVIEW = ' . (is_preview() ? 'true' : 'false') . '; </script>';  
-      echo '<script>var html = document.getElementByTagName(\'html\')[0];html && html.style.marginTop = 0;</script>';
+      // echo '<script>var html = document.getElementByTagName(\'html\')[0];html && html.style.marginTop = 0;</script>';
       show_admin_bar(false);
     }
 
@@ -41,24 +41,27 @@ abstract class Base_Theme extends Assets {
     $wp_query = $this->get_the_wp_query(array(
       'post__in' => array($this->id),
       'post_status' => array('publish', 'draft', 'pending'),
-      'post_type' => 'groove_folio',
+      'post_type' => $this->post_type,
     ));
 
     $page = $wp_query->post;
     $this->title = $page->post_title;
-    $this->subtitle = $page->subtitle;
-
+    $this->content = $page->post_content;
     $this->author = get_the_author_meta('user_login', $page->post_author);
+
+    return $page;
   }
 
-  function get_pages_data () {
+  function get_pages_data ($id) {
     $args = array(
       'post_type' => 'groove_folio_page',
+      'orderby' => 'date', // 根据日期排序
+      'order' => 'ASC', // 升序排列
       'post_status' => array('publish', 'draft', 'pending'),
       'meta_query' => array(
         array(
           'key' => 'folio_id',
-          'value' => $this->id,
+          'value' => $id,
           'compare' => '=',
           'type' => 'NUMERIC'
         )
@@ -85,7 +88,7 @@ abstract class Base_Theme extends Assets {
 
   function get_data () {
     $this->get_page_data();
-    $this->get_pages_data();
+    $this->get_pages_data($this->id);
     $this->get_theme_data(); 
   }
 
