@@ -1,7 +1,8 @@
 jQuery(function () {
   const Groove = Object.create({
-    screenId: window.GROOVE_SCREEN_ID,
-    themeId: window.GROOVE_THEME_ID ?? null,
+    screenId: window.GROOVE_SCREEN_ID || '',
+    themeId: window.GROOVE_THEME_ID ||  null,
+
 
     isAddNewPage () {
       return this.screenId.indexOf('groove-add-new') > -1
@@ -9,6 +10,10 @@ jQuery(function () {
 
     isFolioPage () {
       return this.screenId.indexOf('groove-folio') > -1
+    },
+
+    isPreview () {
+      return !!window.GROOVE_IS_PREVIEW
     }
   })
 
@@ -86,5 +91,15 @@ jQuery(function () {
     });
 
     jQuery('.g-folio__theme[data-theme-id="' + Groove.themeId + '"]').addClass('g-folio__theme_selected');
+  }
+
+  if (Groove.isPreview()) {
+    jQuery('.g-folio__theme-nav-button').click(function () {
+      jQuery('.g-folio__theme-nav').addClass('visible')
+    })
+    
+    jQuery('.g-folio__theme-nav-close').click(function () {
+      jQuery('.g-folio__theme-nav').removeClass('visible')
+    })
   }
 })

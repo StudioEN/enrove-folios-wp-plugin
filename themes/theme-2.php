@@ -1,78 +1,61 @@
 <?php
 namespace Groove\Themes;
-use Groove\Modules\Assets;
 
-class Theme_2 extends Assets {
-  public $data;
-  public function __construct($data) {
-    $this->data = $data;
-    
-    add_action( 'wp_enqueue_scripts', [$this, 'ensure_script'] );
-  }
 
-  public function ensure_script () {
-    wp_enqueue_style( 'groove', $this->get_css_assets_url( 'groove-main', null, 'default', true ), [], GROOVE_VERSION);	
-    wp_enqueue_script( 'groove', $this->get_js_assets_url( 'groove-main' ), ['jquery'], GROOVE_VERSION, true);
-  }
-
-  function display_theme () {
-    
-
-    $data = $this->data;
-    $title = $data->title;
-    $subtitle = $data->subtitle;
-    $cover = $data->cover;
-    $id = $data->id;
-    $logo = $data->logo;
-    $author = $data->author;
-    $theme_name = $data->theme_name;
-    $pages = $data->pages;
-
-    $count = count($pages);
+class Theme_2 extends Base_Theme {
+  function display_nav () {
   ?>
-    <div class="g-folio__theme-2 g-folio__theme-cover" style="background: url(<?= $cover ?>)">
-      <button class="g-folio__theme-nav-button"></button>
-      <nav class="g-folio__theme-nav">
-        <div class="g-folio__theme-nav-content">
-          <button class="g-folio__theme-nav-close"></button>
-          <h3 class="g-folio__theme-nav-name"><?= $theme_name ?></h3>
-          <label class="g-folio__theme-nav-label">CONTENTS</label>
-          <div class="g-folio__theme-navs">
-            <div class="g-folio__theme-nav-item">
-            <i class="g-folio__theme-nav-item-order">1</i>Overview
-            </div>
-            <?
-              $index = 2;
-              foreach ($pages as $page) {
-                ?>
+    <nav class="g-folio__theme-nav">
+      <div class="g-folio__theme-nav-content">
+        <button class="g-folio__theme-nav-close"></button>
+        <h3 class="g-folio__theme-nav-name"><?= $this->theme_name ?></h3>
+        <label class="g-folio__theme-nav-label">CONTENTS</label>
+        <div class="g-folio__theme-navs">
+          <?
+            $index = 1;
+            foreach ($this->pages as $page) {
+              ?>
+                <a href="/?post_type=groove_folio_page&preview=true&p=<?= $page->ID ?>">
                   <div class="g-folio__theme-nav-item">
                     <i class="g-folio__theme-nav-item-order"><?= $index ?></i>
                     <?= $page->post_title ?>
                   </div>
-                <?
-                $index = $index + 1;
-              }
-            ?>
-            <div class="g-folio__theme-nav-item">
-              <i class="g-folio__theme-nav-item-order"><?= $count + 2 ?></i>Next steps
-            </div>
-          </div>
-        </div>
-      </nav>
-      <div class="g-folio__theme-content">
-        <div class="g-folio__theme-brief">
-          <i class="g-folio__theme-logo">
-            <img src="<?= $logo ?>"/>
-          </i>   
-          <h1 class="g-folio__theme-title"><?= $title ?></h1>
-          <h2 class="g-folio__theme-subtitle"><?= $subtitle ?></h2>
-          <p class="g-folio__theme-author">By <?= $author ?></p>
-
-          <div class="g-folio__theme-fields"></div>
-          <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
+                <a>
+              <?
+              $index = $index + 1;
+            }
+          ?>
         </div>
       </div>
+    </nav>
+  <?
+  }
 
+  function display_brief () {
+  ?>
+  <div class="g-folio__theme-brief">
+    <i class="g-folio__theme-logo">
+      <img src="<?= $this->theme_logo_url ?>"/>
+    </i>   
+    <h1 class="g-folio__theme-title"><?= $this->title ?></h1>
+    <h2 class="g-folio__theme-subtitle"><?= $this->subtitle ?></h2>
+    <p class="g-folio__theme-author">By <?= $this->author ?></p>
+
+    <div class="g-folio__theme-fields"></div>
+    <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
+  </div>
+  <?
+  }
+
+  function display_theme () {
+    parent::display_theme();
+  ?>
+    <div class="g-folio__theme-2 g-folio__theme-cover" style="background: url(<?= $this->theme_cover_url ?>)">
+      <button class="g-folio__theme-nav-button"></button>
+      <? $this->display_nav() ?>
+      <div class="g-folio__theme-content">
+        <? $this->display_brief() ?>
+      </div>
       <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site" href="/">StudioEN</a></div>
     </div>
   <?php

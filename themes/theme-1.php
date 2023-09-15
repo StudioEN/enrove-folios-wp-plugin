@@ -1,29 +1,29 @@
 <?php
 namespace Groove\Themes;
 
-class Theme_1 {
-  public $data;
-  public function __construct($data) {
-    $this->data = $data;
+class Theme_1 extends Base_Theme {
+
+  function display_nav () {
+  ?>
+    <nav class="g-foilo__theme-nav">
+      <i class="g-foilo__theme-icon"></i>
+      <i class="g-foilo__theme-logo"></i>    
+    </nav>
+  <?
   }
+
   function display_theme () {
-    $data = $this->data;
-    $title = $data->title;
-    $subtitle = $data->subtitle;
-    $cover = $data->cover;
-    $id = $data->id;
+    parent::display_theme();
   ?>
     <div class="g-foilo__theme g-foilo__theme-1">
-      <nav class="g-foilo__theme-nav">
-        <i class="g-foilo__theme-icon"></i>
-        <i class="g-foilo__theme-logo"></i>    
-      </nav>
+      <? $this->display_nav() ?>
+      <? $this->display_brief() ?>
       <div class="g-foilo__theme-brief">
-        <h1 class="g-foilo__theme-title"><?= $title ?></h1>
-        <h2 class="g-foilo__theme-subtitle"><?= $subtitle ?></h2>
+        <h1 class="g-foilo__theme-title"><?= $this->title ?></h1>
+        <h2 class="g-foilo__theme-subtitle"><?= $this->subtitle ?></h2>
       </div>
-      <div class="g-foilo__theme-cover" style="background: url(<?= $cover ?>)">
-        
+      <div class="g-foilo__theme-cover" style="background: url(<?= $this->theme_cover_urlcover ?>)">
+
       </div>
     </div>
   <?php

@@ -23,8 +23,6 @@
     public function __construct() {
       $this->add_post_action('save_groove_folio_draft', 'save_folio_draft');
       $this->add_post_action('save_groove_folio', 'save_folio');
-
-      
       
       $this->left_button_items = [array(
         'text' => 'Add Page',

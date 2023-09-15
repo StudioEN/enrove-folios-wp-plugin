@@ -1,26 +1,13 @@
 <?php
 namespace Groove\Themes;
-use Groove\Modules\Assets;
 
-class Theme_Page_2 extends Assets {
-  public $data;
-  public function __construct($data) {
-    $this->data = $data;
-    
-    add_action( 'wp_enqueue_scripts', [$this, 'ensure_script'] );
-  }
-
-  public function ensure_script () {
-    wp_enqueue_style( 'groove', $this->get_css_assets_url( 'groove-main', null, 'default', true ), [], GROOVE_VERSION);	
-    wp_enqueue_script( 'groove', $this->get_js_assets_url( 'groove-main' ), ['jquery'], GROOVE_VERSION, true);
-  }
-
+class Theme_Page_2 extends Base_Theme {
+ 
   function display_catalogs () {
     global $wp_embed;
     $data = $this->data;
     $page = $data->page;
     $content = $page->post_content;
-   
     $blocks = parse_blocks($content);
 
     echo '<div class="g-folio__theme-page-catalogs-content">';
@@ -53,30 +40,19 @@ class Theme_Page_2 extends Assets {
   }
 
   function display_theme () {
-    
-
-    $data = $this->data;
-    $title = $data->title;
-    $feature_image = $data->feature_image;
-    $theme_name = $data->theme_name;
-    $pages = $data->pages;
-    $page = $data->page;
-
-    $content = $this->get_content();
-
-    $count = count($pages);
+    parent::display_theme();
   ?>
     <div class="g-folio__theme-2-page">
       <main class="g-folio__theme-page-main">
 
         <div class="g-folio__theme-page-nav-bar">
           <button class="g-folio__theme-page-nav-button"></button>
-          <div class="g-folio__theme-page-name"><?= $theme_name ?></div>
+          <div class="g-folio__theme-page-name"><?= $this->theme_name ?></div>
         </div>
         <nav class="g-folio__theme-page-nav">
           <div class="g-folio__theme-page-nav-content">
             <button class="g-folio__theme-page-nav-close"></button>
-            <h3 class="g-folio__theme-page-nav-name"><?= $theme_name ?></h3>
+            <h3 class="g-folio__theme-page-nav-name"><?= $this->theme_name ?></h3>
             <label class="g-folio__theme-page-nav-label">CONTENTS</label>
             <div class="g-folio__theme-page-navs">
               <div class="g-folio__theme-page-nav-item">
