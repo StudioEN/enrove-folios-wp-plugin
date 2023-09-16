@@ -51,7 +51,7 @@ class Module extends BaseModule {
 			return false;
 		}
 
-		$is_groove_page = strpos( $current_screen->id ?? '', 'groove') >= 0;
+		$is_groove_page = (strpos( $current_screen->id ?? '', 'groove') >= 0);
 
 		return apply_filters(
 			'groove/top-bar-tabs/is-active',
@@ -70,10 +70,8 @@ class Module extends BaseModule {
 				return;
 			}
 			
-
-			$this->add_frontend_settings();
-
 			add_action( 'admin_enqueue_scripts', function () {
+				$this->add_frontend_settings();
 				$this->enqueue_scripts();
 			});
 		});		
