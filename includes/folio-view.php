@@ -1,6 +1,8 @@
 <?php
+use Groove\Themes\Theme_1;
 use Groove\Themes\Theme_2;
 $theme = new Theme_2();
+$theme = new Theme_1();
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
