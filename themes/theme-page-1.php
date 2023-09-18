@@ -178,6 +178,7 @@ class Theme_Page_1 extends Base_Theme {
   }
 
   function display_theme () {
+    
     parent::display_theme();
   ?>
     <div class="g-folio__theme-1-page">

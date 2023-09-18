@@ -42,21 +42,24 @@ class Theme_1 extends Base_Theme {
   function display_brief () {
   ?>
   <div class="g-folio__theme-brief">
-    <div class="g-folio__theme-header">
-      <button class="g-folio__theme-nav-button"></button>
-      <i class="g-folio__theme-logo">
-        <img src="<?= $this->theme_logo_url ?>"/>
-      </i>   
-    </div>
-    <div class="g-folio__theme-brief-content">
+    <div class="g-folio__theme-brief-inner">
+
+      <div class="g-folio__theme-header">
+        <button class="g-folio__theme-nav-button"></button>
+        <i class="g-folio__theme-logo">
+          <img src="<?= $this->theme_logo_url ?>"/>
+        </i>   
+      </div>
+      <div class="g-folio__theme-brief-content">
+          
+        <h1 class="g-folio__theme-title"><?= $this->title ?></h1>
+        <h2 class="g-folio__theme-subtitle"><?= $this->subtitle ?></h2>
+        <p class="g-folio__theme-author">By <?= $this->author ?></p>
         
-      <h1 class="g-folio__theme-title"><?= $this->title ?></h1>
-      <h2 class="g-folio__theme-subtitle"><?= $this->subtitle ?></h2>
-      <p class="g-folio__theme-author">By <?= $this->author ?></p>
-      
-      <div class="g-folio__theme-fields"></div>
-      <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
-      
+        <div class="g-folio__theme-fields"></div>
+        <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
+        
+      </div>
     </div>
   </div>
   <?
@@ -71,10 +74,12 @@ class Theme_1 extends Base_Theme {
       
       <div class="g-folio__theme-content">
         <? $this->display_brief() ?>
-        <div class="g-folio__theme-background" style="background-image: url(<?= $this->theme_cover_url ?>)"></div>
+        <div class="g-folio__theme-background" style="background-image: url(<?= $this->theme_cover_url ?>)">
+          <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site" href="/">StudioEN</a></div>
+        </div>
       </div>
       
-      <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site" href="/">StudioEN</a></div>
+      
     </div>
   <?php
   }

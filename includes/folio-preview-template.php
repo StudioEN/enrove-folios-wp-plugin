@@ -5,26 +5,30 @@ use Groove\Themes\Theme_Page_1;
 use Groove\Themes\Theme_Page_2;
 	function create_theme () {
     $post_type = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : 'groove_folio';
-    $id = isset($_REQUEST['p']) ? $_REQUEST['p'] : '';
+    $id = isset($_REQUEST['folio_id']) 
+      ? $_REQUEST['folio_id'] 
+      : (isset($_REQUEST['p']) ? $_REQUEST['p'] : '');
+
     $meta = get_post_meta($id);
     $theme_id = $meta['theme_id'][0];
 
-    if ($post_type == 'groove_folio') {
-      if ($theme_id == 'theme-01') {
+    if ($post_type == 'groove_folio') {      
+      if ($theme_id == 'theme-1') {
         return new Theme_1();
-      } else if ($theme_id == 'theme-02') {
+      } else if ($theme_id == 'theme-2') {
         return new Theme_2();
       }
     } else if ($post_type == 'groove_folio_page') {
-      if ($theme_id == 'theme-01') {
+      
+      if ($theme_id == 'theme-1') {
         return new Theme_Page_1();
-      } else if ($theme_id == 'theme-02') {
+      } else if ($theme_id == 'theme-2') {
         return new Theme_Page_2();
       }
     }
   }
-
 	$theme = create_theme();
+  
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>

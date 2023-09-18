@@ -160,7 +160,7 @@ class Plugin {
 
 			if ($post_type == 'groove_folio' || $post_type == 'groove_folio_page') {
 				$plugin_dir = plugin_dir_path( __FILE__ );
-				$template = $plugin_dir . 'folio-view.php';
+				$template = $plugin_dir . 'folio-preview-template.php';
 			}
 
 			return $template; 

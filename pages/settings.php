@@ -155,9 +155,11 @@
         if ( $tab_key === $tab_id ) {
           $active_class = ' g-folio__nav-tab-active';
         }
+        
+        $q['tab_key'] = $tab_id;
   
         $sanitized_tab_label = esc_html( $tab['label'] );
-        echo '<a data-tab-id="'. esc_attr( $tab_id ) .'" class="g-folio__nav-tab'. $active_class .' nav-tab">'. $sanitized_tab_label .'</a>';
+        echo '<a href="/wp-admin/admin.php?'. http_build_query($q) .'" data-tab-id="'. esc_attr( $tab_id ) .'" class="g-folio__nav-tab'. $active_class .' nav-tab">'. $sanitized_tab_label .'</a>';
       }
     ?>
       </div>

@@ -829,12 +829,24 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 .g-folio__theme-1 .g-folio__theme-background {
   flex: 1;
   background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
 }
 
 .g-folio__theme-1 .g-folio__theme-brief {
   flex: 1;
   display: flex;
   background: #F0F6FC;
+  flex-direction: column;
+  padding-top: 80px;
+  align-items: flex-end;
+}
+
+.g-folio__theme-1 .g-folio__theme-brief-inner {
+  width: 560px;
+  flex: 1;
+  display: flex;
   flex-direction: column;
 }
 
@@ -844,6 +856,8 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   padding: 24px 32px;
   margin-right: 80px;
   align-content: flex-end;
+  box-sizing: border-box;
+  flex: 1;
 }
 
 .g-folio__theme-1 .g-folio__theme-title {
@@ -852,7 +866,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   font-weight: 700;
   margin: 0;
   line-height: 1.25;
-  margin-top: 37.88px;
+  margin-top: 116px;
 }
 
 .g-folio__theme-1 .g-folio__theme-subtitle {
@@ -860,7 +874,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   font-size: 24px;
   font-weight: 500;
   margin: 0;
-  margin-top: 24px;
+  margin-top: 8px;
 }
 
 .g-folio__theme-1 .g-folio__theme-author {
@@ -913,6 +927,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   justify-content: center;
   align-items: stretch;
   width: 100%;
+  flex: 1;
 }
 
 .g-folio__theme-1  .g-folio__theme-header {
@@ -946,7 +961,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 .g-folio__theme-1 .g-folio__theme-nav {
   width: 360px;;
   padding: 24px;
-  background: #fff;
+  background: #F0F6FC;
   box-sizing: border-box;
   transform: translateX(-100%);
   transition: all .3s;
@@ -967,7 +982,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   height: 64px;
   color: #3858E9;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.5;
   display: flex;
   align-items: center;
@@ -998,7 +1013,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   justify-content: center;
   align-items: center;
   font-size: 32px;
-  color: #52B107;
+  color: #3858E9;
   font-weight: 700;
   font-style: normal;
 }
@@ -1018,7 +1033,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 
 
 .g-folio__theme-1-page {
-  background-color: #1D35B4;
+  background-color: #fff;
   min-height: 100%;
   width: 100%;
   display: flex;
@@ -1047,6 +1062,8 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   height: 48px;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(4px);
+  border-bottom: 2px solid rgba(240, 246, 252, 1);
   display: flex;
   align-items: center;
   padding: 0 12px;
@@ -1055,7 +1072,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 .g-folio__theme-1-page .g-folio__theme-page-nav-button {
   height: 32px;
   width: 32px;
-  background: url('../images/theme-menu-icon-01.png') no-repeat center center #1D35B4;
+  background: url('../images/theme-menu-icon-01.png') no-repeat center center #F6F7F7;
   background-size: 24px 24px;
   border: none;
   outline: none;
@@ -1091,7 +1108,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 .g-folio__theme-1-page .g-folio__theme-page-nav.visible {
   width: 360px;;
   padding: 24px;
-  background: #fff;
+  background: #F0F6FC;
   box-sizing: border-box;
   transform: translateX(0);
 }
@@ -1138,7 +1155,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   justify-content: center;
   align-items: center;
   font-size: 32px;
-  color: #52B107;
+  color: rgba(56, 88, 233, 1);
   font-weight: 700;
   font-style: normal;
 }
@@ -1172,7 +1189,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   font-size: 32px;
   line-height: 1.25;
   font-weight: 600;
-  color: #fff;
+  color: #101517;
   margin-top: 80px;
 }
 
@@ -1197,7 +1214,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   line-height: 1.25;
   font-weight: 400;
   padding: 24px 0;
-  color: #fff;
+  color: rgba(56, 88, 233, 1);
 }
 
 .g-folio__theme-1-page .g-folio__theme-page-container {
@@ -1205,7 +1222,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 }
 
 .g-folio__theme-1-page .g-folio__theme-page-catalogs-label {
-  color: #9DD373;
+  color: #3C434A;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
@@ -1218,12 +1235,12 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   flex: 1;
   box-sizing: border-box;
   padding-left: 16px;
-  border-left: 1px solid #9DD373;
+  border-left: 1px solid #DCDCDE;
   margin-top: 200px;
 }
 
 .g-folio__theme-1-page .g-folio__theme-page-catalog a {
-  color: #fff;
+  color: #3858E9;
   font-size: 14px;
   word-wrap: break-word;
 }
@@ -1259,7 +1276,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 
 .g-folio__theme-1-page .g-folio__theme-page-next a,
 .g-folio__theme-1-page .g-folio__theme-page-prev a {
-  color: #fff;
+  color: rgba(56, 88, 233, 1);
   cursor: pointer;
 }
 

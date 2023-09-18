@@ -191,12 +191,12 @@
 
     public function display_content () {
       $tabs = $this->get_tabs();
-      $tab_key = isset($_REQUEST['tab_key']) ? $_REQUEST['tab_key'] : 'setup'
+      $tab_key = isset($_REQUEST['tab_key']) ? $_REQUEST['tab_key'] : 'setup';
     ?>
       <div class="g-top-bar-tabs-content">
     <?php    
-      $style = 'display: none';
       foreach ($tabs as $tab_id => $tab) {
+        $style = 'display: none';
 
         if ( $tab_key === $tab_id ) {
           $style = 'display: block';
@@ -345,7 +345,7 @@
         $q['tab_key'] = $tab_id;
   
         $sanitized_tab_label = esc_html( $tab['label'] );
-        echo '<a data-tab-id="'. esc_attr( $tab_id ) .'" class="g-folio__nav-tab'. $active_class .' nav-tab">'. $sanitized_tab_label .'</a>';
+        echo '<a href="/wp-admin/admin.php?'. http_build_query($q) .'" data-tab-id="'. esc_attr( $tab_id ) .'" class="g-folio__nav-tab'. $active_class .' nav-tab">'. $sanitized_tab_label .'</a>';
       }
     ?>
       </div>
