@@ -158,12 +158,9 @@ class Plugin {
 		add_filter( 'template_include', function ( $template ) {
 			$post_type = get_post_type();
 
-			if ($post_type === 'groove_folio') {
+			if ($post_type == 'groove_folio' || $post_type == 'groove_folio_page') {
 				$plugin_dir = plugin_dir_path( __FILE__ );
 				$template = $plugin_dir . 'folio-view.php';
-			} else if ($post_type === 'groove_folio_page') {
-				$plugin_dir = plugin_dir_path( __FILE__ );
-				$template = $plugin_dir . 'folio-page-view.php';
 			}
 
 			return $template; 

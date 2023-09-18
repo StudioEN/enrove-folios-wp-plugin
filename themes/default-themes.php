@@ -3,7 +3,7 @@ namespace Groove\Themes;
 use Groove\Modules\Assets;
 
 class Default_Themes extends Assets {
-  
+ 
 
   public function get_themes () {
     return array(
@@ -24,5 +24,6 @@ class Default_Themes extends Assets {
     );
   }
 }
+
 
 ?>
