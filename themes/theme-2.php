@@ -40,6 +40,7 @@ class Theme_2 extends Base_Theme {
   }
 
   function display_brief () {
+    $page = $this->pages[0];
   ?>
   <div class="g-folio__theme-brief">
     <i class="g-folio__theme-logo">
@@ -49,7 +50,11 @@ class Theme_2 extends Base_Theme {
     <h2 class="g-folio__theme-subtitle"><?= $this->subtitle ?></h2>
     <p class="g-folio__theme-author">By <?= $this->author ?></p>
 
-    <div class="g-folio__theme-fields"></div>
+    <div class="g-folio__theme-fields">
+      <a class="g-folio__theme-fields-submit" href="/?folio_id=<?= $this->id ?>&post_type=groove_folio_page&preview=true&p=<?= $page->ID ?>">
+        Enter
+      </a>
+    </div>
     <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
   </div>
   <?

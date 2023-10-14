@@ -56,7 +56,9 @@ class Theme_1 extends Base_Theme {
         <h2 class="g-folio__theme-subtitle"><?= $this->subtitle ?></h2>
         <p class="g-folio__theme-author">By <?= $this->author ?></p>
         
-        <div class="g-folio__theme-fields"></div>
+        <div class="g-folio__theme-fields">
+          
+        </div>
         <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
         
       </div>
