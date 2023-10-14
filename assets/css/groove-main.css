@@ -572,6 +572,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   align-items: center;
   min-height: 100vh;
   overflow: scroll;
+  font-family: DM Sans;
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-center {
@@ -583,6 +584,64 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 .g-folio__theme-2-page .g-folio__theme-page-sidebar {
   flex: 1;
   margin-left: 64px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav {
+  position: fixed;
+  top: 48px;
+  left: 0;
+  right: 0;
+  background: #fff;
+  box-sizing: border-box;
+  transition: all .3s;
+  box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.25);
+  height: 0;
+  padding: 0 16px;
+  overflow: hidden;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav.visible {
+  height: auto;
+  padding: 24px 16px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-label {
+  color: #3C434A;
+  font-family: DM Sans;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 125%; /* 15px */
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-item {
+  height: 38px;
+  color: #3858E9;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-back {
+  color: #3858E9;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-top: 32px;
+  cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-item-link {
+  text-decoration: none;
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-nav-bar {

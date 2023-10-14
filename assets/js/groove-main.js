@@ -104,6 +104,20 @@ jQuery(function () {
 
     setNavBarBackgroundColor()
 
+    jQuery('.g-folio__theme-page-nav-bar-toggle').click(function () {
+      if (jQuery('.g-folio__theme-page-mobile-nav').hasClass('visible')) {
+        jQuery('.g-folio__theme-page-mobile-nav').removeClass('visible')
+      } else {
+        jQuery('.g-folio__theme-page-mobile-nav').addClass('visible')
+      }
+    })
+
+    jQuery('.g-folio__theme-page-mobile-nav-back').click(function () {
+      window.scrollTo({
+        top: 0
+      })
+    })
+
     jQuery(window).scroll(function () {
       setNavBarBackgroundColor()
     })
