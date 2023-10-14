@@ -419,6 +419,11 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   margin-top: 32px;
 }
 
+.g-folio__theme-2 .g-folio__theme-logo {
+  height: 48px;
+  display: flex;
+  align-items: center;
+}
 .g-folio__theme-2 .g-folio__theme-logo img {
   width: 105.898px;
   height: 20.119px;
@@ -588,9 +593,29 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   height: 48px;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.90);
+  transition: background-color .3s;
   display: flex;
   align-items: center;
   padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-bar-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-bar-toggle {
+  display: none;
+  background: url('../images/more-toggle-icon-02.png') no-repeat center center #F6F7F7;
+  background-size: 24px 24px;
+  height: 32px;
+  width: 32px;
+  /* display: flex; */
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-nav-button {
@@ -1288,6 +1313,54 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   color: #fff;
   margin-left: 2px;
 }
+
+/* 响应 */
+/* 主题 2 */
+@media screen and (max-width: 600px) {
+
+  .g-folio__theme-2 .g-folio__theme-content {
+    width: 100%;
+  }
+  .g-folio__theme-2 .g-folio__theme-brief {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 32px 24px;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-content {
+    width: 100%;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-center {
+    width: 100%;
+    margin: 0 16px;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-container {
+    width: 100%;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-sidebar {
+    display: none;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-powerby {
+    display: none;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-nav.visible {
+    width: 100%;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-nav-bar-toggle {
+    display: flex;
+  } 
+
+  /* background: url('../images/theme-arrow-1.png') center center no-repeat; */
+}
+
+
+/*  */
 
 @media screen and (max-width: 960px) {
   .g-top-bar-root {

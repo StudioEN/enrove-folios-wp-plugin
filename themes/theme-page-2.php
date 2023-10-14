@@ -111,8 +111,14 @@ class Theme_Page_2 extends Base_Theme {
   function display_navbar () {
   ?>
     <div class="g-folio__theme-page-nav-bar">
-      <button class="g-folio__theme-page-nav-button"></button>
-      <div class="g-folio__theme-page-name"><?= $this->theme_name ?></div>
+      <div class="g-folio__theme-page-nav-bar-main">
+        <button class="g-folio__theme-page-nav-button"></button>
+        <div class="g-folio__theme-page-name"><?= $this->theme_name ?></div>
+      </div>
+
+      <div class="g-folio__theme-page-nav-bar-toggle">
+        <?php $this->display_nav() ?>
+      </div>
     </div>
   <?
   }

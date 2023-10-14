@@ -94,6 +94,20 @@ jQuery(function () {
   }
 
   if (Groove.isPreview()) {
+    function setNavBarBackgroundColor () {
+      if (window.scrollY > 96) {
+        jQuery('.g-folio__theme-page-nav-bar').css('background-color', 'rgba(255, 255, 255, 1)')
+      } else {
+        jQuery('.g-folio__theme-page-nav-bar').css('background-color', 'rgba(255, 255, 255, 0.9)')
+      }
+    }
+
+    setNavBarBackgroundColor()
+
+    jQuery(window).scroll(function () {
+      setNavBarBackgroundColor()
+    })
+
     jQuery('.g-folio__theme-nav-button').click(function () {
       jQuery('.g-folio__theme-nav').addClass('visible')
     })
