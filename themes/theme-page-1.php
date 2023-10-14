@@ -109,10 +109,11 @@ class Theme_Page_1 extends Base_Theme {
   }
 
   function display_navbar () {
+    $this->get_page_data()
   ?>
     <div class="g-folio__theme-page-nav-bar">
       <button class="g-folio__theme-page-nav-button"></button>
-      <div class="g-folio__theme-page-name"><?= $this->theme_name ?></div>
+      <div class="g-folio__theme-page-name"><?= $this->page->post_title ?></div>
     </div>
   <?
   }

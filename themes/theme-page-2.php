@@ -154,7 +154,7 @@ class Theme_Page_2 extends Base_Theme {
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
         <button class="g-folio__theme-page-nav-button"></button>
-        <div class="g-folio__theme-page-name"><?= $this->theme_name ?></div>
+        <div class="g-folio__theme-page-name"><?= $this->page->post_title ?></div>
       </div>
 
       <div class="g-folio__theme-page-nav-bar-toggle">

@@ -525,6 +525,10 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   margin-top: 80px;
 }
 
+.g-folio__theme-2-page .g-folio__theme-page-name {
+  margin-left: 16px;
+}
+
 .g-folio__theme-2 .g-folio__theme-nav-item {
   height: 64px;
   color: #3858E9;

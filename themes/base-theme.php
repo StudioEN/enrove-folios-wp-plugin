@@ -8,6 +8,7 @@ abstract class Base_Theme extends Assets {
   public $title;
   public $content;
   public $author;
+  public $page;
   public $pages;
   public $theme_id;
   public $theme_name;
@@ -48,6 +49,8 @@ abstract class Base_Theme extends Assets {
     $this->title = $page->post_title;
     $this->content = $page->post_content;
     $this->author = get_the_author_meta('user_login', $page->post_author);
+
+    $this->page = $page;
 
     return $page;
   }
