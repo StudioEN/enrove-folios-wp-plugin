@@ -123,7 +123,8 @@ class Theme_Page_1 extends Base_Theme {
     <nav class="g-folio__theme-page-nav">
       <div class="g-folio__theme-page-nav-content">
         <button class="g-folio__theme-page-nav-close"></button>
-        <h3 class="g-folio__theme-page-nav-name"><?= $this->theme_name ?></h3>
+
+        <h3 class="g-folio__theme-page-nav-name"><?= $this->page->post_title ?></h3>
         <label class="g-folio__theme-page-nav-label">CONTENTS</label>
         <div class="g-folio__theme-page-navs">
           <?

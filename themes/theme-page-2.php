@@ -4,6 +4,7 @@ namespace Groove\Themes;
 class Theme_Page_2 extends Base_Theme {
 
   public $folio_id;
+  public $folio;
 
   public function __construct() {
     parent::__construct();
@@ -11,7 +12,21 @@ class Theme_Page_2 extends Base_Theme {
     $this->folio_id = isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '';
   }
 
+  function get_folio_data () {
+    $wp_query = $this->get_the_wp_query(array(
+      'post__in' => array($this->folio_id),
+      'post_status' => array('publish', 'draft', 'pending'),
+      'post_type' => 'groove_folio',
+    ));
+
+    $page = $wp_query->post;
+    $this->folio = $page;
+
+    return $page;
+  }
+
   function get_data () {
+    $this->get_folio_data();
     $this->get_page_data();
     $this->get_pages_data($this->folio_id);
     $this->get_theme_data(); 
@@ -21,7 +36,7 @@ class Theme_Page_2 extends Base_Theme {
     $doc = new \DOMDocument();
     $doc->loadHTML($html);
 
-    $element_names = ['h1', 'h2', 'h3', 'h4', 'h5'];
+    $element_names = ['h1', 'h2'];
 
     foreach ($element_names as $element_name) {
       $element = $doc->getElementsByTagName($element_name)[0];
@@ -154,7 +169,7 @@ class Theme_Page_2 extends Base_Theme {
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
         <button class="g-folio__theme-page-nav-button"></button>
-        <div class="g-folio__theme-page-name"><?= $this->page->post_title ?></div>
+        <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name"><?= $this->folio->post_title ?> | </span><?= $this->page->post_title ?></div>
       </div>
 
       <div class="g-folio__theme-page-nav-bar-toggle">
@@ -202,7 +217,11 @@ class Theme_Page_2 extends Base_Theme {
     <nav class="g-folio__theme-page-nav">
       <div class="g-folio__theme-page-nav-content">
         <button class="g-folio__theme-page-nav-close"></button>
-        <h3 class="g-folio__theme-page-nav-name"><?= $this->theme_name ?></h3>
+        <h3 class="g-folio__theme-page-nav-name">
+          <a href="/?post_type=groove_folio&preview=true&p=<?= $this->folio->ID ?>">
+            <?= $this->folio->post_title ?>
+          </a>
+        </h3>
         <label class="g-folio__theme-page-nav-label">CONTENTS</label>
         <div class="g-folio__theme-page-navs">
           <?

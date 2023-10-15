@@ -527,6 +527,15 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 
 .g-folio__theme-2-page .g-folio__theme-page-name {
   margin-left: 16px;
+  font-size: 14px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-folio-name {
+  color:  #3C434A;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.25;
 }
 
 .g-folio__theme-2 .g-folio__theme-nav-item {
@@ -595,15 +604,24 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   font-family: DM Sans;
 }
 
+.g-folio__theme-2-page .g-folio__theme-page-main {
+  width: 100%;
+}
+
 .g-folio__theme-2-page .g-folio__theme-page-center {
-  width: 1280px;
   display: flex;
   flex-direction: row;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  overflow: scroll;
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-sidebar {
-  flex: 1;
   margin-left: 64px;
+  position: sticky;
+  top: -100px;
+  width: 265px;
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-mobile-nav {
@@ -1396,6 +1414,9 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 /* 响应 */
 /* 主题 2 */
 @media screen and (max-width: 600px) {
+  .g-folio__theme-2-page .g-folio__theme-folio-name {
+    display: none;
+  }
 
   .g-folio__theme-2 .g-folio__theme-content {
     width: 100%;
@@ -1434,6 +1455,11 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   .g-folio__theme-2-page .g-folio__theme-page-nav-bar-toggle {
     display: flex;
   } 
+
+  .g-folio__theme-2-page .g-folio__theme-page-center {
+    height: auto;
+    overflow: auto;
+  }
 
   /* background: url('../images/theme-arrow-1.png') center center no-repeat; */
 }
