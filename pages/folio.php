@@ -173,7 +173,7 @@
     }
 
     public function get_title() {
-      return 'Folio';
+      return $this->folio->post_title;
     }
 
     public function create_tabs () {
