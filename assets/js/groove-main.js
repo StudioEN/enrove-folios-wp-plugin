@@ -3,6 +3,9 @@ jQuery(function () {
     screenId: window.GROOVE_SCREEN_ID || '',
     themeId: window.GROOVE_THEME_ID ||  null,
 
+    isPostPage () {
+      return this.screenId === 'groove_folio_page' && window.GROOVE_POST
+    },
 
     isAddNewPage () {
       return this.screenId.indexOf('groove-add-new') > -1
@@ -137,5 +140,22 @@ jQuery(function () {
     jQuery('.g-folio__theme-page-nav-close').click(function () {
       jQuery('.g-folio__theme-page-nav').removeClass('visible')
     })
+  }
+
+  if (Groove.isPostPage()) {
+    const content = jQuery(document.getElementById('wpbody-content'))
+    const nav = jQuery(document.createElement('nav'))
+    
+    nav.addClass('g-top-bar-post-nav')
+
+    content.prepend(nav.html(`
+      <div class="g-top-bar-post-type">
+        <a class="g-top-bar-crumb" href="javascript: history.back()">${window.GROOVE_POST_TYPE === 'edit' ? 'Edit Folio' : 'New Folio' }</a>
+        <i class="g-top-bar-crumb-arrow"> /</i>
+        <a class="g-top-bar-crumb">Page</a>
+      </div>
+    `))
+
+    jQuery('#editor').css('top', '24px')
   }
 })

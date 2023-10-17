@@ -17,13 +17,35 @@ class Module extends BaseModule {
 		return 'groove-main';
 	}
 
+	private function is_in_block_editor_page () {
+		$post = get_post();
+		
+		if ( !use_block_editor_for_post($post) ) {
+			return false;
+		}
+
+    // Check if it's a new post/page in the block editor
+    if (strpos($_SERVER['REQUEST_URI'], 'post-new.php') !== false) {
+      return true;
+    }
+
+    // Check if it's an existing post/page being edited in the block editor
+    if (isset($_GET['post']) && strpos($_SERVER['REQUEST_URI'], 'post.php') !== false) {
+      return true;
+    }
+
+		
+
+    return false;
+}
+
 	private function enqueue_scripts() {
 		wp_enqueue_style( 'groove', $this->get_css_assets_url( 'groove-main', null, 'default', true ), [], GROOVE_VERSION);	
 		wp_enqueue_script( 'groove', $this->get_js_assets_url( 'groove-main' ), ['jquery'], GROOVE_VERSION, true);
 	}
 
 	private function add_frontend_settings() {
-		echo '<script>window.GROOVE_SCREEN_ID = "'. $this->get_scrren_id() .'";</script>';
+		echo '<script>window.GROOVE_SCREEN_ID = "'. $this->get_scrren_id() .'"; window.GROOVE_POST = '. ($this->is_in_block_editor_page() ? 'true' : 'false') .';window.GROOVE_POST_TYPE = "'. ( isset($_REQUEST['action']) ? $_REQUEST['action'] : 'create' ) .'";</script>';
 
 		do_action( 'groove/main/init', $this );
 	}
@@ -51,6 +73,7 @@ class Module extends BaseModule {
 			return false;
 		}
 
+		
 		$is_groove_page = (strpos( $current_screen->id ?? '', 'groove') >= 0);
 
 		return apply_filters(
