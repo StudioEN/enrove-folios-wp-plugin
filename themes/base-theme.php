@@ -7,6 +7,7 @@ abstract class Base_Theme extends Assets {
   public $post_type;
   public $title;
   public $content;
+  public $feature_image;
   public $author;
   public $page;
   public $pages;
@@ -46,10 +47,11 @@ abstract class Base_Theme extends Assets {
     ));
 
     $page = $wp_query->post;
+    
     $this->title = $page->post_title;
     $this->content = $page->post_content;
     $this->author = get_the_author_meta('user_login', $page->post_author);
-
+    $this->feature_image = get_the_post_thumbnail($page->ID);
     $this->page = $page;
 
     return $page;
@@ -93,6 +95,8 @@ abstract class Base_Theme extends Assets {
     $this->get_page_data();
     $this->get_pages_data($this->id);
     $this->get_theme_data(); 
+
+
   }
 
   function display_theme () {

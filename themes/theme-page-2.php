@@ -10,6 +10,11 @@ class Theme_Page_2 extends Base_Theme {
     parent::__construct();
 
     $this->folio_id = isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '';
+
+    if ($this->post_type == 'groove_folio_page') {
+      $meta = get_post_meta($this->id);
+      $this->folio_id = $meta['folio_id'][0];
+    }
   }
 
   function get_folio_data () {
@@ -95,6 +100,8 @@ class Theme_Page_2 extends Base_Theme {
 
     $content = $this->content;
     $blocks = parse_blocks($content);
+
+    echo $this->feature_image;
 
     $results = '';
 

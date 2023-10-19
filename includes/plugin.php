@@ -164,7 +164,7 @@ class Plugin {
 			}
 
 			return $template; 
-		}, 99);
+		}, 10, 2);
 
 		add_action( 'init', [ $this, 'init' ], 0 );
 	}

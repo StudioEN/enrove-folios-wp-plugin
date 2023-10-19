@@ -51,9 +51,16 @@
   text-decoration: none;
 }
 
-
+.g-folio__theme-2-page .attachment-post-thumbnail {
+  width: 100%;
+  height: auto;
+}
 
 .groove .interface-interface-skeleton {
+  top: 66px;
+}
+
+.groove .edit-post-layout .editor-post-publish-panel {
   top: 66px;
 }
 
@@ -1548,6 +1555,10 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   }
 
   .groove .interface-interface-skeleton {
+    top: 56px;
+  }
+
+  .groove .edit-post-layout .editor-post-publish-panel {
     top: 56px;
   }
 }

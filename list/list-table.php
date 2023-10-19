@@ -25,6 +25,7 @@ class List_Table extends \WP_List_Table {
 			return '';
 		}
 
+		$post_meta        = get_post_meta($item->ID);
 		$post             = $item;
 		$post_type_object = get_post_type_object( $post->post_type );
 		$can_edit_post    = current_user_can( 'edit_post', $post->ID );
@@ -72,9 +73,14 @@ class List_Table extends \WP_List_Table {
 		}
 
 		if ( is_post_type_viewable( $post_type_object ) ) {
+			
+			$query_args = array(
+				'folio_id' => $post_meta["folio_id"][0]
+			);
+
 			if ( in_array( $post->post_status, array( 'pending', 'draft', 'future' ), true ) ) {
 				if ( $can_edit_post ) {
-					$preview_link    = get_preview_post_link( $post );
+					$preview_link    = get_preview_post_link( $post, $query_args );
 					$actions['view'] = sprintf(
 						'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
 						esc_url( $preview_link ),

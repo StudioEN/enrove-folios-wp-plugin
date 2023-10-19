@@ -38,7 +38,7 @@ class Content extends BaseContent {
       'show_in_nav_menus' => false,
 
       'has_archive' => true,
-      'supports' => array( 'title', 'editor', 'custom-fields'),
+      'supports' => array( 'title', 'editor', 'custom-fields', 'thumbnail', 'excerpt'),
       'rewrite' => array('slug' => 'folio pages'),
     );
 
