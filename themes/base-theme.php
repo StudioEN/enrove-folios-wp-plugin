@@ -60,8 +60,8 @@ abstract class Base_Theme extends Assets {
   function get_pages_data ($id) {
     $args = array(
       'post_type' => 'groove_folio_page',
-      'orderby' => 'date', // 根据日期排序
-      'order' => 'ASC', // 升序排列
+      'orderby' => 'menu_order',
+      'order' => 'ASC',
       'post_status' => array('publish', 'draft', 'pending'),
       'meta_query' => array(
         array(

@@ -41,6 +41,8 @@ class Content extends BaseContent {
       'has_archive' => true,
       'supports' => array( 'title', 'editor', 'password','custom-fields'),
       'rewrite' => array('slug' => 'folio'),
+      'menu_position' => 1, 
+      'menu_order' => 1, 
     );
 
     register_post_type('groove_'. $this->get_key(), $args);

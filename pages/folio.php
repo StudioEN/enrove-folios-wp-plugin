@@ -46,6 +46,8 @@
 
       add_action( 'save_post', [$this, 'save_post']);
 
+      add_action( 'wp_ajax_folio_inline_save', [$this, 'inline_save']);
+
       add_action( 'groove/menu/register', function( Menu_Manager $menu ) {
 				$menu->register( static::PAGE_ID, new Folio_Menu_Item($this) );
 			}, Overview::MENU_PRIORITY + 20 );
@@ -63,6 +65,120 @@
           }
         }
       });
+    }
+
+    public function inline_save () {
+      global $mode;
+
+      check_ajax_referer( 'inlineeditnonce', '_inline_edit' );
+
+      if ( ! isset( $_POST['post_ID'] ) || ! (int) $_POST['post_ID'] ) {
+        wp_die();
+      }
+
+      $post_id = (int) $_POST['post_ID'];
+      
+
+      if ( 'page' === $_POST['post_type'] ) {
+        if ( ! current_user_can( 'edit_page', $post_id ) ) {
+          wp_die( __( 'Sorry, you are not allowed to edit this page.' ) );
+        }
+      } else {
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+          wp_die( __( 'Sorry, you are not allowed to edit this post.' ) );
+        }
+      }
+
+      $last = wp_check_post_lock( $post_id );
+      if ( $last ) {
+        $last_user      = get_userdata( $last );
+        $last_user_name = $last_user ? $last_user->display_name : __( 'Someone' );
+
+        /* translators: %s: User's display name. */
+        $msg_template = __( 'Saving is disabled: %s is currently editing this post.' );
+
+        if ( 'page' === $_POST['post_type'] ) {
+          /* translators: %s: User's display name. */
+          $msg_template = __( 'Saving is disabled: %s is currently editing this page.' );
+        }
+
+        printf( $msg_template, esc_html( $last_user_name ) );
+        wp_die();
+      }
+
+      $data = &$_POST;
+      $post = get_post( $post_id, ARRAY_A );
+
+      // Since it's coming from the database.
+      $post = wp_slash( $post );
+
+      $data['content'] = $post['post_content'];
+      $data['excerpt'] = $post['post_excerpt'];
+
+      // Rename.
+      $data['user_ID'] = get_current_user_id();
+
+      if ( isset( $data['post_parent'] ) ) {
+        $data['parent_id'] = $data['post_parent'];
+      }
+
+      // Status.
+      if ( isset( $data['keep_private'] ) && 'private' === $data['keep_private'] ) {
+        $data['visibility']  = 'private';
+        $data['post_status'] = 'private';
+      } else {
+        $data['post_status'] = $data['_status'];
+      }
+
+      if ( empty( $data['comment_status'] ) ) {
+        $data['comment_status'] = 'closed';
+      }
+
+      if ( empty( $data['ping_status'] ) ) {
+        $data['ping_status'] = 'closed';
+      }
+
+      // Exclude terms from taxonomies that are not supposed to appear in Quick Edit.
+      if ( ! empty( $data['tax_input'] ) ) {
+        foreach ( $data['tax_input'] as $taxonomy => $terms ) {
+          $tax_object = get_taxonomy( $taxonomy );
+          /** This filter is documented in wp-admin/includes/class-wp-posts-list-table.php */
+          if ( ! apply_filters( 'quick_edit_show_taxonomy', $tax_object->show_in_quick_edit, $taxonomy, $post['post_type'] ) ) {
+            unset( $data['tax_input'][ $taxonomy ] );
+          }
+        }
+      }
+
+      // Hack: wp_unique_post_slug() doesn't work for drafts, so we will fake that our post is published.
+      if ( ! empty( $data['post_name'] ) && in_array( $post['post_status'], array( 'draft', 'pending' ), true ) ) {
+        $post['post_status'] = 'publish';
+        $data['post_name']   = wp_unique_post_slug( $data['post_name'], $post['ID'], $post['post_status'], $post['post_type'], $post['post_parent'] );
+      }
+
+      // Update the post.
+      edit_post();
+
+      
+      $post_type = static::POST_TYPE;
+      $table = new Folio_Page_List_Table($this, $post_type);
+
+      $mode = 'excerpt' === $_POST['post_view'] ? 'excerpt' : 'list';
+
+      $level = 0;
+      if ( is_post_type_hierarchical( $table->screen->post_type ) ) {
+        $request_post = array( get_post( $_POST['post_ID'] ) );
+        $parent       = $request_post[0]->post_parent;
+
+        while ( $parent > 0 ) {
+          $parent_post = get_post( $parent );
+          $parent      = $parent_post->post_parent;
+          $level++;
+        }
+      }
+
+      $table->ajax_rows( array( get_post( $_POST['post_ID'] ) ), $level );
+
+      wp_die();
     }
 
     public function save_post ($post_id) {
@@ -360,6 +476,10 @@
 
       $table->prepare_items();
       $table->views();
+
+      if ( $table->has_items() ) {
+        $table->inline_edit();
+      }
     ?>
       <form id="pages-filter" method="get">
         <?php $table->search_box($post_type_object->labels->search_items, 'post' ); ?>

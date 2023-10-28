@@ -38,8 +38,10 @@ class Content extends BaseContent {
       'show_in_nav_menus' => false,
 
       'has_archive' => true,
-      'supports' => array( 'title', 'editor', 'custom-fields', 'thumbnail', 'excerpt'),
+      'supports' => array( 'title', 'editor', 'custom-fields', 'thumbnail', 'excerpt', 'page-attributes'),
       'rewrite' => array('slug' => 'folio pages'),
+      'menu_position' => 1, 
+      'menu_order' => 1,
     );
 
     register_post_type('groove_'. $this->get_key(), $args);

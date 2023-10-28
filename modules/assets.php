@@ -16,7 +16,7 @@ abstract class Assets {
 		return $current_screen->id;
 	}
 
-	final protected function get_assets_url($file_name, $file_extension, $relative_url = null, $add_min_suffix = 'default') {
+	final public function get_assets_url($file_name, $file_extension, $relative_url = null, $add_min_suffix = 'default') {
 		if (!$relative_url) {
 			$relative_url = $this->get_assets_relative_url() . $file_extension . '/';
 		}
@@ -26,11 +26,11 @@ abstract class Assets {
 		return $url . '.' . $file_extension;
 	}
 	
-	final protected function get_js_assets_url( $file_name, $relative_url = null, $add_min_suffix = 'default' ) {
+	final public function get_js_assets_url( $file_name, $relative_url = null, $add_min_suffix = 'default' ) {
 		return $this->get_assets_url( $file_name, 'js', $relative_url, $add_min_suffix );
 	}
 
-	final protected function get_images_assets_url( $file_name, $relative_url = null, $add_min_suffix = 'default' ) {
+	final public function get_images_assets_url( $file_name, $relative_url = null, $add_min_suffix = 'default' ) {
 		if (!$relative_url) {
 			$relative_url = $this->get_assets_relative_url() . 'images' . '/';
 		}
@@ -40,7 +40,7 @@ abstract class Assets {
 		return $url;
 	}
 	
-	final protected function get_css_assets_url ($file_name, $relative_url = null, $add_min_suffix = 'default', $add_direction_suffix = false) {
+	final public function get_css_assets_url ($file_name, $relative_url = null, $add_min_suffix = 'default', $add_direction_suffix = false) {
 		static $direction_suffix = null;
 
 		if ( ! $direction_suffix ) {
@@ -55,12 +55,12 @@ abstract class Assets {
 	}
 
 	
-	protected function get_assets_base_url() {
+	public function get_assets_base_url() {
 		return GROOVE_URL;
 	}
 
 	
-	protected function get_assets_relative_url() {
+	public function get_assets_relative_url() {
 		return 'assets/';
 	}
 }

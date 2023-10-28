@@ -45,6 +45,10 @@
 
       $table->prepare_items();
       $table->views();
+
+      if ( $table->has_items() ) {
+        $table->inline_edit();
+      }
     ?>
       <form id="pages-filter" method="get">
         <?php $table->search_box($post_type_object->labels->search_items, 'post' ); ?>
