@@ -155,7 +155,7 @@ class Plugin {
 		});
 	
 		add_filter('post_type_link', function ($post_link, $post, $leavename) {
-			echo json_encode($post);
+			// echo json_encode($post);
 			if (
 				$post->post_type == 'groove_folio' ||
 				$post->post_type == 'groove_folio_page'
