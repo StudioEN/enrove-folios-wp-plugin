@@ -13,16 +13,16 @@ class Content extends BaseContent {
 
   public function create_posttype () {
     $labels = array(
-      'name' => 'Folio Pages',
-      'singular_name' => 'Folio Pages',
-      'menu_name' => 'Folio Pages',
-      'all_items' => 'All Folio Pages',
+      'name' => 'Folio Page',
+      'singular_name' => 'Folio Page',
+      'menu_name' => 'Folio Page',
+      'all_items' => 'All Folio Page',
       'add_new' => 'Add New',
       'add_new_item' => 'Add New Folio Page',
       'edit_item' => 'Edit Folio Page',
       'new_item' => 'New Folio Page',
       'view_item' => 'View Folio Page',
-      'search_items' => 'Search Folio Pages',
+      'search_items' => 'Search Folio Page',
       'not_found' => 'No folio pages found',
       'not_found_in_trash' => 'No folio pages found in trash',
     );
