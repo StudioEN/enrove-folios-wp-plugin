@@ -6,6 +6,7 @@
   use Groove\Menu\Menu_Manager;
   use Groove\Menu\Folio_Menu_Item;
   use Groove\List\Folio_Page_List_Table;
+  use Groove\Themes\Default_Themes;
 
   
 
@@ -250,6 +251,8 @@
         $permission = isset($_POST['permission']) ? $_POST['permission'] : $fields->permission;
         $fonts = isset($_POST['fonts']) ? $_POST['fonts'] : $fields->fonts;
         $theme_id = isset($_POST['theme_id']) ? $_POST['theme_id'] : $fields->theme_id;
+        
+        $feature_image_id = isset($_POST['feature_image_id']) ? $_POST['feature_image_id'] : null;
     
         $fields = array(
           'ID'=> $id,
@@ -267,8 +270,16 @@
             'permission' => $permission ? $permission : 2
           )
         );
-  
+
+        
         $folio_id = wp_update_post($fields);
+
+        if ($feature_image_id == null) {
+          delete_post_thumbnail($id);
+        } else {
+          set_post_thumbnail($id, $feature_image_id);
+        }
+
   
         if (!is_wp_error($folio_id)) {
           echo json_encode(array(
@@ -407,11 +418,18 @@
 
     public function display_essentials () {
       $fields = $this->get_fields();
-
       $selected_author = get_post_field('post_author', $fields->ID);
+
+      $feature_image = isset($fields->feature_image) ? $fields->feature_image : '';
 
       $subtitle = isset($fields->subtitle) ? $fields->subtitle : '';
       $copyright = isset($fields->copyright) ? $fields->copyright : '';
+
+      $default_theme = new Default_Themes();
+      $themes = $default_theme->get_themes();
+      $theme = $themes[$fields->theme_id];
+
+      $theme_url = $theme["cover_url"];
     ?>
       <div class="postbox-container g-folio__postbox">
         <div class="postbox">
@@ -425,10 +443,15 @@
               <label for="custom_field">SUBTITLE</label>
               <input placeholder="Option" type="text" name="subtitle" value="<?php echo $subtitle ?>" />
             </div>
-            <!-- <div class="g-row_field">
-              <label for="custom_field">FEATURE</label>
-              <input type="text" name="feature" id="feature" value="" />
-            </div> -->
+            <div class="g-row_field">
+              <label for="custom_field">FEATURE IMAGE</label>
+              <input value="<?= $feature_image->ID ?>" type="hidden" name="feature_image_id" id="media_id" placeholder="Feature image">
+              <img id="feature-preview" class="g-row_field-image" src="<?= $feature_image == null ? $theme_url : $feature_image->guid ?>" />
+              <div class="g-row_field-actions">
+                <div id="feature-image" class="g-folio__button">Replace image</div>
+                <a data-default-url="<?= $theme_url ?>" id="use-default-image">Use default</a>
+              </div>
+            </div>
             <div class="g-row_field">
               <label for="authro">AUTHOR</label>
               <?php wp_dropdown_users(array('name' => 'author', 'selected' => $selected_author)) ?>

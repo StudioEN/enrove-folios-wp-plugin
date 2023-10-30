@@ -2,7 +2,7 @@
 namespace Groove\Fields;
 
 class FolioFields {
-
+  public $feature_image;
   public $copyright;
   public $author;
   public $subtitle;
@@ -18,9 +18,14 @@ class FolioFields {
 
   public function __construct($post) {
     $meta = get_post_meta($post->ID);
-
     
-
+    if (has_post_thumbnail($post->ID)) {
+      $thumbnail_id = get_post_thumbnail_id($post->ID);
+      $this->feature_image = get_post($thumbnail_id);
+    } else {
+      $this->feature_image = null;
+    }
+    
     $this->ID = $post->ID;
     $this->copyright = $meta['copyright'][0];
     $this->author = $post->post_author;

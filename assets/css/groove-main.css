@@ -189,6 +189,27 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   margin-bottom: 5px;
 }
 
+.g-row_field-image {
+  height: 120px;
+  width: auto;
+}
+
+.g-row_field-actions {
+  display: flex;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.g-row_field-actions a {
+  cursor: pointer;
+  margin-left: 15px;
+}
+
+.g-row_field-actions .g-folio__button  {
+  cursor: pointer;
+  margin-left: 0;
+}
+
 .g-folio__setting-privacy {
   width: 100%;
 }

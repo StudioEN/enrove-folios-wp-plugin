@@ -78,6 +78,31 @@ jQuery(function () {
       e.preventDefault()
       ajax('save_groove_folio_draft')
     })  
+
+    jQuery('#feature-image').click(function (event) {
+      event.preventDefault();
+      var custom_uploader = wp.media({
+        title: 'Select',
+        button: {
+          text: 'Select'
+        },
+        multiple: false
+      });
+
+      custom_uploader.on('select', function () {
+        var attachment = custom_uploader.state().get('selection').first().toJSON()
+        jQuery('#media_id').val(attachment.id)
+        jQuery('#feature-preview').attr('src', attachment.url)
+      });
+
+      custom_uploader.open();
+    });
+
+    jQuery('#use-default-image').click(function () {
+      jQuery('#media_id').val(null)
+      var defaultUrl = jQuery('#use-default-image').data('default-url')
+      jQuery('#feature-preview').attr('src', defaultUrl)
+    })
   }
 
   if (Groove.isAddNewPage()) {

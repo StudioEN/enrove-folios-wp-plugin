@@ -161,7 +161,6 @@ class Plugin {
 				$post->post_type == 'groove_folio_page'
 				) {
 				$title = preg_replace('/\s+/', '-', strtolower($post->post_title));
-				echo $title . "1111";
 				return 'folio/' . $title;
 			}
 
