@@ -190,8 +190,9 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 }
 
 .g-row_field-image {
-  height: 120px;
+  height: 300px;
   width: auto;
+  object-fit: cover;
 }
 
 .g-row_field-actions {

@@ -39,6 +39,7 @@ use Groove\Themes\Theme_Page_2;
       }
     }
   }
+
 	$theme = create_theme();
   
 ?><!DOCTYPE html>

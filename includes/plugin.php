@@ -161,23 +161,25 @@ class Plugin {
 				$post->post_type == 'groove_folio_page'
 				) {
 				$title = preg_replace('/\s+/', '-', strtolower($post->post_title));
-				return 'folio/' . $title;
+				return home_url('folio/' . $title);
 			}
 
 			return $post_link;
 		}, 10, 3);
 
 	
-		// add_filter( 'template_include', function ( $template ) {
-		// 	$post_type = get_post_type();
+		add_filter( 'template_include', function ( $template ) {
+			$url_parts = parse_url($_SERVER['REQUEST_URI']);
+			$current_path = $url_parts['path'];
+			$pattern = '/^\/folio\//'; 
 
-		// 	if ($post_type == 'groove_folio' || $post_type == 'groove_folio_page') {
-		// 		$plugin_dir = plugin_dir_path( __FILE__ );
-		// 		$template = $plugin_dir . 'folio-preview-template.php';
-		// 	}
+			if (preg_match($pattern, $current_path)) {
+				$plugin_dir = plugin_dir_path( __FILE__ );
+				$template = $plugin_dir . 'folio-preview-template.php';
+			}
 
-		// 	return $template; 
-		// }, 10, 2);
+			return $template; 
+		}, 10, 2);
 
 		add_action( 'init', [ $this, 'init' ], 0 );
 	}
