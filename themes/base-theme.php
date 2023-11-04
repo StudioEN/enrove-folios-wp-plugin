@@ -1,6 +1,7 @@
 <?php
 namespace Groove\Themes;
 use Groove\Modules\Assets;
+use Groove\Utils\Utils;
 
 abstract class Base_Theme extends Assets {
   public $id;
@@ -17,18 +18,16 @@ abstract class Base_Theme extends Assets {
   public $theme_logo_url;
 
   public function __construct() {
-    $this->post_type = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : 'groove_folio';
-    $this->id = isset($_REQUEST['p']) ? $_REQUEST['p'] : '';
+    $this->post_type = Utils::get_groove_post_type();
+    $this->id = Utils::get_groove_post_id();
 
     add_action( 'wp_enqueue_scripts', [$this, 'ensure_script'] );
   }
 
   public function ensure_script () {
-    if (is_preview()) {
-      echo '<script>window.GROOVE_IS_PREVIEW = ' . (is_preview() ? 'true' : 'false') . '; </script>';  
-      // echo '<script>var html = document.getElementByTagName(\'html\')[0];html && html.style.marginTop = 0;</script>';
-      show_admin_bar(false);
-    }
+    echo '<script>window.GROOVE_IS_PREVIEW = true</script>';  
+    // echo '<script>var html = document.getElementByTagName(\'html\')[0];html && html.style.marginTop = 0;</script>';
+    show_admin_bar(false);
 
     wp_enqueue_style( 'groove', $this->get_css_assets_url( 'groove-main', null, 'default', true ), [], GROOVE_VERSION);	
     wp_enqueue_script( 'groove', $this->get_js_assets_url( 'groove-main' ), ['jquery'], GROOVE_VERSION, true);

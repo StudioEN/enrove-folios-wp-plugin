@@ -11,6 +11,7 @@ use Groove\Pages\Add_New;
 use Groove\Pages\Support;
 use Groove\Pages\Settings;
 use Groove\Menu\Menu_Manager;
+use Groove\Utils\Utils;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -65,6 +66,7 @@ class Plugin {
 	}
 
 	public function init() {
+		$this->add_rewrite();
 		$this->add_cpt_support();
 		$this->init_components();
 
@@ -115,6 +117,12 @@ class Plugin {
 		}
 	}
 
+	private function add_rewrite () {
+		add_rewrite_rule('^folio/page/[^/]+/?', 'index.php?post_type=groove_folio_page', 'top');
+		add_rewrite_rule('^folio/[^/]+/?', 'index.php?post_type=groove_folio', 'top');
+		flush_rewrite_rules();
+	}
+
 	private function register_autoloader() {
 		require_once GROOVE_PATH . '/includes/autoloader.php';
 
@@ -155,13 +163,10 @@ class Plugin {
 		});
 	
 		add_filter('post_type_link', function ($post_link, $post, $leavename) {
-			// echo json_encode($post);
-			if (
-				$post->post_type == 'groove_folio' ||
-				$post->post_type == 'groove_folio_page'
-				) {
-				$title = preg_replace('/\s+/', '-', strtolower($post->post_title));
-				return home_url('folio/' . $title);
+			$groove_post_link = Utils::get_folio_permalink($post);
+
+			if ($groove_post_link) {
+				return $groove_post_link;
 			}
 
 			return $post_link;
