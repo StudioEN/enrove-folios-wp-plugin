@@ -497,6 +497,22 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   flex: 1;
 }
 
+.g-folio__theme-2 .g-folio__theme-password-form {
+
+}
+
+.g-folio__theme-2  .g-folio__theme-fields-submit-input {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  background: rgba(197, 217, 237, 1);
+  padding: 8px 12px 8px 12px;
+  border-radius: 2px;
+  border: none;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
 .g-folio__theme-2 .g-folio__theme-fields-submit {
   display: flex;
   height: 40px;
@@ -511,6 +527,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   line-height: 20px; /* 142.857% */
   width: 80px;
   cursor: pointer;
+  background-color: transparent;
 }
 
 .g-folio__theme-2 .g-folio__theme-copyright {

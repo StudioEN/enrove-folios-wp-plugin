@@ -41,7 +41,7 @@ abstract class Base_Theme extends Assets {
   function get_page_data () {
     $wp_query = $this->get_the_wp_query(array(
       'post__in' => array($this->id),
-      'post_status' => array('publish', 'draft', 'pending'),
+      'post_status' => array('publish', 'draft', 'pending', 'private'),
       'post_type' => $this->post_type,
     ));
 
@@ -61,7 +61,7 @@ abstract class Base_Theme extends Assets {
       'post_type' => 'groove_folio_page',
       'orderby' => 'menu_order',
       'order' => 'ASC',
-      'post_status' => array('publish', 'draft', 'pending'),
+      'post_status' => array('publish', 'draft', 'pending', 'private'),
       'meta_query' => array(
         array(
           'key' => 'folio_id',

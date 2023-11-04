@@ -109,7 +109,7 @@
         'post_type' => $post_type,
         'name' => $post_name,
         'posts_per_page' => 1,
-        'post_status' => 'draft,publish'
+        'post_status' => 'draft,publish,private'
       ));
   
       $post = $wp_query->post;  

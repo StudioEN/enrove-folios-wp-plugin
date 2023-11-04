@@ -27,6 +27,13 @@ use Groove\Utils\Utils;
       }
     } else if ($post_type == 'groove_folio_page') {
       
+      $post_password_required = post_password_required( $folio_id );
+
+      if ($post_password_required) {
+        wp_redirect(Utils::get_folio_permalink_by_id($folio_id), 301);
+        exit;
+      }
+
       if ($theme_id == 'theme-1') {
         return new Theme_Page_1();
       } else if ($theme_id == 'theme-2') {

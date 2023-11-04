@@ -40,6 +40,16 @@ class Theme_2 extends Base_Theme {
   <?
   }
 
+  function display_password_form ($post) {
+    $post   = get_post( $post );
+  ?>
+    <form action="<?= esc_url( site_url( 'wp-login.php?action=postpass', 'login_post' ) )?>" class="post-password-form" method="post">
+      <input placeholder="Enter password" class="g-folio__theme-fields-submit-input" name="post_password" type="password" spellcheck="false" size="20" />
+      <input class="g-folio__theme-fields-submit" type="submit" name="Submit" value="Enter" />
+    </form>
+  <?
+  }
+
   function display_brief () {
     $page = $this->pages[0];
   ?>
@@ -51,14 +61,20 @@ class Theme_2 extends Base_Theme {
     <h2 class="g-folio__theme-subtitle"><?= $this->subtitle ?></h2>
     <p class="g-folio__theme-author">By <?= $this->author ?></p>
 
-    <div class="g-folio__theme-fields">
+    <div class="g-folio__theme-fields g-folio__theme-password-form">
       <?
-        if (sizeof($this->pages) > 0) {
-          ?>
-             <a class="g-folio__theme-fields-submit" href="<? echo get_permalink($page->ID) ?>">
-              Enter
-            </a>
-          <?
+        $post_password_required = post_password_required( $this->id );
+
+        if ($post_password_required) {
+          $this->display_password_form($this->id);
+        } else {
+          if (sizeof($this->pages) > 0) {
+            ?>
+              <a class="g-folio__theme-fields-submit" href="<? echo get_permalink($page->ID) ?>">
+                Enter
+              </a>
+            <?
+          }
         }
       ?>
     </div>
