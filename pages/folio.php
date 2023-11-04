@@ -268,7 +268,6 @@
             // 'fonts' => $fonts,
             'subtitle' => $subtitle ? $subtitle : '',
             'copyright' => $copyright ? $copyright : '',
-            'permalink' => $permalink ? $permalink : '',
             'permission' => $permission ? $permission : 2
           )
         );
@@ -406,11 +405,11 @@
             </div>
             <div class="g-row_field">
               <label for="pdf">PASSWORD</label>
-              <input type="password" name="password" value="<?php echo $fields->password ?>" />
+              <input type="password" placeholder="Enter your password" name="password" value="<?php echo $fields->password ?>" />
             </div>
             <div class="g-row_field">
               <label for="pdf">PERMALINK</label>
-              <input type="text" name="permalink" value="<?php echo $permalink ?>" />
+              <input disabled type="text" name="permalink" value="<?php echo $fields->name ?>" />
             </div>
           </div>
         </div>

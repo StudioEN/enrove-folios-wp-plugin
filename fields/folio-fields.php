@@ -2,6 +2,7 @@
 namespace Groove\Fields;
 
 class FolioFields {
+  public $name;
   public $feature_image;
   public $copyright;
   public $author;
@@ -27,6 +28,7 @@ class FolioFields {
     }
     
     $this->ID = $post->ID;
+    $this->name = $post->post_name;
     $this->copyright = $meta['copyright'][0];
     $this->author = $post->post_author;
     $this->subtitle = $meta['subtitle'][0];

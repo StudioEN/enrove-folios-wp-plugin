@@ -41,7 +41,7 @@
               'theme_id' => $theme_id,
               'subtitle' => '',
               'permission' => '2', // 2 allowed 4 not allowed
-              'copyright' => 'Copy right',
+              'copyright' => '',
               'fonts' => ['Arial', 'Helvetica'],
               'permalink' => '',
             ),
