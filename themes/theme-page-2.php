@@ -46,6 +46,7 @@ class Theme_Page_2 extends Base_Theme {
 
     foreach ($element_names as $element_name) {
       $element = $doc->getElementsByTagName($element_name)[0];
+
       if ($element) {
         return [
           $this->get_html_id($element), 
@@ -103,7 +104,6 @@ class Theme_Page_2 extends Base_Theme {
     $blocks = parse_blocks($content);
 
     echo $this->feature_image;
-
     $results = '';
 
     foreach ($blocks as $block) {
@@ -113,7 +113,9 @@ class Theme_Page_2 extends Base_Theme {
         $html = $this->get_html($title);
         $anchor = $this->to_anchor_name($html[1]);
 
-        $block['innerContent'][0] = '<' .$html[2] .' id="'. $anchor .'">' . $html[1] . '</'. $html[2] .'>';
+        if ($html[2] === 'h1' || $html[2] === 'h2') {
+          $block['innerContent'][0] = '<' .$html[2] .' id="'. $anchor .'">' . $html[1] . '</'. $html[2] .'>';
+        } 
       }
 
       $results .= render_block($block);
