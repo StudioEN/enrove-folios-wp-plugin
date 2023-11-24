@@ -9,6 +9,24 @@ class Theme_Page_1 extends Base_Theme {
     parent::__construct();
 
     $this->folio_id = isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '';
+
+    if ($this->post_type == 'groove_folio_page') {
+      $meta = get_post_meta($this->id);
+      $this->folio_id = $meta['folio_id'][0];
+    }
+  }
+
+  function get_folio_data () {
+    $wp_query = $this->get_the_wp_query(array(
+      'post__in' => array($this->folio_id),
+      'post_status' => array('publish', 'draft', 'pending'),
+      'post_type' => 'groove_folio',
+    ));
+
+    $page = $wp_query->post;
+    $this->folio = $page;
+
+    return $page;
   }
 
   function get_data () {
@@ -21,18 +39,37 @@ class Theme_Page_1 extends Base_Theme {
     $doc = new \DOMDocument();
     $doc->loadHTML($html);
 
-    $element_names = ['h1', 'h2', 'h3', 'h4'];
+    $element_names = ['h1', 'h2'];
 
     foreach ($element_names as $element_name) {
       $element = $doc->getElementsByTagName($element_name)[0];
       if ($element) {
-        return [$this->get_html_id($element), $element->textContent];
+        return [
+          $this->get_html_id($element), 
+          $element->textContent, 
+          $element_name
+        ];
       }
     }
   }
 
+  function to_anchor_name ($string) {
+    $dstr = preg_replace_callback('/([A-Z]+)/', function ($matchs) {
+      return '-'.strtolower($matchs[0]);
+    }, $string);
+
+    $dst = preg_replace_callback('/([\s]+)/', function ($matchs) {
+      return '-';
+    }, $dstr);
+    
+    return trim(preg_replace('/_{2,}/','-' , $dst), '-');
+  }
+
+
   function get_html_id ($element) {
-    return $element->getAttribute('id');
+    $id = $element->getAttribute('id');
+    $textContent = $element->textContent;
+    return $id ? $id : $this->to_anchor_name($textContent);
   }
  
   function display_catalogs () {
@@ -46,7 +83,9 @@ class Theme_Page_1 extends Base_Theme {
         $title = $block['innerContent'][0];
 
         $html = $this->get_html($title);
-        echo '<div class="g-folio__theme-page-catalog"><a href="'. ($html[0] ? ('#' . $html[0]) : '') .'">' . $html[1] . '</a></div>';
+        $anchor = $this->to_anchor_name($html[1]);
+
+        echo '<div class="g-folio__theme-page-catalog"><a href="'. ($anchor ? ('#' . $anchor) : '') .'">' . $html[1] . '</a></div>';
       }
     }
 
@@ -58,6 +97,28 @@ class Theme_Page_1 extends Base_Theme {
     global $wp_embed;
 
     $content = $this->content;
+    $blocks = parse_blocks($content);
+
+    echo $this->feature_image;
+
+    $results = '';
+
+    foreach ($blocks as $block) {
+      if ($block['blockName'] === 'core/heading') {
+        $title = $block['innerContent'][0];
+
+        $html = $this->get_html($title);
+        $anchor = $this->to_anchor_name($html[1]);
+
+        $block['innerContent'][0] = '<' .$html[2] .' id="'. $anchor .'">' . $html[1] . '</'. $html[2] .'>';
+      }
+
+      $results .= render_block($block);
+    }
+
+    return $results;
+
+    
 		$content = $wp_embed->autoembed( $content );
 		$content = shortcode_unautop( $content );
 		$content = do_blocks( $content );
@@ -109,13 +170,51 @@ class Theme_Page_1 extends Base_Theme {
   }
 
   function display_navbar () {
-    $this->get_page_data()
-  ?>
-    <div class="g-folio__theme-page-nav-bar">
-      <button class="g-folio__theme-page-nav-button"></button>
-      <div class="g-folio__theme-page-name"><?= $this->page->post_title ?></div>
-    </div>
-  <?
+    ?>
+      <div class="g-folio__theme-page-nav-bar">
+        <div class="g-folio__theme-page-nav-bar-main">
+          <button class="g-folio__theme-page-nav-button"></button>
+          <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name"><?= $this->folio->post_title ?> | </span><?= $this->page->post_title ?></div>
+        </div>
+  
+        <div class="g-folio__theme-page-nav-bar-toggle">
+        </div>
+  
+      </div>
+      <?php $this->display_mobile_nav() ?>
+    <?
+  }
+
+  function display_mobile_nav () {
+    global $wp_embed;
+    $blocks = parse_blocks($this->content);
+    ?>
+      <nav class="g-folio__theme-page-mobile-nav">
+        <div class="g-folio__theme-page-mobile-nav-content">
+          <div class="g-folio__theme-page-mobile-nav-label">JUMP TO...</div>
+          <div class="g-folio__theme-page-mobile-navs">
+            <?
+              foreach ($blocks as $block) {
+                if ($block['blockName'] === 'core/heading') {
+                  $title = $block['innerContent'][0];
+          
+                  $html = $this->get_html($title);
+                  $anchor = $this->to_anchor_name($html[1]);
+                  ?>
+                    <a class="g-folio__theme-page-mobile-nav-item-link" href="<?= '#' . $anchor ?>">
+                      <div class="g-folio__theme-page-mobile-nav-item">
+                        <?= $html[1] ?>
+                      </div>
+                    </a>
+                  <?
+                }
+              }
+            ?>
+          </div>
+          <div class="g-folio__theme-page-mobile-nav-back">↑ Back to top</div>
+        </div>
+      </nav>
+    <?
   }
 
   function display_nav () {
