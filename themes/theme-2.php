@@ -1,5 +1,6 @@
 <?php
 namespace Groove\Themes;
+use Groove\Utils\Utils;
 
 
 class Theme_2 extends Base_Theme {
@@ -23,7 +24,7 @@ class Theme_2 extends Base_Theme {
             $index = 1;
             foreach ($this->pages as $page) {
               ?>
-                <a class="g-folio__theme-nav-item-link" href="/?folio_id=<?= $this->id ?>&post_type=groove_folio_page&preview=true&p=<?= $page->ID ?>">
+                <a class="g-folio__theme-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID)?>">
                   <div class="g-folio__theme-nav-item">
                     <i class="g-folio__theme-nav-item-order"><?= $index ?></i>
                     <?= $page->post_title ?>
@@ -39,6 +40,16 @@ class Theme_2 extends Base_Theme {
   <?
   }
 
+  function display_password_form ($post) {
+    $post   = get_post( $post );
+  ?>
+    <form action="<?= esc_url( site_url( 'wp-login.php?action=postpass', 'login_post' ) )?>" class="post-password-form" method="post">
+      <input placeholder="Enter password" class="g-folio__theme-fields-submit-input" name="post_password" type="password" spellcheck="false" size="20" />
+      <input class="g-folio__theme-fields-submit" type="submit" name="Submit" value="Enter" />
+    </form>
+  <?
+  }
+
   function display_brief () {
     $page = $this->pages[0];
   ?>
@@ -50,10 +61,22 @@ class Theme_2 extends Base_Theme {
     <h2 class="g-folio__theme-subtitle"><?= $this->subtitle ?></h2>
     <p class="g-folio__theme-author">By <?= $this->author ?></p>
 
-    <div class="g-folio__theme-fields">
-      <a class="g-folio__theme-fields-submit" href="/?folio_id=<?= $this->id ?>&post_type=groove_folio_page&preview=true&p=<?= $page->ID ?>">
-        Enter
-      </a>
+    <div class="g-folio__theme-fields g-folio__theme-password-form">
+      <?
+        $post_password_required = post_password_required( $this->id );
+
+        if ($post_password_required) {
+          $this->display_password_form($this->id);
+        } else {
+          if (sizeof($this->pages) > 0) {
+            ?>
+              <a class="g-folio__theme-fields-submit" href="<? echo get_permalink($page->ID) ?>">
+                Enter
+              </a>
+            <?
+          }
+        }
+      ?>
     </div>
     <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
   </div>

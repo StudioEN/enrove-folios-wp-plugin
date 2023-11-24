@@ -1,5 +1,6 @@
 <?php
 namespace Groove\Themes;
+use Groove\Utils\Utils;
 
 class Theme_Page_2 extends Base_Theme {
 
@@ -225,7 +226,7 @@ class Theme_Page_2 extends Base_Theme {
       <div class="g-folio__theme-page-nav-content">
         <button class="g-folio__theme-page-nav-close"></button>
         <h3 class="g-folio__theme-page-nav-name">
-          <a href="/?post_type=groove_folio&preview=true&p=<?= $this->folio->ID ?>">
+          <a href="<?= Utils::get_folio_permalink_by_id($this->folio->ID) ?>">
             <?= $this->folio->post_title ?>
           </a>
         </h3>
@@ -235,7 +236,7 @@ class Theme_Page_2 extends Base_Theme {
             $index = 1;
             foreach ($this->pages as $page) {
               ?>
-                <a class="g-folio__theme-page-nav-item-link" href="/?folio_id=<?= $this->folio_id ?>&post_type=groove_folio_page&preview=true&p=<?= $page->ID ?>">
+                <a class="g-folio__theme-page-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID)?>">
                   <div class="g-folio__theme-page-nav-item">
                     <i class="g-folio__theme-page-nav-item-order"><?= $index ?></i>
                     <?= $page->post_title ?>

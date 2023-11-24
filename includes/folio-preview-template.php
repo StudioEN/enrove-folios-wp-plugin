@@ -3,15 +3,11 @@ use Groove\Themes\Theme_1;
 use Groove\Themes\Theme_2;
 use Groove\Themes\Theme_Page_1;
 use Groove\Themes\Theme_Page_2;
-	function create_theme () {
-    $post_type = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : 'groove_folio';
-    $folio_id = isset($_REQUEST['folio_id']) 
-      ? $_REQUEST['folio_id'] 
-      : '';
+use Groove\Utils\Utils;
 
-    $id = isset($_REQUEST['p']) 
-      ? $_REQUEST['p'] 
-      : '';
+	function create_theme () {
+    $id = Utils::get_groove_post_id();
+    $post_type = Utils::get_groove_post_type();
 
     if ($post_type === 'groove_folio_page') {
       $meta = get_post_meta($id);
@@ -23,7 +19,6 @@ use Groove\Themes\Theme_Page_2;
     $meta = get_post_meta($folio_id);
     $theme_id = $meta['theme_id'][0];
 
-    
     if ($post_type == 'groove_folio') {      
       if ($theme_id == 'theme-1') {
         return new Theme_1();
@@ -32,6 +27,13 @@ use Groove\Themes\Theme_Page_2;
       }
     } else if ($post_type == 'groove_folio_page') {
       
+      $post_password_required = post_password_required( $folio_id );
+
+      if ($post_password_required) {
+        wp_redirect(Utils::get_folio_permalink_by_id($folio_id), 301);
+        exit;
+      }
+
       if ($theme_id == 'theme-1') {
         return new Theme_Page_1();
       } else if ($theme_id == 'theme-2') {
@@ -39,6 +41,8 @@ use Groove\Themes\Theme_Page_2;
       }
     }
   }
+
+  
 	$theme = create_theme();
   
 ?><!DOCTYPE html>
@@ -48,8 +52,9 @@ use Groove\Themes\Theme_Page_2;
 	<?php wp_head();  ?>
 </head>
 
-<body <?php body_class(); ?>>
+<body <?php body_class('groove'); ?>>
 	<?php $theme->display_theme(); ?>
 	<?php wp_footer(); ?>
+  <style media="screen">html { margin-top: 0px !important;}</style>
 </body>
 </html>

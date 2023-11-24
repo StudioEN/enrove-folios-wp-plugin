@@ -1,6 +1,7 @@
 <?php
 namespace Groove\Themes;
 use Groove\Modules\Assets;
+use Groove\Utils\Utils;
 
 abstract class Base_Theme extends Assets {
   public $id;
@@ -17,18 +18,16 @@ abstract class Base_Theme extends Assets {
   public $theme_logo_url;
 
   public function __construct() {
-    $this->post_type = isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : 'groove_folio';
-    $this->id = isset($_REQUEST['p']) ? $_REQUEST['p'] : '';
+    $this->post_type = Utils::get_groove_post_type();
+    $this->id = Utils::get_groove_post_id();
 
     add_action( 'wp_enqueue_scripts', [$this, 'ensure_script'] );
   }
 
   public function ensure_script () {
-    if (is_preview()) {
-      echo '<script>window.GROOVE_IS_PREVIEW = ' . (is_preview() ? 'true' : 'false') . '; </script>';  
-      // echo '<script>var html = document.getElementByTagName(\'html\')[0];html && html.style.marginTop = 0;</script>';
-      show_admin_bar(false);
-    }
+    echo '<script>window.GROOVE_IS_PREVIEW = true</script>';  
+    // echo '<script>var html = document.getElementByTagName(\'html\')[0];html && html.style.marginTop = 0;</script>';
+    show_admin_bar(false);
 
     wp_enqueue_style( 'groove', $this->get_css_assets_url( 'groove-main', null, 'default', true ), [], GROOVE_VERSION);	
     wp_enqueue_script( 'groove', $this->get_js_assets_url( 'groove-main' ), ['jquery'], GROOVE_VERSION, true);
@@ -42,7 +41,7 @@ abstract class Base_Theme extends Assets {
   function get_page_data () {
     $wp_query = $this->get_the_wp_query(array(
       'post__in' => array($this->id),
-      'post_status' => array('publish', 'draft', 'pending'),
+      'post_status' => array('publish', 'draft', 'pending', 'private'),
       'post_type' => $this->post_type,
     ));
 
@@ -62,7 +61,7 @@ abstract class Base_Theme extends Assets {
       'post_type' => 'groove_folio_page',
       'orderby' => 'menu_order',
       'order' => 'ASC',
-      'post_status' => array('publish', 'draft', 'pending'),
+      'post_status' => array('publish', 'draft', 'pending', 'private'),
       'meta_query' => array(
         array(
           'key' => 'folio_id',

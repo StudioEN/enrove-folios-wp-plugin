@@ -7,6 +7,7 @@
   use Groove\Menu\Folio_Menu_Item;
   use Groove\List\Folio_Page_List_Table;
   use Groove\Themes\Default_Themes;
+  use Groove\Utils\Utils;
 
   
 
@@ -28,13 +29,13 @@
       $this->left_button_items = [array(
         'text' => 'Add Page',
         'type' => '',
-        'link' => '/wp-admin/post-new.php?post_type=groove_folio_page&folio_id='. (isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '')
+        'link' => '/wp-admin/post-new.php?post_type=groove_folio_page&folio_id='. Utils::get_groove_post_id()
       )];
 
       $this->right_button_items = [array(
         'text' => 'Preview',
         'type' => 'blank',
-        'link' => '/?theme_id='. (isset($_REQUEST['theme_id']) ? $_REQUEST['theme_id'] : '') .'&post_type=groove_folio&preview=true&p=' . (isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '')
+        'link' => Utils::get_folio_permalink_by_id(Utils::get_groove_post_id())
       ), array(
         'text' => 'Save Draft',
         'type' => 'secondary',
@@ -261,12 +262,12 @@
           'post_title' => $post_title,
           'post_author' => $post_author,
           'post_content' => '',
+          'post_name' => sanitize_title($post_title),
           'meta_input' => array(
             'theme_id' => $theme_id,
             // 'fonts' => $fonts,
             'subtitle' => $subtitle ? $subtitle : '',
             'copyright' => $copyright ? $copyright : '',
-            'permalink' => $permalink ? $permalink : '',
             'permission' => $permission ? $permission : 2
           )
         );
@@ -404,11 +405,11 @@
             </div>
             <div class="g-row_field">
               <label for="pdf">PASSWORD</label>
-              <input type="password" name="password" value="<?php echo $fields->password ?>" />
+              <input type="password" placeholder="Enter your password" name="password" value="<?php echo $fields->password ?>" />
             </div>
             <div class="g-row_field">
               <label for="pdf">PERMALINK</label>
-              <input type="text" name="permalink" value="<?php echo $permalink ?>" />
+              <input disabled type="text" name="permalink" value="<?php echo $fields->name ?>" />
             </div>
           </div>
         </div>

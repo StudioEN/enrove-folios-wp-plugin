@@ -35,12 +35,13 @@
             'post_type' => 'groove_folio', 
             'post_status' => 'draft',
             'post_title' => 'A new folio',
+            'post_name' => sanitize_title('A new folio'),
             'post_content' => '',
             'meta_input' => array(
               'theme_id' => $theme_id,
               'subtitle' => '',
               'permission' => '2', // 2 allowed 4 not allowed
-              'copyright' => '版权信息',
+              'copyright' => '',
               'fonts' => ['Arial', 'Helvetica'],
               'permalink' => '',
             ),
