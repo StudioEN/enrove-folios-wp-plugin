@@ -1,9 +1,12 @@
 <?php
 namespace Groove\Themes;
+use Groove\Utils\Utils;
 
 class Theme_Page_1 extends Base_Theme {
 
   public $folio_id;
+  public $folio;
+
 
   public function __construct() {
     parent::__construct();
@@ -30,6 +33,7 @@ class Theme_Page_1 extends Base_Theme {
   }
 
   function get_data () {
+    $this->get_folio_data();
     $this->get_page_data();
     $this->get_pages_data($this->folio_id);
     $this->get_theme_data(); 
@@ -223,14 +227,18 @@ class Theme_Page_1 extends Base_Theme {
       <div class="g-folio__theme-page-nav-content">
         <button class="g-folio__theme-page-nav-close"></button>
 
-        <h3 class="g-folio__theme-page-nav-name"><?= $this->page->post_title ?></h3>
+        <h3 class="g-folio__theme-page-nav-name">
+          <a href="<?= Utils::get_folio_permalink_by_id($this->folio->ID) ?>">
+            <?= $this->folio->post_title ?>
+          </a>
+        </h3>
         <label class="g-folio__theme-page-nav-label">CONTENTS</label>
         <div class="g-folio__theme-page-navs">
           <?
             $index = 1;
             foreach ($this->pages as $page) {
               ?>
-                <a class="g-folio__theme-page-nav-item-link" href="/?folio_id=<?= $this->folio_id ?>&post_type=groove_folio_page&preview=true&p=<?= $page->ID ?>">
+                <a class="g-folio__theme-page-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID)?>">
                   <div class="g-folio__theme-page-nav-item">
                     <i class="g-folio__theme-page-nav-item-order"><?= $index ?></i>
                     <?= $page->post_title ?>
