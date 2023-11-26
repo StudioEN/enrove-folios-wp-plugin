@@ -29,6 +29,19 @@
   align-items: flex-end;
 }
 
+.g-folio__theme-1 .g-folio__theme-header-bg {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-image: inherit;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;    
+  display: none;
+}
+
 .g-folio__theme-1 .g-folio__theme-brief-inner {
   width: 560px;
   flex: 1;
@@ -149,9 +162,10 @@
   flex: 1;
 }
 
-.g-folio__theme-1  .g-folio__theme-header {
+.g-folio__theme-1 .g-folio__theme-header {
   display: flex;
   align-items: center;
+  background: transparent!important;
 }
 
 .g-folio__theme-1 .g-folio__theme-nav-button {
@@ -625,16 +639,17 @@
     height: 228px;
     align-items: flex-start;
     padding: 24px 20px;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
-    
+    position: relative;
+  }
+
+  .g-folio__theme-1 .g-folio__theme-header-bg {
+    display: block;
   }
   
   .g-folio__theme-1 .g-folio__theme-header-inner {
     display: flex;
     align-items: center;
-    
+    position: relative;
   }
 
   .g-folio__theme-2 .g-folio__theme-content {

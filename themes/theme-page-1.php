@@ -114,7 +114,9 @@ class Theme_Page_1 extends Base_Theme {
         $html = $this->get_html($title);
         $anchor = $this->to_anchor_name($html[1]);
 
-        $block['innerContent'][0] = '<' .$html[2] .' id="'. $anchor .'">' . $html[1] . '</'. $html[2] .'>';
+        if ($html) {
+          $block['innerContent'][0] = '<' .$html[2] .' id="'. $anchor .'">' . $html[1] . '</'. $html[2] .'>';
+        }
       }
 
       $results .= render_block($block);

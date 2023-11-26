@@ -56,7 +56,8 @@ class Theme_1 extends Base_Theme {
   <div class="g-folio__theme-brief">
     <div class="g-folio__theme-brief-inner">
 
-      <div class="g-folio__theme-header" style="background-image: url(<?= $this->theme_cover_url ?>)">
+      <div class="g-folio__theme-header">
+        <div class="g-folio__theme-header-bg" style="background-image: url(<?= $this->theme_cover_url ?>)"></div>
         <div class="g-folio__theme-header-inner">
           <button class="g-folio__theme-nav-button"></button>
           <i class="g-folio__theme-logo">
