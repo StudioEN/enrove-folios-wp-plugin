@@ -92,11 +92,13 @@
         $post_type = 'groove_folio';
         $substring = strstr($current_path, '/folio/');
         $post_name = substr($substring, strlen('/folio/'));
-        return $post_name;
+        return rtrim($post_name, '/');
       } else {
         $post_type = 'groove_folio_page';
         $substring = strstr($current_path, '/folio/page/');
         $post_name = substr($substring, strlen('/folio/page/'));
+
+        return rtrim($post_name, '/');
       }
     }
   
@@ -104,6 +106,7 @@
       $post_type = Utils::get_groove_post_type();
       $post_name = Utils::get_groove_post_name();
 
+      
   
       $wp_query = new \WP_Query(array(
         'post_type' => $post_type,
@@ -111,7 +114,7 @@
         'posts_per_page' => 1,
         'post_status' => 'draft,publish,private'
       ));
-  
+      
       $post = $wp_query->post;  
       return $post;
     }

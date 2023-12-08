@@ -12,6 +12,8 @@ class Theme_Page_2 extends Base_Theme {
 
     $this->folio_id = isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '';
 
+    echo '1111-' . $this->id;
+
     if ($this->post_type == 'groove_folio_page') {
       $meta = get_post_meta($this->id);
       $this->folio_id = $meta['folio_id'][0];
@@ -113,9 +115,10 @@ class Theme_Page_2 extends Base_Theme {
         $html = $this->get_html($title);
         $anchor = $this->to_anchor_name($html[1]);
 
-        if ($html[2] === 'h1' || $html[2] === 'h2') {
+        if ($html) {
           $block['innerContent'][0] = '<' .$html[2] .' id="'. $anchor .'">' . $html[1] . '</'. $html[2] .'>';
-        } 
+        }
+
       }
 
       $results .= render_block($block);
@@ -264,7 +267,7 @@ class Theme_Page_2 extends Base_Theme {
           if ($prev_page) {
           ?>
             <i class="g-folio__theme-page-arrow"></i>
-            <a href="/?folio_id=<?= $this->folio_id ?>&post_type=groove_folio_page&preview=true&p=<?= $prev_page->ID ?>"><?= $prev_page->post_title ?></a>
+            <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID) ?>"><?= $prev_page->post_title ?></a>
           <?
           }
         ?>
@@ -276,7 +279,7 @@ class Theme_Page_2 extends Base_Theme {
         <?
           if ($next_page) {
           ?>
-            <a href="/?folio_id=<?= $this->folio_id ?>&post_type=groove_folio_page&preview=true&p=<?= $next_page->ID ?>"><?= $next_page->post_title ?></a>
+            <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID) ?>"><?= $next_page->post_title ?></a>
             <i class="g-folio__theme-page-arrow"></i>
           <?
           }

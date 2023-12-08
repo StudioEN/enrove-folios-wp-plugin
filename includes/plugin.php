@@ -186,6 +186,28 @@ class Plugin {
 			return $template; 
 		}, 10, 2);
 
+		add_action('save_post', function ($post_id, $content, $update) {
+			// 检查是否为自动保存
+			if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    	}
+
+			$is_block_editor_save = isset($_POST['_wp_http_referer']) && strpos($_POST['_wp_http_referer'], 'block-editor') !== false;
+			if (!$is_block_editor_save) {
+				return;
+			}
+
+			// 获取块编辑器中的标题
+			$block_editor_title = isset($_POST['post_title']) ? sanitize_text_field($_POST['post_title']) : '';
+
+			// 更新文章的 post_name（slug）
+			if (!empty($block_editor_title)) {
+				$post_slug = sanitize_title($block_editor_title);
+				wp_update_post(array('ID' => $post_id, 'post_name' => $post_slug));
+			}
+
+		}, 10, 3);
+
 		add_action( 'init', [ $this, 'init' ], 0 );
 	}
 
