@@ -118,9 +118,9 @@ class Plugin {
 	}
 
 	private function add_rewrite () {
-		add_rewrite_rule('^folio/page/[^/]+/?', 'index.php?post_type=groove_folio_page', 'top');
-		add_rewrite_rule('^folio/[^/]+/?', 'index.php?post_type=groove_folio', 'top');
-		flush_rewrite_rules();
+		// add_rewrite_rule('^folio/[^/]+/?', 'index.php?post_type=groove_folio', 'top');
+		// add_rewrite_rule('^folio/[^/]+/page/[^/]+/?', 'index.php?post_type=groove_folio_page', 'top');
+		// flush_rewrite_rules();
 	}
 
 	private function register_autoloader() {
@@ -163,7 +163,7 @@ class Plugin {
 		});
 	
 		add_filter('post_type_link', function ($post_link, $post, $leavename) {
-			$groove_post_link = Utils::get_folio_permalink($post);
+			$groove_post_link = Utils::get_folio_permalink_by_id($post->ID);
 
 			if ($groove_post_link) {
 				return $groove_post_link;

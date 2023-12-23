@@ -23,15 +23,33 @@
     }
 
     static function get_folio_permalink_by_id ($post_id) {
-      return Utils::get_folio_permalink(get_post($post_id));
+      $post = get_post($post_id);
+      $prefix = '';
+
+      if ($post->post_type === 'groove_folio_page') {
+        $folio_id = get_post_meta($post_id, 'folio_id');
+        $folio_post = get_post($folio_id[0]);
+        $prefix = Utils::get_post_slug($folio_post);
+      }
+
+      return Utils::get_folio_permalink(get_post($post_id), $prefix);
     }
 
-    static function get_folio_permalink ($post) {
+    static function get_post_slug ($post) {
+      return $post->post_name 
+        ? $post->post_name
+        : preg_replace('/\s+/', '-', strtolower($post->post_title));     
+    }
+
+    static function get_folio_permalink ($post, $prefix) {
       if (Utils::is_groove_post($post)) {
-				$title = $post->post_name 
-          ? $post->post_name
-          : preg_replace('/\s+/', '-', strtolower($post->post_title));
-				return home_url('folio/' . ( Utils::is_groove_folio_page_post($post) ? 'page/' : '' ) . $title);
+				$title = Utils::get_post_slug($post)  ;
+          
+        if (Utils::is_groove_folio_post($post)) {
+          return home_url('folio/' . ( $prefix ? $prefix . '/' : '') . $title);
+        }
+
+				return home_url('folio/' . ( $prefix ? $prefix . '/' : '') .  ( Utils::is_groove_folio_page_post($post) ? 'page/' : '' ) . $title);
 			} 
     
       return null;
@@ -53,7 +71,7 @@
   
     static function get_groove_post_type () {
       $current_path = Utils::get_current_path();
-      $pattern = '/^\/folio\/page\//'; 
+      $pattern = '/^\/folio\/.+\/page\//'; 
 
       
       if (Utils::is_groove_post_name_url()) {
@@ -95,8 +113,8 @@
         return rtrim($post_name, '/');
       } else {
         $post_type = 'groove_folio_page';
-        $substring = strstr($current_path, '/folio/page/');
-        $post_name = substr($substring, strlen('/folio/page/'));
+        $substring = strstr($current_path, '/page/');
+        $post_name = substr($substring, strlen('/page/'));
 
         return rtrim($post_name, '/');
       }
