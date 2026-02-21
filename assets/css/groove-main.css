@@ -1,14 +1,16 @@
 @import url(./theme-2.css);
 @import url(./theme-1.css);
+
 @font-face {
   font-family: gicons;
   src: url(./icons.eot?5.21.0);
-  src: url(./icons.eot?5.21.0#iefix) format("embedded-opentype"),url(./icons.woff2?5.21.0) format("woff2"),url(../fonts/eicons.woff?5.21.0) format("woff"),url(../fonts/eicons.ttf?5.21.0) format("truetype"),url(./icons.svg?5.21.0#eicon) format("svg");
+  src: url(./icons.eot?5.21.0#iefix) format("embedded-opentype"), url(./icons.woff2?5.21.0) format("woff2"), url(../fonts/eicons.woff?5.21.0) format("woff"), url(../fonts/eicons.ttf?5.21.0) format("truetype"), url(./icons.svg?5.21.0#eicon) format("svg");
   font-weight: 400;
   font-style: normal
 }
 
-[class*=" gicon-"],[class^=gicon] {
+[class*=" gicon-"],
+[class^=gicon] {
   display: inline-block;
   font-family: gicons;
   font-size: inherit;
@@ -112,6 +114,7 @@ body.groove.groove-folios_page_groove-settings .g-top-bar-root,
 body.groove.groove-folios_page_groove-folio .g-top-bar-root {
   height: 85px;
 }
+
 /* body.toplevel_page_groove-overview #wpbody-content, */
 body.groove.groove-folios_page_groove-settings #wpbody-content,
 body.groove.groove-folios_page_groove-folio #wpbody-content {
@@ -208,7 +211,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   margin-left: 15px;
 }
 
-.g-row_field-actions .g-folio__button  {
+.g-row_field-actions .g-folio__button {
   cursor: pointer;
   margin-left: 0;
 }
@@ -216,6 +219,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 .g-folio__setting-privacy {
   width: 100%;
 }
+
 .g-folio__setting-account .g-row_field label,
 .g-folio__setting-privacy .g-row_field label {
   font-size: 14px;
@@ -303,7 +307,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 0 8px rgba(0,0,0,.1);
+  box-shadow: 0 0 8px rgba(0, 0, 0, .1);
 }
 
 .g-folio__fields-footer {
@@ -332,6 +336,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 .g-folio__postbox-icon:link {
   color: #000;
 }
+
 .g-folio__postbox-icon {
   padding: 15px;
   font-size: 16px;
@@ -346,16 +351,19 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   margin-top: 16px;
   display: flex;
 }
+
 .g-folio__themes-desc {
   margin: 0;
   color: #2C3338;
 }
+
 .g-folio__theme {
   width: calc(50% - 7.5px);
   border: 1px solid #CCC;
   margin-bottom: 16px;
   cursor: pointer;
 }
+
 .g-folio__theme:nth-child(2n) {
   margin-left: 15px;
 }
@@ -386,9 +394,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   width: 100%;
 }
 
-.g-folio__footer-version {
-  
-}
+.g-folio__footer-version {}
 
 .postbox-container.postbox-transparent .postbox {
   background: transparent;
@@ -412,6 +418,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 .g-folio__setting-account.postbox-container {
   width: 100%;
 }
+
 .g-folio__support.postbox-container {
   width: 100%;
 }
@@ -424,6 +431,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   display: flex;
   flex-wrap: wrap;
 }
+
 .g-folio__glance .inside .g-row_field {
   width: 50%;
 }
@@ -441,16 +449,19 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
     width: calc(100% - 36px);
   }
 }
+
 @media screen and (max-width: 782px) {
   .g-top-bar-root {
     width: 100%;
   }
 }
+
 @media screen and (max-width: 600px) {
   .g-top-bar-root {
     left: 0;
   }
 }
+
 @media (max-width: 768px) {
   .g-top-bar-root {
     display: inline-flex;
@@ -459,6 +470,7 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
     flex-direction: column;
   }
 }
+
 @media (min-width: 768px) {
   .g-top-bar-root .g-top-bar__secondary-area .g-top-bar__secondary-area-buttons {
     display: flex;
@@ -468,13 +480,306 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 
 @media (min-width: 783px) {
   .g-top-bar-post-nav {
-    left:160px
+    left: 160px
   }
 }
 
+/* ── Themes Admin Page ────────────────────────────────────────────────── */
+
+.g-themes-page {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.g-themes-section {
+  background: #fff;
+  border: 1px solid #ccd0d4;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+  padding: 30px;
+  margin-bottom: 30px;
+  border-radius: 4px;
+}
+
+.g-themes-section-header {
+  margin-bottom: 25px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.g-themes-section-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.g-themes-count {
+  background: #f0f0f1;
+  color: #50575e;
+  font-size: 13px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.g-themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 30px;
+}
+
+.g-themes-card {
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+
+.g-themes-card:hover {
+  border-color: #3858E9;
+  box-shadow: 0 4px 12px rgba(56, 88, 233, 0.1);
+  transform: translateY(-2px);
+}
+
+.g-themes-card-thumb {
+  height: 180px;
+  background-size: cover;
+  background-position: center;
+  background-color: #f6f7f7;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+.g-themes-card-body {
+  padding: 16px;
+  position: relative;
+}
+
+.g-themes-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.g-themes-card-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.g-themes-tag {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.g-themes-tag--builtin {
+  background: #f0f0f1;
+  color: #50575e;
+}
+
+.g-themes-tag--installed {
+  background: #ebf0fe;
+  color: #3858E9;
+}
+
+.g-themes-card-id {
+  font-size: 12px;
+  color: #646970;
+  margin: 0 0 16px 0;
+}
+
+.g-themes-delete-btn {
+  background: transparent;
+  border: none;
+  color: #d63638;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.g-themes-delete-btn:hover {
+  color: #9b2021;
+}
+
+/* ── Upload Section ──────────────────────────────────────────────────── */
+
+.g-themes-upload-section {
+  border-top: 4px solid #3858E9;
+}
+
+.g-themes-section-desc {
+  color: #646970;
+  margin-top: 8px;
+}
+
+.g-themes-dropzone {
+  border: 2px dashed #c3c4c7;
+  border-radius: 8px;
+  padding: 50px 30px;
+  text-align: center;
+  background: #fbfbfc;
+  transition: all 0.2s ease;
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.g-themes-dropzone--over {
+  border-color: #3858E9;
+  background: #f0f3ff;
+}
+
+.g-themes-dropzone--has-file {
+  border-style: solid;
+  border-color: #3858E9;
+}
+
+.g-themes-dropzone-icon {
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+
+.g-themes-dropzone-label {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.g-themes-dropzone-sub {
+  color: #646970;
+  margin-bottom: 15px;
+}
+
+.g-themes-file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.g-themes-file-name {
+  margin-top: 15px;
+  font-weight: 500;
+  color: #3858E9;
+}
+
+.g-themes-package-info {
+  margin-top: 40px;
+  padding: 25px;
+  background: #f6f7f7;
+  border-radius: 8px;
+}
+
+.g-themes-package-info h3 {
+  margin-top: 0;
+}
+
+.g-themes-code {
+  background: #23282d;
+  color: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+/* ── Notices ─────────────────────────────────────────────────────────── */
+
+.g-themes-notice {
+  padding: 15px 20px;
+  border-radius: 4px;
+  margin-bottom: 25px;
+  border-left: 4px solid #fff;
+}
+
+.g-themes-notice--success {
+  background: #ecf7ed;
+  border-color: #46b450;
+  color: #005c12;
+}
+
+.g-themes-notice--error {
+  background: #fcf0f1;
+  border-color: #d63638;
+  color: #9b2021;
+}
+
+/* ── Theme Selection in Folio Editor ─────────────────────────────────── */
+
+.g-theme-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.g-theme-selection-item {
+  position: relative;
+  border: 1px solid #dcdcde;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.g-theme-selection-item:hover {
+  border-color: #3858E9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.g-theme-selection-item.is-active {
+  border-color: #3858E9;
+  box-shadow: 0 0 0 2px rgba(56, 88, 233, 0.2);
+}
+
+.g-theme-selection-thumb {
+  height: 85px;
+  background-size: cover;
+  background-position: center;
+  background-color: #f6f7f7;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+.g-theme-selection-name {
+  padding: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  color: #1d2327;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.g-theme-selection-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #3858E9;
+  color: #fff;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+
 @media (min-width: 783px) {
   .auto-fold .g-top-bar-post-nav {
-    left:36px;
+    left: 36px;
   }
 
   .g-top-bar-post-nav {
@@ -492,6 +797,6 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 
 @media (min-width: 961px) {
   .auto-fold .g-top-bar-post-nav {
-    left:160px
+    left: 160px
   }
 }

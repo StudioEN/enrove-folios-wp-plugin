@@ -239,41 +239,49 @@
           'code' => 400,
           'message' => 'Bad Request'
         ));
-      } else {
-        $fields = $this->get_fields();
+        return;
+      }
 
-        $id = isset($_POST['folio_id']) ? $_POST['folio_id'] : '';
-        $post_title = isset($_POST['title']) ? $_POST['title'] : $fields->title;
-        $post_author = isset($_POST['author']) ? $_POST['author'] : $fields->author;
-        $subtitle = isset($_POST['subtitle']) ? $_POST['subtitle'] : $fields->subtitle;
-        $password = isset($_POST['password']) ? $_POST['password'] : $fields->password;
-        $copyright = isset($_POST['copyright']) ? $_POST['copyright'] : $fields->copyright;
-        $permalink = isset($_POST['permalink']) ? $_POST['permalink'] : $fields->permalink;
-        $permission = isset($_POST['permission']) ? $_POST['permission'] : $fields->permission;
-        $fonts = isset($_POST['fonts']) ? $_POST['fonts'] : $fields->fonts;
-        $theme_id = isset($_POST['theme_id']) ? $_POST['theme_id'] : $fields->theme_id;
-        
-        $feature_image_id = isset($_POST['feature_image_id']) ? $_POST['feature_image_id'] : null;
-    
-        $fields = array(
-          'ID'=> $id,
-          'post_status' => $post_status,
-          'post_password' => $password,
-          'post_title' => $post_title,
-          'post_author' => $post_author,
-          'post_content' => '',
-          'post_name' => sanitize_title($post_title),
-          'meta_input' => array(
-            'theme_id' => $theme_id,
-            // 'fonts' => $fonts,
-            'subtitle' => $subtitle ? $subtitle : '',
-            'copyright' => $copyright ? $copyright : '',
-            'permission' => $permission ? $permission : 2
-          )
-        );
+      check_admin_referer( 'groove_save_folio', 'groove_nonce' );
 
-        
-        $folio_id = wp_update_post($fields);
+      $id = (int) $_POST['folio_id'];
+
+      if ( ! current_user_can( 'edit_post', $id ) ) {
+        echo json_encode(array(
+          'code' => 403,
+          'message' => 'Forbidden'
+        ));
+        return;
+      }
+
+      $fields = $this->get_fields();
+
+      $post_title  = isset($_POST['title']) ? sanitize_text_field($_POST['title']) : $fields->title;
+      $post_author = isset($_POST['author']) ? (int) $_POST['author'] : $fields->author;
+      $subtitle    = isset($_POST['subtitle']) ? sanitize_text_field($_POST['subtitle']) : $fields->subtitle;
+      $password    = isset($_POST['password']) ? sanitize_text_field($_POST['password']) : $fields->password;
+      $copyright   = isset($_POST['copyright']) ? sanitize_text_field($_POST['copyright']) : $fields->copyright;
+      $permission  = isset($_POST['permission']) ? ( $_POST['permission'] === 'on' || $_POST['permission'] === '1' ? 1 : 2 ) : $fields->permission;
+      $theme_id    = isset($_POST['theme_id']) ? sanitize_key($_POST['theme_id']) : $fields->theme_id;
+      
+      $feature_image_id = isset($_POST['feature_image_id']) ? (int) $_POST['feature_image_id'] : null;
+  
+      $update_args = array(
+        'ID'            => $id,
+        'post_status'   => $post_status,
+        'post_password' => $password,
+        'post_title'    => $post_title,
+        'post_author'   => $post_author,
+        'post_content'  => '',
+        'meta_input'    => array(
+          'theme_id'   => $theme_id,
+          'subtitle'   => $subtitle,
+          'copyright'  => $copyright,
+          'permission' => $permission
+        )
+      );
+
+      $folio_id = wp_update_post($update_args);
 
         if ($feature_image_id == null) {
           delete_post_thumbnail($id);
@@ -321,8 +329,8 @@
       $tabs = $this->get_tabs();
       $tab_key = isset($_REQUEST['tab_key']) ? $_REQUEST['tab_key'] : 'setup';
     ?>
-      <div class="g-top-bar-tabs-content">
-    <?php    
+<div class="g-top-bar-tabs-content">
+  <?php    
       foreach ($tabs as $tab_id => $tab) {
         $style = 'display: none';
 
@@ -342,25 +350,26 @@
         echo "</div>";
       }
       ?>
-      </div>
-      <?php
+</div>
+<?php
     }
 
     public function display_tab_fields () {
       $fields = $this->get_folio_fields();
     ?>
-      <div class="g-folio__fields">
-        <input hidden name="folio_id" value="<?php echo $fields->ID ?>" />
-        <div class="g-folio__fields-left g-folio__fields-section">
-          <?php $this->display_essentials() ?>
-        </div>
+<div class="g-folio__fields">
+  <input hidden name="folio_id" value="<?php echo $fields->ID ?>" />
+  <div class="g-folio__fields-left g-folio__fields-section">
+    <?php $this->display_essentials() ?>
+    <?php $this->display_theme_selection() ?>
+  </div>
 
-        <div class="g-folio__fields-right g-folio__fields-section">
-          <?php $this->display_customization() ?>
-          <?php $this->display_publishing() ?>
-        </div>
-      </div>
-    <?php
+  <div class="g-folio__fields-right g-folio__fields-section">
+    <?php $this->display_customization() ?>
+    <?php $this->display_publishing() ?>
+  </div>
+</div>
+<?php
     }
 
     public function display_customization () {
@@ -368,21 +377,23 @@
 
       // $fonts = $fields->fonts;
     ?>
-      <div class="postbox-container g-folio__postbox">
-        <div class="postbox">
-          <div class="g-folio__fields-header"><h3 class="g-folio__fields-title">Customization</h3></div>
-          <div class="inside">
-            <div class="g-row_field">
-              <label for="font">PRIMARY FONT</label>
-              <select name="fonts">'
-                <option value="Arial">Arial</option>
-                <option value="PingFong">PingFong</option>
-                </select><br>
-            </div>
-          </div>
-        </div>
+<div class="postbox-container g-folio__postbox">
+  <div class="postbox">
+    <div class="g-folio__fields-header">
+      <h3 class="g-folio__fields-title">Customization</h3>
+    </div>
+    <div class="inside">
+      <div class="g-row_field">
+        <label for="font">PRIMARY FONT</label>
+        <select name="fonts">'
+          <option value="Arial">Arial</option>
+          <option value="PingFong">PingFong</option>
+        </select><br>
       </div>
-    <?php
+    </div>
+  </div>
+</div>
+<?php
     }
 
     public function display_publishing () {
@@ -393,28 +404,29 @@
 
       $permalink = isset($fields->permalink) ? $fields->permalink : '';
     ?>
-      <div class="postbox-container g-folio__postbox">
-        <div class="postbox">
-          <div class="g-folio__fields-header">
-            <h3 class="g-folio__fields-title">Publishing</h3>
-          </div>
-          <div class="inside">
-            <div class="g-row_field">
-              <label for="pdf">PDF DOWNLOADS</label>
-              <input type="checkbox" name="permission" <?php echo checked($is_allowed_download, 1, false) ?> />
-            </div>
-            <div class="g-row_field">
-              <label for="pdf">PASSWORD</label>
-              <input type="password" placeholder="Enter your password" name="password" value="<?php echo $fields->password ?>" />
-            </div>
-            <div class="g-row_field">
-              <label for="pdf">PERMALINK</label>
-              <input disabled type="text" name="permalink" value="<?php echo $fields->name ?>" />
-            </div>
-          </div>
-        </div>
+<div class="postbox-container g-folio__postbox">
+  <div class="postbox">
+    <div class="g-folio__fields-header">
+      <h3 class="g-folio__fields-title">Publishing</h3>
+    </div>
+    <div class="inside">
+      <div class="g-row_field">
+        <label for="pdf">PDF DOWNLOADS</label>
+        <input type="checkbox" name="permission" <?php echo checked($is_allowed_download, 1, false) ?> />
       </div>
-    <?php
+      <div class="g-row_field">
+        <label for="pdf">PASSWORD</label>
+        <input type="password" placeholder="Enter your password" name="password"
+          value="<?php echo $fields->password ?>" />
+      </div>
+      <div class="g-row_field">
+        <label for="pdf">PERMALINK</label>
+        <input disabled type="text" name="permalink" value="<?php echo $fields->name ?>" />
+      </div>
+    </div>
+  </div>
+</div>
+<?php
     }
 
     public function display_essentials () {
@@ -426,55 +438,94 @@
       $subtitle = isset($fields->subtitle) ? $fields->subtitle : '';
       $copyright = isset($fields->copyright) ? $fields->copyright : '';
 
-      $default_theme = new Default_Themes();
-      $themes = $default_theme->get_themes();
-      $theme = $themes[$fields->theme_id];
-
-      $theme_url = $theme["cover_url"];
+      // Get current theme info for default image fallback
+      $all_themes   = \Groove\Themes\Themes_Manager::get_all_themes();
+      $current_theme = $all_themes[$fields->theme_id] ?? reset($all_themes);
+      $theme_url     = $current_theme["cover_url"] ?? '';
     ?>
-      <div class="postbox-container g-folio__postbox">
-        <div class="postbox">
-          <div class="g-folio__fields-header"><h3 class="g-folio__fields-title">Essentials</h3></div>
-          <div class="inside">
-            <div class="g-row_field">
-              <label for="custom_field">TITLE</label>
-              <input type="text" name="title" value="<?php echo $fields->title ?>" />
-            </div>
-            <div class="g-row_field">
-              <label for="custom_field">SUBTITLE</label>
-              <input placeholder="Option" type="text" name="subtitle" value="<?php echo $subtitle ?>" />
-            </div>
-            <div class="g-row_field">
-              <label for="custom_field">FEATURE IMAGE</label>
-              <input value="<?= $feature_image->ID ?>" type="hidden" name="feature_image_id" id="media_id" placeholder="Feature image">
-              <img id="feature-preview" class="g-row_field-image" src="<?= $feature_image == null ? $theme_url : $feature_image->guid ?>" />
-              <div class="g-row_field-actions">
-                <div id="feature-image" class="g-folio__button">Replace image</div>
-                <a data-default-url="<?= $theme_url ?>" id="use-default-image">Use default</a>
-              </div>
-            </div>
-            <div class="g-row_field">
-              <label for="authro">AUTHOR</label>
-              <?php wp_dropdown_users(array('name' => 'author', 'selected' => $selected_author)) ?>
-            </div>
-            <div class="g-row_field">
-              <label for="copyright">COPYRIGHT</label>
-              <input placeholder="Option" type="text" name="copyright" value="<?php echo $copyright ?>" />
-            </div>
-          </div>
+<div class="postbox-container g-folio__postbox">
+  <div class="postbox">
+    <div class="g-folio__fields-header">
+      <h3 class="g-folio__fields-title">Essentials</h3>
+    </div>
+    <div class="inside">
+      <div class="g-row_field">
+        <label for="custom_field">TITLE</label>
+        <input type="text" name="title" value="<?php echo esc_attr($fields->title) ?>" />
+      </div>
+      <div class="g-row_field">
+        <label for="custom_field">SUBTITLE</label>
+        <input placeholder="Option" type="text" name="subtitle" value="<?php echo esc_attr($subtitle) ?>" />
+      </div>
+      <div class="g-row_field">
+        <label for="custom_field">FEATURE IMAGE</label>
+        <input value="<?= isset($feature_image->ID) ? $feature_image->ID : '' ?>" type="hidden" name="feature_image_id"
+          id="media_id">
+        <img id="feature-preview" class="g-row_field-image"
+          src="<?= empty($feature_image->guid) ? $theme_url : $feature_image->guid ?>" />
+        <div class="g-row_field-actions">
+          <div id="feature-image" class="g-folio__button">Replace image</div>
+          <a data-default-url="<?= esc_url($theme_url) ?>" id="use-default-image">Use default</a>
         </div>
       </div>
-    <?php
+      <div class="g-row_field">
+        <label for="authro">AUTHOR</label>
+        <?php wp_dropdown_users(array('name' => 'author', 'selected' => $selected_author)) ?>
+      </div>
+      <div class="g-row_field">
+        <label for="copyright">COPYRIGHT</label>
+        <input placeholder="Option" type="text" name="copyright" value="<?php echo esc_attr($copyright) ?>" />
+      </div>
+    </div>
+  </div>
+</div>
+<?php
+    }
+
+    public function display_theme_selection() {
+      $fields     = $this->get_fields();
+      $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
+      $current_id = $fields->theme_id;
+    ?>
+<div class="postbox-container g-folio__postbox">
+  <div class="postbox">
+    <div class="g-folio__fields-header">
+      <h3 class="g-folio__fields-title">Active Theme</h3>
+    </div>
+    <div class="inside">
+      <div class="g-theme-selection-grid">
+        <?php foreach ( $all_themes as $id => $theme ) : 
+                $active = ( $id === $current_id );
+              ?>
+        <div class="g-theme-selection-item <?php echo $active ? 'is-active' : ''; ?>"
+          data-theme-id="<?php echo esc_attr( $id ); ?>"
+          onclick="document.querySelectorAll('.g-theme-selection-item').forEach(el => el.classList.remove('is-active')); this.classList.add('is-active'); document.getElementById('g-active-theme-id').value = '<?php echo esc_attr( $id ); ?>';">
+          <div class="g-theme-selection-thumb"
+            style="background-image: url('<?php echo esc_url( $theme['thumbnail_url'] ); ?>');"></div>
+          <div class="g-theme-selection-name">
+            <?php echo esc_html( $theme['name'] ); ?>
+          </div>
+          <?php if ( $active ) : ?>
+          <span class="g-theme-selection-badge">Active</span>
+          <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+      </div>
+      <input type="hidden" name="theme_id" id="g-active-theme-id" value="<?php echo esc_attr($current_id); ?>" />
+    </div>
+  </div>
+</div>
+<?php
     }
 
     public function display_tabs () {
       $tabs = $this->get_tabs();
       $tab_key = isset($_REQUEST['tab_key']) ? $_REQUEST['tab_key'] : 'setup';
 
-      $q = $this->parse_query()
+      $q = $this->parse_query();
     ?>
-      <div class="g-top-bar-tabs">
-    <?php    
+<div class="g-top-bar-tabs">
+  <?php    
       foreach ($tabs as $tab_id => $tab) {
         $active_class = '';
   
@@ -488,8 +539,8 @@
         echo '<a href="/wp-admin/admin.php?'. http_build_query($q) .'" data-tab-id="'. esc_attr( $tab_id ) .'" class="g-folio__nav-tab'. $active_class .' nav-tab">'. $sanitized_tab_label .'</a>';
       }
     ?>
-      </div>
-    <?php
+</div>
+<?php
     }
 
     public function display_tab_pages () {
@@ -505,27 +556,26 @@
         $table->inline_edit();
       }
     ?>
-      <form id="pages-filter" method="get">
-        <?php $table->search_box($post_type_object->labels->search_items, 'post' ); ?>
+<form id="pages-filter" method="get">
+  <?php $table->search_box($post_type_object->labels->search_items, 'post' ); ?>
 
-        <input type="hidden" name="post_status" class="post_status_page" value="<?php echo ! empty( $_REQUEST['post_status'] ) ? esc_attr( $_REQUEST['post_status'] ) : 'all'; ?>" />
-        <input type="hidden" name="post_type" class="post_type_page" value="<?php echo $post_type; ?>" />
+  <input type="hidden" name="post_status" class="post_status_page"
+    value="<?php echo ! empty( $_REQUEST['post_status'] ) ? esc_attr( $_REQUEST['post_status'] ) : 'all'; ?>" />
+  <input type="hidden" name="post_type" class="post_type_page" value="<?php echo $post_type; ?>" />
 
-        <?php $table->display(); ?>
-      </form>
-    <?php
+  <?php $table->display(); ?>
+</form>
+<?php
     }
 
     public function display_page () {
       $folio = $this->get_folio_fields();
     ?>
-      <form
-        action="/wp-admin/admin-post.php"
-        method="post"
-      >
-        <?php parent::display_page() ?>
-      </form>
-    <?php
+<form action="/wp-admin/admin-post.php" method="post">
+  <?php wp_nonce_field( 'groove_save_folio', 'groove_nonce' ); ?>
+  <?php parent::display_page() ?>
+</form>
+<?php
     }
   }
 ?>
