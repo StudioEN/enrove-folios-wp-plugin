@@ -75,11 +75,24 @@ class Plugin
 	public function init()
 	{
 		$this->add_rewrite();
+		$this->maybe_flush_rewrite_rules();
 		$this->add_cpt_support();
 		$this->init_components();
 
-
 		do_action('groove/init');
+	}
+
+	/**
+	 * Flush rewrite rules once per plugin version so /folio/ URLs always resolve.
+	 * Uses a version-stamped DB option to avoid flushing on every request.
+	 */
+	private function maybe_flush_rewrite_rules()
+	{
+		$flushed_version = get_option('groove_rewrite_flushed_version', '');
+		if ($flushed_version !== GROOVE_VERSION) {
+			flush_rewrite_rules(false); // false = soft flush (no .htaccess write)
+			update_option('groove_rewrite_flushed_version', GROOVE_VERSION);
+		}
 	}
 
 	public function get_install_time()
@@ -132,9 +145,8 @@ class Plugin
 
 	private function add_rewrite()
 	{
-	// add_rewrite_rule('^folio/[^/]+/?', 'index.php?post_type=groove_folio', 'top');
-	// add_rewrite_rule('^folio/[^/]+/page/[^/]+/?', 'index.php?post_type=groove_folio_page', 'top');
-	// flush_rewrite_rules();
+		add_rewrite_rule('^folio/[^/]+/page/[^/]+/?$', 'index.php?post_type=groove_folio_page', 'top');
+		add_rewrite_rule('^folio/[^/]+/?$', 'index.php?post_type=groove_folio', 'top');
 	}
 
 	private function register_autoloader()
@@ -206,27 +218,97 @@ class Plugin
 			return $template;
 		}, 10, 2);
 
-		add_action('save_post', function ($post_id, $content, $update) {
-			// 检查是否为自动保存
+		add_action('save_post_groove_folio_page', function ($post_id, $post, $update) {
+			// Skip autosaves and new post creation (not updates).
 			if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
 				return;
 			}
 
-			$is_block_editor_save = isset($_POST['_wp_http_referer']) && strpos($_POST['_wp_http_referer'], 'block-editor') !== false;
-			if (!$is_block_editor_save) {
+			// Sync slug to the post title whenever a folio page is saved
+			// via the classic editor (REST-based block editor is handled separately below).
+			if (!empty($_POST['post_title'])) {
+				$title = sanitize_text_field($_POST['post_title']);
+				$new_slug = wp_unique_post_slug(
+					sanitize_title($title),
+					$post_id,
+					$post->post_status,
+					'groove_folio_page',
+					$post->post_parent
+				);
+				// Only update if the slug has actually changed to avoid recursion.
+				if ($new_slug !== $post->post_name) {
+					remove_action('save_post_groove_folio_page', __FUNCTION__, 10);
+					wp_update_post(array('ID' => $post_id, 'post_name' => $new_slug));
+					add_action('save_post_groove_folio_page', __FUNCTION__, 10, 3);
+				}
+			}
+		}, 10, 3);
+
+		// Block editor saves via REST API — fires after the post is fully written.
+		add_action('rest_after_insert_groove_folio_page', function ($post) {
+			if (empty($post->post_title)) {
+				return;
+			}
+			$new_slug = wp_unique_post_slug(
+				sanitize_title($post->post_title),
+				$post->ID,
+				$post->post_status,
+				'groove_folio_page',
+				$post->post_parent
+			);
+			if ($new_slug !== $post->post_name) {
+				wp_update_post(array('ID' => $post->ID, 'post_name' => $new_slug));
+			}
+		});
+
+		// ── folio_id meta injection ─────────────────────────────────────────────
+		// When a new folio page is created via "Add Page" the folio_id is in the URL
+		// but never automatically saved to post meta. Both hooks below handle this:
+		// classic editor via save_post (POST data), block editor via REST (query string).
+
+		add_action('save_post_groove_folio_page', function ($post_id, $post, $update) {
+			// Only care about the very first save (not an update).
+			if ($update) {
+				return;
+			}
+			if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
 				return;
 			}
 
-			// 获取块编辑器中的标题
-			$block_editor_title = isset($_POST['post_title']) ? sanitize_text_field($_POST['post_title']) : '';
-
-			// 更新文章的 post_name（slug）
-			if (!empty($block_editor_title)) {
-				$post_slug = sanitize_title($block_editor_title);
-				wp_update_post(array('ID' => $post_id, 'post_name' => $post_slug));
+			// Classic editor passes folio_id in the URL / POST.
+			$folio_id = 0;
+			if (!empty($_REQUEST['folio_id'])) {
+				$folio_id = (int)$_REQUEST['folio_id'];
+			}
+			elseif (!empty($_POST['folio_id'])) {
+				$folio_id = (int)$_POST['folio_id'];
 			}
 
-		}, 10, 3);
+			if ($folio_id && get_post_type($folio_id) === 'groove_folio') {
+				update_post_meta($post_id, 'folio_id', $folio_id);
+			}
+		}, 20, 3);
+
+		// Block editor creates posts via REST — the folio_id comes from the Referer header.
+		add_action('rest_after_insert_groove_folio_page', function ($post, $request) {
+			if (get_post_meta($post->ID, 'folio_id', true)) {
+				return; // Already set — nothing to do.
+			}
+
+			// The block editor opens a URL like post-new.php?post_type=groove_folio_page&folio_id=X
+			// The Referer header carries that URL into REST requests.
+			$referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+			if ($referer) {
+				$query = wp_parse_url($referer, PHP_URL_QUERY);
+				parse_str((string)$query, $params);
+				if (!empty($params['folio_id'])) {
+					$folio_id = (int)$params['folio_id'];
+					if ($folio_id && get_post_type($folio_id) === 'groove_folio') {
+						update_post_meta($post->ID, 'folio_id', $folio_id);
+					}
+				}
+			}
+		}, 10, 2);
 
 		add_action('init', [$this, 'init'], 0);
 	}

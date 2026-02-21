@@ -17,7 +17,7 @@ class Theme_Page_2 extends Base_Theme
 
     if ($this->post_type == 'groove_folio_page') {
       $meta = get_post_meta($this->id);
-      $this->folio_id = $meta['folio_id'][0];
+      $this->folio_id = $meta['folio_id'][0] ?? '';
     }
   }
 

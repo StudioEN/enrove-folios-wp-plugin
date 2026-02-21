@@ -145,16 +145,25 @@ class Themes_Manager extends Assets
         $id = \Groove\Utils\Utils::get_groove_post_id();
         $post_type = \Groove\Utils\Utils::get_groove_post_type();
 
+        // No folio context (e.g. admin pages not related to a folio).
+        if (!$id) {
+            return null;
+        }
+
         if ($post_type === 'groove_folio_page') {
             $meta = get_post_meta($id);
-            $folio_id = $meta['folio_id'][0];
+            $folio_id = $meta['folio_id'][0] ?? null;
         }
         else {
             $folio_id = $id;
         }
 
+        if (!$folio_id) {
+            return null;
+        }
+
         $meta = get_post_meta($folio_id);
-        $theme_id = $meta['theme_id'][0];
+        $theme_id = $meta['theme_id'][0] ?? '';
 
         if ($post_type === 'groove_folio') {
             return static::create_cover_theme($theme_id);

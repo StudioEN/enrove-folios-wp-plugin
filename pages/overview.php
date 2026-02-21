@@ -57,45 +57,102 @@ class Overview extends Page
 
   public function display_glance()
   {
+    // Aggregate all non-trash statuses for each post type.
+    $folio_counts = wp_count_posts('groove_folio');
+    $page_counts = wp_count_posts('groove_folio_page');
+
+    $folio_total = (int)($folio_counts->publish ?? 0)
+      + (int)($folio_counts->draft ?? 0)
+      + (int)($folio_counts->private ?? 0)
+      + (int)($folio_counts->pending ?? 0);
+
+    $page_total = (int)($page_counts->publish ?? 0)
+      + (int)($page_counts->draft ?? 0)
+      + (int)($page_counts->private ?? 0)
+      + (int)($page_counts->pending ?? 0);
+
+    // Collections: post type not yet implemented — show 0.
+    $collection_total = 0;
+    if (post_type_exists('groove_collection')) {
+      $col_counts = wp_count_posts('groove_collection');
+      $collection_total = (int)($col_counts->publish ?? 0)
+        + (int)($col_counts->draft ?? 0)
+        + (int)($col_counts->private ?? 0)
+        + (int)($col_counts->pending ?? 0);
+    }
+
+    $folios_url = admin_url('admin.php?page=groove-all-folios');
+    $pages_url = admin_url('admin.php?page=groove-all-folios'); // no standalone page list yet
+    $collections_url = '#'; // placeholder until groove_collection is registered
 ?>
 <div class="g-folio__glance postbox-container g-folio__postbox">
   <div class="postbox">
     <div class="g-folio__fields-header">
-      <h3 class="g-folio__fields-title">At a glance</h3>
+      <h3 class="g-folio__fields-title">
+        <?php esc_html_e('At a glance', 'groove'); ?>
+      </h3>
     </div>
     <div class="inside">
-      <?php
-    $folio_count = wp_count_posts('groove_folio')->publish;
-    $page_count = wp_count_posts('groove_folio_page')->publish;
-?>
       <div class="g-row_field">
         <i class="gicon gicon-folio"></i>
         <label>
-          <a href="/wp-admin/admin.php?page=groove-all-folios">
-            <?php printf(_n('%s Folio', '%s Folios', $folio_count, 'groove'), number_format_i18n($folio_count)); ?>
+          <a href="<?php echo esc_url($folios_url); ?>">
+            <?php
+    /* translators: %s: number of folios */
+    printf(
+      _n('%s Folio', '%s Folios', $folio_total, 'groove'),
+      '<strong>' . number_format_i18n($folio_total) . '</strong>'
+    );
+?>
           </a>
         </label>
       </div>
       <div class="g-row_field">
         <i class="gicon gicon-page"></i>
         <label>
-          <a>
-            <?php printf(_n('%s Page', '%s Pages', $page_count, 'groove'), number_format_i18n($page_count)); ?>
+          <a href="<?php echo esc_url($pages_url); ?>">
+            <?php
+    /* translators: %s: number of folio pages */
+    printf(
+      _n('%s Page', '%s Pages', $page_total, 'groove'),
+      '<strong>' . number_format_i18n($page_total) . '</strong>'
+    );
+?>
           </a>
         </label>
       </div>
       <div class="g-row_field">
         <i class="gicon gicon-collection"></i>
         <label>
-          <a>
-            <?php printf(_n('%s Collection', '%s Collections', $folio_count, 'groove'), number_format_i18n($folio_count)); ?>
+          <?php if ($collection_total > 0): ?>
+          <a href="<?php echo esc_url($collections_url); ?>">
+            <?php
+    else: ?>
+            <span>
+              <?php
+    endif; ?>
+              <?php
+    /* translators: %s: number of collections */
+    printf(
+      _n('%s Collection', '%s Collections', $collection_total, 'groove'),
+      '<strong>' . number_format_i18n($collection_total) . '</strong>'
+    );
+?>
+              <?php if ($collection_total > 0): ?>
           </a>
+          <?php
+    else: ?>
+          </span>
+          <?php
+    endif; ?>
         </label>
       </div>
     </div>
     <div class="g-folio__fields-footer">
       <a class="g-folio__button g-folio__button-primary"
-        href="/wp-admin/admin.php?page=groove-add-new&from=groove-overview">Add New Folio</a>
+        href="<?php echo esc_url(admin_url('admin.php?page=groove-add-new&from=groove-overview')); ?>">
+        <?php esc_html_e('Add New Folio', 'groove'); ?>
+      </a>
     </div>
   </div>
 </div>

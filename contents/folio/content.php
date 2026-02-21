@@ -1,56 +1,60 @@
 <?php
 namespace Groove\Contents\Folio;
+
 use Groove\Contents\BaseContent;
 
-class Content extends BaseContent {
+class Content extends BaseContent
+{
 
-  public function get_key() {
-		return 'folio';
-	}
+  public function get_key()
+  {
+    return 'folio';
+  }
 
-  public function get_name() {
-		return 'Folio';
-	}
+  public function get_name()
+  {
+    return 'Folio';
+  }
 
-  public function create_posttype () {
+  public function create_posttype()
+  {
     $labels = array(
-      'name' => 'Folios',
-      'singular_name' => 'Folio Page',
-      'menu_name' => 'Folio Page',
-      'all_items' => 'All Folio Page',
-      'add_new' => 'Add New',
-      'add_new_item' => 'Add New Folio Page',
-      'edit_item' => 'Edit Folio Page',
-      'new_item' => 'New Folio Page',
-      'view_item' => 'View Folio Page',
-      'search_items' => 'Search Folio Page',
-      'not_found' => 'No folio pages found',
-      'not_found_in_trash' => 'No folio pages found in trash',
+      'name' => _x('Folios', 'post type general name', 'groove'),
+      'singular_name' => _x('Folio', 'post type singular name', 'groove'),
+      'menu_name' => _x('Folios', 'admin menu', 'groove'),
+      'all_items' => __('All Folios', 'groove'),
+      'add_new' => __('Add New', 'groove'),
+      'add_new_item' => __('Add New Folio', 'groove'),
+      'edit_item' => __('Edit Folio', 'groove'),
+      'new_item' => __('New Folio', 'groove'),
+      'view_item' => __('View Folio', 'groove'),
+      'search_items' => __('Search Folios', 'groove'),
+      'not_found' => __('No folios found', 'groove'),
+      'not_found_in_trash' => __('No folios found in trash', 'groove'),
     );
 
     $args = array(
       'labels' => $labels,
       'public' => true,
-      'exclude_from_search' => false,
+      'exclude_from_search' => true,
       'publicly_queryable' => true,
       'show_ui' => true,
       'show_in_rest' => true,
       'show_in_menu' => false,
       'show_in_nav_menus' => false,
-
-      'has_archive' => true,
-      'supports' => array( 'title', 'editor', 'password','custom-fields'),
-      'rewrite' => array('slug' => 'folio'),
-      'menu_position' => 1, 
-      'menu_order' => 1, 
+      'has_archive' => false,
+      'supports' => array('title', 'editor', 'thumbnail', 'custom-fields', 'page-attributes'),
+      'rewrite' => array('slug' => 'folio', 'with_front' => false),
+      'capability_type' => 'post',
+      'map_meta_cap' => true,
+      'menu_position' => 1,
     );
 
-    register_post_type('groove_'. $this->get_key(), $args);
+    register_post_type('groove_' . $this->get_key(), $args);
   }
 
-  public function __construct() {
+  public function __construct()
+  {
     add_action('init', [$this, 'create_posttype']);
   }
 }
-
-?>

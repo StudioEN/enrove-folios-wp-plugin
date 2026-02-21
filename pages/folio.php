@@ -24,7 +24,7 @@
 
     public function __construct() {
       $this->add_post_action('save_groove_folio_draft', 'save_folio_draft');
-      $this->add_post_action('save_groove_folio', 'save_folio');
+      $this->add_post_action('save_groove_folio', 'save_folio_publish');
       
       $this->left_button_items = [array(
         'text' => 'Add Page',
@@ -229,20 +229,21 @@
       $this->save_folio('draft');
     }
 
-    public function save_folio ($post_status) {
-      if (!isset($post_status)) {
+    public function save_folio_publish () {
+      $this->save_folio('publish');
+    }
+
+    public function save_folio ($post_status = 'publish') {
+      if (!is_string($post_status) || empty($post_status)) {
         $post_status = 'publish';
       }
 
-      if (!isset($_POST['folio_id']) || (isset($_POST['folio_id'])) && $_POST['folio_id'] == '') {
-        echo json_encode(array(
-          'code' => 400,
-          'message' => 'Bad Request'
-        ));
-        return;
-      }
-
+      // Nonce check must come before reading any POST data.
       check_admin_referer( 'groove_save_folio', 'groove_nonce' );
+
+      if (empty($_POST['folio_id'])) {
+        wp_die( esc_html__('Missing folio ID.', 'groove') );
+      }
 
       $id = (int) $_POST['folio_id'];
 
@@ -266,11 +267,22 @@
       
       $feature_image_id = isset($_POST['feature_image_id']) ? (int) $_POST['feature_image_id'] : null;
   
+      // Derive slug from title and ensure it is unique for this post.
+      $desired_slug = sanitize_title($post_title);
+      $post_name    = wp_unique_post_slug(
+        $desired_slug,
+        $id,
+        $post_status,
+        'groove_folio',
+        0
+      );
+
       $update_args = array(
         'ID'            => $id,
         'post_status'   => $post_status,
         'post_password' => $password,
         'post_title'    => $post_title,
+        'post_name'     => $post_name,
         'post_author'   => $post_author,
         'post_content'  => '',
         'meta_input'    => array(
@@ -291,21 +303,16 @@
 
   
         if (!is_wp_error($folio_id)) {
-          echo json_encode(array(
-            'code' => 0,
-            'message' => 'success',
-            'data' => array(
-              'folio_id' => $folio_id
-            )
-          ));
+          // Redirect back to the folio admin page after a successful save.
+          $redirect = add_query_arg(
+            array('page' => static::PAGE_ID, 'folio_id' => $id, 'saved' => '1'),
+            admin_url('admin.php')
+          );
+          wp_redirect($redirect);
+          exit;
         } else {
-          echo json_encode(array(
-            'code' => 500,
-            'message' => 'Something wrong.'
-          ));
+          wp_die( esc_html__('Could not save the folio. Please try again.', 'groove') );
         }
-      }
-
     }
 
     public function get_title() {
@@ -570,9 +577,11 @@
 
     public function display_page () {
       $folio = $this->get_folio_fields();
+      $folio_id = isset($_REQUEST['folio_id']) ? (int) $_REQUEST['folio_id'] : 0;
     ?>
 <form action="/wp-admin/admin-post.php" method="post">
   <?php wp_nonce_field( 'groove_save_folio', 'groove_nonce' ); ?>
+  <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
   <?php parent::display_page() ?>
 </form>
 <?php

@@ -159,15 +159,27 @@ abstract class Base_Theme extends Assets
   function get_theme_data()
   {
     $meta = get_post_meta($this->id);
-    $theme_id = $meta['theme_id'][0];
+    $theme_id = $meta['theme_id'][0] ?? '';
     $all_themes = Themes_Manager::get_all_themes();
 
-    $theme = isset($all_themes[$theme_id]) ? $all_themes[$theme_id] : reset($all_themes);
+    // Fall back to first available theme when stored ID is missing or unrecognised.
+    if (!empty($theme_id) && isset($all_themes[$theme_id])) {
+      $theme = $all_themes[$theme_id];
+      $resolved_id = $theme_id;
+    }
+    else {
+      reset($all_themes);
+      $resolved_id = key($all_themes);
+      $theme = current($all_themes);
+    }
 
-    $this->theme_id = $theme['ID'];
-    $this->theme_name = $theme['name'];
-    $this->theme_cover_url = $theme['cover_url'];
-    $this->theme_logo_url = $theme['logo_url'];
+    // $theme may be false when the registry is empty (no themes registered yet).
+    if ($theme) {
+      $this->theme_id = $resolved_id;
+      $this->theme_name = $theme['name'] ?? '';
+      $this->theme_cover_url = $theme['cover_url'] ?? '';
+      $this->theme_logo_url = $theme['logo_url'] ?? '';
+    }
   }
 
   function get_data()

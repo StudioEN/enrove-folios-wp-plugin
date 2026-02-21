@@ -11,12 +11,9 @@ class Folio_Page_List_Table extends List_Table {
   }
 
   public function edit_post_link($link, $post_id, $context) {
-    
-    if ($context === 'display') {
-      $link = $link . '&folio_id=' . $_REQUEST['folio_id'];
+    if ($context === 'display' && isset($_REQUEST['folio_id'])) {
+      $link = $link . '&folio_id=' . (int) $_REQUEST['folio_id'];
     }
-    
-    // 对于其他上下文，保持原始链接不变
     return $link;
   }
 

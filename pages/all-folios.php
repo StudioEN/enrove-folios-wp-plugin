@@ -26,9 +26,9 @@
 
     public function __construct() {
       $this->left_button_items = [array(
-        'text' => 'Add New',
+        'text' => esc_html__( 'Add New', 'groove' ),
         'type' => 'primary',
-        'link' => '/wp-admin/admin.php?page=groove-add-new&from=groove-all-folios'
+        'link' => admin_url( 'admin.php?page=groove-add-new&from=groove-all-folios' )
       )];
 
       add_action( 'groove/menu/register', function( Menu_Manager $menu ) {
@@ -50,15 +50,16 @@
         $table->inline_edit();
       }
     ?>
-      <form id="pages-filter" method="get">
-        <?php $table->search_box($post_type_object->labels->search_items, 'post' ); ?>
+<form id="pages-filter" method="get">
+  <?php $table->search_box($post_type_object->labels->search_items, 'post' ); ?>
 
-        <input type="hidden" name="post_status" class="post_status_page" value="<?php echo ! empty( $_REQUEST['post_status'] ) ? esc_attr( $_REQUEST['post_status'] ) : 'all'; ?>" />
-        <input type="hidden" name="post_type" class="post_type_page" value="<?php echo $post_type; ?>" />
+  <input type="hidden" name="post_status" class="post_status_page"
+    value="<?php echo ! empty( $_REQUEST['post_status'] ) ? esc_attr( $_REQUEST['post_status'] ) : 'all'; ?>" />
+  <input type="hidden" name="post_type" class="post_type_page" value="<?php echo $post_type; ?>" />
 
-        <?php $table->display(); ?>
-      </form>
-    <?php
+  <?php $table->display(); ?>
+</form>
+<?php
     }
   }
 ?>
