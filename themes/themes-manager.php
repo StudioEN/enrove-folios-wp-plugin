@@ -170,10 +170,18 @@ class Themes_Manager extends Assets
         }
 
         if ($post_type === 'groove_folio_page') {
+            // Guard: if no folio_id was found (orphaned page), do not redirect.
+            if (empty($folio_id)) {
+                return null;
+            }
             $post_password_required = post_password_required($folio_id);
             if ($post_password_required) {
-                wp_redirect(\Groove\Utils\Utils::get_folio_permalink_by_id($folio_id), 301);
-                exit;
+                $folio_url = \Groove\Utils\Utils::get_folio_permalink_by_id($folio_id);
+                if ($folio_url) {
+                    wp_redirect($folio_url, 301);
+                    exit;
+                }
+                return null; // No valid URL — render nothing rather than redirect to home.
             }
             return static::create_page_theme($theme_id);
         }

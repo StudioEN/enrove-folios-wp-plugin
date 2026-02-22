@@ -19,6 +19,25 @@ class Theme_Page_1 extends Base_Theme
     if ($this->post_type == 'groove_folio_page') {
       $meta = get_post_meta($this->id);
       $this->folio_id = $meta['folio_id'][0] ?? '';
+
+      // Auto-heal missing folio_id: read the parent folio slug from the URL path.
+      // Uses a direct WP_Query — no global-state mutations.
+      if (empty($this->folio_id) && $this->id) {
+        $path = Utils::get_current_path();
+        if (preg_match('/^\/folio\/([^\/]+)\/page\//', $path, $url_matches)) {
+          $folio_slug = $url_matches[1];
+          $folio_query = new \WP_Query(array(
+            'post_type' => 'groove_folio',
+            'name' => $folio_slug,
+            'posts_per_page' => 1,
+            'post_status' => array('publish', 'draft', 'pending', 'private'),
+          ));
+          if ($folio_query->post) {
+            $this->folio_id = $folio_query->post->ID;
+            update_post_meta($this->id, 'folio_id', $this->folio_id);
+          }
+        }
+      }
     }
   }
 
@@ -148,12 +167,12 @@ class Theme_Page_1 extends Base_Theme
 
   function is_first_page()
   {
-    return $this->pages[0]->ID === $this->id;
+    return empty($this->pages) ? false : ($this->pages[0]->ID === $this->id);
   }
 
   function is_last_page()
   {
-    return $this->pages[0]->ID === $this->id;
+    return empty($this->pages) ? false : ($this->pages[count($this->pages) - 1]->ID === $this->id);
   }
 
   function get_current_index()
@@ -174,8 +193,8 @@ class Theme_Page_1 extends Base_Theme
   function get_prev_page()
   {
     $index = $this->get_current_index();
-    if ($index > -1) {
-      return $this->pages[$this->get_current_index() - 1];
+    if ($index > 0) {
+      return $this->pages[$index - 1];
     }
     return null;
   }
@@ -197,9 +216,9 @@ class Theme_Page_1 extends Base_Theme
   <div class="g-folio__theme-page-nav-bar-main">
     <button class="g-folio__theme-page-nav-button"></button>
     <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
-        <?= $this->folio->post_title?> |
+        <?= esc_html($this->folio->post_title ?? 'Folio')?> |
       </span>
-      <?= $this->page->post_title?>
+      <?= esc_html($this->page->post_title ?? 'Page')?>
     </div>
   </div>
 
@@ -250,8 +269,8 @@ class Theme_Page_1 extends Base_Theme
         <button class="g-folio__theme-page-nav-close"></button>
 
         <h3 class="g-folio__theme-page-nav-name">
-          <a href="<?= Utils::get_folio_permalink_by_id($this->folio->ID)?>">
-<?= $this->folio->post_title?>
+          <a href="<?= $this->folio ?Utils::get_folio_permalink_by_id($this->folio->ID) : '#'?>">
+<?= esc_html($this->folio->post_title ?? 'Folio')?>
 </a>
 </h3>
 <label class="g-folio__theme-page-nav-label">CONTENTS</label>

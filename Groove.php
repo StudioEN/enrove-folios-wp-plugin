@@ -4,7 +4,7 @@
  * Description: 
  * Plugin URI: 
  * Author: groove.com
- * Version: 0.1.0
+ * Version: 0.1.5
  * Author URI: 
  *
  * Text Domain: groove
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
 }
 
-define('GROOVE_VERSION', '0.1.0');
+define('GROOVE_VERSION', '0.1.5');
 
 define('GROOVE__FILE__', __FILE__);
 define('GROOVE_PLUGIN_BASE', plugin_basename(GROOVE__FILE__));

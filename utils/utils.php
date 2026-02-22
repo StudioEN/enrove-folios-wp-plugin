@@ -112,12 +112,14 @@ class Utils
       return $post ? $post->ID : null;
     }
 
-    if (isset($_REQUEST['folio_id'])) {
-      return $_REQUEST['folio_id'];
+    // Use !empty() — a bare ?folio_id (no value) sets the key to '' which
+    // would be cast to 0 and cause the lookup to silently fail.
+    if (!empty($_REQUEST['folio_id'])) {
+      return (int)$_REQUEST['folio_id'];
     }
 
-    if (isset($_REQUEST['p'])) {
-      return $_REQUEST['p'];
+    if (!empty($_REQUEST['p'])) {
+      return (int)$_REQUEST['p'];
     }
 
     return null;
@@ -158,6 +160,26 @@ class Utils
     ));
 
     $post = $wp_query->post;
+
+    // Fallback: Drafts generated before our fix may have an empty post_name in the DB.
+    // WP_Query fails to find them by 'name'. We scan all drafts and match against our slugifier logic.
+    if (!$post) {
+      $fallback_query = new \WP_Query(array(
+        'post_type' => $post_type,
+        'posts_per_page' => -1,
+        'post_status' => array('draft', 'pending'),
+      ));
+      foreach ($fallback_query->posts as $p) {
+        if (empty($p->post_name)) {
+          $slug = preg_replace('/\s+/', '-', strtolower($p->post_title ?? ''));
+          if ($slug === $post_name) {
+            $post = $p;
+            break;
+          }
+        }
+      }
+    }
+
     return $post;
   }
 }

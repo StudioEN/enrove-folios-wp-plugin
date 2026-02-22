@@ -88,11 +88,9 @@ class Plugin
 	 */
 	private function maybe_flush_rewrite_rules()
 	{
-		$flushed_version = get_option('groove_rewrite_flushed_version', '');
-		if ($flushed_version !== GROOVE_VERSION) {
-			flush_rewrite_rules(false); // false = soft flush (no .htaccess write)
-			update_option('groove_rewrite_flushed_version', GROOVE_VERSION);
-		}
+	// The /folio/ routing is handled entirely by the template_include filter
+	// (see the __construct below). No custom rewrite rules are needed.
+	// Keeping this method in case we need to flush for other reasons in future.
 	}
 
 	public function get_install_time()
@@ -145,8 +143,17 @@ class Plugin
 
 	private function add_rewrite()
 	{
-		add_rewrite_rule('^folio/[^/]+/page/[^/]+/?$', 'index.php?post_type=groove_folio_page', 'top');
-		add_rewrite_rule('^folio/[^/]+/?$', 'index.php?post_type=groove_folio', 'top');
+	// NOTE: No custom rewrite rules here by design.
+	//
+	// All /folio/ routing is handled by the template_include filter in __construct().
+	// Adding rewrite rules for groove_folio/groove_folio_page causes WordPress to see
+	// a CPT archive query (post_type=groove_folio, no 'name'). Since has_archive=false,
+	// WordPress's redirect_canonical fires and bounces the visitor to the home page —
+	// before template_include ever gets a chance to intercept.
+	//
+	// The template_include approach works cleanly without any rewrite rules:
+	// the request naturally 404s in WP's main loop, then the filter swaps in
+	// folio-preview-template.php which does its own draft-safe WP_Query.
 	}
 
 	private function register_autoloader()

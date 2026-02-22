@@ -122,11 +122,20 @@ abstract class Base_Theme extends Assets
 
     $page = $wp_query->post;
 
-    $this->title = $page->post_title;
-    $this->content = $page->post_content;
-    $this->author = get_the_author_meta('user_login', $page->post_author);
-    $this->feature_image = get_the_post_thumbnail($page->ID);
-    $this->page = $page;
+    if ($page) {
+      $this->title = $page->post_title;
+      $this->content = $page->post_content;
+      $this->author = get_the_author_meta('user_login', $page->post_author);
+      $this->feature_image = get_the_post_thumbnail($page->ID);
+      $this->page = $page;
+    }
+    else {
+      $this->title = esc_html__('Not Found', 'groove');
+      $this->content = '';
+      $this->author = '';
+      $this->feature_image = '';
+      $this->page = null;
+    }
 
     return $page;
   }

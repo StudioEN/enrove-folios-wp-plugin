@@ -77,7 +77,7 @@ class Theme_1 extends Base_Theme
   }
 
   function display_brief () {
-    $page = $this->pages[0];
+    $page = $this->pages[0] ?? null;
   ?>
   <div class="g-folio__theme-brief">
     <div class="g-folio__theme-brief-inner">
