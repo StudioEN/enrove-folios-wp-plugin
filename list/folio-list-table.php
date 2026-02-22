@@ -21,7 +21,14 @@ class Folio_List_Table extends List_Table {
     $theme_id = isset($meta['theme_id'][0]) ? $meta['theme_id'][0] : '';
 
     if ( $this->post_type === $post_type ) {
-      $url = '/wp-admin/admin.php?page=groove-folio&folio_id=' . $post_id . '&theme_id='. $theme_id;
+      $url = add_query_arg(
+        array(
+          'page' => 'groove-folio',
+          'folio_id' => (int) $post_id,
+          'theme_id' => sanitize_key($theme_id),
+        ),
+        admin_url('admin.php')
+      );
       return esc_url($url);
     }
 

@@ -21,11 +21,11 @@
       $this->supportTypes = array(
         array(
           'value' => 0,
-          'label' => 'Get a support'
+          'label' => esc_html__('Get support', 'groove')
         ),
         array(
           'value' => 1,
-          'label' => 'Get a help'
+          'label' => esc_html__('Get help', 'groove')
         ),
       );
 
@@ -35,19 +35,44 @@
     }
 
     public function get_support () {
-      if ($_POST['action'] == 'groove_get_support') {
-        $to = '';
-        $subject = '';
-        $message = '';
-        $headers = array();
+      $action = isset($_POST['action']) ? sanitize_key(wp_unslash($_POST['action'])) : '';
+      if ($action === 'groove_get_support') {
+        check_admin_referer('groove_get_support', 'groove_nonce');
 
-        $result = wp_mail($to, $subject, $message, $headers);
-
-        if ($result) {
-
-        } else {
-
+        if (!current_user_can('manage_options')) {
+          wp_die(esc_html__('You do not have permission to contact support.', 'groove'));
         }
+
+        $type = isset($_POST['type']) ? (int) wp_unslash($_POST['type']) : 0;
+        $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+        $title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : '';
+        $message = isset($_POST['message']) ? sanitize_textarea_field(wp_unslash($_POST['message'])) : '';
+
+        if (!is_email($email)) {
+          $this->redirect_with_notice('error', 'invalid_email');
+        }
+
+        if (empty($message)) {
+          $this->redirect_with_notice('error', 'missing_message');
+        }
+
+        $labels = wp_list_pluck($this->supportTypes, 'label', 'value');
+        $type_label = isset($labels[$type]) ? $labels[$type] : $labels[0];
+
+        $to = get_option('admin_email');
+        $subject = sprintf('[Groove Support] %s', $title ? $title : 'Support Request');
+        $body = "Type: {$type_label}\n";
+        $body .= "From: {$email}\n";
+        $body .= "Site: " . home_url('/') . "\n\n";
+        $body .= $message;
+        $headers = array('Reply-To: ' . $email);
+
+        $result = wp_mail($to, $subject, $body, $headers);
+        if ($result) {
+          $this->redirect_with_notice('success', 'sent');
+        }
+
+        $this->redirect_with_notice('error', 'mail_failed');
       }
     }
 
@@ -61,8 +86,19 @@
 
 
     public function display_support_fields () {
+      $notice = isset($_GET['groove_notice']) ? sanitize_key(wp_unslash($_GET['groove_notice'])) : '';
     ?>
-      <form action="/wp-admin/admin-post.php" method="post">
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+        <?php wp_nonce_field('groove_get_support', 'groove_nonce'); ?>
+        <?php if ('success' === $notice): ?>
+          <div class="notice notice-success inline">
+            <p><?php echo esc_html__('Support message sent.', 'groove'); ?></p>
+          </div>
+        <?php elseif ('error' === $notice): ?>
+          <div class="notice notice-error inline">
+            <p><?php echo esc_html__('Unable to send support message. Please verify your input and try again.', 'groove'); ?></p>
+          </div>
+        <?php endif; ?>
         <div class="g-folio__support postbox-container">
           <div class="postbox">
             <div class="g-folio__fields-header">
@@ -77,7 +113,7 @@
 
                     foreach ($supportTypes as $type) {
                       ?>
-                        <option value="<?php echo $type['value']; ?>"><?php echo $type['label'] ?></option>
+                        <option value="<?php echo esc_attr($type['value']); ?>"><?php echo esc_html($type['label']) ?></option>
                       <?php
                     }
                   ?>
@@ -85,7 +121,7 @@
               </div>
               <div class="g-row_field">
                 <label for="email">EMAIL*</label>
-                <input type="text" name="email" value="" placeholder="YOUR EMAIL" />
+                <input type="email" name="email" value="" placeholder="YOUR EMAIL" required />
               </div>
               <div class="g-row_field">
                 <label for="title">TITLE</label>
@@ -94,7 +130,7 @@
 
               <div class="g-row_field">
                 <label for="message">MESSAGE</label>
-                <textarea type="text" name="message" value="" placeholder="Optional"></textarea>
+                <textarea type="text" name="message" value="" placeholder="Optional" required></textarea>
               </div>
             </div>
             <div class="g-folio__fields-footer">
@@ -118,6 +154,21 @@
 
     public function display_content () {
       $this->display_support();
+    }
+
+    private function redirect_with_notice($type, $value)
+    {
+      $url = add_query_arg(
+        array(
+          'page' => static::PAGE_ID,
+          'groove_notice' => $type,
+          'groove_value' => $value,
+        ),
+        admin_url('admin.php')
+      );
+
+      wp_safe_redirect($url);
+      exit;
     }
   }
 ?>

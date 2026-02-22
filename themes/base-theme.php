@@ -32,8 +32,50 @@ abstract class Base_Theme extends Assets
     echo '<script>window.GROOVE_IS_PREVIEW = true</script>';
     show_admin_bar(false);
 
+    // Shared plugin CSS (admin bar reset, global layout).
     wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], GROOVE_VERSION);
+
+    // Per-theme CSS — lives in themes/<theme-id>/assets/css/theme.css.
+    wp_enqueue_style(
+      'groove-theme-' . static::get_id(),
+      $this->get_theme_css_url(),
+    ['groove'],
+      GROOVE_VERSION
+    );
+
     wp_enqueue_script('groove', $this->get_js_assets_url('groove-main'), ['jquery'], GROOVE_VERSION, true);
+  }
+
+  /**
+   * URL to this theme's folder inside the plugin.
+   * e.g. https://example.com/wp-content/plugins/groove/themes/folio-starter/
+   *
+   * @return string
+   */
+  public function get_theme_folder_url(): string
+  {
+    return GROOVE_URL . 'themes/' . static::get_id() . '/';
+  }
+
+  /**
+   * URL to this theme's assets/ folder.
+   * e.g. .../themes/folio-starter/assets/
+   *
+   * @return string
+   */
+  public function get_theme_assets_url(): string
+  {
+    return $this->get_theme_folder_url() . 'assets/';
+  }
+
+  /**
+   * URL to this theme's compiled CSS file.
+   *
+   * @return string
+   */
+  public function get_theme_css_url(): string
+  {
+    return $this->get_theme_assets_url() . 'css/theme.css';
   }
 
   // -----------------------------------------------------------------------
@@ -92,14 +134,14 @@ abstract class Base_Theme extends Assets
    */
   final public static function get_theme_descriptor(): array
   {
-    // Instantiate to access the Assets URL helpers.
-    $instance = new static ();
+    // Build URLs purely statically — no instantiation, no constructor side-effects.
+    $theme_assets_url = GROOVE_URL . 'themes/' . static::get_id() . '/assets/';
     return [
       'ID' => static::get_id(),
       'name' => static::get_name(),
-      'thumbnail_url' => $instance->get_images_assets_url(static::get_thumbnail_filename()),
-      'cover_url' => $instance->get_images_assets_url(static::get_cover_filename()),
-      'logo_url' => $instance->get_images_assets_url(static::get_logo_filename()),
+      'thumbnail_url' => $theme_assets_url . 'images/' . static::get_thumbnail_filename(),
+      'cover_url' => $theme_assets_url . 'images/' . static::get_cover_filename(),
+      'logo_url' => $theme_assets_url . 'images/' . static::get_logo_filename(),
     ];
   }
 
@@ -201,9 +243,8 @@ abstract class Base_Theme extends Assets
   function display_theme()
   {
     $this->get_data();
-
-    if ($this->post_type !== 'groove_folio') {
-      return '<h1>' . esc_html__('No matching template found') . '</h1>';
-    }
+    // Themes_Manager ensures the right class is used for the right post type.
+    // No guard needed here — child classes control their own output.
+    return true;
   }
 }

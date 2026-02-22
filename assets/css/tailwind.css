@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Define the source paths for Tailwind v4 to scan */
+@source "../../pages/**/*.php";
+@source "../../modules/**/*.php";
+@source "../../templates/**/*.php";

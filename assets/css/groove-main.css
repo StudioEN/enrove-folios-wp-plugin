@@ -28,17 +28,29 @@
 }
 
 .g-top-bar-post-nav {
-  position: fixed;
-  z-index: 10;
-  background-color: rgba(240, 246, 252, 1);
-  ;
-  top: 46px;
-  left: 0;
-  right: 0;
-  height: 24px;
+  position: relative;
+  z-index: 2;
+  background-color: #f6f7f7;
+  min-height: 24px;
   display: flex;
   align-items: center;
-  padding: 0 18px;
+  padding: 0 16px;
+  border-bottom: 1px solid #dcdcde;
+}
+
+/* Fallback for classic editor */
+body:not(.block-editor-page) .g-top-bar-post-nav {
+  position: relative;
+  top: 0;
+  margin-bottom: 15px;
+}
+
+/* Keep breadcrumb in normal document flow in Gutenberg so it never overlays controls. */
+body.block-editor-page .g-top-bar-post-nav {
+  left: auto;
+  right: auto;
+  top: auto;
+  margin: 0;
 }
 
 .g-top-bar-post-nav .g-top-bar-crumb {
@@ -60,14 +72,6 @@
   height: auto;
 }
 
-.groove .interface-interface-skeleton {
-  top: 66px;
-}
-
-.groove .edit-post-layout .editor-post-publish-panel {
-  top: 66px;
-}
-
 .g-top-bar-root {
   left: 160px;
   font-family: var(--g-a-font-family);
@@ -76,7 +80,7 @@
   position: fixed;
   top: 32px;
   width: calc(100% - 160px);
-  z-index: 1;
+  z-index: 100;
 }
 
 .g-top-bar-root .g-top-bar {
@@ -101,24 +105,18 @@ body.groove_folio-template-default {
   flex-direction: column;
 }
 
-body.groove .g-top-bar-root {
+body.groove.groove-folios_page_groove-overview .g-top-bar-root,
+body.groove.groove-folios_page_groove-settings .g-top-bar-root,
+body.groove.groove-folios_page_groove-themes .g-top-bar-root,
+body.groove.groove-folios_page_groove-folio .g-top-bar-root {
   height: 50px;
 }
 
-body.groove #wpbody-content {
-  margin-top: 65px;
-}
-
-/* body.toplevel_page_groove-overview .g-top-bar-root, */
-body.groove.groove-folios_page_groove-settings .g-top-bar-root,
-body.groove.groove-folios_page_groove-folio .g-top-bar-root {
-  height: 85px;
-}
-
-/* body.toplevel_page_groove-overview #wpbody-content, */
+body.groove.groove-folios_page_groove-overview #wpbody-content,
 body.groove.groove-folios_page_groove-settings #wpbody-content,
+body.groove.groove-folios_page_groove-themes #wpbody-content,
 body.groove.groove-folios_page_groove-folio #wpbody-content {
-  margin-top: 100px;
+  margin-top: 65px;
 }
 
 .g-top-bar-tabs {
@@ -396,6 +394,43 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
 
 .g-folio__footer-version {}
 
+#g-folio-save-indicator {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 9999;
+  background: #f0f6fc;
+  border: 1px solid #d0d7de;
+  border-radius: 999px;
+  color: #1d2327;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 10px 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+#g-folio-save-indicator.is-saving {
+  background: #fff7e6;
+  border-color: #f0b849;
+  color: #8a5600;
+}
+
+#g-folio-save-indicator.is-saved,
+#g-folio-save-indicator.is-idle {
+  background: #edfaef;
+  border-color: #7bc48b;
+  color: #0f5132;
+}
+
+#g-folio-save-indicator.is-error {
+  background: #fff1f2;
+  border-color: #e35d6a;
+  color: #9f1239;
+}
+
 .postbox-container.postbox-transparent .postbox {
   background: transparent;
   border: none;
@@ -477,12 +512,6 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   }
 }
 
-
-@media (min-width: 783px) {
-  .g-top-bar-post-nav {
-    left: 160px
-  }
-}
 
 /* ── Themes Admin Page ────────────────────────────────────────────────── */
 
@@ -776,27 +805,3 @@ body.groove.groove-folios_page_groove-folio #wpbody-content {
   line-height: 1.4;
 }
 
-
-@media (min-width: 783px) {
-  .auto-fold .g-top-bar-post-nav {
-    left: 36px;
-  }
-
-  .g-top-bar-post-nav {
-    top: 32px;
-  }
-
-  .groove .interface-interface-skeleton {
-    top: 56px;
-  }
-
-  .groove .edit-post-layout .editor-post-publish-panel {
-    top: 56px;
-  }
-}
-
-@media (min-width: 961px) {
-  .auto-fold .g-top-bar-post-nav {
-    left: 160px
-  }
-}

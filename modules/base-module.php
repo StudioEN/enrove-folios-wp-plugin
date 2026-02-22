@@ -1,46 +1,52 @@
 <?php
 namespace Groove\Modules;
 
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
 }
 
-abstract class BaseModule extends Assets {
+abstract class BaseModule extends Assets
+{
 	protected static $_instances = [];
 
 	abstract public function get_name();
 
-	public static function instance() {
+	public static function instance()
+	{
 		$class_name = static::class_name();
 
-		if ( empty( static::$_instances[ $class_name ] ) ) {
-			static::$_instances[ $class_name ] = new static();
+		if (empty(static::$_instances[$class_name])) {
+			static::$_instances[$class_name] = new static();
 		}
 
-		return static::$_instances[ $class_name ];
+		return static::$_instances[$class_name];
 	}
 
-	public static function is_active() {
+	public static function is_active()
+	{
 		return true;
 	}
-	
-	public static function class_name() {
+
+	public static function class_name()
+	{
 		return get_called_class();
 	}
 
-  public function __clone() {
+	public function __clone()
+	{
 		_doing_it_wrong(
 			__FUNCTION__,
-			sprintf( 'Cloning instances of the singleton "%s" class is forbidden.', get_class( $this ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			'1.0.0'
+			sprintf('Cloning instances of the singleton "%s" class is forbidden.', get_class($this)), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			GROOVE_VERSION
 		);
 	}
 
-	public function __wakeup() {
+	public function __wakeup()
+	{
 		_doing_it_wrong(
 			__FUNCTION__,
-			sprintf( 'Unserializing instances of the singleton "%s" class is forbidden.', get_class( $this ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			'1.0.0'
+			sprintf('Unserializing instances of the singleton "%s" class is forbidden.', get_class($this)), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			GROOVE_VERSION
 		);
 	}
 }

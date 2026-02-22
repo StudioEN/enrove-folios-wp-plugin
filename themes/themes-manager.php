@@ -35,8 +35,23 @@ class Themes_Manager extends Assets
      */
     public static function register_defaults()
     {
-        static::register(Theme_1::class , Theme_Page_1::class);
-        static::register(Theme_2::class , Theme_Page_2::class);
+        // Guard: only run once per request.
+        static $initialized = false;
+        if ($initialized) {
+            return;
+        }
+        $initialized = true;
+
+        // Require explicitly — the autoloader won't find these new sub-namespaced classes
+        // automatically since they don't follow the flat namespace->path convention.
+        $themes_path = GROOVE_PATH . 'themes/';
+        require_once $themes_path . 'folio-starter/cover.php';
+        require_once $themes_path . 'folio-starter/page.php';
+        require_once $themes_path . 'groove-ebook/cover.php';
+        require_once $themes_path . 'groove-ebook/page.php';
+
+        static::register(Folio_Starter\Cover::class, Folio_Starter\Page::class);
+        static::register(Groove_Ebook\Cover::class, Groove_Ebook\Page::class);
         static::load_installed_themes();
         static::run_migrations();
     }
@@ -112,8 +127,13 @@ class Themes_Manager extends Assets
      */
     public static function create_cover_theme($theme_id)
     {
-        if (!static::has($theme_id)) {
-            return null;
+        // Fall back to first registered theme when theme_id is empty or unrecognised.
+        if (!$theme_id || !static::has($theme_id)) {
+            reset(self::$registry);
+            $theme_id = key(self::$registry);
+        }
+        if (!$theme_id) {
+            return null; // Registry is empty — no themes installed.
         }
         $class = self::$registry[$theme_id]['cover_class'];
         return new $class();
@@ -127,8 +147,13 @@ class Themes_Manager extends Assets
      */
     public static function create_page_theme($theme_id)
     {
-        if (!static::has($theme_id)) {
-            return null;
+        // Fall back to first registered theme when theme_id is empty or unrecognised.
+        if (!$theme_id || !static::has($theme_id)) {
+            reset(self::$registry);
+            $theme_id = key(self::$registry);
+        }
+        if (!$theme_id) {
+            return null; // Registry is empty.
         }
         $class = self::$registry[$theme_id]['page_class'];
         return new $class();
@@ -153,8 +178,18 @@ class Themes_Manager extends Assets
         if ($post_type === 'groove_folio_page') {
             $meta = get_post_meta($id);
             $folio_id = $meta['folio_id'][0] ?? null;
-        }
-        else {
+
+            if (!$folio_id) {
+                $current_path = \Groove\Utils\Utils::get_current_path();
+                if (preg_match('/^\/folio\/([^\/]+)\/page\//', $current_path, $matches)) {
+                    $folio_slug = rtrim($matches[1], '/');
+                    $folio_post = \Groove\Utils\Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+                    if ($folio_post) {
+                        $folio_id = $folio_post->ID;
+                    }
+                }
+            }
+        } else {
             $folio_id = $id;
         }
 
@@ -178,7 +213,7 @@ class Themes_Manager extends Assets
             if ($post_password_required) {
                 $folio_url = \Groove\Utils\Utils::get_folio_permalink_by_id($folio_id);
                 if ($folio_url) {
-                    wp_redirect($folio_url, 301);
+                    wp_safe_redirect($folio_url, 302);
                     exit;
                 }
                 return null; // No valid URL — render nothing rather than redirect to home.
@@ -375,20 +410,21 @@ class Themes_Manager extends Assets
 
         global $wpdb;
 
-        // Map old IDs to new slug-based IDs.
+        // Map old legacy IDs — numeric slugs used before v0.1.10, and any stale
+        // slug-based IDs that might have been stored before the renaming.
         $mapping = [
-            'theme-1' => Theme_1::get_id(), // folio-starter
-            'theme-2' => Theme_2::get_id(), // groove-ebook
+            'theme-1' => Folio_Starter\Cover::get_id(), // folio-starter
+            'theme-2' => Groove_Ebook\Cover::get_id(), // groove-ebook
         ];
 
         foreach ($mapping as $old_id => $new_id) {
             $wpdb->update(
                 $wpdb->postmeta,
-            ['meta_value' => $new_id],
-            [
-                'meta_key' => 'theme_id',
-                'meta_value' => $old_id
-            ]
+                ['meta_value' => $new_id],
+                [
+                    'meta_key' => 'theme_id',
+                    'meta_value' => $old_id,
+                ]
             );
         }
 
@@ -445,7 +481,7 @@ class Themes_Manager extends Assets
         $files = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::CHILD_FIRST
-            );
+        );
         foreach ($files as $file) {
             $file->isDir() ? rmdir($file->getRealPath()) : unlink($file->getRealPath());
         }

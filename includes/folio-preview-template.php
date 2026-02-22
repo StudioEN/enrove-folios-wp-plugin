@@ -1,8 +1,8 @@
 <?php
 use Groove\Themes\Themes_Manager;
 
-// Boot the theme registry before attempting to create a theme.
-Themes_Manager::register_defaults();
+// NOTE: Themes_Manager::register_defaults() is already called in Plugin::__construct().
+// Do NOT call it again here — it would double-register all themes and re-run migrations.
 
 $theme = Themes_Manager::create_theme_for_current_request();
 
@@ -33,6 +33,18 @@ endif; ?>
 </head>
 
 <body <?php body_class('groove'); ?>>
+  <?php
+// ── DEBUG: remove once preview is confirmed working ──────────────────────
+if (defined('WP_DEBUG') && WP_DEBUG) {
+  echo '<pre style="position:fixed;top:0;left:0;z-index:99999;background:#000;color:#0f0;font-size:11px;padding:8px;max-width:400px;opacity:0.9;overflow:auto;max-height:50vh">';
+  echo 'Theme class: ' . esc_html(get_class($theme)) . "\n";
+  echo 'post_type:   ' . esc_html($theme->post_type ?? 'N/A') . "\n";
+  echo 'id:          ' . esc_html($theme->id ?? 'N/A') . "\n";
+  echo 'theme_id:    ' . esc_html($theme->theme_id ?? 'N/A') . "\n";
+  echo '</pre>';
+}
+// ── END DEBUG ─────────────────────────────────────────────────────────────
+?>
   <?php $theme->display_theme(); ?>
   <?php wp_footer(); ?>
   <style media="screen">

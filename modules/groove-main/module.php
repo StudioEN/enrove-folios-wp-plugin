@@ -45,16 +45,108 @@ class Module extends BaseModule
 
 	private function enqueue_scripts()
 	{
+		// Vite integration
+		$is_vite_dev = false;
+		$vite_port = 5173;
+
+		// Optional: simple check to see if the dev server is active
+		// Note: in a deep WP dev environment we might use a constant `define('IS_VITE_DEVELOPMENT', true);`
+		// Here we'll do a quick socket check (fails gracefully if not running)
+		if (in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'])) {
+			$connection = @fsockopen('localhost', $vite_port, $errno, $errstr, 0.1);
+			if (is_resource($connection)) {
+				$is_vite_dev = true;
+				fclose($connection);
+			}
+		}
+
+		if ($is_vite_dev) {
+			// Enqueue Vite client for HMR
+			wp_enqueue_script('vite-client', 'http://localhost:' . $vite_port . '/@vite/client', [], null, true);
+
+			// Add type="module" to vite-client
+			add_filter('script_loader_tag', function ($tag, $handle, $src) {
+				if ($handle === 'vite-client' || $handle === 'groove-tailwind-vite') {
+					return '<script type="module" src="' . esc_url($src) . '"></script>';
+				}
+				return $tag;
+			}, 10, 3);
+
+			// Enqueue our tailwind entry directly from the Vite dev server
+			wp_enqueue_script('groove-tailwind-vite', 'http://localhost:' . $vite_port . '/assets/css/tailwind.css', [], null, true);
+		} else {
+			// Production mode: try to read the manifest.json
+			$manifest_path = plugin_dir_path(dirname(__DIR__)) . 'assets/build/.vite/manifest.json';
+			if (file_exists($manifest_path)) {
+				$manifest = json_decode(file_get_contents($manifest_path), true);
+				if (isset($manifest['assets/css/tailwind.css']['file'])) {
+					$css_file = $manifest['assets/css/tailwind.css']['file'];
+					wp_enqueue_style('groove-tailwind', plugin_dir_url(dirname(__DIR__)) . 'assets/build/' . $css_file, [], GROOVE_VERSION);
+				}
+			}
+		}
+
 		wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], GROOVE_VERSION);
 		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery'], GROOVE_VERSION, true);
 		wp_enqueue_script('groove-inline-edit', $this->get_js_assets_url('groove-inline-edit'), ['jquery'], GROOVE_VERSION, true);
+
+		if ($this->is_in_block_editor_page()) {
+			wp_enqueue_script('groove-gutenberg-breadcrumb', $this->get_js_assets_url('groove-gutenberg-breadcrumb'), ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-data', 'wp-components'], GROOVE_VERSION, true);
+		}
 
 		wp_enqueue_media();
 	}
 
 	private function add_frontend_settings()
 	{
-		echo '<script>window.GROOVE_SCREEN_ID = "' . $this->get_scrren_id() . '"; window.GROOVE_POST = ' . ($this->is_in_block_editor_page() ? 'true' : 'fa lse') . '; window.GROOVE_POST_TYPE = "' . (isset($_REQUEST['action']) ? $_REQUEST['action'] : 'create') . '";</script>';
+		$folio_name = '';
+		$folio_setup_url = '';
+		$post = get_post();
+		if (!$post && !empty($_GET['post'])) {
+			$post = get_post((int) $_GET['post']);
+		}
+
+		if ($post && $post->post_type === 'groove_folio_page') {
+			$folio_id = get_post_meta($post->ID, 'folio_id', true);
+			if (!$folio_id && !empty($_GET['folio_id'])) {
+				$folio_id = (int) wp_unslash($_GET['folio_id']);
+			}
+			if ($folio_id) {
+				$folio_post = get_post($folio_id);
+				if ($folio_post) {
+					$folio_name = $folio_post->post_title;
+				}
+				$folio_setup_url = add_query_arg(
+					array(
+						'page' => 'groove-folio',
+						'folio_id' => (int) $folio_id,
+					),
+					admin_url('admin.php')
+				);
+			}
+		}
+
+		$post_action = isset($_GET['action']) ? sanitize_key(wp_unslash($_GET['action'])) : 'create';
+		$settings = array(
+			'screenId' => $this->get_scrren_id() ?? '',
+			'isPost' => $this->is_in_block_editor_page(),
+			'postType' => $post_action,
+			'folioName' => $folio_name,
+			'folioSetupUrl' => $folio_setup_url,
+			'adminPostUrl' => admin_url('admin-post.php'),
+		);
+
+		wp_add_inline_script(
+			'groove-main',
+			'window.GROOVE_SETTINGS = ' . wp_json_encode($settings) . ';' .
+			'window.GROOVE_SCREEN_ID = window.GROOVE_SETTINGS.screenId;' .
+			'window.GROOVE_POST = !!window.GROOVE_SETTINGS.isPost;' .
+			'window.GROOVE_POST_TYPE = window.GROOVE_SETTINGS.postType;' .
+			'window.GROOVE_FOLIO_NAME = window.GROOVE_SETTINGS.folioName;' .
+			'window.GROOVE_FOLIO_SETUP_URL = window.GROOVE_SETTINGS.folioSetupUrl;' .
+			'window.GROOVE_ADMIN_POST_URL = window.GROOVE_SETTINGS.adminPostUrl;',
+			'before'
+		);
 
 		do_action('groove/main/init', $this);
 	}
@@ -85,7 +177,7 @@ class Module extends BaseModule
 		}
 
 
-		$is_groove_page = (strpos($current_screen->id ?? '', 'groove') >= 0);
+			$is_groove_page = (strpos($current_screen->id ?? '', 'groove') !== false);
 
 		return apply_filters(
 			'groove/top-bar-tabs/is-active',
@@ -106,12 +198,23 @@ class Module extends BaseModule
 				return;
 			}
 
-			add_action('admin_enqueue_scripts', function () {
-				    $this->add_frontend_settings();
-				    $this->enqueue_scripts();
-			    }
-			    );
-		    });
+			add_action(
+				'admin_enqueue_scripts',
+				function () {
+					$this->enqueue_scripts();
+					$this->add_frontend_settings();
+				}
+			);
+
+			add_action(
+				'enqueue_block_editor_assets',
+				function () {
+					if ($this->is_in_block_editor_page()) {
+						wp_enqueue_script('groove-gutenberg-breadcrumb', $this->get_js_assets_url('groove-gutenberg-breadcrumb'), ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-data', 'wp-components'], GROOVE_VERSION, true);
+					}
+				}
+			);
+		});
 
 		add_filter('admin_footer_text', [$this, 'remove_wp_footer']);
 	}

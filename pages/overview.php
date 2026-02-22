@@ -28,7 +28,7 @@ class Overview extends Page
     add_menu_page(
       esc_html__('Groove', 'groove'),
       esc_html__('Groove Folios', 'groove'),
-      'manage_options',
+      'edit_posts',
       self::PAGE_ID,
     [$this, 'display_page'],
       $this->get_images_assets_url('logo.svg'),

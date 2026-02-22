@@ -6,8 +6,6 @@ use Groove\Pages\Overview;
 use Groove\Menu\Menu_Manager;
 use Groove\Menu\Add_New_Menu_Item;
 
-use Groove\Themes\Default_Themes;
-
 
 if (!defined('ABSPATH')) {
   exit; // Exit if accessed directly.
@@ -30,14 +28,19 @@ class Add_New extends Page
 
   public function create_folio()
   {
-    if (isset($_POST['action']) && $_POST['action'] === 'groove_create_folio') {
+    $action = isset($_POST['action']) ? sanitize_key(wp_unslash($_POST['action'])) : '';
+    if ($action === 'groove_create_folio') {
       check_admin_referer('groove_create_folio_action', 'groove_nonce');
 
       if (!current_user_can('edit_posts')) {
         wp_die(esc_html__('You do not have permission to create folios.', 'groove'));
       }
 
-      $theme_id = sanitize_key($_POST['themeId']);
+      $theme_id = isset($_POST['themeId']) ? sanitize_key(wp_unslash($_POST['themeId'])) : '';
+      $themes = \Groove\Themes\Themes_Manager::get_all_themes();
+      if (empty($theme_id) || !isset($themes[$theme_id])) {
+        wp_die(esc_html__('Invalid theme selection.', 'groove'));
+      }
       $title = esc_html__('A new folio', 'groove');
 
       $fields = array(
@@ -58,7 +61,7 @@ class Add_New extends Page
 
       if (!is_wp_error($folio_id)) {
         $redirect_url = admin_url('admin.php?page=groove-folio&folio_id=' . $folio_id);
-        wp_redirect($redirect_url);
+        wp_safe_redirect($redirect_url);
         exit;
       }
       else {
@@ -69,7 +72,7 @@ class Add_New extends Page
 
   public function get_title()
   {
-    return 'Add New';
+    return esc_html__('Add New', 'groove');
   }
 
   public function create_tabs()
@@ -87,7 +90,7 @@ class Add_New extends Page
       return;
     }
 ?>
-<p class="g-folio__themes-desc">Choose a Theme to get started</p>
+<p class="g-folio__themes-desc"><?php echo esc_html__('Choose a theme to get started', 'groove'); ?></p>
 <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
   <?php wp_nonce_field('groove_create_folio_action', 'groove_nonce'); ?>
   <input type="hidden" name="action" value="groove_create_folio" />
@@ -97,8 +100,7 @@ class Add_New extends Page
     foreach ($themes as $id => $theme) {
       $is_first = ($id === $first_theme_id);
       echo '<div class="g-folio__theme ' . ($is_first ? 'is-active' : '') . '" 
-                 data-theme-id="' . esc_attr($id) . '"
-                 onclick="document.querySelectorAll(\'.g-folio__theme\').forEach(el => el.classList.remove(\'is-active\')); this.classList.add(\'is-active\'); document.querySelector(\'[name=themeId]\').value = \'' . esc_attr($id) . '\';">';
+                 data-theme-id="' . esc_attr($id) . '">';
       echo '<div class="g-folio__theme-thumb"><img src="' . esc_url($theme['thumbnail_url']) . '" /></div>';
       echo '<div class="g-folio__theme-name">' . esc_html($theme['name']) . '</div>';
       echo '</div>';
@@ -108,7 +110,7 @@ class Add_New extends Page
   <input type="hidden" name="themeId" value="<?php echo esc_attr($first_theme_id)?>" />
   <div class="g-folio__theme-button">
     <button type="submit" class="g-folio__button g-folio__button-primary">
-      Continue
+      <?php echo esc_html__('Continue', 'groove'); ?>
     </button>
   </div>
 </form>
@@ -124,13 +126,20 @@ class Add_New extends Page
       <div class="g-folio__postbox-header">
         <div class="g-folio__postbox-header-left">
           <h2 class="g-folio__postbox-title">
-            THEMES
+            <?php echo esc_html__('Themes', 'groove'); ?>
           </h2>
         </div>
         <div class="g-folio__postbox-header-right">
           <div class="g-folio__postbox-close">
+            <?php
+            $from = isset($_GET['from']) ? sanitize_key(wp_unslash($_GET['from'])) : 'groove-overview';
+            $allowed_from = array('groove-overview', 'groove-all-folios');
+            if (!in_array($from, $allowed_from, true)) {
+              $from = 'groove-overview';
+            }
+            ?>
             <a type="submit" class="g-folio__postbox-icon gicon-close"
-              href="/wp-admin/admin.php?page=<?php echo (isset($_REQUEST['from']) ? $_REQUEST['from'] : 'groove-overview')?>"></a>
+              href="<?php echo esc_url(add_query_arg(array('page' => $from), admin_url('admin.php'))); ?>"></a>
           </div>
         </div>
       </div>

@@ -54,10 +54,10 @@ class Settings extends Page
       wp_die(esc_html__('You do not have permission to modify settings.', 'groove'));
     }
 
-    $tab = isset($_POST['tab_key']) ? sanitize_key($_POST['tab_key']) : 'account';
+    $tab = isset($_POST['tab_key']) ? sanitize_key(wp_unslash($_POST['tab_key'])) : 'account';
 
     if ('account' === $tab) {
-      $invitation_code = isset($_POST['invitationCode']) ? sanitize_text_field($_POST['invitationCode']) : '';
+      $invitation_code = isset($_POST['invitationCode']) ? sanitize_text_field(wp_unslash($_POST['invitationCode'])) : '';
       update_option('groove_invitation_code', $invitation_code);
     }
     else {
@@ -71,7 +71,7 @@ class Settings extends Page
       'message' => 'settings_saved'
     ], admin_url('admin.php'));
 
-    wp_redirect($redirect);
+    wp_safe_redirect($redirect);
     exit;
   }
 
@@ -171,7 +171,7 @@ class Settings extends Page
   public function display_content()
   {
     $tabs = $this->get_tabs();
-    $tab_key = isset($_REQUEST['tab_key']) ? $_REQUEST['tab_key'] : 'account';
+    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'account';
 ?>
 <div class="g-top-bar-tabs-content">
   <?php
@@ -201,9 +201,9 @@ class Settings extends Page
   public function display_tabs()
   {
     $tabs = $this->get_tabs();
-    $tab_key = isset($_REQUEST['tab_key']) ? $_REQUEST['tab_key'] : 'account';
+    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'account';
 
-    $q = $this->parse_query()
+    $q = $this->parse_query();
   ?>
 <div class="g-top-bar-tabs">
   <?php
@@ -217,7 +217,8 @@ class Settings extends Page
       $q['tab_key'] = $tab_id;
 
       $sanitized_tab_label = esc_html($tab['label']);
-      echo '<a href="/wp-admin/admin.php?' . http_build_query($q) . '" data-tab-id="' . esc_attr($tab_id) . '" class="g-folio__nav-tab' . $active_class . ' nav-tab">' . $sanitized_tab_label . '</a>';
+      $tab_url = add_query_arg($q, admin_url('admin.php'));
+      echo '<a href="' . esc_url($tab_url) . '" data-tab-id="' . esc_attr($tab_id) . '" class="g-folio__nav-tab' . $active_class . ' nav-tab">' . $sanitized_tab_label . '</a>';
     }
 ?>
 </div>

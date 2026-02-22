@@ -23,7 +23,7 @@ abstract class Page extends Assets
 
 	final public static function parse_query()
 	{
-		$query_string = $_SERVER['QUERY_STRING'];
+		$query_string = isset($_SERVER['QUERY_STRING']) ? wp_unslash($_SERVER['QUERY_STRING']) : '';
 		$query = array();
 		parse_str($query_string, $query);
 
@@ -37,7 +37,8 @@ abstract class Page extends Assets
 
 	public function __construct()
 	{
-		if (!empty($_POST['option_page']) && static::PAGE_ID === $_POST['option_page']) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$option_page = isset($_POST['option_page']) ? sanitize_key(wp_unslash($_POST['option_page'])) : '';
+		if (!empty($option_page) && static::PAGE_ID === $option_page) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			add_action('admin_init', [$this, 'register_fields']);
 		}
 	}
@@ -70,11 +71,11 @@ abstract class Page extends Assets
 	public function display_page()
 	{
 		$this->display_nav();
-?>
-<div class="wrap">
-	<?php $this->display_content()?>
-</div>
-<?php
+		?>
+		<div class="wrap">
+			<?php $this->display_content() ?>
+		</div>
+		<?php
 	}
 
 	public function display_left_button_items()
@@ -92,15 +93,22 @@ abstract class Page extends Assets
 	public function display_button_items($button_items)
 	{
 		if (!empty($button_items)) {
-			echo '<div class="g-folio__buttons">';
+			echo '<div class="flex space-x-3">';
 			foreach ($button_items as $button_item) {
-				$classes = 'g-folio__button ' . ($button_item['type'] ? 'g-folio__button-' . $button_item['type'] : '');
+				$type = isset($button_item['type']) ? $button_item['type'] : 'default';
+
+				$base_classes = 'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2';
+
+				if ($type === 'primary') {
+					$classes = $base_classes . ' border border-transparent bg-indigo-600 text-white hover:bg-indigo-700';
+				} else {
+					$classes = $base_classes . ' border border-gray-300 bg-white text-gray-700 hover:bg-gray-50';
+				}
 
 				if (isset($button_item['link'])) {
-					echo '<a href="' . $button_item['link'] . '" class="' . $classes . '">' . $button_item['text'] . '</a>';
-				}
-				else if (isset($button_item['action'])) {
-					echo '<button type="submit" name="action" value="' . $button_item['action'] . '" class="' . $classes . '">' . $button_item['text'] . '</button>';
+					echo '<a href="' . esc_url($button_item['link']) . '" class="' . $classes . '">' . esc_html($button_item['text']) . '</a>';
+				} else if (isset($button_item['action'])) {
+					echo '<button type="submit" name="action" value="' . esc_attr($button_item['action']) . '" class="' . $classes . '">' . esc_html($button_item['text']) . '</button>';
 				}
 			}
 			echo '</div>';
@@ -114,24 +122,32 @@ abstract class Page extends Assets
 	public function display_nav()
 	{
 		$tabs = $this->get_tabs();
-?>
-<div class="g-top-bar-root <?php $tabs == null ? '' : 'tabs'?>">
-	<div class="g-top-bar">
-		<div class="g-top-bar__left">
-			<div class="g-top-bar-logo"></div>
-			<div class="g-top-bar-title">
-				<?php echo $this->get_title(); ?>
-			</div>
-			<?php $this->display_left_button_items()?>
-		</div>
+		?>
+		<div class="bg-gray-900 text-white shadow <?php $tabs == null ? '' : 'tabs' ?>">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex items-center justify-between h-16">
+					<div class="flex items-center">
+						<div class="flex-shrink-0">
+							<!-- Logo Placeholder -->
+							<div class="h-8 w-8 bg-indigo-500 rounded-md flex items-center justify-center font-bold text-white">
+								G</div>
+						</div>
+						<div class="ml-4 font-semibold text-lg tracking-tight">
+							<?php echo esc_html($this->get_title()); ?>
+						</div>
+						<div class="ml-6 flex items-center space-x-4">
+							<?php $this->display_left_button_items() ?>
+						</div>
+					</div>
 
-		<div class="g-top-bar__right">
-			<?php $this->display_right_button_items()?>
+					<div class="flex items-center space-x-4">
+						<?php $this->display_right_button_items() ?>
+					</div>
+				</div>
+			</div>
+			<?php $this->display_tabs(); ?>
 		</div>
-	</div>
-	<?php $this->display_tabs(); ?>
-</div>
-<?php
+		<?php
 	}
 
 	public function display_content()

@@ -30,6 +30,10 @@ class Utils
 
   static function get_folio_permalink_by_id($post_id)
   {
+    if (is_admin()) {
+      return Utils::get_folio_preview_query_url_by_id($post_id);
+    }
+
     $post = get_post($post_id);
     $prefix = '';
 
@@ -42,6 +46,27 @@ class Utils
     }
 
     return Utils::get_folio_permalink(get_post($post_id), $prefix);
+  }
+
+  static function get_folio_preview_query_url_by_id($post_id)
+  {
+    $post = get_post($post_id);
+    if (!$post || !Utils::is_groove_post($post)) {
+      return null;
+    }
+
+    $query_args = array(
+      'groove_preview' => 1,
+    );
+
+    if (Utils::is_groove_folio_post($post)) {
+      $query_args['folio_id'] = $post->ID;
+    } else {
+      $query_args['p'] = $post->ID;
+      $query_args['post_type'] = 'groove_folio_page';
+    }
+
+    return add_query_arg($query_args, home_url('/'));
   }
 
   static function get_post_slug($post)
@@ -57,6 +82,22 @@ class Utils
   {
     if (Utils::is_groove_post($post)) {
       $title = Utils::get_post_slug($post);
+      $pretty_permalinks_enabled = (bool) get_option('permalink_structure');
+
+      if (!$pretty_permalinks_enabled) {
+        $query_args = array(
+          'groove_preview' => 1,
+        );
+
+        if (Utils::is_groove_folio_post($post)) {
+          $query_args['folio_id'] = $post->ID;
+        } else {
+          $query_args['p'] = $post->ID;
+          $query_args['post_type'] = 'groove_folio_page';
+        }
+
+        return add_query_arg($query_args, home_url('/'));
+      }
 
       if (Utils::is_groove_folio_post($post)) {
         return home_url('folio/' . ($prefix ? $prefix . '/' : '') . $title);
@@ -70,8 +111,16 @@ class Utils
 
   static function get_current_path()
   {
-    $url_parts = parse_url($_SERVER['REQUEST_URI']);
-    $current_path = $url_parts['path'];
+    $home_path = parse_url(home_url(), PHP_URL_PATH) ?? '/';
+    $home_path = rtrim($home_path, '/');
+
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
+    $url_parts = parse_url($request_uri);
+    $current_path = isset($url_parts['path']) ? $url_parts['path'] : '/';
+
+    if ($home_path && strpos($current_path, $home_path) === 0) {
+      $current_path = substr($current_path, strlen($home_path));
+    }
 
     return $current_path;
   }
@@ -101,25 +150,25 @@ class Utils
       }
     }
     else {
-      return isset($_REQUEST['post_type']) ? $_REQUEST['post_type'] : 'groove_folio';
+      return isset($_GET['post_type']) ? sanitize_key(wp_unslash($_GET['post_type'])) : 'groove_folio';
     }
   }
 
   static function get_groove_post_id()
   {
+    // Prefer explicit ID params over slug-based lookup so ?folio_id=N URLs
+    // work reliably for drafts (which have no post_name in the DB).
+    if (!empty($_GET['folio_id'])) {
+      return (int) wp_unslash($_GET['folio_id']);
+    }
+
+    if (!empty($_GET['p'])) {
+      return (int) wp_unslash($_GET['p']);
+    }
+
     if (Utils::is_groove_post_name_url()) {
       $post = Utils::get_groove_post_by_post_type_and_post_name();
       return $post ? $post->ID : null;
-    }
-
-    // Use !empty() — a bare ?folio_id (no value) sets the key to '' which
-    // would be cast to 0 and cause the lookup to silently fail.
-    if (!empty($_REQUEST['folio_id'])) {
-      return (int)$_REQUEST['folio_id'];
-    }
-
-    if (!empty($_REQUEST['p'])) {
-      return (int)$_REQUEST['p'];
     }
 
     return null;
@@ -145,10 +194,15 @@ class Utils
     }
   }
 
-  static function get_groove_post_by_post_type_and_post_name()
+  static function get_groove_post_by_post_type_and_post_name($post_type = null, $post_name = null)
   {
-    $post_type = Utils::get_groove_post_type();
-    $post_name = Utils::get_groove_post_name();
+    if (empty($post_type)) {
+      $post_type = Utils::get_groove_post_type();
+    }
+
+    if (empty($post_name)) {
+      $post_name = Utils::get_groove_post_name();
+    }
 
 
 
@@ -161,13 +215,14 @@ class Utils
 
     $post = $wp_query->post;
 
-    // Fallback: Drafts generated before our fix may have an empty post_name in the DB.
-    // WP_Query fails to find them by 'name'. We scan all drafts and match against our slugifier logic.
-    if (!$post) {
+    // Fallback: Drafts don't have a 'post_name' saved in the DB, so WP_Query fails.
+    // We synthesize the slug from the title in get_post_slug(), so we must reverse
+    // that check here to resolve the draft.
+    if (!$post && $post_name) {
       $fallback_query = new \WP_Query(array(
         'post_type' => $post_type,
         'posts_per_page' => -1,
-        'post_status' => array('draft', 'pending'),
+        'post_status' => array('draft', 'pending', 'private')
       ));
       foreach ($fallback_query->posts as $p) {
         if (empty($p->post_name)) {

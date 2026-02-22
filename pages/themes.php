@@ -146,7 +146,7 @@ class Themes extends Page {
 									</div>
 									<p class="g-themes-card-id">ID: <code><?php echo esc_html( $id ); ?></code></p>
 									<?php if ( $is_installed ) : ?>
-										<form method="post" action="/wp-admin/admin-post.php" class="g-themes-delete-form">
+										<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="g-themes-delete-form">
 											<?php wp_nonce_field( 'groove_uninstall_theme' ); ?>
 											<input type="hidden" name="action" value="groove_uninstall_theme" />
 											<input type="hidden" name="theme_id" value="<?php echo esc_attr( $id ); ?>" />
@@ -174,7 +174,7 @@ class Themes extends Page {
 
 				<form
 					method="post"
-					action="/wp-admin/admin-post.php"
+					action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
 					enctype="multipart/form-data"
 					class="g-themes-upload-form"
 					id="groove-theme-upload-form"
@@ -321,7 +321,7 @@ class Themes extends Page {
 			'groove_value'   => $value,
 		], admin_url( 'admin.php' ) );
 
-		wp_redirect( $url );
+		wp_safe_redirect( $url );
 		exit;
 	}
 }

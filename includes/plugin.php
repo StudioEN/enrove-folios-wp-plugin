@@ -49,7 +49,7 @@ class Plugin
 		_doing_it_wrong(
 			__FUNCTION__,
 			sprintf('Cloning instances of the singleton "%s" class is forbidden.', get_class($this)), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			'1.0.0'
+			GROOVE_VERSION
 		);
 	}
 
@@ -58,7 +58,7 @@ class Plugin
 		_doing_it_wrong(
 			__FUNCTION__,
 			sprintf('Unserializing instances of the singleton "%s" class is forbidden.', get_class($this)), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			'1.0.0'
+			GROOVE_VERSION
 		);
 	}
 
@@ -88,9 +88,9 @@ class Plugin
 	 */
 	private function maybe_flush_rewrite_rules()
 	{
-	// The /folio/ routing is handled entirely by the template_include filter
-	// (see the __construct below). No custom rewrite rules are needed.
-	// Keeping this method in case we need to flush for other reasons in future.
+		// The /folio/ routing is handled entirely by the template_include filter
+		// (see the __construct below). No custom rewrite rules are needed.
+		// Keeping this method in case we need to flush for other reasons in future.
 	}
 
 	public function get_install_time()
@@ -143,17 +143,17 @@ class Plugin
 
 	private function add_rewrite()
 	{
-	// NOTE: No custom rewrite rules here by design.
-	//
-	// All /folio/ routing is handled by the template_include filter in __construct().
-	// Adding rewrite rules for groove_folio/groove_folio_page causes WordPress to see
-	// a CPT archive query (post_type=groove_folio, no 'name'). Since has_archive=false,
-	// WordPress's redirect_canonical fires and bounces the visitor to the home page —
-	// before template_include ever gets a chance to intercept.
-	//
-	// The template_include approach works cleanly without any rewrite rules:
-	// the request naturally 404s in WP's main loop, then the filter swaps in
-	// folio-preview-template.php which does its own draft-safe WP_Query.
+		// NOTE: No custom rewrite rules here by design.
+		//
+		// All /folio/ routing is handled by the template_include filter in __construct().
+		// Adding rewrite rules for groove_folio/groove_folio_page causes WordPress to see
+		// a CPT archive query (post_type=groove_folio, no 'name'). Since has_archive=false,
+		// WordPress's redirect_canonical fires and bounces the visitor to the home page —
+		// before template_include ever gets a chance to intercept.
+		//
+		// The template_include approach works cleanly without any rewrite rules:
+		// the request naturally 404s in WP's main loop, then the filter swaps in
+		// folio-preview-template.php which does its own draft-safe WP_Query.
 	}
 
 	private function register_autoloader()
@@ -212,31 +212,48 @@ class Plugin
 		}, 10, 3);
 
 
-		add_filter('template_include', function ($template) {
-			$url_parts = parse_url($_SERVER['REQUEST_URI']);
-			$current_path = $url_parts['path'];
+		// Run before redirect_canonical (priority 10) to prevent WP from
+		// "helpfully" redirecting 404s (drafts) to the homepage.
+		add_action('template_redirect', function () {
+			$current_path = Utils::get_current_path();
 			$pattern = '/^\/folio\//';
+			$is_query_preview = isset($_GET['groove_preview']) && '1' === (string) wp_unslash($_GET['groove_preview']);
+			$query_folio_id = isset($_GET['folio_id']) ? (int) wp_unslash($_GET['folio_id']) : 0;
+			$query_post_id = isset($_GET['p']) ? (int) wp_unslash($_GET['p']) : 0;
 
-			if (preg_match($pattern, $current_path)) {
+			$is_query_groove_context = false;
+			if ($query_folio_id && get_post_type($query_folio_id) === 'groove_folio') {
+				$is_query_groove_context = true;
+			}
+			if ($query_post_id) {
+				$query_post_type = get_post_type($query_post_id);
+				if (in_array($query_post_type, array('groove_folio', 'groove_folio_page'), true)) {
+					$is_query_groove_context = true;
+				}
+			}
+
+			if ($is_query_preview || $is_query_groove_context || preg_match($pattern, $current_path)) {
 				$plugin_dir = plugin_dir_path(__FILE__);
-				$template = $plugin_dir . 'folio-preview-template.php';
+				require_once $plugin_dir . 'folio-preview-template.php';
+				exit; // Stop WP execution, we've handled the template
 			}
+		}, 5);
 
-			return $template;
-		}, 10, 2);
-
-		add_action('save_post_groove_folio_page', function ($post_id, $post, $update) {
-			// Skip autosaves and new post creation (not updates).
-			if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-				return;
-			}
+			add_action('save_post_groove_folio_page', function ($post_id, $post, $update) {
+				// Skip autosaves and new post creation (not updates).
+				if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id)) {
+					return;
+				}
+				if (!current_user_can('edit_post', $post_id)) {
+					return;
+				}
 
 			// Sync slug to the post title whenever a folio page is saved
 			// via the classic editor (REST-based block editor is handled separately below).
-			if (!empty($_POST['post_title'])) {
-				$title = sanitize_text_field($_POST['post_title']);
-				$new_slug = wp_unique_post_slug(
-					sanitize_title($title),
+				if (isset($_POST['post_title']) && '' !== trim((string) wp_unslash($_POST['post_title']))) {
+					$title = sanitize_text_field(wp_unslash($_POST['post_title']));
+					$new_slug = wp_unique_post_slug(
+						sanitize_title($title),
 					$post_id,
 					$post->post_status,
 					'groove_folio_page',
@@ -273,23 +290,25 @@ class Plugin
 		// but never automatically saved to post meta. Both hooks below handle this:
 		// classic editor via save_post (POST data), block editor via REST (query string).
 
-		add_action('save_post_groove_folio_page', function ($post_id, $post, $update) {
-			// Only care about the very first save (not an update).
-			if ($update) {
-				return;
-			}
-			if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-				return;
-			}
+			add_action('save_post_groove_folio_page', function ($post_id, $post, $update) {
+				// Only care about the very first save (not an update).
+				if ($update) {
+					return;
+				}
+				if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id)) {
+					return;
+				}
+				if (!current_user_can('edit_post', $post_id)) {
+					return;
+				}
 
-			// Classic editor passes folio_id in the URL / POST.
-			$folio_id = 0;
-			if (!empty($_REQUEST['folio_id'])) {
-				$folio_id = (int)$_REQUEST['folio_id'];
-			}
-			elseif (!empty($_POST['folio_id'])) {
-				$folio_id = (int)$_POST['folio_id'];
-			}
+				// Classic editor passes folio_id in the URL / POST.
+				$folio_id = 0;
+				if (!empty($_GET['folio_id'])) {
+					$folio_id = (int) wp_unslash($_GET['folio_id']);
+				} elseif (!empty($_POST['folio_id'])) {
+					$folio_id = (int) wp_unslash($_POST['folio_id']);
+				}
 
 			if ($folio_id && get_post_type($folio_id) === 'groove_folio') {
 				update_post_meta($post_id, 'folio_id', $folio_id);
@@ -297,19 +316,19 @@ class Plugin
 		}, 20, 3);
 
 		// Block editor creates posts via REST — the folio_id comes from the Referer header.
-		add_action('rest_after_insert_groove_folio_page', function ($post, $request) {
-			if (get_post_meta($post->ID, 'folio_id', true)) {
-				return; // Already set — nothing to do.
-			}
+			add_action('rest_after_insert_groove_folio_page', function ($post, $request) {
+				if (get_post_meta($post->ID, 'folio_id', true)) {
+					return; // Already set — nothing to do.
+				}
 
 			// The block editor opens a URL like post-new.php?post_type=groove_folio_page&folio_id=X
 			// The Referer header carries that URL into REST requests.
-			$referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-			if ($referer) {
+				$referer = wp_get_referer();
+				if ($referer) {
 				$query = wp_parse_url($referer, PHP_URL_QUERY);
-				parse_str((string)$query, $params);
+				parse_str((string) $query, $params);
 				if (!empty($params['folio_id'])) {
-					$folio_id = (int)$params['folio_id'];
+					$folio_id = (int) $params['folio_id'];
 					if ($folio_id && get_post_type($folio_id) === 'groove_folio') {
 						update_post_meta($post->ID, 'folio_id', $folio_id);
 					}

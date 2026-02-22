@@ -27,7 +27,7 @@ class Add_New_Menu_Item extends Menu_Item_Page {
 	}
 
 	public function get_capability() {
-		return 'manage_options';
+		return 'edit_posts';
 	}
 
 	

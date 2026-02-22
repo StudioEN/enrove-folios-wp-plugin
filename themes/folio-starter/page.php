@@ -1,14 +1,43 @@
 <?php
-namespace Groove\Themes;
+namespace Groove\Themes\Folio_Starter;
 
+use Groove\Themes\Base_Theme;
 use Groove\Utils\Utils;
 
-class Theme_Page_1 extends Base_Theme
-{
+if (!defined('ABSPATH')) {
+  exit;
+}
 
+class Page extends Base_Theme
+{
   public $folio_id;
   public $folio;
 
+  // ── Abstract method implementations ──────────────────────────────────────
+  // Page themes delegate metadata to the cover class for their theme.
+  // Themes_Manager only calls get_theme_descriptor() on cover classes.
+
+  public static function get_name(): string
+  {
+    return Cover::get_name();
+  }
+
+  protected static function get_thumbnail_filename(): string
+  {
+    return Cover::get_thumbnail_filename();
+  }
+
+  protected static function get_cover_filename(): string
+  {
+    return Cover::get_cover_filename();
+  }
+
+  protected static function get_logo_filename(): string
+  {
+    return Cover::get_logo_filename();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   public function __construct()
   {
@@ -21,7 +50,6 @@ class Theme_Page_1 extends Base_Theme
       $this->folio_id = $meta['folio_id'][0] ?? '';
 
       // Auto-heal missing folio_id: read the parent folio slug from the URL path.
-      // Uses a direct WP_Query — no global-state mutations.
       if (empty($this->folio_id) && $this->id) {
         $path = Utils::get_current_path();
         if (preg_match('/^\/folio\/([^\/]+)\/page\//', $path, $url_matches)) {
@@ -45,7 +73,7 @@ class Theme_Page_1 extends Base_Theme
   {
     $wp_query = $this->get_the_wp_query(array(
       'post__in' => array($this->folio_id),
-      'post_status' => array('publish', 'draft', 'pending'),
+      'post_status' => array('publish', 'draft', 'pending', 'private'),
       'post_type' => 'groove_folio',
     ));
 
@@ -66,12 +94,12 @@ class Theme_Page_1 extends Base_Theme
   function get_html($html)
   {
     $doc = new \DOMDocument();
-    $doc->loadHTML($html);
+    @$doc->loadHTML($html); // suppress charset warnings
 
     $element_names = ['h1', 'h2'];
 
     foreach ($element_names as $element_name) {
-      $element = $doc->getElementsByTagName($element_name)[0];
+      $element = $doc->getElementsByTagName($element_name)->item(0);
       if ($element) {
         return [
           $this->get_html_id($element),
@@ -80,6 +108,8 @@ class Theme_Page_1 extends Base_Theme
         ];
       }
     }
+
+    return null;
   }
 
   function to_anchor_name($string)
@@ -95,7 +125,6 @@ class Theme_Page_1 extends Base_Theme
     return trim(preg_replace('/_{2,}/', '-', $dst), '-');
   }
 
-
   function get_html_id($element)
   {
     $id = $element->getAttribute('id');
@@ -105,7 +134,6 @@ class Theme_Page_1 extends Base_Theme
 
   function display_catalogs()
   {
-    global $wp_embed;
     $blocks = parse_blocks($this->content);
 
     echo '<div class="g-folio__theme-page-catalogs-content">';
@@ -115,20 +143,20 @@ class Theme_Page_1 extends Base_Theme
         $title = $block['innerContent'][0];
 
         $html = $this->get_html($title);
+        if (!$html) {
+          continue;
+        }
         $anchor = $this->to_anchor_name($html[1]);
 
-        echo '<div class="g-folio__theme-page-catalog"><a href="' . ($anchor ? ('#' . $anchor) : '') . '">' . $html[1] . '</a></div>';
+        echo '<div class="g-folio__theme-page-catalog"><a href="' . ($anchor ? ('#' . $anchor) : '') . '">' . esc_html($html[1]) . '</a></div>';
       }
     }
 
     echo '</div>';
   }
 
-
   function get_content()
   {
-    global $wp_embed;
-
     $content = $this->content;
     $blocks = parse_blocks($content);
 
@@ -141,9 +169,8 @@ class Theme_Page_1 extends Base_Theme
         $title = $block['innerContent'][0];
 
         $html = $this->get_html($title);
-        $anchor = $this->to_anchor_name($html[1]);
-
         if ($html) {
+          $anchor = $this->to_anchor_name($html[1]);
           $block['innerContent'][0] = '<' . $html[2] . ' id="' . $anchor . '">' . $html[1] . '</' . $html[2] . '>';
         }
       }
@@ -152,17 +179,6 @@ class Theme_Page_1 extends Base_Theme
     }
 
     return $results;
-
-
-    $content = $wp_embed->autoembed($content);
-    $content = shortcode_unautop($content);
-    $content = do_blocks($content);
-    $content = wptexturize($content);
-    $content = convert_smilies($content);
-    $content = wp_filter_content_tags($content, 'template');
-    $content = str_replace(']]>', ']]&gt;', $content);
-
-    return $content;
   }
 
   function is_first_page()
@@ -178,15 +194,12 @@ class Theme_Page_1 extends Base_Theme
   function get_current_index()
   {
     $index = 0;
-
     foreach ($this->pages as $page) {
       if ($page->ID == $this->id) {
         return $index;
       }
-
       $index++;
     }
-
     return -1;
   }
 
@@ -201,10 +214,12 @@ class Theme_Page_1 extends Base_Theme
 
   function get_next_page()
   {
+    if (empty($this->pages)) {
+      return null;
+    }
     $index = $this->get_current_index();
-
-    if ($index > -1) {
-      return $this->pages[$this->get_current_index() + 1];
+    if ($index > -1 && $index < count($this->pages) - 1) {
+      return $this->pages[$index + 1];
     }
     return null;
   }
@@ -230,65 +245,61 @@ class Theme_Page_1 extends Base_Theme
 <?
   }
 
-  function display_mobile_nav () {
-    global $wp_embed;
+  function display_mobile_nav()
+  {
     $blocks = parse_blocks($this->content);
-    ?>
-      <nav class="g-folio__theme-page-mobile-nav">
-        <div class="g-folio__theme-page-mobile-nav-content">
-          <div class="g-folio__theme-page-mobile-nav-label">JUMP TO...</div>
-          <div class="g-folio__theme-page-mobile-navs">
-            <?
-              foreach ($blocks as $block) {
-                if ($block['blockName'] === 'core/heading') {
-                  $title = $block['innerContent'][0];
-          
-                  $html = $this->get_html($title);
-                  $anchor = $this->to_anchor_name($html[1]);
-                  ?>
-                    <a class="g-folio__theme-page-mobile-nav-item-link" href="<?='#' . $anchor?>">
-<div class="g-folio__theme-page-mobile-nav-item">
-  <?= $html[1]?>
-</div>
-</a>
-<?
-                }
+?>
+    <nav class="g-folio__theme-page-mobile-nav">
+      <div class="g-folio__theme-page-mobile-nav-content">
+        <div class="g-folio__theme-page-mobile-nav-label">JUMP TO...</div>
+        <div class="g-folio__theme-page-mobile-navs">
+          <?
+            foreach ($blocks as $block) {
+              if ($block['blockName'] === 'core/heading') {
+                $title = $block['innerContent'][0];
+                $html = $this->get_html($title);
+                if (!$html) { continue; }
+                $anchor = $this->to_anchor_name($html[1]);
+                ?>
+                  <a class="g-folio__theme-page-mobile-nav-item-link" href="<?= '#' . $anchor?>">
+                    <div class="g-folio__theme-page-mobile-nav-item"><?= esc_html($html[1])?></div>
+                  </a>
+                <?
               }
-            ?>
-          </div>
-          <div class="g-folio__theme-page-mobile-nav-back">↑ Back to top</div>
+            }
+          ?>
         </div>
-      </nav>
-    <?
+        <div class="g-folio__theme-page-mobile-nav-back">↑ Back to top</div>
+      </div>
+    </nav>
+  <?
   }
 
-  function display_nav () {
-  ?>
+  function display_nav()
+  {
+?>
     <nav class="g-folio__theme-page-nav">
       <div class="g-folio__theme-page-nav-content">
         <button class="g-folio__theme-page-nav-close"></button>
-
         <h3 class="g-folio__theme-page-nav-name">
-          <a href="<?= $this->folio ?Utils::get_folio_permalink_by_id($this->folio->ID) : '#'?>">
-<?= esc_html($this->folio->post_title ?? 'Folio')?>
-</a>
-</h3>
-<label class="g-folio__theme-page-nav-label">CONTENTS</label>
-<div class="g-folio__theme-page-navs">
-  <?
+          <a href="<?= $this->folio ? Utils::get_folio_permalink_by_id($this->folio->ID) : '#'?>">
+            <?= esc_html($this->folio->post_title ?? 'Folio')?>
+          </a>
+        </h3>
+        <label class="g-folio__theme-page-nav-label">CONTENTS</label>
+        <div class="g-folio__theme-page-navs">
+          <?
             $index = 1;
             foreach ($this->pages as $page) {
               ?>
                 <a class="g-folio__theme-page-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID)?>">
-  <div class="g-folio__theme-page-nav-item">
-    <i class="g-folio__theme-page-nav-item-order">
-      <?= $index?>
-    </i>
-    <?= $page->post_title?>
-  </div>
-  </a>
-  <?
-              $index = $index + 1;
+                  <div class="g-folio__theme-page-nav-item">
+                    <i class="g-folio__theme-page-nav-item-order"><?= $index?></i>
+                    <?= esc_html($page->post_title)?>
+                  </div>
+                </a>
+              <?
+              $index++;
             }
           ?>
         </div>
@@ -297,10 +308,11 @@ class Theme_Page_1 extends Base_Theme
   <?
   }
 
-  function display_footer () {
+  function display_footer()
+  {
     $prev_page = $this->get_prev_page();
     $next_page = $this->get_next_page();
-  ?>
+?>
     <nav class="g-folio__theme-page-footer">
       <div class="g-folio__theme-page-prev">
         <?
@@ -308,12 +320,12 @@ class Theme_Page_1 extends Base_Theme
           ?>
             <i class="g-folio__theme-page-arrow"></i>
             <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID)?>">
-  <?= $prev_page->post_title?></a>
-  <?
+              <?= esc_html($prev_page->post_title)?></a>
+          <?
           }
         ?>
       </div>
-      
+
       <div class="g-folio__theme-page-powerby">Powered by Groove Folios</div>
 
       <div class="g-folio__theme-page-next">
@@ -321,9 +333,9 @@ class Theme_Page_1 extends Base_Theme
           if ($next_page) {
           ?>
             <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID)?>">
-  <?= $next_page->post_title?></a>
-  <i class="g-folio__theme-page-arrow"></i>
-  <?
+              <?= esc_html($next_page->post_title)?></a>
+            <i class="g-folio__theme-page-arrow"></i>
+          <?
           }
         ?>
       </div>
@@ -331,10 +343,12 @@ class Theme_Page_1 extends Base_Theme
   <?
   }
 
-  function display_theme () {
-    
-    parent::display_theme();
-  ?>
+  function display_theme()
+  {
+    if (!parent::display_theme()) {
+      return;
+    }
+?>
     <div class="g-folio__theme-1-page">
       <? $this->display_navbar() ?>
       <? $this->display_nav() ?>
@@ -342,13 +356,11 @@ class Theme_Page_1 extends Base_Theme
         <div class="g-folio__theme-page-body">
           <div class="g-folio__theme-page-center">
             <div class="g-folio__theme-page-container">
-
-              <h1 class="g-folio__theme-page-title"><?= $this->title?>
-  </h1>
-  <div class="g-folio__theme-page-content">
-    <?= $this->get_content()?>
-  </div>
-  <? $this->display_footer() ?>
+              <h1 class="g-folio__theme-page-title"><?= esc_html($this->title)?></h1>
+              <div class="g-folio__theme-page-content">
+                <?= $this->get_content()?>
+              </div>
+              <? $this->display_footer() ?>
             </div>
             <div class="g-folio__theme-page-sidebar">
               <div class="g-folio__theme-page-catalogs">
@@ -363,5 +375,3 @@ class Theme_Page_1 extends Base_Theme
   <?php
   }
 }
-
-?>
