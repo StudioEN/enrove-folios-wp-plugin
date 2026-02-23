@@ -630,12 +630,16 @@ class All_Folios extends Page
 									),
 									admin_url('admin.php')
 								);
-								$pages_url = $this->get_folio_pages_url($post_id);
-								$page_count = (int) ($page_counts[$post_id] ?? 0);
-								$view_url = Utils::get_folio_permalink_by_id($post_id);
-								if (!$view_url) {
-									$view_url = get_permalink($post_id);
-								}
+									$pages_url = $this->get_folio_pages_url($post_id);
+									$page_count = (int) ($page_counts[$post_id] ?? 0);
+									$view_url = Utils::get_folio_permalink_by_id($post_id);
+									if (!$view_url) {
+										$view_url = get_permalink($post_id);
+									}
+									$is_preview_status = in_array($post_status, array('draft', 'pending', 'future'), true);
+									$preview_url = get_preview_post_link(get_post($post_id));
+									$row_view_url = ($is_preview_status && $preview_url) ? $preview_url : $view_url;
+									$row_view_label = $is_preview_status ? esc_html__('Preview', 'groove') : esc_html__('View', 'groove');
 									$modified_label = sprintf(
 										/* translators: 1: date/time value, 2: user display name */
 										esc_html__('%1$s by %2$s', 'groove'),
@@ -674,11 +678,11 @@ class All_Folios extends Page
 															aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove'); ?></button> |
 													</span>
 													<?php endif; ?>
-												<span class="view">
-													<a href="<?php echo esc_url($view_url); ?>" target="_blank"
-														rel="noopener noreferrer"><?php esc_html_e('View', 'groove'); ?></a> |
-												</span>
-											<?php if ($post_status === 'trash'): ?>
+													<span class="view">
+														<a href="<?php echo esc_url($row_view_url); ?>" target="_blank"
+															rel="noopener noreferrer"><?php echo esc_html($row_view_label); ?></a> |
+													</span>
+												<?php if ($post_status === 'trash'): ?>
 												<span class="untrash">
 													<a
 														href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove'); ?></a>
