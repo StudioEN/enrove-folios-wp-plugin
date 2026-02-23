@@ -2,56 +2,63 @@
 namespace Groove\Contents\FolioPage;
 use Groove\Contents\BaseContent;
 
-class Content extends BaseContent {
+class Content extends BaseContent
+{
 
-  public function get_key() {
+  public function get_key()
+  {
     return 'folio_page';
   }
 
-  public function get_name() {
+  public function get_name()
+  {
     return 'Folio Page';
   }
 
-  public function create_posttype() {
+  public function create_posttype()
+  {
     $labels = array(
-      'name'               => _x( 'Folio Pages', 'post type general name', 'groove' ),
-      'singular_name'      => _x( 'Folio Page', 'post type singular name', 'groove' ),
-      'menu_name'          => _x( 'Folio Pages', 'admin menu', 'groove' ),
-      'all_items'          => __( 'All Folio Pages', 'groove' ),
-      'add_new'            => __( 'Add New', 'groove' ),
-      'add_new_item'       => __( 'Add New Folio Page', 'groove' ),
-      'edit_item'          => __( 'Edit Folio Page', 'groove' ),
-      'new_item'           => __( 'New Folio Page', 'groove' ),
-      'view_item'          => __( 'View Folio Page', 'groove' ),
-      'search_items'       => __( 'Search Folio Pages', 'groove' ),
-      'not_found'          => __( 'No folio pages found', 'groove' ),
-      'not_found_in_trash' => __( 'No folio pages found in trash', 'groove' ),
+      'name' => _x('Folio Pages', 'post type general name', 'groove'),
+      'singular_name' => _x('Folio Page', 'post type singular name', 'groove'),
+      'menu_name' => _x('Folio Pages', 'admin menu', 'groove'),
+      'all_items' => __('All Folio Pages', 'groove'),
+      'add_new' => __('Add New', 'groove'),
+      'add_new_item' => __('Add New Folio Page', 'groove'),
+      'edit_item' => __('Edit Folio Page', 'groove'),
+      'new_item' => __('New Folio Page', 'groove'),
+      'view_item' => __('View Folio Page', 'groove'),
+      'search_items' => __('Search Folio Pages', 'groove'),
+      'not_found' => __('No folio pages found', 'groove'),
+      'not_found_in_trash' => __('No folio pages found in trash', 'groove'),
     );
 
     $args = array(
-      'labels'              => $labels,
-      'public'              => true,
+      'labels' => $labels,
+      'public' => true,
       'exclude_from_search' => true,
-      'publicly_queryable'  => true,
-      'show_ui'             => true,
-      'show_in_rest'        => true,
-      'show_in_menu'        => false,
-      'show_in_nav_menus'   => false,
-      'has_archive'         => false,
+      'publicly_queryable' => true,
+      'show_ui' => true,
+      'show_in_rest' => true,
+      'show_in_menu' => false,
+      'show_in_nav_menus' => false,
+      'has_archive' => false,
       // page-attributes gives us menu_order for drag-and-drop ordering within a folio.
-      'supports'            => array( 'title', 'editor', 'thumbnail', 'custom-fields', 'excerpt', 'page-attributes' ),
+      'supports' => array('title', 'editor', 'thumbnail', 'custom-fields', 'excerpt', 'page-attributes'),
       // Slug was 'folio pages' (with a space) — fixed to 'folio-page'.
-      'rewrite'             => array( 'slug' => 'folio-page', 'with_front' => false ),
-      'capability_type'     => 'post',
-      'map_meta_cap'        => true,
-      'menu_position'       => 1,
+      'rewrite' => array('slug' => 'folio-page', 'with_front' => false),
+      'capability_type' => 'post',
+      'map_meta_cap' => true,
+      'menu_position' => 1,
     );
 
-    register_post_type( 'groove_' . $this->get_key(), $args );
+    register_post_type('groove_' . $this->get_key(), $args);
+
+    register_post_meta('groove_folio_page', 'folio_id', array('show_in_rest' => true, 'single' => true, 'type' => 'integer'));
   }
 
-  public function __construct() {
-    add_action( 'init', [ $this, 'create_posttype' ] );
+  public function __construct()
+  {
+    add_action('init', [$this, 'create_posttype']);
   }
 }
 ?>

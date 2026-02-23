@@ -54,7 +54,7 @@ class Page extends Base_Theme
   {
     $wp_query = $this->get_the_wp_query(array(
       'post__in' => array($this->folio_id),
-      'post_status' => array('publish', 'draft', 'pending', 'private'),
+      'post_status' => Utils::get_viewable_post_statuses(),
       'post_type' => 'groove_folio',
     ));
 

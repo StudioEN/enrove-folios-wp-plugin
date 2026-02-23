@@ -3,6 +3,37 @@ namespace Groove\Utils;
 
 class Utils
 {
+  static function can_preview_unpublished_posts()
+  {
+    return is_admin() || (is_user_logged_in() && current_user_can('edit_posts'));
+  }
+
+  static function get_viewable_post_statuses()
+  {
+    if (Utils::can_preview_unpublished_posts()) {
+      return array('publish', 'draft', 'private', 'pending');
+    }
+
+    return array('publish');
+  }
+
+  static function can_current_request_view_post($post)
+  {
+    if (!$post instanceof \WP_Post) {
+      return false;
+    }
+
+    if ($post->post_status === 'publish') {
+      return true;
+    }
+
+    if (is_admin()) {
+      return true;
+    }
+
+    return is_user_logged_in() && current_user_can('edit_post', $post->ID);
+  }
+
   static function get_folio_base_slug()
   {
     $slug = get_option('groove_folio_base_slug', 'folio');
@@ -223,7 +254,7 @@ class Utils
       'post_type' => $post_type,
       'name' => $post_name,
       'posts_per_page' => 1,
-      'post_status' => array('draft', 'publish', 'private', 'pending'),
+      'post_status' => Utils::get_viewable_post_statuses(),
     ));
 
     $post = $wp_query->post;
@@ -232,10 +263,16 @@ class Utils
     // We synthesize the slug from the title in get_post_slug(), so we must reverse
     // that check here to resolve the draft.
     if (!$post && $post_name) {
+      $allowed_statuses = Utils::get_viewable_post_statuses();
+      $fallback_statuses = array_values(array_diff($allowed_statuses, array('publish')));
+      if (empty($fallback_statuses)) {
+        return null;
+      }
+
       $fallback_query = new \WP_Query(array(
         'post_type' => $post_type,
         'posts_per_page' => -1,
-        'post_status' => array('draft', 'pending', 'private')
+        'post_status' => $fallback_statuses
       ));
       foreach ($fallback_query->posts as $p) {
         if (empty($p->post_name)) {

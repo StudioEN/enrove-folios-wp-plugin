@@ -175,6 +175,15 @@ class Themes_Manager extends Assets
             return null;
         }
 
+        $requested_post = get_post($id);
+        if (
+            !$requested_post ||
+            !\Groove\Utils\Utils::is_groove_post($requested_post) ||
+            !\Groove\Utils\Utils::can_current_request_view_post($requested_post)
+        ) {
+            return null;
+        }
+
         if ($post_type === 'groove_folio_page') {
             $meta = get_post_meta($id);
             $folio_id = $meta['folio_id'][0] ?? null;
@@ -196,6 +205,15 @@ class Themes_Manager extends Assets
         }
 
         if (!$folio_id) {
+            return null;
+        }
+
+        $folio_post = get_post($folio_id);
+        if (
+            !$folio_post ||
+            $folio_post->post_type !== 'groove_folio' ||
+            !\Groove\Utils\Utils::can_current_request_view_post($folio_post)
+        ) {
             return null;
         }
 

@@ -8,6 +8,10 @@ $theme = Themes_Manager::create_theme_for_current_request();
 
 ?>
 <?php if (!$theme): ?>
+<?php
+status_header(404);
+nocache_headers();
+?>
 <!DOCTYPE html>
 <html>
 
