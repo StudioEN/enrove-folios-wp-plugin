@@ -53,23 +53,32 @@ class Overview extends Page
   public function __construct()
   {
     add_action('admin_menu', [$this, 'register_admin_menu'], 20);
+    add_action('admin_head', [$this, 'normalize_menu_icon_spacing']);
+  }
+
+  public function normalize_menu_icon_spacing()
+  {
+    ?>
+<style id="groove-admin-menu-icon-spacing">
+  #adminmenu #toplevel_page_groove-overview .wp-menu-image img {
+    width: 16px;
+    height: 16px;
+    padding: 9px 10px;
+    box-sizing: content-box;
+  }
+</style>
+<?php
   }
 
   public function display_glance()
   {
     // Aggregate all non-trash statuses for each post type.
     $folio_counts = wp_count_posts('groove_folio');
-    $page_counts = wp_count_posts('groove_folio_page');
 
     $folio_total = (int)($folio_counts->publish ?? 0)
       + (int)($folio_counts->draft ?? 0)
       + (int)($folio_counts->private ?? 0)
       + (int)($folio_counts->pending ?? 0);
-
-    $page_total = (int)($page_counts->publish ?? 0)
-      + (int)($page_counts->draft ?? 0)
-      + (int)($page_counts->private ?? 0)
-      + (int)($page_counts->pending ?? 0);
 
     // Collections: post type not yet implemented — show 0.
     $collection_total = 0;
@@ -82,142 +91,121 @@ class Overview extends Page
     }
 
     $folios_url = admin_url('admin.php?page=groove-all-folios');
-    $pages_url = admin_url('admin.php?page=groove-all-folios'); // no standalone page list yet
     $collections_url = '#'; // placeholder until groove_collection is registered
-?>
-<div class="g-folio__glance postbox-container g-folio__postbox">
-  <div class="postbox">
-    <div class="g-folio__fields-header">
-      <h3 class="g-folio__fields-title">
-        <?php esc_html_e('At a glance', 'groove'); ?>
-      </h3>
-    </div>
-    <div class="inside">
-      <div class="g-row_field">
-        <i class="gicon gicon-folio"></i>
-        <label>
-          <a href="<?php echo esc_url($folios_url); ?>">
-            <?php
-    /* translators: %s: number of folios */
-    printf(
-      _n('%s Folio', '%s Folios', $folio_total, 'groove'),
-      '<strong>' . number_format_i18n($folio_total) . '</strong>'
-    );
-?>
-          </a>
-        </label>
-      </div>
-      <div class="g-row_field">
-        <i class="gicon gicon-page"></i>
-        <label>
-          <a href="<?php echo esc_url($pages_url); ?>">
-            <?php
-    /* translators: %s: number of folio pages */
-    printf(
-      _n('%s Page', '%s Pages', $page_total, 'groove'),
-      '<strong>' . number_format_i18n($page_total) . '</strong>'
-    );
-?>
-          </a>
-        </label>
-      </div>
-      <div class="g-row_field">
-        <i class="gicon gicon-collection"></i>
-        <label>
-          <?php if ($collection_total > 0): ?>
-          <a href="<?php echo esc_url($collections_url); ?>">
-            <?php
-    else: ?>
-            <span>
-              <?php
-    endif; ?>
-              <?php
-    /* translators: %s: number of collections */
-    printf(
-      _n('%s Collection', '%s Collections', $collection_total, 'groove'),
-      '<strong>' . number_format_i18n($collection_total) . '</strong>'
-    );
-?>
-              <?php if ($collection_total > 0): ?>
-          </a>
-          <?php
-    else: ?>
-          </span>
-          <?php
-    endif; ?>
-        </label>
-      </div>
-    </div>
-    <div class="g-folio__fields-footer">
-      <a class="g-folio__button g-folio__button-primary"
-        href="<?php echo esc_url(admin_url('admin.php?page=groove-add-new&from=groove-overview')); ?>">
-        <?php esc_html_e('Add New Folio', 'groove'); ?>
-      </a>
-    </div>
+    ?>
+<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('At a Glance', 'groove'); ?></h2>
+    <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=groove-add-new&from=groove-overview')); ?>">
+      <?php esc_html_e('Add New Folio', 'groove'); ?>
+    </a>
   </div>
-</div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <a href="<?php echo esc_url($folios_url); ?>" class="block rounded-lg border border-gray-200 bg-gray-50/50 p-4 hover:bg-gray-100">
+      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide"><?php esc_html_e('Folios', 'groove'); ?></div>
+      <div class="mt-2 text-2xl font-semibold text-gray-900"><?php echo esc_html(number_format_i18n($folio_total)); ?></div>
+      <div class="mt-1 text-xs text-gray-600">
+        <?php
+        /* translators: %s: number of folios */
+        printf(esc_html(_n('%s item', '%s items', $folio_total, 'groove')), esc_html(number_format_i18n($folio_total)));
+        ?>
+      </div>
+    </a>
+
+    <?php if ($collection_total > 0): ?>
+    <a href="<?php echo esc_url($collections_url); ?>" class="block rounded-lg border border-gray-200 bg-gray-50/50 p-4 hover:bg-gray-100">
+      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide"><?php esc_html_e('Collections', 'groove'); ?></div>
+      <div class="mt-2 text-2xl font-semibold text-gray-900"><?php echo esc_html(number_format_i18n($collection_total)); ?></div>
+      <div class="mt-1 text-xs text-gray-600">
+        <?php
+        /* translators: %s: number of collections */
+        printf(esc_html(_n('%s item', '%s items', $collection_total, 'groove')), esc_html(number_format_i18n($collection_total)));
+        ?>
+      </div>
+    </a>
+    <?php else: ?>
+    <div class="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
+      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide"><?php esc_html_e('Collections', 'groove'); ?></div>
+      <div class="mt-2 text-2xl font-semibold text-gray-900">0</div>
+      <div class="mt-1 text-xs text-gray-600"><?php esc_html_e('Coming soon', 'groove'); ?></div>
+    </div>
+    <?php endif; ?>
+  </div>
+</section>
 <?php
   }
 
   public function display_activity()
   {
-?>
-<div class="g-folio__activity postbox-container g-folio__postbox">
-  <div class="postbox">
-    <div class="g-folio__fields-header">
-      <h3 class="g-folio__fields-title">Activity</h3>
-    </div>
-    <div class="inside">
-      <div class="g-row_field">
-        <label>Recently updated</label>
-        <div class="g-folio__activities">
-          <?php
     $recent_posts = get_posts(array(
       'post_type' => 'groove_folio',
       'post_status' => 'any',
-      'posts_per_page' => 3,
+      'posts_per_page' => 5,
       'orderby' => 'modified',
       'order' => 'DESC'
     ));
-
-    if (!empty($recent_posts)) {
-      foreach ($recent_posts as $post) {
-        $date = get_the_modified_date('M jS, g:i a', $post);
-        $link = admin_url('admin.php?page=groove-folio&folio_id=' . $post->ID);
-?>
-          <div class="g-row__activity">
-            <label>
-              <?php echo esc_html($date); ?>
-            </label>
-            <a href="<?php echo esc_url($link); ?>">
-              <?php echo esc_html(get_the_title($post)); ?>
-            </a>
-          </div>
-          <?php
-      }
-    }
-    else {
-      echo '<p>' . esc_html__('No recent activity found.', 'groove') . '</p>';
-    }
-?>
-        </div>
-      </div>
-    </div>
+    ?>
+<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Recent Activity', 'groove'); ?></h2>
+    <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=groove-all-folios')); ?>">
+      <?php esc_html_e('View All Folios', 'groove'); ?>
+    </a>
   </div>
-</div>
+
+  <?php if (!empty($recent_posts)): ?>
+  <div class="overflow-x-auto">
+    <table class="min-w-full border-collapse">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"><?php esc_html_e('Folio', 'groove'); ?></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"><?php esc_html_e('Status', 'groove'); ?></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"><?php esc_html_e('Updated', 'groove'); ?></th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
+        <?php foreach ($recent_posts as $post): ?>
+        <?php
+          $title = get_the_title($post);
+          $title = $title ? $title : esc_html__('(no title)', 'groove');
+          $link = admin_url('admin.php?page=groove-folio&folio_id=' . $post->ID);
+          $status_object = get_post_status_object($post->post_status);
+          $status_label = $status_object ? $status_object->label : ucfirst($post->post_status);
+          ?>
+        <tr class="hover:bg-gray-50/50">
+          <td class="px-4 py-3"><a href="<?php echo esc_url($link); ?>" class="text-indigo-600 hover:text-indigo-500"><?php echo esc_html($title); ?></a></td>
+          <td class="px-4 py-3 text-gray-700"><?php echo esc_html($status_label); ?></td>
+          <td class="px-4 py-3 text-gray-700 whitespace-nowrap"><?php echo esc_html(get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post)); ?></td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+  <?php else: ?>
+  <p class="text-sm text-gray-600"><?php esc_html_e('No recent activity found.', 'groove'); ?></p>
+  <?php endif; ?>
+</section>
 <?php
   }
 
   public function display_content()
   {
-?>
-<div class="g-folio__fields">
-  <div class="g-folio__fields-left g-folio__fields-section">
-    <?php $this->display_glance()?>
+    ?>
+<div class="space-y-6">
+  <div class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
+    <p class="m-0 text-sm text-indigo-900">
+      <?php esc_html_e('Welcome to Groove Folios. Manage your folios, review recent changes, and create new work from here.', 'groove'); ?>
+    </p>
   </div>
 
-  <div class="g-folio__fields-right g-folio__fields-section">
-    <?php $this->display_activity()?>
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="lg:col-span-2">
+      <?php $this->display_glance(); ?>
+    </div>
+    <div>
+      <?php $this->display_activity(); ?>
+    </div>
   </div>
 </div>
 <?php

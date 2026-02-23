@@ -46,17 +46,20 @@ class Folio extends Page
     $this->right_button_items = [
       array(
         'text' => 'Preview',
-        'type' => 'blank',
+        'type' => 'secondary',
+        'ui' => 'wp',
         'link' => Utils::get_folio_permalink_by_id(Utils::get_groove_post_id())
       ),
       array(
         'text' => 'Save Draft',
         'type' => 'secondary',
+        'ui' => 'wp',
         'action' => 'save_groove_folio_draft'
       ),
       array(
         'text' => 'Publish',
-        'type' => 'secondary',
+        'type' => 'primary',
+        'ui' => 'wp',
         'action' => 'save_groove_folio'
       )
     ];
@@ -518,6 +521,7 @@ class Folio extends Page
     $is_allowed_download = $permission == '2';
 
     $permalink = isset($fields->permalink) ? $fields->permalink : '';
+    $base_slug = \Groove\Utils\Utils::get_folio_base_slug();
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
@@ -541,7 +545,7 @@ class Folio extends Page
             (Read-only)</label>
           <div class="mt-1 flex rounded-md shadow-sm">
             <span
-              class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">/folio/</span>
+              class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">/<?php echo esc_html($base_slug); ?>/</span>
             <input disabled type="text" id="permalink" name="permalink" value="<?php echo esc_attr($fields->name) ?>"
               class="block w-full min-w-0 flex-1 rounded-none rounded-r-md border-gray-300 px-3 py-2 bg-gray-100 text-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
           </div>
@@ -591,11 +595,10 @@ class Folio extends Page
             <img id="feature-preview" class="h-32 w-auto object-cover rounded border border-gray-200"
               src="<?= empty($feature_image->guid) ? esc_url($theme_url) : esc_url($feature_image->guid) ?>" />
             <div class="flex flex-col space-y-2">
-              <button type="button" id="feature-image"
-                class="inline-flex items-center rounded border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Replace
+              <button type="button" id="feature-image" class="button button-secondary">Replace
                 image</button>
               <button type="button" data-default-url="<?= esc_url($theme_url) ?>" id="use-default-image"
-                class="inline-flex items-center border border-transparent px-2.5 py-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none">Use
+                class="button-link">Use
                 default</button>
             </div>
           </div>
@@ -659,22 +662,17 @@ class Folio extends Page
 
     $q = $this->parse_query();
     ?>
-    <div class="border-b border-gray-200 bg-white shadow-sm mb-6">
-      <nav class="-mb-px flex space-x-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" aria-label="Tabs">
-        <?php
-        foreach ($tabs as $tab_id => $tab) {
-          $active_class = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300';
-          if ($tab_key === $tab_id) {
-            $active_class = 'border-indigo-500 text-indigo-600';
-          }
-          $q['tab_key'] = $tab_id;
-          $sanitized_tab_label = esc_html($tab['label']);
-          $tab_url = add_query_arg($q, admin_url('admin.php'));
-          echo '<a href="' . esc_url($tab_url) . '" data-tab-id="' . esc_attr($tab_id) . '" class="' . $active_class . ' whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">' . $sanitized_tab_label . '</a>';
-        }
-        ?>
-      </nav>
-    </div>
+    <nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Folio tabs', 'groove'); ?>">
+      <?php
+      foreach ($tabs as $tab_id => $tab) {
+        $active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
+        $q['tab_key'] = $tab_id;
+        $sanitized_tab_label = esc_html($tab['label']);
+        $tab_url = add_query_arg($q, admin_url('admin.php'));
+        echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . $active_class . '">' . $sanitized_tab_label . '</a>';
+      }
+      ?>
+    </nav>
     <?php
   }
 

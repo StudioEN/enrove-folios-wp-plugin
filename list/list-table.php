@@ -247,37 +247,45 @@ class List_Table extends \WP_List_Table {
 
 		$post_type = $this->screen->post_type;
 		$meta_key = 'folio_id';
+		$counts = array_fill_keys( get_post_stati(), 0 );
 
-		if (isset($_REQUEST['folio_id'])) {
-			$meta_value = isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '';
-	
-			$count = $wpdb->get_var(
+		if ( isset( $_REQUEST['folio_id'] ) ) {
+			$meta_value = absint( wp_unslash( $_REQUEST['folio_id'] ) );
+
+			$results = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT COUNT(*) 
-					FROM $wpdb->posts AS p
-					INNER JOIN $wpdb->postmeta AS pm ON p.ID = pm.post_id
-					WHERE p.post_type = %s
-					AND pm.meta_key = %s
-					AND pm.meta_value = %s",
-					$post_type,
-					$meta_key,
-					$meta_value
-				)
-			);
+					"SELECT p.post_status, COUNT(*) AS num_posts
+						FROM $wpdb->posts AS p
+						INNER JOIN $wpdb->postmeta AS pm ON p.ID = pm.post_id
+						WHERE p.post_type = %s
+						AND pm.meta_key = %s
+						AND pm.meta_value = %d
+						GROUP BY p.post_status",
+						$post_type,
+						$meta_key,
+						$meta_value
+					)
+				);
 
-			return $count;
+			foreach ( (array) $results as $result ) {
+				if ( ! isset( $result->post_status ) || ! isset( $result->num_posts ) ) {
+					continue;
+				}
+
+				$counts[ $result->post_status ] = (int) $result->num_posts;
+			}
 		}
 
-		return 0;
+		return $counts;
 	}
 
-  protected function get_views() {
+	protected function get_views() {
 		$post_type = $this->screen->post_type;
-    $avail_post_stati = get_available_post_statuses( $post_type );
+		$avail_post_stati = get_available_post_statuses( $post_type );
 
 		$status_links = array();
-		$num_posts    = $this->count_posts();
-		$total_posts  = array_sum( (array) $num_posts );
+		$num_posts    = (array) $this->count_posts();
+		$total_posts  = array_sum( $num_posts );
 		$class        = '';
 
 		$current_user_id = get_current_user_id();
@@ -291,7 +299,7 @@ class List_Table extends \WP_List_Table {
 
 		// Subtract post types that are not included in the admin all list.
 		foreach ( get_post_stati( array( 'show_in_admin_all_list' => false ) ) as $state ) {
-			$total_posts -= $num_posts->$state;
+			$total_posts -= isset( $num_posts[ $state ] ) ? $num_posts[ $state ] : 0;
 		}
 
 		if ( $this->user_posts_count && $this->user_posts_count !== $total_posts ) {
@@ -353,8 +361,9 @@ class List_Table extends \WP_List_Table {
 			$class = '';
 
 			$status_name = $status->name;
+			$status_count = isset( $num_posts[ $status_name ] ) ? $num_posts[ $status_name ] : 0;
 
-			if ( ! in_array( $status_name, $avail_post_stati, true ) || empty( $num_posts->$status_name ) ) {
+			if ( ! in_array( $status_name, $avail_post_stati, true ) || empty( $status_count ) ) {
 				continue;
 			}
 
@@ -371,8 +380,8 @@ class List_Table extends \WP_List_Table {
 			);
 
 			$status_label = sprintf(
-				translate_nooped_plural( $status->label_count, $num_posts->$status_name ),
-				number_format_i18n( $num_posts->$status_name )
+				translate_nooped_plural( $status->label_count, $status_count ),
+				number_format_i18n( $status_count )
 			);
 
 			$status_links[ $status_name ] = array(
@@ -513,7 +522,7 @@ class List_Table extends \WP_List_Table {
 			$post_counts = (array) wp_count_posts( $post_type, 'readable' );
 
 			if ( isset( $_REQUEST['post_status'] ) && in_array( $_REQUEST['post_status'], $avail_post_stati, true ) ) {
-				$total_items = $post_counts[ $_REQUEST['post_status'] ];
+				$total_items = isset( $post_counts[ $_REQUEST['post_status'] ] ) ? $post_counts[ $_REQUEST['post_status'] ] : 0;
 			} elseif ( isset( $_REQUEST['show_sticky'] ) && $_REQUEST['show_sticky'] ) {
 				$total_items = $this->sticky_posts_count;
 			} elseif ( isset( $_GET['author'] ) && get_current_user_id() === (int) $_GET['author'] ) {
@@ -523,7 +532,7 @@ class List_Table extends \WP_List_Table {
 
 				// Subtract post types that are not included in the admin all list.
 				foreach ( get_post_stati( array( 'show_in_admin_all_list' => false ) ) as $state ) {
-					$total_items -= $post_counts[ $state ];
+					$total_items -= isset( $post_counts[ $state ] ) ? $post_counts[ $state ] : 0;
 				}
 			}
 		}
@@ -590,11 +599,15 @@ class List_Table extends \WP_List_Table {
 	}
 
 	public function inline_edit() {
-		global $mode;
+		global $mode, $post;
 
 		$screen = $this->screen;
 
 		$post             = get_default_post_to_edit( $screen->post_type );
+		if ( ! ( $post instanceof \WP_Post ) ) {
+			$post = get_default_post_to_edit( 'post' );
+		}
+		$GLOBALS['post'] = $post;
 		$post_type_object = get_post_type_object( $screen->post_type );
 
 		$taxonomy_names          = get_object_taxonomies( $screen->post_type );

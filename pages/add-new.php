@@ -36,23 +36,44 @@ class Add_New extends Page
         wp_die(esc_html__('You do not have permission to create folios.', 'groove'));
       }
 
-      $theme_id = isset($_POST['themeId']) ? sanitize_key(wp_unslash($_POST['themeId'])) : '';
       $themes = \Groove\Themes\Themes_Manager::get_all_themes();
+      if (empty($themes)) {
+        wp_die(esc_html__('No themes are available. Install a theme first.', 'groove'));
+      }
+
+      $default_theme_id = (string) get_option('groove_default_theme_id', '');
+      if ($default_theme_id === '' || !isset($themes[$default_theme_id])) {
+        $default_theme_id = (string) array_key_first($themes);
+      }
+
+      $theme_id = isset($_POST['themeId']) ? sanitize_key(wp_unslash($_POST['themeId'])) : $default_theme_id;
       if (empty($theme_id) || !isset($themes[$theme_id])) {
         wp_die(esc_html__('Invalid theme selection.', 'groove'));
       }
-      $title = esc_html__('A new folio', 'groove');
+
+      $default_status = (string) get_option('groove_default_folio_status', 'draft');
+      if (!in_array($default_status, ['draft', 'publish'], true)) {
+        $default_status = 'draft';
+      }
+
+      $title = (string) get_option('groove_default_folio_title', '');
+      if ($title === '') {
+        $title = esc_html__('A new folio', 'groove');
+      }
+
+      $default_allow_download = (int) get_option('groove_default_allow_pdf_download', 1) === 1;
+      $default_permission = $default_allow_download ? '2' : '4';
 
       $fields = array(
         'post_type' => 'groove_folio',
-        'post_status' => 'draft',
+        'post_status' => $default_status,
         'post_title' => $title,
         'post_name' => sanitize_title($title),
         'post_content' => '',
         'meta_input' => array(
           'theme_id' => $theme_id,
           'subtitle' => '',
-          'permission' => '2',
+          'permission' => $default_permission,
           'copyright' => '',
         ),
       );
@@ -83,7 +104,15 @@ class Add_New extends Page
   public function display__themes()
   {
     $themes = \Groove\Themes\Themes_Manager::get_all_themes();
-    $first_theme_id = !empty($themes) ? array_key_first($themes) : '';
+    $first_theme_id = '';
+    if (!empty($themes)) {
+      $saved_default = (string) get_option('groove_default_theme_id', '');
+      if ($saved_default !== '' && isset($themes[$saved_default])) {
+        $first_theme_id = $saved_default;
+      } else {
+        $first_theme_id = (string) array_key_first($themes);
+      }
+    }
 
     if (empty($themes)) {
       echo '<p>' . esc_html__('No themes available. Please install a theme first.', 'groove') . '</p>';
@@ -109,7 +138,7 @@ class Add_New extends Page
   </div>
   <input type="hidden" name="themeId" value="<?php echo esc_attr($first_theme_id)?>" />
   <div class="g-folio__theme-button">
-    <button type="submit" class="g-folio__button g-folio__button-primary">
+    <button type="submit" class="button button-primary">
       <?php echo esc_html__('Continue', 'groove'); ?>
     </button>
   </div>

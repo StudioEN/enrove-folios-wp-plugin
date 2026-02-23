@@ -52,7 +52,9 @@ class Page extends Base_Theme
       // Auto-heal missing folio_id: read the parent folio slug from the URL path.
       if (empty($this->folio_id) && $this->id) {
         $path = Utils::get_current_path();
-        if (preg_match('/^\/folio\/([^\/]+)\/page\//', $path, $url_matches)) {
+        $base_slug = Utils::get_folio_base_slug();
+        $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
+        if (preg_match($pattern, $path, $url_matches)) {
           $folio_slug = $url_matches[1];
           $folio_query = new \WP_Query(array(
             'post_type' => 'groove_folio',

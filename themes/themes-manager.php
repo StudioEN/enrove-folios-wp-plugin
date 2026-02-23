@@ -181,7 +181,9 @@ class Themes_Manager extends Assets
 
             if (!$folio_id) {
                 $current_path = \Groove\Utils\Utils::get_current_path();
-                if (preg_match('/^\/folio\/([^\/]+)\/page\//', $current_path, $matches)) {
+                $base_slug = \Groove\Utils\Utils::get_folio_base_slug();
+                $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
+                if (preg_match($pattern, $current_path, $matches)) {
                     $folio_slug = rtrim($matches[1], '/');
                     $folio_post = \Groove\Utils\Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
                     if ($folio_post) {

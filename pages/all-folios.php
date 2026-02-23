@@ -1,65 +1,827 @@
 <?php
-  namespace Groove\Pages;
-  use Groove\List\Folio_List_Table;
-  use Groove\Pages\Page;
-  use Groove\Pages\Overview;
-  use Groove\Menu\Menu_Manager;
-  use Groove\Menu\All_Folios_Menu_Item;
-  
+namespace Groove\Pages;
 
-  if ( ! defined( 'ABSPATH' ) ) {
-  	exit; // Exit if accessed directly.
-  }
+use Groove\List\Folio_List_Table;
+use Groove\Menu\All_Folios_Menu_Item;
+use Groove\Menu\Menu_Manager;
+use Groove\Pages\Overview;
+use Groove\Pages\Page;
+use Groove\Utils\Utils;
 
+if (!defined('ABSPATH')) {
+	exit; // Exit if accessed directly.
+}
 
-  class All_Folios extends Page {
-    const PAGE_ID = 'groove-all-folios';
-    const POST_TYPE = 'groove_folio';
+class All_Folios extends Page
+{
+	const PAGE_ID = 'groove-all-folios';
+	const POST_TYPE = 'groove_folio';
 
-    public function get_title() {
-      return 'All Folios';
-    }
+	public function get_title()
+	{
+		return 'All Folios';
+	}
 
-    public function create_tabs () {
-      return array();
-    }
+	public function create_tabs()
+	{
+		return array();
+	}
 
-    public function __construct() {
-      $this->left_button_items = [array(
-        'text' => esc_html__( 'Add New', 'groove' ),
-        'type' => 'primary',
-        'link' => admin_url( 'admin.php?page=groove-add-new&from=groove-all-folios' )
-      )];
+	public function __construct()
+	{
+		$this->left_button_items = [
+			array(
+				'text' => esc_html__('Add New', 'groove'),
+				'type' => 'primary',
+				'link' => admin_url('admin.php?page=groove-add-new&from=groove-all-folios')
+			)
+		];
 
-      add_action( 'groove/menu/register', function( Menu_Manager $menu ) {
-				$menu->register( static::PAGE_ID, new All_Folios_Menu_Item($this) );
-			}, Overview::MENU_PRIORITY + 20 );
-    }
+		add_action('groove/menu/register', function (Menu_Manager $menu) {
+			$menu->register(static::PAGE_ID, new All_Folios_Menu_Item($this));
+		}, Overview::MENU_PRIORITY + 20);
+	}
 
-    public function display_content () {
-      $post_type = static::POST_TYPE;
-      $post_type_object = get_post_type_object($post_type);
+	private function get_current_status()
+	{
+		$status = isset($_GET['post_status']) ? sanitize_key(wp_unslash($_GET['post_status'])) : 'all';
+		$allowed_statuses = array('all', 'publish', 'draft', 'pending', 'private', 'trash');
 
-      $table = new Folio_List_Table($this, $post_type);
+		if (!in_array($status, $allowed_statuses, true)) {
+			return 'all';
+		}
 
+		return $status;
+	}
 
-      $table->prepare_items();
-      $table->views();
+	private function get_search_term()
+	{
+		return isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+	}
 
-      if ( $table->has_items() ) {
-        $table->inline_edit();
-      }
-    ?>
-<form id="pages-filter" method="get">
-  <?php $table->search_box($post_type_object->labels->search_items, 'post' ); ?>
+	private function get_current_paged()
+	{
+		return max(1, isset($_GET['paged']) ? (int) $_GET['paged'] : 1);
+	}
 
-  <input type="hidden" name="post_status" class="post_status_page"
-    value="<?php echo ! empty( $_REQUEST['post_status'] ) ? esc_attr( $_REQUEST['post_status'] ) : 'all'; ?>" />
-  <input type="hidden" name="post_type" class="post_type_page" value="<?php echo $post_type; ?>" />
+	private function get_current_orderby()
+	{
+		$orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash($_GET['orderby'])) : 'modified';
+		$allowed_orderby = array('title', 'modified', 'page_count');
 
-  <?php $table->display(); ?>
-</form>
-<?php
-    }
-  }
+		if (!in_array($orderby, $allowed_orderby, true)) {
+			return 'modified';
+		}
+
+		return $orderby;
+	}
+
+	private function get_current_order()
+	{
+		$order = isset($_GET['order']) ? strtoupper(sanitize_key(wp_unslash($_GET['order']))) : 'DESC';
+		return $order === 'ASC' ? 'ASC' : 'DESC';
+	}
+
+	private function get_status_counts()
+	{
+		$counts = wp_count_posts(static::POST_TYPE);
+
+		$publish = (int) ($counts->publish ?? 0);
+		$draft = (int) ($counts->draft ?? 0);
+		$pending = (int) ($counts->pending ?? 0);
+		$private = (int) ($counts->private ?? 0);
+		$future = (int) ($counts->future ?? 0);
+		$trash = (int) ($counts->trash ?? 0);
+
+		return array(
+			'all' => $publish + $draft + $pending + $private + $future,
+			'publish' => $publish,
+			'draft' => $draft,
+			'pending' => $pending,
+			'private' => $private,
+			'trash' => $trash,
+		);
+	}
+
+	private function get_status_label($status)
+	{
+		switch ($status) {
+			case 'publish':
+				return esc_html__('Published', 'groove');
+			case 'draft':
+				return esc_html__('Draft', 'groove');
+			case 'pending':
+				return esc_html__('Pending', 'groove');
+			case 'private':
+				return esc_html__('Private', 'groove');
+			case 'trash':
+				return esc_html__('Trash', 'groove');
+			default:
+				return esc_html__('All', 'groove');
+		}
+	}
+
+	private function build_page_url($args = array())
+	{
+		return add_query_arg(
+			array_merge(
+				array('page' => static::PAGE_ID),
+				$args
+			),
+			admin_url('admin.php')
+		);
+	}
+
+	private function get_folios_query($status, $search, $paged, $orderby, $order, $per_page = 20)
+	{
+		$query_args = array(
+			'post_type' => static::POST_TYPE,
+			'post_status' => $status === 'all' ? array('publish', 'draft', 'pending', 'private', 'future') : $status,
+			'posts_per_page' => $per_page,
+			'paged' => $paged,
+			'orderby' => $orderby,
+			'order' => $order,
+		);
+
+		if ($search !== '') {
+			$query_args['s'] = $search;
+		}
+
+		return new \WP_Query($query_args);
+	}
+
+	private function get_page_counts_for_folio_ids($folio_ids)
+	{
+		global $wpdb;
+
+		$ids = array_values(array_filter(array_map('intval', (array) $folio_ids)));
+		if (empty($ids)) {
+			return array();
+		}
+
+		$placeholders = implode(',', array_fill(0, count($ids), '%d'));
+		$sql = "
+			SELECT
+				pm.meta_value AS folio_id,
+				COUNT(*) AS page_count
+			FROM {$wpdb->posts} p
+			INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+			WHERE p.post_type = %s
+				AND p.post_status IN ('publish','draft','pending','private','future')
+				AND pm.meta_key = %s
+				AND CAST(pm.meta_value AS UNSIGNED) IN ($placeholders)
+			GROUP BY pm.meta_value
+		";
+
+		$params = array_merge(array('groove_folio_page', 'folio_id'), $ids);
+		$prepared_sql = $wpdb->prepare($sql, $params);
+		$rows = $wpdb->get_results($prepared_sql);
+
+		$counts = array_fill_keys($ids, 0);
+		foreach ((array) $rows as $row) {
+			$folio_id = (int) $row->folio_id;
+			$counts[$folio_id] = (int) $row->page_count;
+		}
+
+		return $counts;
+	}
+
+	private function get_folios_results($status, $search, $paged, $orderby, $order)
+	{
+		$per_page = 20;
+
+		if ($orderby !== 'page_count') {
+			$query = $this->get_folios_query($status, $search, $paged, $orderby, $order, $per_page);
+			$posts = $query->posts;
+			$post_ids = wp_list_pluck($posts, 'ID');
+
+			return array(
+				'posts' => $posts,
+				'total_items' => (int) $query->found_posts,
+				'total_pages' => (int) $query->max_num_pages,
+				'page_counts' => $this->get_page_counts_for_folio_ids($post_ids),
+			);
+		}
+
+		$ids_query_args = array(
+			'post_type' => static::POST_TYPE,
+			'post_status' => $status === 'all' ? array('publish', 'draft', 'pending', 'private', 'future') : $status,
+			'posts_per_page' => -1,
+			'fields' => 'ids',
+			'orderby' => 'modified',
+			'order' => 'DESC',
+		);
+		if ($search !== '') {
+			$ids_query_args['s'] = $search;
+		}
+		$ids_query = new \WP_Query($ids_query_args);
+
+		$all_ids = array_map('intval', (array) $ids_query->posts);
+		$page_counts = $this->get_page_counts_for_folio_ids($all_ids);
+
+		usort($all_ids, function ($a, $b) use ($page_counts, $order) {
+			$a_count = (int) ($page_counts[$a] ?? 0);
+			$b_count = (int) ($page_counts[$b] ?? 0);
+
+			if ($a_count === $b_count) {
+				return $a <=> $b;
+			}
+
+			$cmp = $a_count <=> $b_count;
+			return $order === 'ASC' ? $cmp : -$cmp;
+		});
+
+		$total_items = count($all_ids);
+		$total_pages = $total_items > 0 ? (int) ceil($total_items / $per_page) : 0;
+		$offset = ($paged - 1) * $per_page;
+		$current_page_ids = array_slice($all_ids, $offset, $per_page);
+		$posts = array();
+
+		if (!empty($current_page_ids)) {
+			$posts = get_posts(array(
+				'post_type' => static::POST_TYPE,
+				'post_status' => $status === 'all' ? array('publish', 'draft', 'pending', 'private', 'future') : $status,
+				'post__in' => $current_page_ids,
+				'orderby' => 'post__in',
+				'posts_per_page' => $per_page,
+			));
+		}
+
+		return array(
+			'posts' => $posts,
+			'total_items' => $total_items,
+			'total_pages' => $total_pages,
+			'page_counts' => $page_counts,
+		);
+	}
+
+	private function get_sort_url($column, $current_orderby, $current_order, $status, $search)
+	{
+		$next_order = 'ASC';
+		if ($column === $current_orderby && $current_order === 'ASC') {
+			$next_order = 'DESC';
+		}
+
+		return $this->build_page_url(array_filter(array(
+			'post_status' => $status !== 'all' ? $status : null,
+			's' => $search !== '' ? $search : null,
+			'orderby' => $column,
+			'order' => $next_order,
+		), function ($value) {
+			return $value !== null;
+		}));
+	}
+
+	private function get_available_bulk_actions($status)
+	{
+		if ($status === 'trash') {
+			return array(
+				'untrash' => esc_html__('Restore', 'groove'),
+				'delete' => esc_html__('Delete Permanently', 'groove'),
+			);
+		}
+
+		return array(
+			'trash' => esc_html__('Move to Trash', 'groove'),
+		);
+	}
+
+	private function get_current_bulk_action()
+	{
+		$action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '-1';
+		$action2 = isset($_REQUEST['action2']) ? sanitize_key(wp_unslash($_REQUEST['action2'])) : '-1';
+
+		if ($action !== '-1') {
+			return $action;
+		}
+		if ($action2 !== '-1') {
+			return $action2;
+		}
+
+		return false;
+	}
+
+	private function process_bulk_action($status, $search, $orderby, $order, $paged)
+	{
+		$action = $this->get_current_bulk_action();
+		if (!$action) {
+			return;
+		}
+
+		$available_actions = $this->get_available_bulk_actions($status);
+		if (!isset($available_actions[$action])) {
+			return;
+		}
+
+		check_admin_referer('groove_bulk_folios_action', '_groove_bulk_nonce');
+
+		$post_ids = isset($_REQUEST['post']) ? (array) wp_unslash($_REQUEST['post']) : array();
+		$post_ids = array_values(array_filter(array_map('intval', $post_ids)));
+		if (empty($post_ids)) {
+			return;
+		}
+
+		$updated_count = 0;
+		foreach ($post_ids as $post_id) {
+			if (get_post_type($post_id) !== static::POST_TYPE) {
+				continue;
+			}
+			if (!current_user_can('delete_post', $post_id)) {
+				continue;
+			}
+
+			switch ($action) {
+				case 'trash':
+					if (wp_trash_post($post_id)) {
+						$updated_count++;
+					}
+					break;
+				case 'untrash':
+					if (wp_untrash_post($post_id)) {
+						$updated_count++;
+					}
+					break;
+				case 'delete':
+					if (wp_delete_post($post_id, true)) {
+						$updated_count++;
+					}
+					break;
+			}
+		}
+
+		$redirect_args = array_filter(array(
+			'post_status' => $status !== 'all' ? $status : null,
+			's' => $search !== '' ? $search : null,
+			'orderby' => $orderby !== 'modified' ? $orderby : null,
+			'order' => $order !== 'DESC' ? $order : null,
+			'paged' => $paged > 1 ? $paged : null,
+			'bulk_action' => $action,
+			'bulk_count' => $updated_count,
+		), function ($value) {
+			return $value !== null;
+		});
+
+		wp_safe_redirect($this->build_page_url($redirect_args));
+		exit;
+	}
+
+	private function display_bulk_notice()
+	{
+		if (!isset($_GET['bulk_action']) || !isset($_GET['bulk_count'])) {
+			return;
+		}
+
+		$action = sanitize_key(wp_unslash($_GET['bulk_action']));
+		$count = (int) wp_unslash($_GET['bulk_count']);
+		if ($count < 1) {
+			return;
+		}
+
+		$message = '';
+		switch ($action) {
+			case 'trash':
+				$message = sprintf(
+					/* translators: %s: number of folios moved to trash */
+					esc_html(_n('%s folio moved to Trash.', '%s folios moved to Trash.', $count, 'groove')),
+					esc_html(number_format_i18n($count))
+				);
+				break;
+			case 'untrash':
+				$message = sprintf(
+					/* translators: %s: number of folios restored */
+					esc_html(_n('%s folio restored.', '%s folios restored.', $count, 'groove')),
+					esc_html(number_format_i18n($count))
+				);
+				break;
+			case 'delete':
+				$message = sprintf(
+					/* translators: %s: number of folios deleted */
+					esc_html(_n('%s folio deleted permanently.', '%s folios deleted permanently.', $count, 'groove')),
+					esc_html(number_format_i18n($count))
+				);
+				break;
+		}
+
+		if ($message === '') {
+			return;
+		}
+		?>
+		<div class="notice notice-success is-dismissible">
+			<p><?php echo esc_html($message); ?></p>
+		</div>
+		<?php
+	}
+
+	private function get_folio_pages_url($folio_id)
+	{
+		return add_query_arg(
+			array(
+				'page' => 'groove-folio',
+				'folio_id' => (int) $folio_id,
+			),
+			admin_url('admin.php')
+		);
+	}
+
+	private function get_post_status_display_label($post_status)
+	{
+		$status_object = get_post_status_object($post_status);
+		if ($status_object && !empty($status_object->label)) {
+			return (string) $status_object->label;
+		}
+
+		return ucfirst((string) $post_status);
+	}
+
+	private function get_last_modified_by($post_id)
+	{
+		$last_editor_id = (int) get_post_meta($post_id, '_edit_last', true);
+		if ($last_editor_id > 0) {
+			$user = get_userdata($last_editor_id);
+			if ($user) {
+				return $user->display_name;
+			}
+		}
+
+		$author = get_userdata((int) get_post_field('post_author', $post_id));
+		return $author ? $author->display_name : esc_html__('Unknown user', 'groove');
+	}
+
+	public function display_content()
+	{
+		$status = $this->get_current_status();
+		$search = $this->get_search_term();
+		$paged = $this->get_current_paged();
+		$orderby = $this->get_current_orderby();
+		$order = $this->get_current_order();
+		$this->process_bulk_action($status, $search, $orderby, $order, $paged);
+		$status_counts = $this->get_status_counts();
+		$bulk_actions = $this->get_available_bulk_actions($status);
+		$results = $this->get_folios_results($status, $search, $paged, $orderby, $order);
+		$quick_edit_table = new Folio_List_Table($this, static::POST_TYPE);
+		$posts = (array) $results['posts'];
+		$page_counts = (array) $results['page_counts'];
+		$total_items = (int) $results['total_items'];
+		$total_pages = (int) $results['total_pages'];
+		?>
+		<div class="wrap">
+			<?php $this->display_bulk_notice(); ?>
+			<form id="posts-filter" method="get">
+				<input type="hidden" name="page" value="<?php echo esc_attr(static::PAGE_ID); ?>" />
+				<input type="hidden" name="post_status" value="<?php echo esc_attr($status); ?>" />
+				<input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>" />
+				<input type="hidden" name="order" value="<?php echo esc_attr($order); ?>" />
+				<?php wp_nonce_field('groove_bulk_folios_action', '_groove_bulk_nonce'); ?>
+
+				<ul class="subsubsub">
+					<?php
+					$total_statuses = count($status_counts);
+					$status_index = 0;
+					foreach ($status_counts as $status_key => $count) {
+						$status_index++;
+						$is_active = $status_key === $status;
+						$status_url = $this->build_page_url(array_filter(array(
+							'post_status' => $status_key,
+							's' => $search !== '' ? $search : null,
+							'orderby' => $orderby !== 'modified' ? $orderby : null,
+							'order' => $order !== 'DESC' ? $order : null,
+						), function ($value) {
+							return $value !== null;
+						}));
+						?>
+						<li class="<?php echo esc_attr($status_key); ?>">
+							<a href="<?php echo esc_url($status_url); ?>"
+								class="<?php echo esc_attr($is_active ? 'current' : ''); ?>">
+								<?php echo esc_html($this->get_status_label($status_key)); ?>
+								<span class="count">(<?php echo esc_html(number_format_i18n($count)); ?>)</span>
+							</a>
+							<?php if ($status_index < $total_statuses): ?>
+								|
+							<?php endif; ?>
+						</li>
+						<?php
+					}
+					?>
+				</ul>
+
+				<p class="search-box">
+					<label class="screen-reader-text"
+						for="post-search-input"><?php esc_html_e('Search folios', 'groove'); ?>:</label>
+					<input type="search" id="post-search-input" name="s" value="<?php echo esc_attr($search); ?>" />
+					<input type="submit" id="search-submit" class="button"
+						value="<?php esc_attr_e('Search Folios', 'groove'); ?>" />
+				</p>
+
+				<div class="tablenav top">
+					<div class="alignleft actions bulkactions">
+						<label for="bulk-action-selector-top"
+							class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove'); ?></label>
+						<select name="action" id="bulk-action-selector-top">
+							<option value="-1"><?php esc_html_e('Bulk actions', 'groove'); ?></option>
+							<?php foreach ($bulk_actions as $action_key => $action_label): ?>
+								<option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<input type="submit" id="doaction" class="button action" value="<?php esc_attr_e('Apply', 'groove'); ?>" />
+					</div>
+					<div class="tablenav-pages">
+						<?php if ($total_pages > 1): ?>
+							<?php
+							$base_url = $this->build_page_url(array_filter(array(
+								'post_status' => $status !== 'all' ? $status : null,
+								's' => $search !== '' ? $search : null,
+								'orderby' => $orderby !== 'modified' ? $orderby : null,
+								'order' => $order !== 'DESC' ? $order : null,
+								'paged' => '%#%',
+							), function ($value) {
+								return $value !== null;
+							}));
+							$pagination_links = paginate_links(array(
+								'base' => $base_url,
+								'format' => '',
+								'current' => $paged,
+								'total' => $total_pages,
+								'type' => 'array',
+								'prev_text' => '&lsaquo;',
+								'next_text' => '&rsaquo;',
+							));
+							?>
+							<span class="displaying-num">
+								<?php
+								printf(
+									/* translators: %s: number of items */
+									esc_html(_n('%s item', '%s items', $total_items, 'groove')),
+									esc_html(number_format_i18n($total_items))
+								);
+								?>
+							</span>
+							<span class="pagination-links">
+								<?php echo wp_kses_post(implode(' ', (array) $pagination_links)); ?>
+							</span>
+						<?php else: ?>
+							<span class="displaying-num">
+								<?php
+								printf(
+									/* translators: %s: number of items */
+									esc_html(_n('%s item', '%s items', $total_items, 'groove')),
+									esc_html(number_format_i18n($total_items))
+								);
+								?>
+							</span>
+						<?php endif; ?>
+					</div>
+					<br class="clear" />
+				</div>
+
+				<table class="wp-list-table widefat striped table-view-list posts">
+					<thead>
+						<tr>
+							<th scope="col" id="cb" class="manage-column column-cb check-column">
+								<label class="screen-reader-text"
+									for="cb-select-all-1"><?php esc_html_e('Select all folios', 'groove'); ?></label>
+								<input id="cb-select-all-1" type="checkbox" />
+							</th>
+							<th scope="col"
+								class="manage-column column-primary <?php echo esc_attr($orderby === 'title' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
+								<a href="<?php echo esc_url($this->get_sort_url('title', $orderby, $order, $status, $search)); ?>">
+									<span><?php esc_html_e('Folio Name', 'groove'); ?></span>
+									<span class="sorting-indicators"><span class="sorting-indicator asc"
+											aria-hidden="true"></span><span class="sorting-indicator desc"
+											aria-hidden="true"></span></span>
+								</a>
+							</th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Folio ID', 'groove'); ?></th>
+							<th scope="col"
+								class="manage-column <?php echo esc_attr($orderby === 'page_count' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
+								<a
+									href="<?php echo esc_url($this->get_sort_url('page_count', $orderby, $order, $status, $search)); ?>">
+									<span><?php esc_html_e('Page Count', 'groove'); ?></span>
+									<span class="sorting-indicators"><span class="sorting-indicator asc"
+											aria-hidden="true"></span><span class="sorting-indicator desc"
+											aria-hidden="true"></span></span>
+								</a>
+							</th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove'); ?></th>
+							<th scope="col"
+								class="manage-column <?php echo esc_attr($orderby === 'modified' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
+								<a
+									href="<?php echo esc_url($this->get_sort_url('modified', $orderby, $order, $status, $search)); ?>">
+									<span><?php esc_html_e('Last Updated', 'groove'); ?></span>
+									<span class="sorting-indicators"><span class="sorting-indicator asc"
+											aria-hidden="true"></span><span class="sorting-indicator desc"
+											aria-hidden="true"></span></span>
+								</a>
+							</th>
+						</tr>
+					</thead>
+					<tbody id="the-list">
+						<?php if (!empty($posts)): ?>
+							<?php foreach ($posts as $post): ?>
+								<?php
+								$post_id = (int) $post->ID;
+								$post_status = (string) get_post_status($post_id);
+								$title = get_the_title($post_id);
+								$theme_id = (string) get_post_meta($post_id, 'theme_id', true);
+								$edit_url = add_query_arg(
+									array(
+										'page' => 'groove-folio',
+										'folio_id' => (int) $post_id,
+										'theme_id' => sanitize_key($theme_id),
+									),
+									admin_url('admin.php')
+								);
+								$pages_url = $this->get_folio_pages_url($post_id);
+								$page_count = (int) ($page_counts[$post_id] ?? 0);
+								$view_url = Utils::get_folio_permalink_by_id($post_id);
+								if (!$view_url) {
+									$view_url = get_permalink($post_id);
+								}
+									$modified_label = sprintf(
+										/* translators: 1: date/time value, 2: user display name */
+										esc_html__('%1$s by %2$s', 'groove'),
+										get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post_id),
+										$this->get_last_modified_by($post_id)
+									);
+									$quick_edit_title = $title !== '' ? $title : esc_html__('(no title)', 'groove');
+									$quick_edit_aria_label = sprintf(
+										/* translators: %s: Folio title. */
+										esc_attr__('Quick edit "%s" inline', 'groove'),
+										wp_strip_all_tags($quick_edit_title)
+									);
+									?>
+								<tr id="post-<?php echo esc_attr((string) $post_id); ?>">
+									<th scope="row" class="check-column">
+										<label class="screen-reader-text"
+											for="cb-select-<?php echo esc_attr((string) $post_id); ?>"><?php esc_html_e('Select folio', 'groove'); ?></label>
+										<input id="cb-select-<?php echo esc_attr((string) $post_id); ?>" type="checkbox" name="post[]"
+											value="<?php echo esc_attr((string) $post_id); ?>" />
+									</th>
+									<td class="title column-title has-row-actions column-primary page-title"
+										data-colname="<?php esc_attr_e('Folio Name', 'groove'); ?>">
+										<strong>
+											<a class="row-title" href="<?php echo esc_url($edit_url); ?>">
+												<?php echo esc_html($title !== '' ? $title : esc_html__('(no title)', 'groove')); ?>
+											</a>
+										</strong>
+											<div class="row-actions">
+												<span class="edit">
+													<a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove'); ?></a> |
+												</span>
+													<?php if ($post_status !== 'trash'): ?>
+													<span class="inline hide-if-no-js">
+														<button type="button" class="button-link editinline"
+															aria-label="<?php echo esc_attr($quick_edit_aria_label); ?>"
+															aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove'); ?></button> |
+													</span>
+													<?php endif; ?>
+												<span class="view">
+													<a href="<?php echo esc_url($view_url); ?>" target="_blank"
+														rel="noopener noreferrer"><?php esc_html_e('View', 'groove'); ?></a> |
+												</span>
+											<?php if ($post_status === 'trash'): ?>
+												<span class="untrash">
+													<a
+														href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove'); ?></a>
+													|
+												</span>
+												<span class="delete">
+													<a class="submitdelete"
+														href="<?php echo esc_url(get_delete_post_link($post_id, '', true)); ?>"><?php esc_html_e('Delete Permanently', 'groove'); ?></a>
+												</span>
+											<?php else: ?>
+												<span class="trash">
+													<a class="submitdelete"
+														href="<?php echo esc_url(get_delete_post_link($post_id)); ?>"><?php esc_html_e('Trash', 'groove'); ?></a>
+												</span>
+												<?php endif; ?>
+											</div>
+											<?php
+											if (function_exists('get_inline_data')) {
+												get_inline_data(get_post($post_id));
+											}
+											?>
+											<button type="button" class="toggle-row"><span
+													class="screen-reader-text"><?php esc_html_e('Show more details', 'groove'); ?></span></button>
+										</td>
+									<td data-colname="<?php esc_attr_e('Folio ID', 'groove'); ?>">
+										<?php echo esc_html((string) $post_id); ?>
+									</td>
+									<td data-colname="<?php esc_attr_e('Page Count', 'groove'); ?>">
+										<a href="<?php echo esc_url($pages_url); ?>">
+											<?php echo esc_html(number_format_i18n($page_count)); ?>
+										</a>
+									</td>
+									<td data-colname="<?php esc_attr_e('Publish Status', 'groove'); ?>">
+										<?php echo esc_html($this->get_post_status_display_label($post_status)); ?>
+									</td>
+									<td data-colname="<?php esc_attr_e('Last Updated', 'groove'); ?>">
+										<?php echo esc_html($modified_label); ?>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						<?php else: ?>
+							<tr class="no-items">
+								<td class="colspanchange" colspan="6">
+									<?php esc_html_e('No folios found for the current filters.', 'groove'); ?></td>
+							</tr>
+						<?php endif; ?>
+					</tbody>
+					<tfoot>
+						<tr>
+							<td class="manage-column column-cb check-column">
+								<label class="screen-reader-text"
+									for="cb-select-all-2"><?php esc_html_e('Select all folios', 'groove'); ?></label>
+								<input id="cb-select-all-2" type="checkbox" />
+							</td>
+							<th scope="col" class="manage-column column-primary"><?php esc_html_e('Folio Name', 'groove'); ?>
+							</th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Folio ID', 'groove'); ?></th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Page Count', 'groove'); ?></th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove'); ?></th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Last Updated', 'groove'); ?></th>
+						</tr>
+					</tfoot>
+				</table>
+				<?php if (!empty($posts)): ?>
+					<?php
+					$quick_edit_post = get_post((int) $posts[0]->ID);
+					if ($quick_edit_post instanceof \WP_Post) {
+						setup_postdata($quick_edit_post);
+					}
+					$quick_edit_table->inline_edit();
+					if ($quick_edit_post instanceof \WP_Post) {
+						wp_reset_postdata();
+					}
+					?>
+				<?php endif; ?>
+
+				<?php if ($total_pages > 1): ?>
+					<div class="tablenav bottom">
+						<div class="alignleft actions bulkactions">
+							<label for="bulk-action-selector-bottom"
+								class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove'); ?></label>
+							<select name="action2" id="bulk-action-selector-bottom">
+								<option value="-1"><?php esc_html_e('Bulk actions', 'groove'); ?></option>
+								<?php foreach ($bulk_actions as $action_key => $action_label): ?>
+									<option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
+								<?php endforeach; ?>
+							</select>
+							<input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove'); ?>" />
+						</div>
+						<div class="tablenav-pages">
+							<span class="displaying-num">
+								<?php
+								printf(
+									/* translators: %s: number of items */
+									esc_html(_n('%s item', '%s items', $total_items, 'groove')),
+									esc_html(number_format_i18n($total_items))
+								);
+								?>
+							</span>
+							<?php
+							$bottom_base_url = $this->build_page_url(array_filter(array(
+								'post_status' => $status !== 'all' ? $status : null,
+								's' => $search !== '' ? $search : null,
+								'orderby' => $orderby !== 'modified' ? $orderby : null,
+								'order' => $order !== 'DESC' ? $order : null,
+								'paged' => '%#%',
+							), function ($value) {
+								return $value !== null;
+							}));
+							echo wp_kses_post(
+								paginate_links(array(
+									'base' => $bottom_base_url,
+									'format' => '',
+									'current' => $paged,
+									'total' => $total_pages,
+									'type' => 'plain',
+									'prev_text' => '&lsaquo;',
+									'next_text' => '&rsaquo;',
+								))
+							);
+							?>
+						</div>
+						<br class="clear" />
+					</div>
+				<?php else: ?>
+					<div class="tablenav bottom">
+						<div class="alignleft actions bulkactions">
+							<label for="bulk-action-selector-bottom"
+								class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove'); ?></label>
+							<select name="action2" id="bulk-action-selector-bottom">
+								<option value="-1"><?php esc_html_e('Bulk actions', 'groove'); ?></option>
+								<?php foreach ($bulk_actions as $action_key => $action_label): ?>
+									<option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
+								<?php endforeach; ?>
+							</select>
+							<input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove'); ?>" />
+						</div>
+						<br class="clear" />
+					</div>
+				<?php endif; ?>
+			</form>
+		</div>
+		<?php
+	}
+}
 ?>

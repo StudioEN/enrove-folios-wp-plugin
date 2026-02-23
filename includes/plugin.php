@@ -216,7 +216,8 @@ class Plugin
 		// "helpfully" redirecting 404s (drafts) to the homepage.
 		add_action('template_redirect', function () {
 			$current_path = Utils::get_current_path();
-			$pattern = '/^\/folio\//';
+			$base_slug = Utils::get_folio_base_slug();
+			$pattern = '#^/' . preg_quote($base_slug, '#') . '/#';
 			$is_query_preview = isset($_GET['groove_preview']) && '1' === (string) wp_unslash($_GET['groove_preview']);
 			$query_folio_id = isset($_GET['folio_id']) ? (int) wp_unslash($_GET['folio_id']) : 0;
 			$query_post_id = isset($_GET['p']) ? (int) wp_unslash($_GET['p']) : 0;

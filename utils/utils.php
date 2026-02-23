@@ -3,6 +3,14 @@ namespace Groove\Utils;
 
 class Utils
 {
+  static function get_folio_base_slug()
+  {
+    $slug = get_option('groove_folio_base_slug', 'folio');
+    $slug = sanitize_title($slug);
+
+    return $slug !== '' ? $slug : 'folio';
+  }
+
   static function get_folio_id()
   {
     return Utils::get_groove_post_id();
@@ -82,6 +90,7 @@ class Utils
   {
     if (Utils::is_groove_post($post)) {
       $title = Utils::get_post_slug($post);
+      $base_slug = Utils::get_folio_base_slug();
       $pretty_permalinks_enabled = (bool) get_option('permalink_structure');
 
       if (!$pretty_permalinks_enabled) {
@@ -100,10 +109,10 @@ class Utils
       }
 
       if (Utils::is_groove_folio_post($post)) {
-        return home_url('folio/' . ($prefix ? $prefix . '/' : '') . $title);
+        return home_url($base_slug . '/' . ($prefix ? $prefix . '/' : '') . $title);
       }
 
-      return home_url('folio/' . ($prefix ? $prefix . '/' : '') . (Utils::is_groove_folio_page_post($post) ? 'page/' : '') . $title);
+      return home_url($base_slug . '/' . ($prefix ? $prefix . '/' : '') . (Utils::is_groove_folio_page_post($post) ? 'page/' : '') . $title);
     }
 
     return null;
@@ -128,7 +137,8 @@ class Utils
   static function is_groove_post_name_url()
   {
     $current_path = Utils::get_current_path();
-    $result = preg_match('/^\/folio\//', $current_path);
+    $base_slug = Utils::get_folio_base_slug();
+    $result = preg_match('#^/' . preg_quote($base_slug, '#') . '/#', $current_path);
 
     return $result;
   }
@@ -136,7 +146,8 @@ class Utils
   static function get_groove_post_type()
   {
     $current_path = Utils::get_current_path();
-    $pattern = '/^\/folio\/.+\/page\//';
+    $base_slug = Utils::get_folio_base_slug();
+    $pattern = '#^/' . preg_quote($base_slug, '#') . '/.+/page/#';
 
 
     if (Utils::is_groove_post_name_url()) {
@@ -178,11 +189,13 @@ class Utils
   {
     $current_path = Utils::get_current_path();
     $post_type = Utils::get_groove_post_type();
+    $base_slug = Utils::get_folio_base_slug();
+    $base_prefix = '/' . $base_slug . '/';
 
     if ($post_type == 'groove_folio') {
       $post_type = 'groove_folio';
-      $substring = strstr($current_path, '/folio/');
-      $post_name = substr($substring, strlen('/folio/'));
+      $substring = strstr($current_path, $base_prefix);
+      $post_name = substr($substring, strlen($base_prefix));
       return rtrim($post_name, '/');
     }
     else {

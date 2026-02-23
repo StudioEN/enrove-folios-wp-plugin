@@ -110,6 +110,9 @@ class Themes extends Page {
 	public function display_content() {
 		$all_themes       = Themes_Manager::get_all_themes();
 		$installed_ids    = array_keys( Themes_Manager::get_installed_themes_meta() );
+		$total_themes     = count( $all_themes );
+		$installed_count  = count( $installed_ids );
+		$builtin_count    = max( 0, $total_themes - $installed_count );
 		$notice_type      = isset( $_GET['groove_notice'] ) ? sanitize_key( $_GET['groove_notice'] ) : '';
 		$notice_value     = isset( $_GET['groove_value'] ) ? sanitize_text_field( urldecode( $_GET['groove_value'] ) ) : '';
 		?>
@@ -117,13 +120,27 @@ class Themes extends Page {
 
 			<?php $this->display_notice( $notice_type, $notice_value ); ?>
 
-			<!-- ── Installed Themes ───────────────────────────────── -->
+			<div class="g-themes-summary-grid">
+				<div class="g-themes-summary-card">
+					<div class="g-themes-summary-label"><?php esc_html_e( 'Total themes', 'groove' ); ?></div>
+					<div class="g-themes-summary-value"><?php echo esc_html( number_format_i18n( $total_themes ) ); ?></div>
+				</div>
+				<div class="g-themes-summary-card">
+					<div class="g-themes-summary-label"><?php esc_html_e( 'Installed packages', 'groove' ); ?></div>
+					<div class="g-themes-summary-value"><?php echo esc_html( number_format_i18n( $installed_count ) ); ?></div>
+				</div>
+				<div class="g-themes-summary-card">
+					<div class="g-themes-summary-label"><?php esc_html_e( 'Built-in themes', 'groove' ); ?></div>
+					<div class="g-themes-summary-value"><?php echo esc_html( number_format_i18n( $builtin_count ) ); ?></div>
+				</div>
+			</div>
+
 			<div class="g-themes-section">
 				<div class="g-themes-section-header">
-					<h2 class="g-themes-section-title">
-						<?php esc_html_e( 'Available Themes', 'groove' ); ?>
-						<span class="g-themes-count"><?php echo count( $all_themes ); ?></span>
-					</h2>
+					<h2 class="g-themes-section-title"><?php esc_html_e( 'Available Themes', 'groove' ); ?></h2>
+					<p class="g-themes-section-desc">
+						<?php esc_html_e( 'These themes are available for new and existing folios.', 'groove' ); ?>
+					</p>
 				</div>
 
 				<?php if ( empty( $all_themes ) ) : ?>
@@ -138,7 +155,11 @@ class Themes extends Page {
 							$tag_class = $is_installed ? 'g-themes-tag--installed' : 'g-themes-tag--builtin';
 						?>
 							<div class="g-themes-card">
-								<div class="g-themes-card-thumb" style="background-image: url('<?php echo esc_url( $theme['thumbnail_url'] ); ?>')"></div>
+								<div class="g-themes-card-thumb">
+									<img
+										src="<?php echo esc_url( $theme['thumbnail_url'] ); ?>"
+										alt="<?php echo esc_attr( $theme['name'] ); ?>" />
+								</div>
 								<div class="g-themes-card-body">
 									<div class="g-themes-card-meta">
 										<span class="g-themes-card-name"><?php echo esc_html( $theme['name'] ); ?></span>
@@ -150,7 +171,7 @@ class Themes extends Page {
 											<?php wp_nonce_field( 'groove_uninstall_theme' ); ?>
 											<input type="hidden" name="action" value="groove_uninstall_theme" />
 											<input type="hidden" name="theme_id" value="<?php echo esc_attr( $id ); ?>" />
-											<button type="submit" class="g-themes-delete-btn"
+											<button type="submit" class="button button-secondary g-themes-delete-btn"
 												onclick="return confirm('<?php esc_attr_e( 'Delete this theme? This cannot be undone.', 'groove' ); ?>')">
 												<?php esc_html_e( 'Remove', 'groove' ); ?>
 											</button>
@@ -163,7 +184,6 @@ class Themes extends Page {
 				<?php endif; ?>
 			</div>
 
-			<!-- ── Upload a Theme Package ─────────────────────────── -->
 			<div class="g-themes-section g-themes-upload-section">
 				<div class="g-themes-section-header">
 					<h2 class="g-themes-section-title"><?php esc_html_e( 'Install a Theme', 'groove' ); ?></h2>
@@ -172,55 +192,56 @@ class Themes extends Page {
 					</p>
 				</div>
 
-				<form
-					method="post"
-					action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
-					enctype="multipart/form-data"
-					class="g-themes-upload-form"
-					id="groove-theme-upload-form"
-				>
-					<?php wp_nonce_field( 'groove_install_theme' ); ?>
-					<input type="hidden" name="action" value="groove_install_theme" />
+				<div class="g-themes-upload-grid">
+					<form
+						method="post"
+						action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+						enctype="multipart/form-data"
+						class="g-themes-upload-form"
+						id="groove-theme-upload-form"
+					>
+						<?php wp_nonce_field( 'groove_install_theme' ); ?>
+						<input type="hidden" name="action" value="groove_install_theme" />
 
-					<div class="g-themes-dropzone" id="groove-theme-dropzone">
-						<div class="g-themes-dropzone-icon">📦</div>
-						<p class="g-themes-dropzone-label">
-							<?php esc_html_e( 'Drag & drop your theme .zip here', 'groove' ); ?>
-						</p>
-						<p class="g-themes-dropzone-sub">
-							<?php esc_html_e( 'or', 'groove' ); ?>
-						</p>
-						<label for="theme_zip" class="g-folio__button g-folio__button-primary g-themes-file-label">
-							<?php esc_html_e( 'Choose File', 'groove' ); ?>
-						</label>
-						<input
-							type="file"
-							name="theme_zip"
-							id="theme_zip"
-							accept=".zip"
-							class="g-themes-file-input"
-						/>
-						<p class="g-themes-file-name" id="groove-theme-filename">
-							<?php esc_html_e( 'No file chosen', 'groove' ); ?>
-						</p>
-					</div>
+						<div class="g-themes-dropzone" id="groove-theme-dropzone">
+							<div class="g-themes-dropzone-icon">📦</div>
+							<p class="g-themes-dropzone-label">
+								<?php esc_html_e( 'Drag and drop your theme .zip here', 'groove' ); ?>
+							</p>
+							<p class="g-themes-dropzone-sub">
+								<?php esc_html_e( 'or choose a file to upload', 'groove' ); ?>
+							</p>
+							<label for="theme_zip" class="button button-secondary g-themes-file-label">
+								<?php esc_html_e( 'Choose File', 'groove' ); ?>
+							</label>
+							<input
+								type="file"
+								name="theme_zip"
+								id="theme_zip"
+								accept=".zip"
+								class="g-themes-file-input"
+							/>
+							<p class="g-themes-file-name" id="groove-theme-filename">
+								<?php esc_html_e( 'No file chosen', 'groove' ); ?>
+							</p>
+						</div>
 
-					<div class="g-themes-upload-actions">
-						<button
-							type="submit"
-							class="g-folio__button g-folio__button-primary"
-							id="groove-theme-submit"
-							disabled
-						>
-							<?php esc_html_e( 'Install Theme', 'groove' ); ?>
-						</button>
-					</div>
-				</form>
+						<div class="g-themes-upload-actions">
+							<button
+								type="submit"
+								class="button button-primary"
+								id="groove-theme-submit"
+								disabled
+							>
+								<?php esc_html_e( 'Install Theme', 'groove' ); ?>
+							</button>
+						</div>
+					</form>
 
-				<div class="g-themes-package-info">
-					<h3><?php esc_html_e( 'Package format', 'groove' ); ?></h3>
-					<p><?php esc_html_e( 'A valid Groove theme package is a .zip file with this structure:', 'groove' ); ?></p>
-					<pre class="g-themes-code">my-theme.zip
+					<div class="g-themes-package-info">
+						<h3><?php esc_html_e( 'Package format', 'groove' ); ?></h3>
+						<p><?php esc_html_e( 'A valid Groove theme package is a .zip file with this structure:', 'groove' ); ?></p>
+						<pre class="g-themes-code">my-theme.zip
 ├── theme-info.json     ← required
 ├── cover.php           ← folio cover template
 ├── page.php            ← folio inner-page template
@@ -228,7 +249,8 @@ class Themes extends Page {
     ├── thumbnail.png
     ├── cover.png
     └── logo.png</pre>
-					<p><?php esc_html_e( 'The theme name in theme-info.json becomes its ID automatically.', 'groove' ); ?></p>
+						<p><?php esc_html_e( 'The theme name in theme-info.json becomes its ID automatically.', 'groove' ); ?></p>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -262,7 +284,7 @@ class Themes extends Page {
 				e.preventDefault();
 				dropzone.classList.remove('g-themes-dropzone--over');
 				var file = e.dataTransfer.files[0];
-				if (file && file.name.endsWith('.zip')) {
+				if (file && file.name.toLowerCase().endsWith('.zip')) {
 					// Attach to the real file input via DataTransfer.
 					var dt = new DataTransfer();
 					dt.items.add(file);

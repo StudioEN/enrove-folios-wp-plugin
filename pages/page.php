@@ -70,10 +70,10 @@ abstract class Page extends Assets
 
 	public function display_page()
 	{
-		$this->display_nav();
 		?>
 		<div class="wrap">
-			<?php $this->display_content() ?>
+			<?php $this->display_nav(); ?>
+			<?php $this->display_content(); ?>
 		</div>
 		<?php
 	}
@@ -93,9 +93,28 @@ abstract class Page extends Assets
 	public function display_button_items($button_items)
 	{
 		if (!empty($button_items)) {
-			echo '<div class="flex space-x-3">';
+			$button_count = count($button_items);
+			$group_class = $button_count > 1 ? ' g-page-header__buttons-group' : '';
+			echo '<div class="g-page-header__buttons' . esc_attr($group_class) . '">';
 			foreach ($button_items as $button_item) {
 				$type = isset($button_item['type']) ? $button_item['type'] : 'default';
+				$ui = isset($button_item['ui']) ? $button_item['ui'] : 'wp';
+
+				if ($ui === 'wp') {
+					$wp_classes = 'button';
+					if ($type === 'primary') {
+						$wp_classes .= ' button-primary';
+					} else if ($type === 'secondary') {
+						$wp_classes .= ' button-secondary';
+					}
+
+					if (isset($button_item['link'])) {
+						echo '<a href="' . esc_url($button_item['link']) . '" class="' . esc_attr($wp_classes) . '">' . esc_html($button_item['text']) . '</a>';
+					} else if (isset($button_item['action'])) {
+						echo '<button type="submit" name="action" value="' . esc_attr($button_item['action']) . '" class="' . esc_attr($wp_classes) . '">' . esc_html($button_item['text']) . '</button>';
+					}
+					continue;
+				}
 
 				$base_classes = 'inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2';
 
@@ -105,10 +124,10 @@ abstract class Page extends Assets
 					$classes = $base_classes . ' border border-gray-300 bg-white text-gray-700 hover:bg-gray-50';
 				}
 
-				if (isset($button_item['link'])) {
-					echo '<a href="' . esc_url($button_item['link']) . '" class="' . $classes . '">' . esc_html($button_item['text']) . '</a>';
-				} else if (isset($button_item['action'])) {
-					echo '<button type="submit" name="action" value="' . esc_attr($button_item['action']) . '" class="' . $classes . '">' . esc_html($button_item['text']) . '</button>';
+					if (isset($button_item['link'])) {
+						echo '<a href="' . esc_url($button_item['link']) . '" class="g-tailwind-link-reset ' . $classes . '">' . esc_html($button_item['text']) . '</a>';
+					} else if (isset($button_item['action'])) {
+						echo '<button type="submit" name="action" value="' . esc_attr($button_item['action']) . '" class="' . $classes . '">' . esc_html($button_item['text']) . '</button>';
 				}
 			}
 			echo '</div>';
@@ -123,30 +142,24 @@ abstract class Page extends Assets
 	{
 		$tabs = $this->get_tabs();
 		?>
-		<div class="bg-gray-900 text-white shadow <?php $tabs == null ? '' : 'tabs' ?>">
-			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-				<div class="flex items-center justify-between h-16">
-					<div class="flex items-center">
-						<div class="flex-shrink-0">
-							<!-- Logo Placeholder -->
-							<div class="h-8 w-8 bg-indigo-500 rounded-md flex items-center justify-center font-bold text-white">
-								G</div>
-						</div>
-						<div class="ml-4 font-semibold text-lg tracking-tight">
-							<?php echo esc_html($this->get_title()); ?>
-						</div>
-						<div class="ml-6 flex items-center space-x-4">
-							<?php $this->display_left_button_items() ?>
-						</div>
-					</div>
-
-					<div class="flex items-center space-x-4">
-						<?php $this->display_right_button_items() ?>
-					</div>
-				</div>
+		<div class="g-page-header">
+			<div class="g-page-header__left">
+				<h1 class="wp-heading-inline g-page-header__title"><?php echo esc_html($this->get_title()); ?></h1>
+				<?php $this->display_left_button_items(); ?>
 			</div>
-			<?php $this->display_tabs(); ?>
+			<?php if (!empty($this->right_button_items)): ?>
+			<div class="g-page-header__right">
+				<?php $this->display_right_button_items(); ?>
+			</div>
+			<?php endif; ?>
 		</div>
+		<hr class="wp-header-end">
+
+		<?php
+		if (!empty($tabs)) {
+			$this->display_tabs();
+		}
+		?>
 		<?php
 	}
 
