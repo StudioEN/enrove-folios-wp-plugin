@@ -50,7 +50,7 @@ class Cover extends Base_Theme
     </h3>
     <label class="g-folio__theme-nav-label">CONTENTS</label>
     <div class="g-folio__theme-navs">
-      <?
+      <?php
             $index = 1;
             foreach ($this->pages as $page) {
               ?>
@@ -62,14 +62,14 @@ class Cover extends Base_Theme
         <?= esc_html($page->post_title)?>
       </div>
       </a>
-      <?
+      <?php
               $index = $index + 1;
             }
           ?>
         </div>
       </div>
     </nav>
-  <?
+  <?php
   }
 
   function display_password_form($post)
@@ -82,7 +82,7 @@ class Cover extends Base_Theme
         type="password" spellcheck="false" size="20" />
       <input class="g-folio__theme-fields-submit" type="submit" name="Submit" value="Enter" />
     </form>
-    <?
+    <?php
   }
 
   function display_brief()
@@ -115,7 +115,7 @@ class Cover extends Base_Theme
         </p>
 
         <div class="g-folio__theme-fields g-folio__theme-password-form">
-          <?
+          <?php
                 $post_password_required = post_password_required($this->id);
 
                 if ($post_password_required) {
@@ -126,7 +126,7 @@ class Cover extends Base_Theme
                       <a class="g-folio__theme-fields-submit" href="<?= Utils::get_folio_permalink_by_id($page->ID)?>">
                         Enter
                       </a>
-                    <?
+                    <?php
                   }
                 }
               ?>
@@ -135,7 +135,7 @@ class Cover extends Base_Theme
       </div>
     </div>
   </div>
-  <?
+  <?php
   }
 
   function display_theme()
@@ -146,10 +146,10 @@ class Cover extends Base_Theme
   ?>
     <div class="g-folio__theme-1 g-folio__theme-cover">
 
-      <? $this->display_nav() ?>
+      <?php $this->display_nav() ?>
 
       <div class="g-folio__theme-content">
-        <? $this->display_brief() ?>
+        <?php $this->display_brief() ?>
         <div class="g-folio__theme-background" style="background-image: url(<?= esc_url($this->theme_cover_url)?>)">
           <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site"
               href="/">StudioEN</a></div>

@@ -244,7 +244,7 @@ class Page extends Base_Theme
 
 </div>
 <?php $this->display_mobile_nav()?>
-<?
+<?php
   }
 
   function display_mobile_nav()
@@ -255,7 +255,7 @@ class Page extends Base_Theme
       <div class="g-folio__theme-page-mobile-nav-content">
         <div class="g-folio__theme-page-mobile-nav-label">JUMP TO...</div>
         <div class="g-folio__theme-page-mobile-navs">
-          <?
+          <?php
             foreach ($blocks as $block) {
               if ($block['blockName'] === 'core/heading') {
                 $title = $block['innerContent'][0];
@@ -266,7 +266,7 @@ class Page extends Base_Theme
                   <a class="g-folio__theme-page-mobile-nav-item-link" href="<?= '#' . $anchor?>">
                     <div class="g-folio__theme-page-mobile-nav-item"><?= esc_html($html[1])?></div>
                   </a>
-                <?
+                <?php
               }
             }
           ?>
@@ -274,7 +274,7 @@ class Page extends Base_Theme
         <div class="g-folio__theme-page-mobile-nav-back">↑ Back to top</div>
       </div>
     </nav>
-  <?
+  <?php
   }
 
   function display_nav()
@@ -290,7 +290,7 @@ class Page extends Base_Theme
         </h3>
         <label class="g-folio__theme-page-nav-label">CONTENTS</label>
         <div class="g-folio__theme-page-navs">
-          <?
+          <?php
             $index = 1;
             foreach ($this->pages as $page) {
               ?>
@@ -300,14 +300,14 @@ class Page extends Base_Theme
                     <?= esc_html($page->post_title)?>
                   </div>
                 </a>
-              <?
+              <?php
               $index++;
             }
           ?>
         </div>
       </div>
     </nav>
-  <?
+  <?php
   }
 
   function display_footer()
@@ -317,13 +317,13 @@ class Page extends Base_Theme
 ?>
     <nav class="g-folio__theme-page-footer">
       <div class="g-folio__theme-page-prev">
-        <?
+        <?php
           if ($prev_page) {
           ?>
             <i class="g-folio__theme-page-arrow"></i>
             <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID)?>">
               <?= esc_html($prev_page->post_title)?></a>
-          <?
+          <?php
           }
         ?>
       </div>
@@ -331,18 +331,18 @@ class Page extends Base_Theme
       <div class="g-folio__theme-page-powerby">Powered by Groove Folios</div>
 
       <div class="g-folio__theme-page-next">
-        <?
+        <?php
           if ($next_page) {
           ?>
             <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID)?>">
               <?= esc_html($next_page->post_title)?></a>
             <i class="g-folio__theme-page-arrow"></i>
-          <?
+          <?php
           }
         ?>
       </div>
     </nav>
-  <?
+  <?php
   }
 
   function display_theme()
@@ -352,8 +352,8 @@ class Page extends Base_Theme
     }
 ?>
     <div class="g-folio__theme-1-page">
-      <? $this->display_navbar() ?>
-      <? $this->display_nav() ?>
+      <?php $this->display_navbar() ?>
+      <?php $this->display_nav() ?>
       <main class="g-folio__theme-page-main">
         <div class="g-folio__theme-page-body">
           <div class="g-folio__theme-page-center">
@@ -362,12 +362,12 @@ class Page extends Base_Theme
               <div class="g-folio__theme-page-content">
                 <?= $this->get_content()?>
               </div>
-              <? $this->display_footer() ?>
+              <?php $this->display_footer() ?>
             </div>
             <div class="g-folio__theme-page-sidebar">
               <div class="g-folio__theme-page-catalogs">
                 <label class="g-folio__theme-page-catalogs-label">SECTION</label>
-                <? $this->display_catalogs(); ?>
+                <?php $this->display_catalogs(); ?>
               </div>
             </div>
           </div>
