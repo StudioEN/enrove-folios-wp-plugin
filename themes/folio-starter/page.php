@@ -13,30 +13,6 @@ class Page extends Base_Theme
   public $folio_id;
   public $folio;
 
-  // ── Abstract method implementations ──────────────────────────────────────
-  // Page themes delegate metadata to the cover class for their theme.
-  // Themes_Manager only calls get_theme_descriptor() on cover classes.
-
-  public static function get_name(): string
-  {
-    return Cover::get_name();
-  }
-
-  protected static function get_thumbnail_filename(): string
-  {
-    return Cover::get_thumbnail_filename();
-  }
-
-  protected static function get_cover_filename(): string
-  {
-    return Cover::get_cover_filename();
-  }
-
-  protected static function get_logo_filename(): string
-  {
-    return Cover::get_logo_filename();
-  }
-
   // ─────────────────────────────────────────────────────────────────────────
 
   public function __construct()
@@ -229,103 +205,105 @@ class Page extends Base_Theme
 
   function display_navbar()
   {
-?>
-<div class="g-folio__theme-page-nav-bar">
-  <div class="g-folio__theme-page-nav-bar-main">
-    <button class="g-folio__theme-page-nav-button"></button>
-    <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
-        <?= esc_html($this->folio->post_title ?? 'Folio')?> |
-      </span>
-      <?= esc_html($this->page->post_title ?? 'Page')?>
+    ?>
+    <div class="g-folio__theme-page-nav-bar">
+      <div class="g-folio__theme-page-nav-bar-main">
+        <button class="g-folio__theme-page-nav-button"></button>
+        <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
+            <?= esc_html($this->folio->post_title ?? 'Folio') ?> |
+          </span>
+          <?= esc_html($this->page->post_title ?? 'Page') ?>
+        </div>
+      </div>
+
+      <div class="g-folio__theme-page-nav-bar-toggle">
+      </div>
+
     </div>
-  </div>
-
-  <div class="g-folio__theme-page-nav-bar-toggle">
-  </div>
-
-</div>
-<?php $this->display_mobile_nav()?>
-<?php
+    <?php $this->display_mobile_nav() ?>
+    <?php
   }
 
   function display_mobile_nav()
   {
     $blocks = parse_blocks($this->content);
-?>
+    ?>
     <nav class="g-folio__theme-page-mobile-nav">
       <div class="g-folio__theme-page-mobile-nav-content">
         <div class="g-folio__theme-page-mobile-nav-label">On this page</div>
         <div class="g-folio__theme-page-mobile-navs">
           <?php
-            foreach ($blocks as $block) {
-              if ($block['blockName'] === 'core/heading') {
-                $title = $block['innerContent'][0];
-                $html = $this->get_html($title);
-                if (!$html) { continue; }
-                $anchor = $this->to_anchor_name($html[1]);
-                ?>
-                  <a class="g-folio__theme-page-mobile-nav-item-link" href="<?= '#' . $anchor?>">
-                    <div class="g-folio__theme-page-mobile-nav-item"><?= esc_html($html[1])?></div>
-                  </a>
-                <?php
+          foreach ($blocks as $block) {
+            if ($block['blockName'] === 'core/heading') {
+              $title = $block['innerContent'][0];
+              $html = $this->get_html($title);
+              if (!$html) {
+                continue;
               }
+              $anchor = $this->to_anchor_name($html[1]);
+              ?>
+              <a class="g-folio__theme-page-mobile-nav-item-link" href="<?= '#' . $anchor ?>">
+                <div class="g-folio__theme-page-mobile-nav-item"><?= esc_html($html[1]) ?></div>
+              </a>
+              <?php
             }
+          }
           ?>
         </div>
         <div class="g-folio__theme-page-mobile-nav-back">↑ Back to top</div>
       </div>
     </nav>
-  <?php
+    <?php
   }
 
   function display_nav()
   {
-?>
+    ?>
     <nav class="g-folio__theme-page-nav">
       <div class="g-folio__theme-page-nav-content">
         <button class="g-folio__theme-page-nav-close"></button>
         <h3 class="g-folio__theme-page-nav-name">
-          <a href="<?= $this->folio ? Utils::get_folio_permalink_by_id($this->folio->ID) : '#'?>">
-            <?= esc_html($this->folio->post_title ?? 'Folio')?>
+          <a href="<?= $this->folio ? Utils::get_folio_permalink_by_id($this->folio->ID) : '#' ?>">
+            <?= esc_html($this->folio->post_title ?? 'Folio') ?>
           </a>
         </h3>
         <label class="g-folio__theme-page-nav-label">CONTENTS</label>
         <div class="g-folio__theme-page-navs">
           <?php
-            $index = 1;
-            foreach ($this->pages as $page) {
-              ?>
-                <a class="g-folio__theme-page-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID)?>">
-                  <div class="g-folio__theme-page-nav-item">
-                    <i class="g-folio__theme-page-nav-item-order"><?= $index?></i>
-                    <?= esc_html($page->post_title)?>
-                  </div>
-                </a>
-              <?php
-              $index++;
-            }
+          $index = 1;
+          foreach ($this->pages as $page) {
+            ?>
+            <a class="g-folio__theme-page-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID) ?>">
+              <div class="g-folio__theme-page-nav-item">
+                <i class="g-folio__theme-page-nav-item-order"><?= $index ?></i>
+                <?= esc_html($page->post_title) ?>
+              </div>
+            </a>
+            <?php
+            $index++;
+          }
           ?>
         </div>
       </div>
     </nav>
-  <?php
+    <?php
   }
 
   function display_footer()
   {
     $prev_page = $this->get_prev_page();
     $next_page = $this->get_next_page();
-?>
+    ?>
     <nav class="g-folio__theme-page-footer">
       <div class="g-folio__theme-page-prev">
         <?php
-          if ($prev_page) {
+        if ($prev_page) {
           ?>
-            <i class="g-folio__theme-page-arrow"></i>
-            <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID)?>">
-              <?= esc_html($prev_page->post_title)?></a>
+          <i class="g-folio__theme-page-arrow"></i>
+          <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID) ?>">
+            <?= esc_html($prev_page->post_title) ?></a>
           <?php
-          }
+        }
         ?>
       </div>
 
@@ -333,17 +311,17 @@ class Page extends Base_Theme
 
       <div class="g-folio__theme-page-next">
         <?php
-          if ($next_page) {
+        if ($next_page) {
           ?>
-            <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID)?>">
-              <?= esc_html($next_page->post_title)?></a>
-            <i class="g-folio__theme-page-arrow"></i>
+          <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID) ?>">
+            <?= esc_html($next_page->post_title) ?></a>
+          <i class="g-folio__theme-page-arrow"></i>
           <?php
-          }
+        }
         ?>
       </div>
     </nav>
-  <?php
+    <?php
   }
 
   function display_theme()
@@ -351,7 +329,7 @@ class Page extends Base_Theme
     if (!parent::display_theme()) {
       return;
     }
-?>
+    ?>
     <div class="g-folio__theme-1-page">
       <?php $this->display_navbar() ?>
       <?php $this->display_nav() ?>
@@ -359,9 +337,9 @@ class Page extends Base_Theme
         <div class="g-folio__theme-page-body">
           <div class="g-folio__theme-page-center">
             <div class="g-folio__theme-page-container">
-              <h1 class="g-folio__theme-page-title"><?= esc_html($this->title)?></h1>
+              <h1 class="g-folio__theme-page-title"><?= esc_html($this->title) ?></h1>
               <div class="g-folio__theme-page-content">
-                <?= $this->get_content()?>
+                <?= $this->get_content() ?>
               </div>
               <?php $this->display_footer() ?>
             </div>
@@ -375,6 +353,6 @@ class Page extends Base_Theme
         </div>
       </main>
     </div>
-  <?php
+    <?php
   }
 }
