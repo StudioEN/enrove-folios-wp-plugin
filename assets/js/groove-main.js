@@ -289,11 +289,62 @@ jQuery(function () {
   }
 
   if (Groove.isAddNewPage()) {
-    jQuery(document).on('click', '.g-folio__theme', function () {
-      jQuery('.g-folio__theme').removeClass('is-active')
-      jQuery(this).addClass('is-active')
-      jQuery('[name="themeId"]').val(jQuery(this).data('theme-id'))
-    });
+    const themeCardsSelector = '.g-folio__theme-option'
+
+    function selectAddNewTheme(card) {
+      const selected = jQuery(card)
+      const cards = jQuery(themeCardsSelector)
+      const selectedName = selected.data('theme-name') || ''
+
+      cards
+        .removeClass('border-indigo-600 ring-1 ring-indigo-600')
+        .addClass('border-gray-200')
+        .attr('aria-checked', 'false')
+        .attr('tabindex', '-1')
+      cards.find('.active-badge').addClass('hidden')
+
+      selected
+        .removeClass('border-gray-200')
+        .addClass('border-indigo-600 ring-1 ring-indigo-600')
+        .attr('aria-checked', 'true')
+        .attr('tabindex', '0')
+        .focus()
+      selected.find('.active-badge').removeClass('hidden')
+
+      jQuery('[name="themeId"]').val(selected.data('theme-id'))
+      jQuery('#g-folio-selected-theme-name').text(selectedName)
+    }
+
+    jQuery(document).on('click', themeCardsSelector, function () {
+      selectAddNewTheme(this)
+    })
+
+    jQuery(document).on('keydown', themeCardsSelector, function (event) {
+      const horizontalKeys = ['ArrowLeft', 'ArrowRight']
+      const verticalKeys = ['ArrowUp', 'ArrowDown']
+      const allKeys = horizontalKeys.concat(verticalKeys)
+
+      if (allKeys.indexOf(event.key) === -1) {
+        return
+      }
+
+      event.preventDefault()
+
+      const cards = jQuery(themeCardsSelector)
+      const currentIndex = cards.index(this)
+      if (currentIndex === -1) {
+        return
+      }
+
+      const isBack = event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+      const delta = isBack ? -1 : 1
+      const nextIndex = (currentIndex + delta + cards.length) % cards.length
+      const nextCard = cards.get(nextIndex)
+
+      if (nextCard) {
+        selectAddNewTheme(nextCard)
+      }
+    })
   }
 
   if (Groove.isPreview()) {

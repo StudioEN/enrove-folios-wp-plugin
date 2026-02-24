@@ -36,11 +36,14 @@ abstract class Base_Theme extends Assets
     wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], GROOVE_VERSION);
 
     // Per-theme CSS — lives in themes/<theme-id>/assets/css/theme.css.
+    $theme_css_path = trailingslashit(GROOVE_PATH) . 'themes/' . static::get_id() . '/assets/css/theme.css';
+    $version = file_exists($theme_css_path) ? filemtime($theme_css_path) : GROOVE_VERSION;
+
     wp_enqueue_style(
       'groove-theme-' . static::get_id(),
       $this->get_theme_css_url(),
-    ['groove'],
-      GROOVE_VERSION
+      ['groove'],
+      $version
     );
 
     wp_enqueue_script('groove', $this->get_js_assets_url('groove-main'), ['jquery'], GROOVE_VERSION, true);
@@ -170,8 +173,7 @@ abstract class Base_Theme extends Assets
       $this->author = get_the_author_meta('user_login', $page->post_author);
       $this->feature_image = get_the_post_thumbnail($page->ID);
       $this->page = $page;
-    }
-    else {
+    } else {
       $this->title = esc_html__('Not Found', 'groove');
       $this->content = '';
       $this->author = '';
@@ -190,7 +192,7 @@ abstract class Base_Theme extends Assets
       'order' => 'ASC',
       'post_status' => Utils::get_viewable_post_statuses(),
       'meta_query' => array(
-          array(
+        array(
           'key' => 'folio_id',
           'value' => $id,
           'compare' => '=',
@@ -217,8 +219,7 @@ abstract class Base_Theme extends Assets
     if (!empty($theme_id) && isset($all_themes[$theme_id])) {
       $theme = $all_themes[$theme_id];
       $resolved_id = $theme_id;
-    }
-    else {
+    } else {
       reset($all_themes);
       $resolved_id = key($all_themes);
       $theme = current($all_themes);

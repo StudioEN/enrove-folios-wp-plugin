@@ -438,9 +438,14 @@ body.groove .g-page-header__buttons-group {
 
 .g-folio__themes {
   margin-top: 16px;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 16px;
+  align-content: start;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-gutter: stable;
 }
 
 .g-folio__themes-desc {
@@ -448,28 +453,55 @@ body.groove .g-page-header__buttons-group {
   color: #2C3338;
 }
 
-.g-folio__theme {
+.g-folio__themes-selected {
+  margin: 8px 0 0;
+  color: #50575e;
+}
+
+.g-folio__theme-option {
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 8px;
+  padding: 0;
+  text-align: left;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.g-folio__theme-option--add-new {
   width: auto;
-  flex: 1 1 calc(50% - 8px);
-  border: 1px solid #CCC;
-  margin-bottom: 16px;
-  cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.g-folio__theme:nth-child(2n) {
-  margin-left: 0;
+.g-folio__theme-option:focus-visible {
+  outline: 2px solid #3858E9;
+  outline-offset: 2px;
 }
 
-.g-folio__theme-name {
-  padding: 18px;
-  font-size: 12px;
-  background-color: #fff;
-  color: #000;
+.g-folio__themes::-webkit-scrollbar {
+  width: 10px;
 }
 
-.g-folio__theme.g-folio__theme_selected .g-folio__theme-name {
-  background-color: #3858E9;
-  color: #fff;
+.g-folio__themes::-webkit-scrollbar-track {
+  background: #f2f4f6;
+  border-radius: 999px;
+}
+
+.g-folio__themes::-webkit-scrollbar-thumb {
+  background: #c5cbd1;
+  border-radius: 999px;
+  border: 2px solid #f2f4f6;
+}
+
+.g-folio__themes::-webkit-scrollbar-thumb:hover {
+  background: #aeb5bc;
+}
+
+.g-folio__themes {
+  scrollbar-width: thin;
+  scrollbar-color: #c5cbd1 #f2f4f6;
 }
 
 .g-folio__theme-button {
