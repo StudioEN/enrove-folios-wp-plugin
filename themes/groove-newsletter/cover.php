@@ -1,8 +1,10 @@
 <?php
-namespace Groove\Themes\Groove_Ebook;
+namespace Groove\Themes\Groove_Newsletter;
 
 use Groove\Themes\Base_Theme;
 use Groove\Utils\Utils;
+
+require_once __DIR__ . '/navigation-pane.php';
 
 if (!defined('ABSPATH')) {
   exit;
@@ -14,7 +16,7 @@ class Cover extends Base_Theme
 
   public static function get_name(): string
   {
-    return 'Groove eBook';
+    return 'Groove Newsletter';
   }
 
   protected static function get_thumbnail_filename(): string
@@ -41,45 +43,23 @@ class Cover extends Base_Theme
 
   function display_nav()
   {
-?>
-<nav class="g-folio__theme-nav">
-  <div class="g-folio__theme-nav-content">
-    <button class="g-folio__theme-nav-close"></button>
-    <h3 class="g-folio__theme-nav-name">
-      <?= $this->theme_name?>
-    </h3>
-    <label class="g-folio__theme-nav-label">CONTENTS</label>
-    <div class="g-folio__theme-navs">
-      <?php
-            $index = 1;
-            foreach ($this->pages as $page) {
-              ?>
-                <a class="g-folio__theme-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID)?>">
-      <div class="g-folio__theme-nav-item">
-        <i class="g-folio__theme-nav-item-order">
-          <?= $index?>
-        </i>
-        <?= esc_html($page->post_title)?>
-      </div>
-      </a>
-      <?php
-              $index = $index + 1;
-            }
-          ?>
-        </div>
-      </div>
-    </nav>
-  <?php
+    display_recent_navigation_pane($this, array(
+      'class_prefix' => 'g-folio__theme-nav',
+      'folio_id' => (int) $this->id,
+      'title' => $this->theme_name,
+      'label' => 'RECENT',
+      'limit' => 10,
+    ));
   }
 
   function display_password_form($post)
   {
     $post = get_post($post);
-  ?>
-    <form action="<?= esc_url(site_url('wp-login.php?action=postpass', 'login_post'))?>" class="post-password-form"
+    ?>
+    <form action="<?= esc_url(site_url('wp-login.php?action=postpass', 'login_post')) ?>" class="post-password-form"
       method="post">
-      <input placeholder="Enter password" class="g-folio__theme-fields-submit-input" name="post_password"
-        type="password" spellcheck="false" size="20" />
+      <input placeholder="Enter password" class="g-folio__theme-fields-submit-input" name="post_password" type="password"
+        spellcheck="false" size="20" />
       <input class="g-folio__theme-fields-submit" type="submit" name="Submit" value="Enter" />
     </form>
     <?php
@@ -88,23 +68,23 @@ class Cover extends Base_Theme
   function display_brief()
   {
     $page = $this->pages[0] ?? null;
-?>
-  <div class="g-folio__theme-brief">
-    <i class="g-folio__theme-logo">
-      <img src="<?= esc_url($this->theme_logo_url)?>"/>
-    </i>
-    <h1 class="g-folio__theme-title">
-      <?= esc_html($this->title)?>
-    </h1>
-    <h2 class="g-folio__theme-subtitle">
-      <?= esc_html($this->subtitle)?>
-    </h2>
-    <p class="g-folio__theme-author">By
-      <?= esc_html($this->author)?>
-    </p>
+    ?>
+    <div class="g-folio__theme-brief">
+      <i class="g-folio__theme-logo">
+        <img src="<?= esc_url($this->theme_logo_url) ?>" />
+      </i>
+      <h1 class="g-folio__theme-title">
+        <?= esc_html($this->title) ?>
+      </h1>
+      <h2 class="g-folio__theme-subtitle">
+        <?= esc_html($this->subtitle) ?>
+      </h2>
+      <p class="g-folio__theme-author">By
+        <?= esc_html($this->author) ?>
+      </p>
 
-    <div class="g-folio__theme-fields g-folio__theme-password-form">
-      <?php
+      <div class="g-folio__theme-fields g-folio__theme-password-form">
+        <?php
         $post_password_required = post_password_required($this->id);
 
         if ($post_password_required) {
@@ -112,17 +92,17 @@ class Cover extends Base_Theme
         } else {
           if (!empty($this->pages) && $page) {
             ?>
-              <a class="g-folio__theme-fields-submit" href="<?= Utils::get_folio_permalink_by_id($page->ID)?>">
-                Enter
-              </a>
+            <a class="g-folio__theme-fields-submit" href="<?= Utils::get_folio_permalink_by_id($page->ID) ?>">
+              Enter
+            </a>
             <?php
           }
         }
-      ?>
+        ?>
+      </div>
+      <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
     </div>
-    <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
-  </div>
-<?php
+    <?php
   }
 
   function display_theme()
@@ -130,15 +110,18 @@ class Cover extends Base_Theme
     if (!parent::display_theme()) {
       return;
     }
-?>
-    <div class="g-folio__theme-2 g-folio__theme-cover" style="background: url(<?= esc_url($this->theme_cover_url)?>)">
-      <button class="g-folio__theme-nav-button"></button>
+
+    ?>
+    <div class="g-folio__theme-newsletter g-folio__theme-cover"
+      style="background: url(<?= esc_url($this->theme_cover_url) ?>)">
+      <button class="g-folio__theme-nav-button" aria-label="Open navigation"></button>
       <?php $this->display_nav() ?>
       <div class="g-folio__theme-content">
         <?php $this->display_brief() ?>
       </div>
-      <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site" href="/">StudioEN</a></div>
+      <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site"
+          href="/">StudioEN</a></div>
     </div>
-  <?php
+    <?php
   }
 }

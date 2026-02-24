@@ -42,16 +42,7 @@ class Themes_Manager extends Assets
         }
         $initialized = true;
 
-        // Require explicitly — the autoloader won't find these new sub-namespaced classes
-        // automatically since they don't follow the flat namespace->path convention.
-        $themes_path = GROOVE_PATH . 'themes/';
-        require_once $themes_path . 'folio-starter/cover.php';
-        require_once $themes_path . 'folio-starter/page.php';
-        require_once $themes_path . 'groove-ebook/cover.php';
-        require_once $themes_path . 'groove-ebook/page.php';
-
-        static::register(Folio_Starter\Cover::class, Folio_Starter\Page::class);
-        static::register(Groove_Ebook\Cover::class, Groove_Ebook\Page::class);
+        static::load_builtin_themes();
         static::load_installed_themes();
         static::run_migrations();
     }
@@ -308,6 +299,54 @@ class Themes_Manager extends Assets
     }
 
     /**
+     * Discover built-in themes shipped inside plugin /themes/.
+     * A valid theme folder must contain cover.php and page.php.
+     */
+    public static function load_builtin_themes(): void
+    {
+        $themes_path = trailingslashit(GROOVE_PATH . 'themes');
+        if (!is_dir($themes_path)) {
+            return;
+        }
+
+        $theme_dirs = glob($themes_path . '*', GLOB_ONLYDIR);
+        if (empty($theme_dirs)) {
+            return;
+        }
+
+        natsort($theme_dirs);
+
+        foreach ($theme_dirs as $dir) {
+            $cover_file = trailingslashit($dir) . 'cover.php';
+            $page_file = trailingslashit($dir) . 'page.php';
+
+            if (!is_readable($cover_file) || !is_readable($page_file)) {
+                continue;
+            }
+
+            $cover_class = static::extract_class_name($cover_file);
+            $page_class = static::extract_class_name($page_file);
+
+            if (!$cover_class || !$page_class) {
+                continue;
+            }
+
+            require_once $cover_file;
+            require_once $page_file;
+
+            if (!class_exists($cover_class) || !class_exists($page_class)) {
+                continue;
+            }
+
+            if (!is_subclass_of($cover_class, Base_Theme::class) || !is_subclass_of($page_class, Base_Theme::class)) {
+                continue;
+            }
+
+            static::register($cover_class, $page_class);
+        }
+    }
+
+    /**
      * Validate, extract, and install a theme ZIP package.
      *
      * @param string $zip_path  Absolute path to the uploaded temporary ZIP file.
@@ -433,8 +472,8 @@ class Themes_Manager extends Assets
         // Map old legacy IDs — numeric slugs used before v0.1.10, and any stale
         // slug-based IDs that might have been stored before the renaming.
         $mapping = [
-            'theme-1' => Folio_Starter\Cover::get_id(), // folio-starter
-            'theme-2' => Groove_Ebook\Cover::get_id(), // groove-ebook
+            'theme-1' => 'folio-starter',
+            'theme-2' => 'groove-ebook',
         ];
 
         foreach ($mapping as $old_id => $new_id) {
@@ -471,8 +510,8 @@ class Themes_Manager extends Assets
     }
 
     /**
-     * Regex-extract the first class name (with namespace) declared in a PHP file.
-     * Text-scan only — the file is never evaluated.
+     * Token-parse the first declared class name with namespace.
+     * The file is never evaluated.
      *
      * @param string $file
      * @return string|null
@@ -480,11 +519,80 @@ class Themes_Manager extends Assets
     private static function extract_class_name(string $file): ?string
     {
         $source = file_get_contents($file);
-        if (preg_match('/^\s*(?:namespace\s+([\w\\\\]+);)?.*?^\s*class\s+(\w+)/ms', $source, $m)) {
-            $namespace = rtrim($m[1] ?? '', '\\');
-            $class = $m[2];
-            return $namespace ? $namespace . '\\' . $class : $class;
+        if ($source === false) {
+            return null;
         }
+
+        $tokens = token_get_all($source);
+        $namespace = '';
+        $last_significant = null;
+        $name_token_ids = [T_STRING, T_NS_SEPARATOR];
+
+        if (defined('T_NAME_QUALIFIED')) {
+            $name_token_ids[] = T_NAME_QUALIFIED;
+        }
+        if (defined('T_NAME_FULLY_QUALIFIED')) {
+            $name_token_ids[] = T_NAME_FULLY_QUALIFIED;
+        }
+
+        $token_count = count($tokens);
+
+        for ($i = 0; $i < $token_count; $i++) {
+            $token = $tokens[$i];
+
+            if (!is_array($token)) {
+                continue;
+            }
+
+            $token_id = $token[0];
+
+            if ($token_id === T_NAMESPACE) {
+                $parts = [];
+                for ($j = $i + 1; $j < $token_count; $j++) {
+                    $next = $tokens[$j];
+                    if (is_array($next)) {
+                        if ($next[0] === T_WHITESPACE) {
+                            continue;
+                        }
+
+                        if (in_array($next[0], $name_token_ids, true)) {
+                            $parts[] = $next[1];
+                            continue;
+                        }
+                    } elseif ($next === ';' || $next === '{') {
+                        break;
+                    }
+                }
+
+                $namespace = trim(implode('', $parts), '\\');
+                continue;
+            }
+
+            // Ignore anonymous classes: "new class (...) { ... }".
+            if ($token_id === T_CLASS && $last_significant !== T_NEW) {
+                for ($j = $i + 1; $j < $token_count; $j++) {
+                    $next = $tokens[$j];
+                    if (!is_array($next)) {
+                        continue;
+                    }
+
+                    if ($next[0] === T_WHITESPACE) {
+                        continue;
+                    }
+
+                    if ($next[0] === T_STRING) {
+                        return $namespace ? $namespace . '\\' . $next[1] : $next[1];
+                    }
+
+                    break;
+                }
+            }
+
+            if (!in_array($token_id, [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
+                $last_significant = $token_id;
+            }
+        }
+
         return null;
     }
 
