@@ -77,7 +77,8 @@ class Page extends Base_Theme
     $doc = new \DOMDocument();
     @$doc->loadHTML($html);
 
-    $element_names = ['h1', 'h2'];
+    // "On this page" links are intended for section headings only.
+    $element_names = ['h2'];
 
     foreach ($element_names as $element_name) {
       $element = $doc->getElementsByTagName($element_name)->item(0);
@@ -229,7 +230,7 @@ class Page extends Base_Theme
 ?>
     <nav class="g-folio__theme-page-mobile-nav">
       <div class="g-folio__theme-page-mobile-nav-content">
-        <div class="g-folio__theme-page-mobile-nav-label">JUMP TO...</div>
+        <div class="g-folio__theme-page-mobile-nav-label">On this page</div>
         <div class="g-folio__theme-page-mobile-navs">
           <?php
             foreach ($blocks as $block) {
@@ -342,7 +343,7 @@ class Page extends Base_Theme
             </div>
             <div class="g-folio__theme-page-sidebar">
               <div class="g-folio__theme-page-catalogs">
-                <label class="g-folio__theme-page-catalogs-label">SECTION</label>
+                <label class="g-folio__theme-page-catalogs-label">On this page</label>
                 <?php $this->display_catalogs(); ?>
               </div>
             </div>
