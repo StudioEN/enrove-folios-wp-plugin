@@ -14,26 +14,6 @@ class Cover extends Base_Theme
 {
   public $subtitle;
 
-  public static function get_name(): string
-  {
-    return 'Groove Newsletter';
-  }
-
-  protected static function get_thumbnail_filename(): string
-  {
-    return 'theme-thumb.png';
-  }
-
-  protected static function get_cover_filename(): string
-  {
-    return 'theme-cover.png';
-  }
-
-  protected static function get_logo_filename(): string
-  {
-    return 'theme-g-logo.png';
-  }
-
   function get_page_data()
   {
     $page = parent::get_page_data();

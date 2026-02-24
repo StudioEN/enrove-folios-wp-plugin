@@ -15,29 +15,6 @@ class Page extends Base_Theme
   public $folio_id;
   public $folio;
 
-  // ── Abstract method implementations ──────────────────────────────────────
-  // Page themes delegate metadata to the cover class for their theme.
-
-  public static function get_name(): string
-  {
-    return Cover::get_name();
-  }
-
-  protected static function get_thumbnail_filename(): string
-  {
-    return Cover::get_thumbnail_filename();
-  }
-
-  protected static function get_cover_filename(): string
-  {
-    return Cover::get_cover_filename();
-  }
-
-  protected static function get_logo_filename(): string
-  {
-    return Cover::get_logo_filename();
-  }
-
   // ─────────────────────────────────────────────────────────────────────────
 
   public function __construct()

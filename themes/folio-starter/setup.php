@@ -1,0 +1,10 @@
+<?php
+return [
+    'name' => 'Folio Starter',
+    'thumbnail' => 'theme-thumb.png',
+    'cover' => 'theme-cover.png',
+    'logo' => 'theme-g-logo.png',
+    'description' => 'A clean, typography-led default theme for Groove Folios.',
+    'author' => 'StudioEN',
+    'last_updated' => '2023-10-01',
+];

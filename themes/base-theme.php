@@ -82,40 +82,96 @@ abstract class Base_Theme extends Assets
   }
 
   // -----------------------------------------------------------------------
-  // Theme identity — subclasses define a human name and asset filenames.
-  // The ID is derived automatically; no manual string needed anywhere.
+  // Theme identity
   // -----------------------------------------------------------------------
+
+  protected static $setup_data = [];
+
+  public static function get_setup_data(): array
+  {
+    $class = static::class;
+    if (!isset(self::$setup_data[$class])) {
+      $reflector = new \ReflectionClass($class);
+      $dir = dirname($reflector->getFileName());
+      $setup_file = $dir . '/setup.php';
+      if (file_exists($setup_file)) {
+        self::$setup_data[$class] = include $setup_file;
+      } else {
+        self::$setup_data[$class] = [];
+      }
+    }
+    return self::$setup_data[$class];
+  }
 
   /**
    * Human-readable theme name shown in the admin picker.
-   * The theme ID is auto-generated from this value (see get_id()).
-   *
-   * @example 'Folio Starter' -> id becomes 'folio-starter'
    *
    * @return string
    */
-  abstract public static function get_name(): string;
+  public static function get_name(): string
+  {
+    return static::get_setup_data()['name'] ?? '';
+  }
 
   /**
    * Filename (not full URL) of the picker thumbnail image.
-   * @example 'theme-thumb-01.png'
+   *
    * @return string
    */
-  abstract protected static function get_thumbnail_filename(): string;
+  protected static function get_thumbnail_filename(): string
+  {
+    return static::get_setup_data()['thumbnail'] ?? '';
+  }
 
   /**
    * Filename (not full URL) of the cover/hero image.
-   * @example 'theme-cover-01.png'
+   *
    * @return string
    */
-  abstract protected static function get_cover_filename(): string;
+  protected static function get_cover_filename(): string
+  {
+    return static::get_setup_data()['cover'] ?? '';
+  }
 
   /**
    * Filename (not full URL) of the theme logo image.
-   * @example 'theme-g-logo-01.png'
+   *
    * @return string
    */
-  abstract protected static function get_logo_filename(): string;
+  protected static function get_logo_filename(): string
+  {
+    return static::get_setup_data()['logo'] ?? '';
+  }
+
+  /**
+   * Theme description text.
+   *
+   * @return string
+   */
+  public static function get_description(): string
+  {
+    return static::get_setup_data()['description'] ?? '';
+  }
+
+  /**
+   * Theme author.
+   *
+   * @return string
+   */
+  public static function get_author(): string
+  {
+    return static::get_setup_data()['author'] ?? '';
+  }
+
+  /**
+   * Theme last updated date.
+   *
+   * @return string
+   */
+  public static function get_last_updated(): string
+  {
+    return static::get_setup_data()['last_updated'] ?? '';
+  }
 
   /**
    * Auto-generate a URL-safe theme ID from the human name.
@@ -133,7 +189,7 @@ abstract class Base_Theme extends Assets
    * Build the full descriptor array used by the admin theme picker
    * and Themes_Manager. This is concrete — subclasses do NOT override it.
    *
-   * @return array{ID: string, name: string, thumbnail_url: string, cover_url: string, logo_url: string}
+   * @return array{ID: string, name: string, thumbnail_url: string, cover_url: string, logo_url: string, description: string, author: string, last_updated: string}
    */
   final public static function get_theme_descriptor(): array
   {
@@ -145,6 +201,9 @@ abstract class Base_Theme extends Assets
       'thumbnail_url' => $theme_assets_url . 'images/' . static::get_thumbnail_filename(),
       'cover_url' => $theme_assets_url . 'images/' . static::get_cover_filename(),
       'logo_url' => $theme_assets_url . 'images/' . static::get_logo_filename(),
+      'description' => static::get_description(),
+      'author' => static::get_author(),
+      'last_updated' => static::get_last_updated(),
     ];
   }
 

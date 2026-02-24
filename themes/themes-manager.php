@@ -366,21 +366,21 @@ class Themes_Manager extends Assets
         }
 
         // 2. Find the package root (may be inside a sub-folder inside the zip).
-        $info_file = static::find_file_in_dir($tmp_dir, 'theme-info.json');
+        $info_file = static::find_file_in_dir($tmp_dir, 'setup.php');
 
         if (!$info_file) {
             static::cleanup_dir($tmp_dir);
-            return new \WP_Error('missing_info', 'theme-info.json not found in the package.');
+            return new \WP_Error('missing_info', 'setup.php not found in the package.');
         }
 
         $package_root = dirname($info_file) . '/';
 
-        // 3. Parse and validate theme-info.json.
-        $info = json_decode(file_get_contents($info_file), true);
+        // 3. Parse and validate setup.php.
+        $info = include $info_file;
 
-        if (!isset($info['name']) || '' === trim($info['name'])) {
+        if (!is_array($info) || !isset($info['name']) || '' === trim($info['name'])) {
             static::cleanup_dir($tmp_dir);
-            return new \WP_Error('invalid_info', 'theme-info.json must contain a "name" field.');
+            return new \WP_Error('invalid_info', 'setup.php must return an array with a "name" field.');
         }
 
         if (!file_exists($package_root . 'cover.php') || !file_exists($package_root . 'page.php')) {
