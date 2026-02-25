@@ -52,6 +52,61 @@ class Utils
     return Utils::get_groove_post_id();
   }
 
+  static function is_folio_cover_enabled($folio_id)
+  {
+    $folio_id = (int) $folio_id;
+    if ($folio_id <= 0) {
+      return true;
+    }
+
+    $folio = get_post($folio_id);
+    if (!$folio || !Utils::is_groove_folio_post($folio)) {
+      return true;
+    }
+
+    $use_folio = get_post_meta($folio_id, 'use_folio', true);
+    if ($use_folio === '') {
+      // Backward-compat: existing folios default to using the cover.
+      return true;
+    }
+
+    return in_array((string) $use_folio, array('1', 'on', 'true', 'yes'), true);
+  }
+
+  static function get_first_folio_page_id($folio_id)
+  {
+    $folio_id = (int) $folio_id;
+    if ($folio_id <= 0) {
+      return 0;
+    }
+
+    $query = new \WP_Query(array(
+      'post_type' => 'groove_folio_page',
+      'posts_per_page' => 1,
+      'post_status' => Utils::get_viewable_post_statuses(),
+      'meta_query' => array(
+        array(
+          'key' => 'folio_id',
+          'value' => $folio_id,
+          'compare' => '=',
+          'type' => 'NUMERIC',
+        ),
+      ),
+      'orderby' => array(
+        'menu_order' => 'ASC',
+        'ID' => 'ASC',
+      ),
+      'ignore_sticky_posts' => true,
+      'no_found_rows' => true,
+    ));
+
+    if (!empty($query->posts) && !empty($query->posts[0]->ID)) {
+      return (int) $query->posts[0]->ID;
+    }
+
+    return 0;
+  }
+
   static function is_groove_folio_post($post)
   {
     return isset($post->post_type) && $post->post_type == 'groove_folio';

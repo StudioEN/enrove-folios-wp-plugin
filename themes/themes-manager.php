@@ -212,6 +212,17 @@ class Themes_Manager extends Assets
         $theme_id = $meta['theme_id'][0] ?? '';
 
         if ($post_type === 'groove_folio') {
+            $is_cover_enabled = \Groove\Utils\Utils::is_folio_cover_enabled($folio_id);
+            if (!$is_cover_enabled && !post_password_required($folio_id)) {
+                $first_page_id = \Groove\Utils\Utils::get_first_folio_page_id($folio_id);
+                if ($first_page_id > 0) {
+                    $first_page_url = \Groove\Utils\Utils::get_folio_permalink_by_id($first_page_id);
+                    if (!empty($first_page_url)) {
+                        wp_safe_redirect($first_page_url, 302);
+                        exit;
+                    }
+                }
+            }
             return static::create_cover_theme($theme_id);
         }
 

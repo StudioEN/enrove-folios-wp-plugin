@@ -74,6 +74,7 @@ class Add_New extends Page
           'theme_id' => $theme_id,
           'subtitle' => '',
           'permission' => $default_permission,
+          'use_folio' => '1',
           'copyright' => '',
         ),
       );

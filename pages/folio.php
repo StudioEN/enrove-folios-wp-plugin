@@ -332,6 +332,8 @@ class Folio extends Page
       $permission_raw = (string) wp_unslash($_POST['permission']);
       $permission = in_array($permission_raw, array('on', '1', '2'), true) ? '2' : '4';
     }
+    $use_folio = isset($_POST['use_folio']) ? (string) wp_unslash($_POST['use_folio']) : $fields->use_folio;
+    $use_folio = $use_folio === '1' ? '1' : '0';
     $theme_id = isset($_POST['theme_id']) ? sanitize_key(wp_unslash($_POST['theme_id'])) : $fields->theme_id;
 
     // feature_image_id: empty-string means 'clear image', positive int means 'set image'.
@@ -360,7 +362,8 @@ class Folio extends Page
         'theme_id' => $theme_id,
         'subtitle' => $subtitle,
         'copyright' => $copyright,
-        'permission' => $permission
+        'permission' => $permission,
+        'use_folio' => $use_folio,
       )
     );
 
@@ -519,6 +522,7 @@ class Folio extends Page
 
     $permission = $fields->permission;
     $is_allowed_download = $permission == '2';
+    $is_using_folio = $fields->use_folio !== '0';
 
     $permalink = isset($fields->permalink) ? $fields->permalink : '';
     $base_slug = \Groove\Utils\Utils::get_folio_base_slug();
@@ -528,6 +532,12 @@ class Folio extends Page
         <h3 class="text-sm font-semibold text-gray-800 m-0">Publishing</h3>
       </div>
       <div class="p-4 space-y-4">
+        <div class="flex items-center">
+          <input type="hidden" name="use_folio" value="0" />
+          <input type="checkbox" id="use_folio" name="use_folio" value="1"
+            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($is_using_folio, true, false) ?> />
+          <label for="use_folio" class="ml-2 block text-sm text-gray-900">Use Folio Cover</label>
+        </div>
         <div class="flex items-center">
           <input type="checkbox" id="permission" name="permission"
             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($is_allowed_download, 1, false) ?> />

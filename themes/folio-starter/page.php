@@ -258,14 +258,23 @@ class Page extends Base_Theme
 
   function display_nav()
   {
+    $folio_title = $this->folio->post_title ?? 'Folio';
+    $folio_url = '';
+    if ($this->folio && Utils::is_folio_cover_enabled((int) $this->folio->ID)) {
+      $folio_url = Utils::get_folio_permalink_by_id($this->folio->ID);
+    }
     ?>
     <nav class="g-folio__theme-page-nav">
       <div class="g-folio__theme-page-nav-content">
         <button class="g-folio__theme-page-nav-close"></button>
         <h3 class="g-folio__theme-page-nav-name">
-          <a href="<?= $this->folio ? Utils::get_folio_permalink_by_id($this->folio->ID) : '#' ?>">
-            <?= esc_html($this->folio->post_title ?? 'Folio') ?>
-          </a>
+          <?php if (!empty($folio_url)): ?>
+            <a href="<?= esc_url($folio_url) ?>">
+              <?= esc_html($folio_title) ?>
+            </a>
+          <?php else: ?>
+            <?= esc_html($folio_title) ?>
+          <?php endif; ?>
         </h3>
         <label class="g-folio__theme-page-nav-label">CONTENTS</label>
         <div class="g-folio__theme-page-navs">
