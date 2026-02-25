@@ -42,6 +42,80 @@ class Utils
     return $slug !== '' ? $slug : 'folio';
   }
 
+  static function get_supported_primary_fonts()
+  {
+    return array(
+      'roboto' => array(
+        'label' => 'Roboto',
+        'css_stack' => "'Roboto', sans-serif",
+        'google_family' => 'Roboto:wght@400;700',
+      ),
+      'open-sans' => array(
+        'label' => 'Open Sans',
+        'css_stack' => "'Open Sans', sans-serif",
+        'google_family' => 'Open+Sans:wght@400;700',
+      ),
+      'noto-sans' => array(
+        'label' => 'Noto Sans',
+        'css_stack' => "'Noto Sans', sans-serif",
+        'google_family' => 'Noto+Sans:wght@400;700',
+      ),
+      'inter' => array(
+        'label' => 'Inter',
+        'css_stack' => "'Inter', sans-serif",
+        'google_family' => 'Inter:wght@400;700',
+      ),
+      'montserrat' => array(
+        'label' => 'Montserrat',
+        'css_stack' => "'Montserrat', sans-serif",
+        'google_family' => 'Montserrat:wght@400;700',
+      ),
+      'poppins' => array(
+        'label' => 'Poppins',
+        'css_stack' => "'Poppins', sans-serif",
+        'google_family' => 'Poppins:wght@400;700',
+      ),
+      'lato' => array(
+        'label' => 'Lato',
+        'css_stack' => "'Lato', sans-serif",
+        'google_family' => 'Lato:wght@400;700',
+      ),
+      'nunito-sans' => array(
+        'label' => 'Nunito Sans',
+        'css_stack' => "'Nunito Sans', sans-serif",
+        'google_family' => 'Nunito+Sans:wght@400;700',
+      ),
+      'dm-sans' => array(
+        'label' => 'DM Sans',
+        'css_stack' => "'DM Sans', sans-serif",
+        'google_family' => 'DM+Sans:wght@400;700',
+      ),
+    );
+  }
+
+  static function normalize_primary_font_key($font_key)
+  {
+    $font_key = is_string($font_key) ? sanitize_key($font_key) : '';
+    $supported_fonts = Utils::get_supported_primary_fonts();
+
+    return isset($supported_fonts[$font_key]) ? $font_key : '';
+  }
+
+  static function get_primary_font_data($font_key)
+  {
+    $font_key = Utils::normalize_primary_font_key($font_key);
+    if ($font_key === '') {
+      return null;
+    }
+
+    $supported_fonts = Utils::get_supported_primary_fonts();
+    $font = $supported_fonts[$font_key];
+    $font['key'] = $font_key;
+    $font['google_url'] = 'https://fonts.googleapis.com/css2?family=' . $font['google_family'] . '&display=swap';
+
+    return $font;
+  }
+
   static function get_folio_id()
   {
     return Utils::get_groove_post_id();

@@ -335,6 +335,8 @@ class Folio extends Page
     $use_folio = isset($_POST['use_folio']) ? (string) wp_unslash($_POST['use_folio']) : $fields->use_folio;
     $use_folio = $use_folio === '1' ? '1' : '0';
     $theme_id = isset($_POST['theme_id']) ? sanitize_key(wp_unslash($_POST['theme_id'])) : $fields->theme_id;
+    $primary_font = isset($_POST['fonts']) ? (string) wp_unslash($_POST['fonts']) : $fields->fonts;
+    $primary_font = Utils::normalize_primary_font_key($primary_font);
 
     // feature_image_id: empty-string means 'clear image', positive int means 'set image'.
     // A missing or null field means 'keep existing' — we do NOT delete in that case.
@@ -364,6 +366,7 @@ class Folio extends Page
         'copyright' => $copyright,
         'permission' => $permission,
         'use_folio' => $use_folio,
+        'fonts' => $primary_font,
       )
     );
 
@@ -494,22 +497,33 @@ class Folio extends Page
   public function display_customization()
   {
     $fields = $this->get_fields();
-
-    // $fonts = $fields->fonts;
+    $primary_font = Utils::normalize_primary_font_key($fields->fonts);
+    $available_fonts = Utils::get_supported_primary_fonts();
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
         <h3 class="text-sm font-semibold text-gray-800 m-0">Customization</h3>
       </div>
       <div class="p-4">
-        <div class="mb-4">
-          <label for="fonts" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PRIMARY
+        <div>
+          <label for="g-primary-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PRIMARY
             FONT</label>
-          <select name="fonts"
-            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-            <option value="Arial">Arial</option>
-            <option value="PingFong">PingFong</option>
-          </select>
+          <div class="flex items-center gap-2">
+            <select id="g-primary-font" name="fonts"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+              <option value="">Theme Default</option>
+              <?php foreach ($available_fonts as $font_key => $font): ?>
+                <option value="<?php echo esc_attr($font_key); ?>" <?php selected($primary_font, $font_key); ?>>
+                  <?php echo esc_html($font['label']); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+            <button type="button" id="g-reset-primary-font"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="Reset to theme default font" title="Reset to theme default font">
+              <span class="dashicons dashicons-undo" aria-hidden="true"></span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

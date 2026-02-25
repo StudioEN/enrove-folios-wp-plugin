@@ -569,7 +569,16 @@ body.groove .g-page-header__buttons-group {
   padding: 10px 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   pointer-events: none;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+#g-folio-save-indicator.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 #g-folio-save-indicator.is-saving {
@@ -579,7 +588,7 @@ body.groove .g-page-header__buttons-group {
 }
 
 #g-folio-save-indicator.is-saved,
-#g-folio-save-indicator.is-idle {
+#g-folio-save-indicator.is-visible:not(.is-saving):not(.is-error):not(.is-saved) {
   background: #edfaef;
   border-color: #7bc48b;
   color: #0f5132;

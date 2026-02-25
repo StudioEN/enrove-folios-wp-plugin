@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026-02-25]
+
+### Added
+- Added Folio primary typeface customization in the Folio setup page with Google Font options: Roboto, Open Sans, Noto Sans, Inter, Montserrat, Poppins, Lato, Nunito Sans, and DM Sans.
+- Added a reset-to-default icon button for the Folio primary font selector.
+- Added `fonts` Folio meta registration and sanitization helpers to safely persist supported font choices.
+
+### Changed
+- Updated frontend theme rendering to load and apply the selected Folio primary font across cover and page views while preserving theme defaults when no custom font is selected.
+
 ## [2026-02-24]
 
 ### Added
