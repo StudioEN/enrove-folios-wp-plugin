@@ -9,6 +9,7 @@ class FolioFields
   public $author;
   public $subtitle;
   public $permission;
+  public $use_folio;
   public $permalink;
   public $title;
   public $fonts;
@@ -43,6 +44,7 @@ class FolioFields
     $this->copyright = $meta['copyright'][0] ?? '';
     $this->subtitle = $meta['subtitle'][0] ?? '';
     $this->permission = $meta['permission'][0] ?? '';
+    $this->use_folio = $meta['use_folio'][0] ?? '1';
     $this->theme_id = $meta['theme_id'][0] ?? '';
     $this->permalink = $meta['permalink'][0] ?? '';
     $this->fonts = $meta['fonts'][0] ?? '';

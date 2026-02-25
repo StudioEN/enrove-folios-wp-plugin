@@ -93,7 +93,7 @@ class Cover extends Base_Theme
           if (!empty($this->pages) && $page) {
             ?>
             <a class="g-folio__theme-fields-submit" href="<?= Utils::get_folio_permalink_by_id($page->ID) ?>">
-              Enter
+              Open folio
             </a>
             <?php
           }
@@ -101,7 +101,8 @@ class Cover extends Base_Theme
         ?>
       </div>
       <div class="g-folio__theme-copyright">&copy; <?= esc_html(substr(static::get_last_updated(), 0, 4)) ?>
-        <?= esc_html(static::get_author()) ?></div>
+        <?= esc_html(static::get_author()) ?>
+      </div>
     </div>
     <?php
   }

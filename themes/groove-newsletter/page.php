@@ -238,7 +238,8 @@ class Page extends Base_Theme
     $fallback_folio_id = (int) $this->folio_id;
     $folio_id = isset($this->folio->ID) ? (int) $this->folio->ID : $fallback_folio_id;
     $folio_title = $this->folio->post_title ?? 'Folio';
-    $folio_url = $this->folio ? Utils::get_folio_permalink_by_id($this->folio->ID) : '';
+    $can_link_to_cover = Utils::is_folio_cover_enabled($folio_id);
+    $folio_url = ($folio_id > 0 && $can_link_to_cover) ? Utils::get_folio_permalink_by_id($folio_id) : '';
 
     display_recent_navigation_pane($this, array(
       'class_prefix' => 'g-folio__theme-page-nav',
