@@ -194,23 +194,27 @@ class List_Table extends \WP_List_Table
 		}
 
 		$pad = str_repeat('&#8212; ', $this->current_level);
-		echo '<strong>';
+		echo '<strong class="g-folio__title-wrap">';
 
-		$title = $post->post_title;
+		$title = (string) $post->post_title;
+		$title_tooltip = esc_attr($title);
+		$title_display = esc_html($title);
 
 		if ($can_edit_post && 'trash' !== $post->post_status) {
 			printf(
-				'<a class="row-title" href="%s" aria-label="%s">%s%s</a>',
+				'<a class="row-title g-folio__truncate-text" href="%s" aria-label="%s" title="%s">%s%s</a>',
 				get_edit_post_link($post->ID),
 				esc_attr(sprintf(__('&#8220;%s&#8221; (Edit)'), $title)),
+				$title_tooltip,
 				$pad,
-				$title
+				$title_display
 			);
 		} else {
 			printf(
-				'<span>%s%s</span>',
+				'<span class="g-folio__truncate-text" title="%s">%s%s</span>',
+				$title_tooltip,
 				$pad,
-				$title
+				$title_display
 			);
 		}
 		_post_states($post);

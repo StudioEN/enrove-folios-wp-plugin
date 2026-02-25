@@ -171,15 +171,49 @@ body.groove.groove-folios_page_groove-all-folios #wpbody-content .wrap {
   overflow-x: auto;
 }
 
+body.groove.groove-overview_page_groove-folio #wpbody-content .wrap,
+body.groove.groove-folios_page_groove-folio #wpbody-content .wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 body.groove.groove-overview_page_groove-all-folios #posts-filter,
 body.groove.groove-folios_page_groove-all-folios #posts-filter {
   max-width: 100%;
+}
+
+body.groove.groove-overview_page_groove-folio #pages-filter,
+body.groove.groove-folios_page_groove-folio #pages-filter {
+  max-width: 100%;
+  clear: both;
 }
 
 body.groove.groove-overview_page_groove-all-folios #posts-filter .wp-list-table,
 body.groove.groove-folios_page_groove-all-folios #posts-filter .wp-list-table {
   width: 100%;
   min-width: 780px;
+}
+
+body.groove.groove-overview_page_groove-folio #pages-filter .wp-list-table,
+body.groove.groove-folios_page_groove-folio #pages-filter .wp-list-table {
+  width: 100%;
+  min-width: 780px;
+}
+
+body.groove.groove-overview_page_groove-folio #pages-filter .wp-list-table td.column-title .g-folio__title-wrap,
+body.groove.groove-folios_page_groove-folio #pages-filter .wp-list-table td.column-title .g-folio__title-wrap {
+  display: block;
+  min-width: 0;
+}
+
+body.groove.groove-overview_page_groove-folio #pages-filter .wp-list-table .g-folio__truncate-text,
+body.groove.groove-folios_page_groove-folio #pages-filter .wp-list-table .g-folio__truncate-text {
+  display: inline-block;
+  max-width: min(100%, 60ch);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 
 /* Normalize WP tablenav spacing/alignment on Groove list screens. */

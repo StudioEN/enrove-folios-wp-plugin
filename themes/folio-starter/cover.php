@@ -111,7 +111,8 @@ class Cover extends Base_Theme
             }
             ?>
           </div>
-          <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
+          <div class="g-folio__theme-copyright">&copy; <?= esc_html(substr(static::get_last_updated(), 0, 4)) ?>
+            <?= esc_html(static::get_author()) ?></div>
         </div>
       </div>
     </div>
@@ -131,10 +132,9 @@ class Cover extends Base_Theme
       <div class="g-folio__theme-content">
         <?php $this->display_brief() ?>
         <div class="g-folio__theme-background" style="background-image: url(<?= esc_url($this->theme_cover_url) ?>)">
-          <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site"
-              href="/">StudioEN</a></div>
-        </div>
+          href="/"><?= esc_html(static::get_author()) ?></a></div>
       </div>
+    </div>
 
     </div>
     <?php

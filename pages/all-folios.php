@@ -67,7 +67,7 @@ class All_Folios extends Page
 	private function get_current_orderby()
 	{
 		$orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash($_GET['orderby'])) : 'modified';
-		$allowed_orderby = array('title', 'modified', 'page_count');
+		$allowed_orderby = array('title', 'modified', 'page_count', 'theme_name');
 
 		if (!in_array($orderby, $allowed_orderby, true)) {
 			return 'modified';
@@ -143,8 +143,18 @@ class All_Folios extends Page
 			'order' => $order,
 		);
 
+		if ($orderby === 'theme_name') {
+			$query_args['orderby'] = 'meta_value';
+			$query_args['meta_key'] = 'theme_id';
+		}
+
 		if ($search !== '') {
 			$query_args['s'] = $search;
+		}
+
+		if (isset($_GET['theme_id']) && $_GET['theme_id'] !== '') {
+			$query_args['meta_key'] = 'theme_id';
+			$query_args['meta_value'] = sanitize_key($_GET['theme_id']);
 		}
 
 		return new \WP_Query($query_args);
@@ -214,6 +224,12 @@ class All_Folios extends Page
 		if ($search !== '') {
 			$ids_query_args['s'] = $search;
 		}
+
+		if (isset($_GET['theme_id']) && $_GET['theme_id'] !== '') {
+			$ids_query_args['meta_key'] = 'theme_id';
+			$ids_query_args['meta_value'] = sanitize_key($_GET['theme_id']);
+		}
+
 		$ids_query = new \WP_Query($ids_query_args);
 
 		$all_ids = array_map('intval', (array) $ids_query->posts);
@@ -267,6 +283,7 @@ class All_Folios extends Page
 			's' => $search !== '' ? $search : null,
 			'orderby' => $column,
 			'order' => $next_order,
+			'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
 		), function ($value) {
 			return $value !== null;
 		}));
@@ -355,6 +372,7 @@ class All_Folios extends Page
 			'orderby' => $orderby !== 'modified' ? $orderby : null,
 			'order' => $order !== 'DESC' ? $order : null,
 			'paged' => $paged > 1 ? $paged : null,
+			'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
 			'bulk_action' => $action,
 			'bulk_count' => $updated_count,
 		), function ($value) {
@@ -485,6 +503,7 @@ class All_Folios extends Page
 							's' => $search !== '' ? $search : null,
 							'orderby' => $orderby !== 'modified' ? $orderby : null,
 							'order' => $order !== 'DESC' ? $order : null,
+							'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
 						), function ($value) {
 							return $value !== null;
 						}));
@@ -522,7 +541,8 @@ class All_Folios extends Page
 								<option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
 							<?php endforeach; ?>
 						</select>
-						<input type="submit" id="doaction" class="button action" value="<?php esc_attr_e('Apply', 'groove'); ?>" />
+						<input type="submit" id="doaction" class="button action"
+							value="<?php esc_attr_e('Apply', 'groove'); ?>" />
 					</div>
 					<div class="tablenav-pages">
 						<?php if ($total_pages > 1): ?>
@@ -532,6 +552,7 @@ class All_Folios extends Page
 								's' => $search !== '' ? $search : null,
 								'orderby' => $orderby !== 'modified' ? $orderby : null,
 								'order' => $order !== 'DESC' ? $order : null,
+								'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
 								'paged' => '%#%',
 							), function ($value) {
 								return $value !== null;
@@ -583,14 +604,24 @@ class All_Folios extends Page
 							</th>
 							<th scope="col"
 								class="manage-column column-primary <?php echo esc_attr($orderby === 'title' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
-								<a href="<?php echo esc_url($this->get_sort_url('title', $orderby, $order, $status, $search)); ?>">
+								<a
+									href="<?php echo esc_url($this->get_sort_url('title', $orderby, $order, $status, $search)); ?>">
 									<span><?php esc_html_e('Folio Name', 'groove'); ?></span>
 									<span class="sorting-indicators"><span class="sorting-indicator asc"
 											aria-hidden="true"></span><span class="sorting-indicator desc"
 											aria-hidden="true"></span></span>
 								</a>
 							</th>
-							<th scope="col" class="manage-column"><?php esc_html_e('Folio ID', 'groove'); ?></th>
+							<th scope="col"
+								class="manage-column <?php echo esc_attr($orderby === 'theme_name' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
+								<a
+									href="<?php echo esc_url($this->get_sort_url('theme_name', $orderby, $order, $status, $search)); ?>">
+									<span><?php esc_html_e('Theme Name', 'groove'); ?></span>
+									<span class="sorting-indicators"><span class="sorting-indicator asc"
+											aria-hidden="true"></span><span class="sorting-indicator desc"
+											aria-hidden="true"></span></span>
+								</a>
+							</th>
 							<th scope="col"
 								class="manage-column <?php echo esc_attr($orderby === 'page_count' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
 								<a
@@ -630,29 +661,29 @@ class All_Folios extends Page
 									),
 									admin_url('admin.php')
 								);
-									$pages_url = $this->get_folio_pages_url($post_id);
-									$page_count = (int) ($page_counts[$post_id] ?? 0);
-									$view_url = Utils::get_folio_permalink_by_id($post_id);
-									if (!$view_url) {
-										$view_url = get_permalink($post_id);
-									}
-									$is_preview_status = in_array($post_status, array('draft', 'pending', 'future'), true);
-									$preview_url = get_preview_post_link(get_post($post_id));
-									$row_view_url = ($is_preview_status && $preview_url) ? $preview_url : $view_url;
-									$row_view_label = $is_preview_status ? esc_html__('Preview', 'groove') : esc_html__('View', 'groove');
-									$modified_label = sprintf(
-										/* translators: 1: date/time value, 2: user display name */
-										esc_html__('%1$s by %2$s', 'groove'),
-										get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post_id),
-										$this->get_last_modified_by($post_id)
-									);
-									$quick_edit_title = $title !== '' ? $title : esc_html__('(no title)', 'groove');
-									$quick_edit_aria_label = sprintf(
-										/* translators: %s: Folio title. */
-										esc_attr__('Quick edit "%s" inline', 'groove'),
-										wp_strip_all_tags($quick_edit_title)
-									);
-									?>
+								$pages_url = $this->get_folio_pages_url($post_id);
+								$page_count = (int) ($page_counts[$post_id] ?? 0);
+								$view_url = Utils::get_folio_permalink_by_id($post_id);
+								if (!$view_url) {
+									$view_url = get_permalink($post_id);
+								}
+								$is_preview_status = in_array($post_status, array('draft', 'pending', 'future'), true);
+								$preview_url = get_preview_post_link(get_post($post_id));
+								$row_view_url = ($is_preview_status && $preview_url) ? $preview_url : $view_url;
+								$row_view_label = $is_preview_status ? esc_html__('Preview', 'groove') : esc_html__('View', 'groove');
+								$modified_label = sprintf(
+									/* translators: 1: date/time value, 2: user display name */
+									esc_html__('%1$s by %2$s', 'groove'),
+									get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post_id),
+									$this->get_last_modified_by($post_id)
+								);
+								$quick_edit_title = $title !== '' ? $title : esc_html__('(no title)', 'groove');
+								$quick_edit_aria_label = sprintf(
+									/* translators: %s: Folio title. */
+									esc_attr__('Quick edit "%s" inline', 'groove'),
+									wp_strip_all_tags($quick_edit_title)
+								);
+								?>
 								<tr id="post-<?php echo esc_attr((string) $post_id); ?>">
 									<th scope="row" class="check-column">
 										<label class="screen-reader-text"
@@ -667,22 +698,22 @@ class All_Folios extends Page
 												<?php echo esc_html($title !== '' ? $title : esc_html__('(no title)', 'groove')); ?>
 											</a>
 										</strong>
-											<div class="row-actions">
-												<span class="edit">
-													<a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove'); ?></a> |
+										<div class="row-actions">
+											<span class="edit">
+												<a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove'); ?></a> |
+											</span>
+											<?php if ($post_status !== 'trash'): ?>
+												<span class="inline hide-if-no-js">
+													<button type="button" class="button-link editinline"
+														aria-label="<?php echo esc_attr($quick_edit_aria_label); ?>"
+														aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove'); ?></button> |
 												</span>
-													<?php if ($post_status !== 'trash'): ?>
-													<span class="inline hide-if-no-js">
-														<button type="button" class="button-link editinline"
-															aria-label="<?php echo esc_attr($quick_edit_aria_label); ?>"
-															aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove'); ?></button> |
-													</span>
-													<?php endif; ?>
-													<span class="view">
-														<a href="<?php echo esc_url($row_view_url); ?>" target="_blank"
-															rel="noopener noreferrer"><?php echo esc_html($row_view_label); ?></a> |
-													</span>
-												<?php if ($post_status === 'trash'): ?>
+											<?php endif; ?>
+											<span class="view">
+												<a href="<?php echo esc_url($row_view_url); ?>" target="_blank"
+													rel="noopener noreferrer"><?php echo esc_html($row_view_label); ?></a> |
+											</span>
+											<?php if ($post_status === 'trash'): ?>
 												<span class="untrash">
 													<a
 														href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove'); ?></a>
@@ -697,18 +728,25 @@ class All_Folios extends Page
 													<a class="submitdelete"
 														href="<?php echo esc_url(get_delete_post_link($post_id)); ?>"><?php esc_html_e('Trash', 'groove'); ?></a>
 												</span>
-												<?php endif; ?>
-											</div>
-											<?php
-											if (function_exists('get_inline_data')) {
-												get_inline_data(get_post($post_id));
-											}
-											?>
-											<button type="button" class="toggle-row"><span
-													class="screen-reader-text"><?php esc_html_e('Show more details', 'groove'); ?></span></button>
-										</td>
-									<td data-colname="<?php esc_attr_e('Folio ID', 'groove'); ?>">
-										<?php echo esc_html((string) $post_id); ?>
+											<?php endif; ?>
+										</div>
+										<?php
+										if (function_exists('get_inline_data')) {
+											get_inline_data(get_post($post_id));
+										}
+										?>
+										<button type="button" class="toggle-row"><span
+												class="screen-reader-text"><?php esc_html_e('Show more details', 'groove'); ?></span></button>
+									</td>
+									<td data-colname="<?php esc_attr_e('Theme Name', 'groove'); ?>">
+										<?php
+										$all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
+										if (isset($all_themes[$theme_id])) {
+											echo esc_html($all_themes[$theme_id]['name']);
+										} else {
+											echo esc_html($theme_id) . ' ' . esc_html__('(Unknown)', 'groove');
+										}
+										?>
 									</td>
 									<td data-colname="<?php esc_attr_e('Page Count', 'groove'); ?>">
 										<a href="<?php echo esc_url($pages_url); ?>">
@@ -726,7 +764,8 @@ class All_Folios extends Page
 						<?php else: ?>
 							<tr class="no-items">
 								<td class="colspanchange" colspan="6">
-									<?php esc_html_e('No folios found for the current filters.', 'groove'); ?></td>
+									<?php esc_html_e('No folios found for the current filters.', 'groove'); ?>
+								</td>
 							</tr>
 						<?php endif; ?>
 					</tbody>
@@ -739,7 +778,7 @@ class All_Folios extends Page
 							</td>
 							<th scope="col" class="manage-column column-primary"><?php esc_html_e('Folio Name', 'groove'); ?>
 							</th>
-							<th scope="col" class="manage-column"><?php esc_html_e('Folio ID', 'groove'); ?></th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Theme Name', 'groove'); ?></th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Page Count', 'groove'); ?></th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove'); ?></th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Last Updated', 'groove'); ?></th>
@@ -770,7 +809,8 @@ class All_Folios extends Page
 									<option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
 								<?php endforeach; ?>
 							</select>
-							<input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove'); ?>" />
+							<input type="submit" id="doaction2" class="button action"
+								value="<?php esc_attr_e('Apply', 'groove'); ?>" />
 						</div>
 						<div class="tablenav-pages">
 							<span class="displaying-num">
@@ -788,6 +828,7 @@ class All_Folios extends Page
 								's' => $search !== '' ? $search : null,
 								'orderby' => $orderby !== 'modified' ? $orderby : null,
 								'order' => $order !== 'DESC' ? $order : null,
+								'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
 								'paged' => '%#%',
 							), function ($value) {
 								return $value !== null;
@@ -818,7 +859,8 @@ class All_Folios extends Page
 									<option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
 								<?php endforeach; ?>
 							</select>
-							<input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove'); ?>" />
+							<input type="submit" id="doaction2" class="button action"
+								value="<?php esc_attr_e('Apply', 'groove'); ?>" />
 						</div>
 						<br class="clear" />
 					</div>

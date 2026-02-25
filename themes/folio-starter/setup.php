@@ -7,4 +7,7 @@ return [
     'description' => 'A clean, typography-led default theme for Groove Folios.',
     'author' => 'StudioEN',
     'last_updated' => '2023-10-01',
+    'namespace' => 'Groove\Themes\Folio_Starter',
+    'cover_class' => 'Groove\Themes\Folio_Starter\Cover',
+    'page_class' => 'Groove\Themes\Folio_Starter\Page',
 ];
