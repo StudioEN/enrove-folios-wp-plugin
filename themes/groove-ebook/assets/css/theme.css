@@ -249,7 +249,7 @@
   align-items: center;
   min-height: 100vh;
   overflow: scroll;
-  font-family: DM Sans;
+  font-family: var(--g-folio-primary-font, 'DM Sans', sans-serif);
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-main {
@@ -293,7 +293,7 @@
 
 .g-folio__theme-2-page .g-folio__theme-page-mobile-nav-label {
   color: #3C434A;
-  font-family: DM Sans;
+  font-family: var(--g-folio-primary-font, 'DM Sans', sans-serif);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

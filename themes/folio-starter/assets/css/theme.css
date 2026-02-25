@@ -320,7 +320,7 @@
 
 .g-folio__theme-1-page .g-folio__theme-page-mobile-nav-label {
   color: #3C434A;
-  font-family: DM Sans;
+  font-family: var(--g-folio-primary-font, 'DM Sans', sans-serif);
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

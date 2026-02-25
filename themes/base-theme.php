@@ -46,7 +46,73 @@ abstract class Base_Theme extends Assets
       $version
     );
 
+    $this->enqueue_primary_font_style('groove-theme-' . static::get_id());
+
     wp_enqueue_script('groove', $this->get_js_assets_url('groove-main'), ['jquery'], GROOVE_VERSION, true);
+  }
+
+  protected function get_folio_id_for_customization()
+  {
+    $post_id = (int) $this->id;
+    if ($post_id <= 0) {
+      return 0;
+    }
+
+    if ($this->post_type === 'groove_folio') {
+      return $post_id;
+    }
+
+    if ($this->post_type !== 'groove_folio_page') {
+      return 0;
+    }
+
+    $folio_id = (int) get_post_meta($post_id, 'folio_id', true);
+    if ($folio_id > 0) {
+      return $folio_id;
+    }
+
+    $current_path = Utils::get_current_path();
+    $base_slug = Utils::get_folio_base_slug();
+    $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
+    if (preg_match($pattern, $current_path, $matches)) {
+      $folio_slug = rtrim($matches[1], '/');
+      $folio_post = Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+      if ($folio_post) {
+        return (int) $folio_post->ID;
+      }
+    }
+
+    return 0;
+  }
+
+  protected function get_selected_primary_font_data()
+  {
+    $folio_id = $this->get_folio_id_for_customization();
+    if ($folio_id <= 0) {
+      return null;
+    }
+
+    $font_key = Utils::normalize_primary_font_key((string) get_post_meta($folio_id, 'fonts', true));
+    if ($font_key === '') {
+      return null;
+    }
+
+    return Utils::get_primary_font_data($font_key);
+  }
+
+  protected function enqueue_primary_font_style($theme_handle)
+  {
+    $font = $this->get_selected_primary_font_data();
+    if (!$font || empty($font['google_url']) || empty($font['css_stack'])) {
+      return;
+    }
+
+    $font_handle = 'groove-folio-font-' . $font['key'];
+    wp_enqueue_style($font_handle, $font['google_url'], [], GROOVE_VERSION);
+
+    $font_stack = $font['css_stack'];
+    $inline_css = '.g-folio__theme-cover, body.groove [class*="g-folio__theme-"][class$="-page"] { --g-folio-primary-font: ' . $font_stack . '; font-family: var(--g-folio-primary-font); }';
+    wp_add_inline_style($theme_handle, $inline_css);
   }
 
   /**

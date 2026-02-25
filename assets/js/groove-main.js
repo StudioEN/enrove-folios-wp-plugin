@@ -46,29 +46,42 @@ jQuery(function () {
     let autosaveTimer = null
     let isManualSave = false
     let lastAutosaveHash = ''
+    const saveIndicatorAutoHideMs = 3000
     let saveIndicatorResetTimer = null
     let saveIndicator = jQuery('#g-folio-save-indicator')
 
     if (!saveIndicator.length) {
-      saveIndicator = jQuery('<div id="g-folio-save-indicator" class="is-idle" aria-live="polite">All changes saved</div>')
+      saveIndicator = jQuery('<div id="g-folio-save-indicator" aria-live="polite"></div>')
       jQuery('body').append(saveIndicator)
     }
 
-    function setSaveStatus(state, message) {
+    function hideSaveStatus() {
       if (!saveIndicator.length) {
         return
       }
 
       clearTimeout(saveIndicatorResetTimer)
       saveIndicator
-        .removeClass('is-idle is-saving is-saved is-error')
+        .removeClass('is-visible is-saving is-saved is-error')
+        .text('')
+    }
+
+    function setSaveStatus(state, message, autoHideMs = 0) {
+      if (!saveIndicator.length) {
+        return
+      }
+
+      clearTimeout(saveIndicatorResetTimer)
+      saveIndicator
+        .removeClass('is-saving is-saved is-error')
+        .addClass('is-visible')
         .addClass('is-' + state)
         .text(message)
 
-      if (state === 'saved') {
+      if (autoHideMs > 0) {
         saveIndicatorResetTimer = setTimeout(function () {
-          setSaveStatus('idle', 'All changes saved')
-        }, 1800)
+          hideSaveStatus()
+        }, autoHideMs)
       }
     }
 
@@ -112,7 +125,7 @@ jQuery(function () {
       const nonce = fields.groove_nonce || folioForm.find('input[name="groove_nonce"]').first().val()
 
       if (!fields.folio_id || !nonce) {
-        setSaveStatus('error', 'Save failed')
+        setSaveStatus('error', 'Save failed', saveIndicatorAutoHideMs)
         if (!silent) {
           // eslint-disable-next-line no-console
           console.error('Groove save failed: missing folio_id or nonce.')
@@ -132,7 +145,7 @@ jQuery(function () {
         dataType: 'json',
       }).done(function (result) {
         if (result && result.code === 0) {
-          setSaveStatus('saved', savedText)
+          setSaveStatus('saved', savedText, saveIndicatorAutoHideMs)
 
           if (shouldUpdatePermalink && result.slug) {
             jQuery('#permalink').val(result.slug)
@@ -142,14 +155,14 @@ jQuery(function () {
             location.reload()
           }
         } else if (!silent) {
-          setSaveStatus('error', errorText)
+          setSaveStatus('error', errorText, saveIndicatorAutoHideMs)
           // eslint-disable-next-line no-console
           console.error('Groove save failed.', result)
         } else {
-          setSaveStatus('error', errorText)
+          setSaveStatus('error', errorText, saveIndicatorAutoHideMs)
         }
       }).fail(function (xhr) {
-        setSaveStatus('error', errorText)
+        setSaveStatus('error', errorText, saveIndicatorAutoHideMs)
         if (!silent) {
           // eslint-disable-next-line no-console
           console.error('Groove save request failed.', xhr)
@@ -272,6 +285,15 @@ jQuery(function () {
       jQuery('#media_id').val('').trigger('change')
       var defaultUrl = jQuery('#use-default-image').data('default-url')
       jQuery('#feature-preview').attr('src', defaultUrl)
+    })
+
+    jQuery('#g-reset-primary-font').click(function () {
+      const fontSelect = jQuery('#g-primary-font')
+      if (!fontSelect.length) {
+        return
+      }
+
+      fontSelect.val('').trigger('change')
     })
 
     jQuery(document).on('click', '.g-folio__theme-option', function () {

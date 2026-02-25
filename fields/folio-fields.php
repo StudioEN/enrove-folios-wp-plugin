@@ -1,6 +1,8 @@
 <?php
 namespace Groove\Fields;
 
+use Groove\Utils\Utils;
+
 class FolioFields
 {
   public $name;
@@ -47,7 +49,7 @@ class FolioFields
     $this->use_folio = $meta['use_folio'][0] ?? '1';
     $this->theme_id = $meta['theme_id'][0] ?? '';
     $this->permalink = $meta['permalink'][0] ?? '';
-    $this->fonts = $meta['fonts'][0] ?? '';
+    $this->fonts = Utils::normalize_primary_font_key($meta['fonts'][0] ?? '');
   }
 }
 ?>
