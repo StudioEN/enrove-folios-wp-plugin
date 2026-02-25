@@ -4,8 +4,6 @@ namespace Groove\Themes\Groove_Newsletter;
 use Groove\Themes\Base_Theme;
 use Groove\Utils\Utils;
 
-require_once __DIR__ . '/navigation-pane.php';
-
 if (!defined('ABSPATH')) {
   exit;
 }

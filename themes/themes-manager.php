@@ -279,11 +279,25 @@ class Themes_Manager extends Assets
         $themes_dir = static::get_themes_dir();
 
         foreach ($meta_list as $theme_id => $meta) {
-            $cover_file = $themes_dir . $theme_id . '/cover.php';
-            $page_file = $themes_dir . $theme_id . '/page.php';
+            $theme_path = $themes_dir . $theme_id . '/';
+            $cover_file = $theme_path . 'cover.php';
+            $page_file = $theme_path . 'page.php';
+            $setup_file = $theme_path . 'setup.php';
 
             if (!is_readable($cover_file) || !is_readable($page_file)) {
                 continue; // Package deleted from disk — skip silently.
+            }
+
+            if (is_readable($setup_file)) {
+                $setup = include $setup_file;
+                if (!empty($setup['dependencies']) && is_array($setup['dependencies'])) {
+                    foreach ($setup['dependencies'] as $dep) {
+                        $dep_file = $theme_path . $dep;
+                        if (is_readable($dep_file)) {
+                            require_once $dep_file;
+                        }
+                    }
+                }
             }
 
             require_once $cover_file;
@@ -317,22 +331,33 @@ class Themes_Manager extends Assets
         natsort($theme_dirs);
 
         foreach ($theme_dirs as $dir) {
+            $setup_file = trailingslashit($dir) . 'setup.php';
             $cover_file = trailingslashit($dir) . 'cover.php';
             $page_file = trailingslashit($dir) . 'page.php';
 
-            if (!is_readable($cover_file) || !is_readable($page_file)) {
+            if (!file_exists($setup_file) || !is_readable($cover_file) || !is_readable($page_file)) {
                 continue;
             }
 
-            $cover_class = static::extract_class_name($cover_file);
-            $page_class = static::extract_class_name($page_file);
-
-            if (!$cover_class || !$page_class) {
+            $setup = include $setup_file;
+            if (!is_array($setup) || empty($setup['cover_class']) || empty($setup['page_class'])) {
                 continue;
+            }
+
+            if (!empty($setup['dependencies']) && is_array($setup['dependencies'])) {
+                foreach ($setup['dependencies'] as $dep) {
+                    $dep_file = trailingslashit($dir) . $dep;
+                    if (is_readable($dep_file)) {
+                        require_once $dep_file;
+                    }
+                }
             }
 
             require_once $cover_file;
             require_once $page_file;
+
+            $cover_class = $setup['cover_class'];
+            $page_class = $setup['page_class'];
 
             if (!class_exists($cover_class) || !class_exists($page_class)) {
                 continue;
@@ -392,13 +417,13 @@ class Themes_Manager extends Assets
         $theme_name = sanitize_text_field($info['name']);
         $theme_id = sanitize_title($theme_name);
 
-        // 5. Extract class names declared in cover.php / page.php (text scan, no eval).
-        $cover_class = static::extract_class_name($package_root . 'cover.php');
-        $page_class = static::extract_class_name($package_root . 'page.php');
+        // 5. Read class names declared in setup.php.
+        $cover_class = $info['cover_class'] ?? null;
+        $page_class = $info['page_class'] ?? null;
 
         if (!$cover_class || !$page_class) {
             static::cleanup_dir($tmp_dir);
-            return new \WP_Error('bad_class', 'Could not detect PHP class names in cover.php / page.php.');
+            return new \WP_Error('bad_class', 'setup.php must define cover_class and page_class.');
         }
 
         // 6. Move to the permanent themes directory.
@@ -506,93 +531,6 @@ class Themes_Manager extends Assets
                 return $file->getPathname();
             }
         }
-        return null;
-    }
-
-    /**
-     * Token-parse the first declared class name with namespace.
-     * The file is never evaluated.
-     *
-     * @param string $file
-     * @return string|null
-     */
-    private static function extract_class_name(string $file): ?string
-    {
-        $source = file_get_contents($file);
-        if ($source === false) {
-            return null;
-        }
-
-        $tokens = token_get_all($source);
-        $namespace = '';
-        $last_significant = null;
-        $name_token_ids = [T_STRING, T_NS_SEPARATOR];
-
-        if (defined('T_NAME_QUALIFIED')) {
-            $name_token_ids[] = T_NAME_QUALIFIED;
-        }
-        if (defined('T_NAME_FULLY_QUALIFIED')) {
-            $name_token_ids[] = T_NAME_FULLY_QUALIFIED;
-        }
-
-        $token_count = count($tokens);
-
-        for ($i = 0; $i < $token_count; $i++) {
-            $token = $tokens[$i];
-
-            if (!is_array($token)) {
-                continue;
-            }
-
-            $token_id = $token[0];
-
-            if ($token_id === T_NAMESPACE) {
-                $parts = [];
-                for ($j = $i + 1; $j < $token_count; $j++) {
-                    $next = $tokens[$j];
-                    if (is_array($next)) {
-                        if ($next[0] === T_WHITESPACE) {
-                            continue;
-                        }
-
-                        if (in_array($next[0], $name_token_ids, true)) {
-                            $parts[] = $next[1];
-                            continue;
-                        }
-                    } elseif ($next === ';' || $next === '{') {
-                        break;
-                    }
-                }
-
-                $namespace = trim(implode('', $parts), '\\');
-                continue;
-            }
-
-            // Ignore anonymous classes: "new class (...) { ... }".
-            if ($token_id === T_CLASS && $last_significant !== T_NEW) {
-                for ($j = $i + 1; $j < $token_count; $j++) {
-                    $next = $tokens[$j];
-                    if (!is_array($next)) {
-                        continue;
-                    }
-
-                    if ($next[0] === T_WHITESPACE) {
-                        continue;
-                    }
-
-                    if ($next[0] === T_STRING) {
-                        return $namespace ? $namespace . '\\' . $next[1] : $next[1];
-                    }
-
-                    break;
-                }
-            }
-
-            if (!in_array($token_id, [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {
-                $last_significant = $token_id;
-            }
-        }
-
         return null;
     }
 

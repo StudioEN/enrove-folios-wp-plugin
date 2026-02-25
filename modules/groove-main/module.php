@@ -120,6 +120,7 @@ class Module extends BaseModule
 					array(
 						'page' => 'groove-folio',
 						'folio_id' => (int) $folio_id,
+						'tab_key' => 'pages',
 					),
 					admin_url('admin.php')
 				);

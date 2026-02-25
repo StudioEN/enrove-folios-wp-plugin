@@ -4,7 +4,6 @@ namespace Groove\Themes\Groove_Newsletter;
 use Groove\Themes\Base_Theme;
 use Groove\Utils\Utils;
 
-require_once __DIR__ . '/navigation-pane.php';
 
 if (!defined('ABSPATH')) {
   exit;
@@ -80,7 +79,8 @@ class Cover extends Base_Theme
         }
         ?>
       </div>
-      <div class="g-folio__theme-copyright">© 2023 StudioEN</div>
+      <div class="g-folio__theme-copyright">&copy; <?= esc_html(substr(static::get_last_updated(), 0, 4)) ?>
+        <?= esc_html(static::get_author()) ?></div>
     </div>
     <?php
   }
@@ -100,7 +100,7 @@ class Cover extends Base_Theme
         <?php $this->display_brief() ?>
       </div>
       <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site"
-          href="/">StudioEN</a></div>
+          href="/"><?= esc_html(static::get_author()) ?></a></div>
     </div>
     <?php
   }
