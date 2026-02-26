@@ -203,11 +203,12 @@ class Page extends Base_Theme
 
   function display_mobile_nav()
   {
+    $on_this_page_label = Utils::get_folio_on_this_page_label((int) $this->folio_id);
     $blocks = parse_blocks($this->content);
     ?>
     <nav class="g-folio__theme-page-mobile-nav">
       <div class="g-folio__theme-page-mobile-nav-content">
-        <div class="g-folio__theme-page-mobile-nav-label">On this page</div>
+        <div class="g-folio__theme-page-mobile-nav-label"><?= esc_html($on_this_page_label) ?></div>
         <div class="g-folio__theme-page-mobile-navs">
           <?php
           foreach ($blocks as $block) {
@@ -292,6 +293,8 @@ class Page extends Base_Theme
       return;
     }
 
+    $on_this_page_label = Utils::get_folio_on_this_page_label((int) $this->folio_id);
+
     ?>
     <div class="g-folio__theme-newsletter-page">
       <?php $this->display_navbar() ?>
@@ -308,7 +311,7 @@ class Page extends Base_Theme
             </div>
             <div class="g-folio__theme-page-sidebar">
               <div class="g-folio__theme-page-catalogs">
-                <label class="g-folio__theme-page-catalogs-label">On this page</label>
+                <label class="g-folio__theme-page-catalogs-label"><?= esc_html($on_this_page_label) ?></label>
                 <?php $this->display_catalogs(); ?>
               </div>
             </div>

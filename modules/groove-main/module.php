@@ -86,7 +86,9 @@ class Module extends BaseModule
 			}
 		}
 
-		wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], GROOVE_VERSION);
+		$groove_css_path = plugin_dir_path(dirname(__DIR__)) . 'assets/css/groove-main.css';
+		$groove_css_version = file_exists($groove_css_path) ? (string) filemtime($groove_css_path) : GROOVE_VERSION;
+		wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], $groove_css_version);
 		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery'], GROOVE_VERSION, true);
 		wp_enqueue_script('groove-inline-edit', $this->get_js_assets_url('groove-inline-edit'), ['jquery'], GROOVE_VERSION, true);
 

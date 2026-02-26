@@ -356,6 +356,17 @@ abstract class Base_Theme extends Assets
       $this->theme_name = $theme['name'] ?? '';
       $this->theme_cover_url = $theme['cover_url'] ?? '';
       $this->theme_logo_url = $theme['logo_url'] ?? '';
+
+      $folio_id = $this->get_folio_id_for_customization();
+      if ($folio_id > 0) {
+        $custom_logo_id = (int) get_post_meta($folio_id, 'logo_id', true);
+        if ($custom_logo_id > 0) {
+          $custom_logo_url = wp_get_attachment_image_url($custom_logo_id, 'full');
+          if (!empty($custom_logo_url)) {
+            $this->theme_logo_url = $custom_logo_url;
+          }
+        }
+      }
     }
   }
 

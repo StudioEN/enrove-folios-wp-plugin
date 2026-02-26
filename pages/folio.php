@@ -337,10 +337,13 @@ class Folio extends Page
     $theme_id = isset($_POST['theme_id']) ? sanitize_key(wp_unslash($_POST['theme_id'])) : $fields->theme_id;
     $primary_font = isset($_POST['fonts']) ? (string) wp_unslash($_POST['fonts']) : $fields->fonts;
     $primary_font = Utils::normalize_primary_font_key($primary_font);
+    $on_this_page_label = isset($_POST['on_this_page_label']) ? (string) wp_unslash($_POST['on_this_page_label']) : $fields->on_this_page_label;
+    $on_this_page_label = Utils::sanitize_on_this_page_label($on_this_page_label);
 
     // feature_image_id: empty-string means 'clear image', positive int means 'set image'.
     // A missing or null field means 'keep existing' — we do NOT delete in that case.
     $feature_image_id = isset($_POST['feature_image_id']) ? (int) wp_unslash($_POST['feature_image_id']) : -1;
+    $logo_id = isset($_POST['logo_id']) ? (int) wp_unslash($_POST['logo_id']) : -1;
 
     // Derive slug from title and ensure it is unique for this post.
     $desired_slug = sanitize_title($post_title);
@@ -367,6 +370,7 @@ class Folio extends Page
         'permission' => $permission,
         'use_folio' => $use_folio,
         'fonts' => $primary_font,
+        'on_this_page_label' => $on_this_page_label,
       )
     );
 
@@ -379,6 +383,13 @@ class Folio extends Page
       set_post_thumbnail($id, $feature_image_id);
     }
     // $feature_image_id === -1 means field was not sent; keep existing thumbnail.
+
+    if ($logo_id === 0) {
+      delete_post_meta($id, 'logo_id');
+    } elseif ($logo_id > 0) {
+      update_post_meta($id, 'logo_id', $logo_id);
+    }
+    // $logo_id === -1 means field was not sent; keep existing logo.
 
     if ($post_status === 'publish' && !is_wp_error($folio_result)) {
       $pages_query = new \WP_Query(array(
@@ -499,12 +510,14 @@ class Folio extends Page
     $fields = $this->get_fields();
     $primary_font = Utils::normalize_primary_font_key($fields->fonts);
     $available_fonts = Utils::get_supported_primary_fonts();
+    $on_this_page_label = isset($fields->on_this_page_label) ? (string) $fields->on_this_page_label : '';
+    $on_this_page_placeholder = Utils::get_default_on_this_page_label();
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
         <h3 class="text-sm font-semibold text-gray-800 m-0">Customization</h3>
       </div>
-      <div class="p-4">
+      <div class="p-4 space-y-4">
         <div>
           <label for="g-primary-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PRIMARY
             FONT</label>
@@ -524,6 +537,15 @@ class Folio extends Page
               <span class="dashicons dashicons-undo" aria-hidden="true"></span>
             </button>
           </div>
+        </div>
+        <div>
+          <label for="g-on-this-page-label"
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">ON
+            THIS PAGE LABEL</label>
+          <input type="text" id="g-on-this-page-label" name="on_this_page_label"
+            value="<?php echo esc_attr($on_this_page_label); ?>"
+            placeholder="<?php echo esc_attr($on_this_page_placeholder); ?>"
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
       </div>
     </div>
@@ -585,6 +607,7 @@ class Folio extends Page
     $selected_author = get_post_field('post_author', $fields->ID);
 
     $feature_image = isset($fields->feature_image) ? $fields->feature_image : '';
+    $logo = isset($fields->logo) ? $fields->logo : '';
 
     $subtitle = isset($fields->subtitle) ? $fields->subtitle : '';
     $copyright = isset($fields->copyright) ? $fields->copyright : '';
@@ -592,7 +615,10 @@ class Folio extends Page
     // Get current theme info for default image fallback
     $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
     $current_theme = $all_themes[$fields->theme_id] ?? reset($all_themes);
-    $theme_url = $current_theme["cover_url"] ?? '';
+    $theme_cover_url = $current_theme["cover_url"] ?? '';
+    $theme_logo_url = $current_theme["logo_url"] ?? '';
+    $feature_image_src = ($feature_image instanceof \WP_Post && !empty($feature_image->guid)) ? $feature_image->guid : $theme_cover_url;
+    $logo_image_src = ($logo instanceof \WP_Post && !empty($logo->guid)) ? $logo->guid : $theme_logo_url;
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
@@ -611,19 +637,38 @@ class Folio extends Page
           <input placeholder="Option" type="text" id="subtitle" name="subtitle" value="<?php echo esc_attr($subtitle) ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">FEATURE IMAGE</label>
-          <input value="<?= isset($feature_image->ID) ? $feature_image->ID : '' ?>" type="hidden" name="feature_image_id"
-            id="media_id">
-          <div class="flex items-start space-x-4">
-            <img id="feature-preview" class="h-32 w-auto object-cover rounded border border-gray-200"
-              src="<?= empty($feature_image->guid) ? esc_url($theme_url) : esc_url($feature_image->guid) ?>" />
-            <div class="flex flex-col space-y-2">
-              <button type="button" id="feature-image" class="button button-secondary">Replace
-                image</button>
-              <button type="button" data-default-url="<?= esc_url($theme_url) ?>" id="use-default-image"
-                class="button-link">Use
-                default</button>
+        <div class="g-folio__media-row">
+          <div class="g-folio__media-col">
+            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">FEATURE IMAGE</label>
+            <input value="<?= $feature_image instanceof \WP_Post ? (int) $feature_image->ID : '' ?>" type="hidden"
+              name="feature_image_id" id="feature-media-id">
+            <div class="flex items-start space-x-4">
+              <div
+                class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2">
+                <img id="feature-preview" class="g-folio__media-preview-image"
+                  src="<?= esc_url($feature_image_src) ?>" />
+              </div>
+              <div class="flex flex-col space-y-2">
+                <button type="button" id="feature-image" class="button button-secondary">Replace image</button>
+                <button type="button" data-default-url="<?= esc_url($theme_cover_url) ?>" id="use-default-image"
+                  class="button-link">Use default</button>
+              </div>
+            </div>
+          </div>
+          <div class="g-folio__media-col">
+            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">LOGO</label>
+            <input value="<?= $logo instanceof \WP_Post ? (int) $logo->ID : '' ?>" type="hidden" name="logo_id"
+              id="logo-media-id">
+            <div class="flex items-start space-x-4">
+              <div
+                class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2">
+                <img id="logo-preview" class="g-folio__media-preview-image" src="<?= esc_url($logo_image_src) ?>" />
+              </div>
+              <div class="flex flex-col space-y-2">
+                <button type="button" id="logo-image" class="button button-secondary">Replace image</button>
+                <button type="button" data-default-url="<?= esc_url($theme_logo_url) ?>" id="use-default-logo"
+                  class="button-link">Use default</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1075,8 +1120,7 @@ class Folio extends Page
       <input type="hidden" name="page" value="<?php echo esc_attr(static::PAGE_ID); ?>" />
       <input type="hidden" name="tab_key" value="pages" />
       <input type="hidden" name="folio_id" value="<?php echo esc_attr((string) $folio_id); ?>" />
-      <input type="hidden" name="post_status" class="post_status_page"
-        value="<?php echo esc_attr($status); ?>" />
+      <input type="hidden" name="post_status" class="post_status_page" value="<?php echo esc_attr($status); ?>" />
       <input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>" />
       <input type="hidden" name="order" value="<?php echo esc_attr($order); ?>" />
       <?php wp_nonce_field('groove_bulk_pages_action', '_groove_bulk_nonce'); ?>
@@ -1196,7 +1240,8 @@ class Folio extends Page
             </th>
             <th scope="col"
               class="manage-column column-primary <?php echo esc_attr($orderby === 'title' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
-              <a href="<?php echo esc_url($this->get_pages_tab_sort_url($folio_id, 'title', $orderby, $order, $status, $search)); ?>">
+              <a
+                href="<?php echo esc_url($this->get_pages_tab_sort_url($folio_id, 'title', $orderby, $order, $status, $search)); ?>">
                 <span><?php esc_html_e('Page Name', 'groove'); ?></span>
                 <span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span
                     class="sorting-indicator desc" aria-hidden="true"></span></span>
@@ -1280,7 +1325,8 @@ class Folio extends Page
                     </a>
                   </strong>
                   <div class="row-actions">
-                    <span class="edit"><a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove'); ?></a> |</span>
+                    <span class="edit"><a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove'); ?></a>
+                      |</span>
                     <?php if ($post_status !== 'trash'): ?>
                       <span class="inline hide-if-no-js">
                         <button type="button" class="button-link editinline"
@@ -1292,7 +1338,8 @@ class Folio extends Page
                         rel="noopener noreferrer"><?php echo esc_html($row_view_label); ?></a> |</span>
                     <?php if ($post_status === 'trash'): ?>
                       <span class="untrash"><a
-                          href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove'); ?></a> |</span>
+                          href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove'); ?></a>
+                        |</span>
                       <span class="delete"><a class="submitdelete"
                           href="<?php echo esc_url(get_delete_post_link($post_id, '', true)); ?>"><?php esc_html_e('Delete Permanently', 'groove'); ?></a></span>
                     <?php else: ?>

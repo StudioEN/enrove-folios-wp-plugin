@@ -347,6 +347,32 @@ body.groove .g-page-header__buttons-group {
   overflow: hidden;
 }
 
+.g-folio__media-preview-frame {
+  width: 160px;
+  height: 120px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+}
+
+.g-folio__media-preview-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.g-folio__media-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.g-folio__media-col {
+  min-width: 0;
+}
+
 .g-folio__fields-section {
   overflow: hidden;
   flex: 1 1 0;
