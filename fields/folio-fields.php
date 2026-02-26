@@ -7,6 +7,7 @@ class FolioFields
 {
   public $name;
   public $feature_image;
+  public $logo;
   public $copyright;
   public $author;
   public $subtitle;
@@ -15,6 +16,7 @@ class FolioFields
   public $permalink;
   public $title;
   public $fonts;
+  public $on_this_page_label;
   public $password;
 
   public $theme_id;
@@ -37,6 +39,9 @@ class FolioFields
       $this->feature_image = null;
     }
 
+    $logo_id = isset($meta['logo_id'][0]) ? (int) $meta['logo_id'][0] : 0;
+    $this->logo = $logo_id > 0 ? get_post($logo_id) : null;
+
     $this->ID = $post->ID;
     $this->name = $post->post_name ?? '';
     $this->title = $post->post_title ?? '';
@@ -50,6 +55,7 @@ class FolioFields
     $this->theme_id = $meta['theme_id'][0] ?? '';
     $this->permalink = $meta['permalink'][0] ?? '';
     $this->fonts = Utils::normalize_primary_font_key($meta['fonts'][0] ?? '');
+    $this->on_this_page_label = Utils::sanitize_on_this_page_label($meta['on_this_page_label'][0] ?? '');
   }
 }
 ?>

@@ -262,29 +262,55 @@ jQuery(function () {
       })
     })
 
-    jQuery('#feature-image').click(function (event) {
-      event.preventDefault();
-      var custom_uploader = wp.media({
-        title: 'Select',
-        button: {
-          text: 'Select'
-        },
-        multiple: false
-      });
+    function bindMediaSelector(options) {
+      const openButton = jQuery(options.openButton)
+      if (!openButton.length) {
+        return
+      }
 
-      custom_uploader.on('select', function () {
-        var attachment = custom_uploader.state().get('selection').first().toJSON()
-        jQuery('#media_id').val(attachment.id).trigger('change')
-        jQuery('#feature-preview').attr('src', attachment.url)
-      });
+      openButton.click(function (event) {
+        event.preventDefault()
+        const customUploader = wp.media({
+          title: 'Select',
+          button: {
+            text: 'Select'
+          },
+          multiple: false
+        })
 
-      custom_uploader.open();
-    });
+        customUploader.on('select', function () {
+          const attachment = customUploader.state().get('selection').first().toJSON()
+          jQuery(options.hiddenInput).val(attachment.id).trigger('change')
+          jQuery(options.previewImage).attr('src', attachment.url)
+        })
 
-    jQuery('#use-default-image').click(function () {
-      jQuery('#media_id').val('').trigger('change')
-      var defaultUrl = jQuery('#use-default-image').data('default-url')
-      jQuery('#feature-preview').attr('src', defaultUrl)
+        customUploader.open()
+      })
+
+      const defaultButton = jQuery(options.defaultButton)
+      if (!defaultButton.length) {
+        return
+      }
+
+      defaultButton.click(function () {
+        jQuery(options.hiddenInput).val('').trigger('change')
+        const defaultUrl = jQuery(this).data('default-url')
+        jQuery(options.previewImage).attr('src', defaultUrl)
+      })
+    }
+
+    bindMediaSelector({
+      openButton: '#feature-image',
+      hiddenInput: '#feature-media-id',
+      previewImage: '#feature-preview',
+      defaultButton: '#use-default-image'
+    })
+
+    bindMediaSelector({
+      openButton: '#logo-image',
+      hiddenInput: '#logo-media-id',
+      previewImage: '#logo-preview',
+      defaultButton: '#use-default-logo'
     })
 
     jQuery('#g-reset-primary-font').click(function () {

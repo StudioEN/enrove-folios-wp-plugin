@@ -45,50 +45,55 @@ class Utils
   static function get_supported_primary_fonts()
   {
     return array(
-      'roboto' => array(
-        'label' => 'Roboto',
-        'css_stack' => "'Roboto', sans-serif",
-        'google_family' => 'Roboto:wght@400;700',
-      ),
-      'open-sans' => array(
-        'label' => 'Open Sans',
-        'css_stack' => "'Open Sans', sans-serif",
-        'google_family' => 'Open+Sans:wght@400;700',
-      ),
-      'noto-sans' => array(
-        'label' => 'Noto Sans',
-        'css_stack' => "'Noto Sans', sans-serif",
-        'google_family' => 'Noto+Sans:wght@400;700',
+      'dm-sans' => array(
+        'label' => 'DM Sans',
+        'css_stack' => "'DM Sans', sans-serif",
+        'google_family' => 'DM+Sans:wght@400;700',
       ),
       'inter' => array(
         'label' => 'Inter',
         'css_stack' => "'Inter', sans-serif",
         'google_family' => 'Inter:wght@400;700',
       ),
+      'lato' => array(
+        'label' => 'Lato',
+        'css_stack' => "'Lato', sans-serif",
+        'google_family' => 'Lato:wght@400;700',
+      ),
+      'merriweather' => array(
+        'label' => 'Merriweather',
+        'css_stack' => "'Merriweather', serif",
+        'google_family' => 'Merriweather:wght@400;700',
+      ),
       'montserrat' => array(
         'label' => 'Montserrat',
         'css_stack' => "'Montserrat', sans-serif",
         'google_family' => 'Montserrat:wght@400;700',
       ),
-      'poppins' => array(
-        'label' => 'Poppins',
-        'css_stack' => "'Poppins', sans-serif",
-        'google_family' => 'Poppins:wght@400;700',
+      'noto-sans' => array(
+        'label' => 'Noto Sans',
+        'css_stack' => "'Noto Sans', sans-serif",
+        'google_family' => 'Noto+Sans:wght@400;700',
       ),
-      'lato' => array(
-        'label' => 'Lato',
-        'css_stack' => "'Lato', sans-serif",
-        'google_family' => 'Lato:wght@400;700',
+      'noto-serif' => array(
+        'label' => 'Noto Serif',
+        'css_stack' => "'Noto Serif', serif",
+        'google_family' => 'Noto+Serif:wght@400;700',
       ),
       'nunito-sans' => array(
         'label' => 'Nunito Sans',
         'css_stack' => "'Nunito Sans', sans-serif",
         'google_family' => 'Nunito+Sans:wght@400;700',
       ),
-      'dm-sans' => array(
-        'label' => 'DM Sans',
-        'css_stack' => "'DM Sans', sans-serif",
-        'google_family' => 'DM+Sans:wght@400;700',
+      'poppins' => array(
+        'label' => 'Poppins',
+        'css_stack' => "'Poppins', sans-serif",
+        'google_family' => 'Poppins:wght@400;700',
+      ),
+      'roboto' => array(
+        'label' => 'Roboto',
+        'css_stack' => "'Roboto', sans-serif",
+        'google_family' => 'Roboto:wght@400;700',
       ),
     );
   }
@@ -114,6 +119,33 @@ class Utils
     $font['google_url'] = 'https://fonts.googleapis.com/css2?family=' . $font['google_family'] . '&display=swap';
 
     return $font;
+  }
+
+  static function sanitize_on_this_page_label($label)
+  {
+    if (!is_string($label)) {
+      return '';
+    }
+
+    return trim(sanitize_text_field($label));
+  }
+
+  static function get_default_on_this_page_label()
+  {
+    return __('On this page', 'groove');
+  }
+
+  static function get_folio_on_this_page_label($folio_id)
+  {
+    $folio_id = (int) $folio_id;
+    if ($folio_id <= 0) {
+      return Utils::get_default_on_this_page_label();
+    }
+
+    $label = get_post_meta($folio_id, 'on_this_page_label', true);
+    $label = Utils::sanitize_on_this_page_label($label);
+
+    return $label !== '' ? $label : Utils::get_default_on_this_page_label();
   }
 
   static function get_folio_id()
