@@ -1,6 +1,7 @@
 <?php
 namespace Groove\Pages;
 
+use Groove\Insights\Manager as Insights_Manager;
 use Groove\Menu\Menu_Manager;
 use Groove\Menu\Settings_Menu_Item;
 use Groove\Pages\Overview;
@@ -29,6 +30,9 @@ class Settings extends Page
       ],
       'routing' => [
         'label' => esc_html__('Routing', 'groove'),
+      ],
+      'insights' => [
+        'label' => esc_html__('Insights', 'groove'),
       ],
       'privacy' => [
         'label' => esc_html__('Privacy', 'groove'),
@@ -130,6 +134,23 @@ class Settings extends Page
     } else if ('routing' === $tab) {
       $base_slug = isset($_POST['folio_base_slug']) ? $this->sanitize_base_slug(wp_unslash($_POST['folio_base_slug'])) : 'folio';
       update_option('groove_folio_base_slug', $base_slug);
+    } else if ('insights' === $tab) {
+      $worker_endpoint = isset($_POST['insights_worker_endpoint']) ? esc_url_raw(trim((string) wp_unslash($_POST['insights_worker_endpoint']))) : '';
+      $shared_secret = isset($_POST['insights_shared_secret']) ? sanitize_text_field(wp_unslash($_POST['insights_shared_secret'])) : '';
+      $notification_email = isset($_POST['insights_notification_email']) ? sanitize_email(wp_unslash($_POST['insights_notification_email'])) : '';
+      $master_folio_id = isset($_POST['insights_master_folio_id']) ? (int) wp_unslash($_POST['insights_master_folio_id']) : 0;
+
+      if (!is_email($notification_email)) {
+        $notification_email = (string) get_option('admin_email', '');
+      }
+      if ($master_folio_id > 0 && get_post_type($master_folio_id) !== 'groove_folio') {
+        $master_folio_id = 0;
+      }
+
+      update_option('groove_insights_worker_endpoint', $worker_endpoint);
+      update_option('groove_insights_shared_secret', $shared_secret);
+      update_option('groove_insights_notification_email', $notification_email);
+      update_option('groove_insights_master_folio_id', $master_folio_id);
     } else {
       $analytics = isset($_POST['usage_analytics']) ? 1 : 0;
       update_option('groove_usage_analytics', $analytics);
@@ -270,6 +291,97 @@ class Settings extends Page
 <?php
   }
 
+  public function display_insights_fields()
+  {
+    $worker_endpoint = Insights_Manager::get_worker_endpoint();
+    $shared_secret = Insights_Manager::get_shared_secret();
+    $notification_email = Insights_Manager::get_notification_email();
+    $master_folio_id = Insights_Manager::get_master_folio_id();
+    $callback_example = Insights_Manager::get_callback_url(123);
+    ?>
+<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4">
+  <?php wp_nonce_field('groove_save_settings', 'groove_nonce'); ?>
+  <input type="hidden" name="action" value="save_groove_settings" />
+  <input type="hidden" name="tab_key" value="insights" />
+
+  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
+    <div>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Insights Worker', 'groove'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('Configure the external worker that performs the weekly research, ranking, briefing, and audio generation.', 'groove'); ?></p>
+    </div>
+
+    <div>
+      <label for="groove-insights-worker-endpoint" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+        <?php esc_html_e('Worker Endpoint URL', 'groove'); ?>
+      </label>
+      <input
+        id="groove-insights-worker-endpoint"
+        type="url"
+        name="insights_worker_endpoint"
+        value="<?php echo esc_attr($worker_endpoint); ?>"
+        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        placeholder="https://worker.example.com/groove-insights/run" />
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div>
+        <label for="groove-insights-shared-secret" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+          <?php esc_html_e('Shared Secret', 'groove'); ?>
+        </label>
+        <input
+          id="groove-insights-shared-secret"
+          type="password"
+          name="insights_shared_secret"
+          value="<?php echo esc_attr($shared_secret); ?>"
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          autocomplete="off" />
+      </div>
+
+      <div>
+        <label for="groove-insights-notification-email" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+          <?php esc_html_e('Notification Email', 'groove'); ?>
+        </label>
+        <input
+          id="groove-insights-notification-email"
+          type="email"
+          name="insights_notification_email"
+          value="<?php echo esc_attr($notification_email); ?>"
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          placeholder="<?php echo esc_attr(get_option('admin_email')); ?>" />
+      </div>
+    </div>
+
+    <div>
+      <label for="groove-insights-master-folio-id" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+        <?php esc_html_e('Master Folio ID', 'groove'); ?>
+      </label>
+      <input
+        id="groove-insights-master-folio-id"
+        type="number"
+        min="0"
+        name="insights_master_folio_id"
+        value="<?php echo esc_attr((string) $master_folio_id); ?>"
+        class="block w-full max-w-xs rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+      <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('Leave this as 0 if Groove should create or discover the master folio automatically.', 'groove'); ?></p>
+    </div>
+
+    <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700">
+      <p class="m-0"><?php esc_html_e('Worker callback example:', 'groove'); ?> <code><?php echo esc_html($callback_example); ?></code></p>
+      <p class="mt-2 mb-0"><?php esc_html_e('Expected callback header:', 'groove'); ?> <code>X-Groove-Insights-Secret</code></p>
+    </div>
+
+    <div class="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      <p class="m-0"><?php esc_html_e('Use a real cron or external scheduler for Friday 7:00 AM ET. This workflow should not rely on WP-Cron for exact delivery.', 'groove'); ?></p>
+    </div>
+
+    <div>
+      <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'groove'); ?></button>
+    </div>
+  </section>
+</form>
+<?php
+  }
+
   public function display_privacy_fields()
   {
     ?>
@@ -340,6 +452,15 @@ class Settings extends Page
 <?php
   }
 
+  public function display_tab_insights()
+  {
+    ?>
+<div>
+  <?php $this->display_insights_fields(); ?>
+</div>
+<?php
+  }
+
   public function display_content()
   {
     $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'general';
@@ -354,6 +475,8 @@ class Settings extends Page
 
   <?php if ('routing' === $tab_key): ?>
     <?php $this->display_tab_routing(); ?>
+  <?php elseif ('insights' === $tab_key): ?>
+    <?php $this->display_tab_insights(); ?>
   <?php elseif ('privacy' === $tab_key): ?>
     <?php $this->display_tab_privacy(); ?>
   <?php else: ?>

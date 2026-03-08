@@ -1,0 +1,27 @@
+name: Agent Skills Update Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 12 * * 1"
+
+jobs:
+  check-agent-skills:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Refresh shared-skills source when using a submodule
+        run: |
+          if [ -e "tools/agent-skills/.git" ]; then
+            git submodule update --init --remote tools/agent-skills
+          fi
+
+      - name: Check for Agent Skills updates
+        run: |
+          python3 tools/agent-skills/scripts/check_agent_skill_updates.py \
+            --repo-root tools/agent-skills \
+            --lock-file .codex/agent-skills.lock.json

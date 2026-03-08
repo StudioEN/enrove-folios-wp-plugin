@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "catalog_name": "agent-skills",
+  "installed_at": "2026-03-08T22:00:58.303576+00:00",
+  "source_repo_root": "/Users/frank/Documents/Dropbox/StudioEN/Project/Groove Folios/Production/WP-plugin/groove-wordpress-plugin/tools/agent-skills",
+  "source_git_commit": "8b32a297b7fc40089d1ee606da4307a1b3f8fc2f",
+  "skills": [
+    {
+      "name": "figma",
+      "path": "skills/figma",
+      "hash": "37da49a4a9ff7e2d55b92be0a84e41fd0bf372be4c8a93f4776e0d2afa7f92c2"
+    },
+    {
+      "name": "figma-implement-design",
+      "path": "skills/figma-implement-design",
+      "hash": "8b9201be9d6c7c1c8092bb9da36b8245550a8edaef454f2ddcb47c8ee5d6f89b"
+    }
+  ]
+}
