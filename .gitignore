@@ -107,6 +107,8 @@ coverage
 ############################
 
 .env
+scripts/.env.local
+scripts/insights-output/
 license.txt
 exports
 *.cache

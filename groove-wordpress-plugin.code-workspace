@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../Automation"
+		},
+		{
+			"path": "../../Automation/Agent Skills/Base-Agent-Skills"
+		}
+	],
+	"settings": {}
+}

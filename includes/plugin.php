@@ -2,6 +2,7 @@
 namespace Groove;
 
 use Groove\Autoloader;
+use Groove\Insights\Manager as Insights_Manager;
 use Groove\Modules\Modules_Manager;
 use Groove\Contents\Contents_Manager;
 use Groove\Pages\Overview;
@@ -11,6 +12,7 @@ use Groove\Pages\Add_New;
 use Groove\Pages\Support;
 use Groove\Pages\Settings;
 use Groove\Pages\Themes;
+use Groove\Pages\Insights;
 use Groove\Menu\Menu_Manager;
 use Groove\Themes\Themes_Manager;
 use Groove\Utils\Utils;
@@ -40,6 +42,8 @@ class Plugin
 	public $all_folios;
 	public $folio;
 	public $themes;
+	public $insights;
+	public $insights_manager;
 	public $menu_manager;
 	public $modules_manager;
 	public $contents_manager;
@@ -115,6 +119,8 @@ class Plugin
 		$this->support = new Support();
 		$this->settings = new Settings();
 		$this->themes = new Themes();
+		$this->insights = new Insights();
+		$this->insights_manager = Insights_Manager::instance();
 
 		$this->menu_manager = new Menu_Manager();
 		$this->modules_manager = new Modules_Manager();
