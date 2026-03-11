@@ -72,6 +72,22 @@
 /* ── Google Fonts import ── */
 @import url('https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* ── Base Interaction styles ── */
+a,
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    COVER PAGE
@@ -813,13 +829,13 @@ html {
   letter-spacing: -0.02em;
   /* Decorative accent underline */
   padding-bottom: 20px;
-  border-bottom: 3px solid var(--gm-accent);
+  border-bottom: 2px solid var(--gm-accent-progress);
 }
 
 /* ── Page content ── */
 .gm-page__content {
   margin-top: 32px;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.75;
   color: var(--gm-text-primary);
 }
