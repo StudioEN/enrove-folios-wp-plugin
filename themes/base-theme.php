@@ -12,6 +12,7 @@ abstract class Base_Theme extends Assets
   public $content;
   public $feature_image;
   public $author;
+  public $copyright;
   public $page;
   public $pages;
   public $theme_id;
@@ -85,14 +86,15 @@ abstract class Base_Theme extends Assets
     return 0;
   }
 
-  protected function get_selected_primary_font_data()
+  protected function get_selected_font_data($font_role = 'body')
   {
     $folio_id = $this->get_folio_id_for_customization();
     if ($folio_id <= 0) {
       return null;
     }
 
-    $font_key = Utils::normalize_primary_font_key((string) get_post_meta($folio_id, 'fonts', true));
+    $font_keys = Utils::get_folio_font_keys($folio_id);
+    $font_key = Utils::normalize_primary_font_key($font_keys[$font_role] ?? '');
     if ($font_key === '') {
       return null;
     }
@@ -102,16 +104,41 @@ abstract class Base_Theme extends Assets
 
   protected function enqueue_primary_font_style($theme_handle)
   {
-    $font = $this->get_selected_primary_font_data();
-    if (!$font || empty($font['google_url']) || empty($font['css_stack'])) {
+    $header_font = $this->get_selected_font_data('header');
+    $body_font = $this->get_selected_font_data('body');
+
+    if (!$header_font && !$body_font) {
       return;
     }
 
-    $font_handle = 'groove-folio-font-' . $font['key'];
-    wp_enqueue_style($font_handle, $font['google_url'], [], GROOVE_VERSION);
+    $fonts_to_enqueue = array();
+    if ($header_font && !empty($header_font['key']) && !empty($header_font['google_url'])) {
+      $fonts_to_enqueue[$header_font['key']] = $header_font;
+    }
+    if ($body_font && !empty($body_font['key']) && !empty($body_font['google_url'])) {
+      $fonts_to_enqueue[$body_font['key']] = $body_font;
+    }
 
-    $font_stack = $font['css_stack'];
-    $inline_css = '.g-folio__theme-cover, body.groove [class*="g-folio__theme-"][class$="-page"] { --g-folio-primary-font: ' . $font_stack . '; font-family: var(--g-folio-primary-font); }';
+    foreach ($fonts_to_enqueue as $font) {
+      $font_handle = 'groove-folio-font-' . $font['key'];
+      wp_enqueue_style($font_handle, $font['google_url'], [], GROOVE_VERSION);
+    }
+
+    $declarations = array();
+    if ($header_font && !empty($header_font['css_stack'])) {
+      $declarations[] = '--g-folio-header-font: ' . $header_font['css_stack'];
+    }
+    if ($body_font && !empty($body_font['css_stack'])) {
+      $declarations[] = '--g-folio-body-font: ' . $body_font['css_stack'];
+      $declarations[] = '--g-folio-primary-font: var(--g-folio-body-font)';
+      $declarations[] = 'font-family: var(--g-folio-body-font)';
+    }
+
+    if (empty($declarations)) {
+      return;
+    }
+
+    $inline_css = '.g-folio__theme-cover, body.groove [class*="g-folio__theme-"][class$="-page"] { ' . implode('; ', $declarations) . '; }';
     wp_add_inline_style($theme_handle, $inline_css);
   }
 
@@ -331,6 +358,58 @@ abstract class Base_Theme extends Assets
   }
 
   /**
+   * Resolve navigation context with shared fallbacks.
+   *
+   * Themes can consume this context and still render fully custom nav markup.
+   */
+  protected function get_navigation_context($args = array())
+  {
+    $folio_id = isset($args['folio_id']) ? (int) $args['folio_id'] : $this->get_folio_id_for_customization();
+    $current_page_id = isset($args['current_page_id'])
+      ? (int) $args['current_page_id']
+      : (($this->post_type === 'groove_folio_page') ? (int) $this->id : 0);
+
+    $pages = array();
+    if (isset($args['pages']) && is_array($args['pages'])) {
+      $pages = $args['pages'];
+    } elseif (is_array($this->pages) && !empty($this->pages)) {
+      $pages = $this->pages;
+    } elseif ($folio_id > 0) {
+      $this->get_pages_data($folio_id);
+      $pages = is_array($this->pages) ? $this->pages : array();
+    }
+
+    $title = array_key_exists('title', $args) ? (string) $args['title'] : '';
+    if ($title === '') {
+      if ($this->post_type === 'groove_folio') {
+        $title = !empty($this->title) ? (string) $this->title : (string) $this->theme_name;
+      } else {
+        if (property_exists($this, 'folio') && isset($this->folio) && isset($this->folio->post_title)) {
+          $title = (string) $this->folio->post_title;
+        } elseif ($folio_id > 0) {
+          $folio_post = get_post($folio_id);
+          if ($folio_post && isset($folio_post->post_title)) {
+            $title = (string) $folio_post->post_title;
+          }
+        }
+      }
+    }
+
+    $title_url = array_key_exists('title_url', $args) ? (string) $args['title_url'] : '';
+    if ($title_url === '' && $folio_id > 0 && Utils::is_folio_cover_enabled($folio_id)) {
+      $title_url = (string) Utils::get_folio_permalink_by_id($folio_id);
+    }
+
+    return array(
+      'folio_id' => $folio_id,
+      'title' => $title,
+      'title_url' => $title_url,
+      'pages' => $pages,
+      'current_page_id' => $current_page_id,
+    );
+  }
+
+  /**
    * Resolve theme display metadata via Themes_Manager (single source of truth).
    * Falls back to the first registered theme if the stored ID is not found.
    */
@@ -375,6 +454,27 @@ abstract class Base_Theme extends Assets
     $this->get_page_data();
     $this->get_pages_data($this->id);
     $this->get_theme_data();
+    $this->copyright = '';
+
+    $folio_id = $this->get_folio_id_for_customization();
+    if ($folio_id > 0) {
+      $this->copyright = trim((string) get_post_meta($folio_id, 'copyright', true));
+
+      $show_byline = (string) get_post_meta($folio_id, 'show_byline', true);
+      if ($show_byline === '0') {
+        $this->author = '';
+      } else {
+        $byline_user_id = (int) get_post_meta($folio_id, 'byline', true);
+        if ($byline_user_id <= 0) {
+          $byline_user_id = (int) get_post_field('post_author', $folio_id);
+        }
+
+        if ($byline_user_id > 0) {
+          $byline_user = get_userdata($byline_user_id);
+          $this->author = $byline_user ? $byline_user->display_name : '';
+        }
+      }
+    }
   }
 
   function display_theme()

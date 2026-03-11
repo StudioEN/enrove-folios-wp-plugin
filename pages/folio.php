@@ -323,8 +323,18 @@ class Folio extends Page
     $fields = new FolioFields($folio_post);
 
     $post_title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : $fields->title;
-    $post_author = isset($_POST['author']) ? (int) wp_unslash($_POST['author']) : $fields->author;
+    $post_author = $fields->author;
     $subtitle = isset($_POST['subtitle']) ? sanitize_text_field(wp_unslash($_POST['subtitle'])) : $fields->subtitle;
+    $byline = isset($_POST['byline']) ? (int) wp_unslash($_POST['byline']) : (int) $fields->byline;
+    if ($byline <= 0) {
+      $byline = 0;
+      $show_byline = '0';
+    } elseif (!get_userdata($byline)) {
+      $byline = $post_author;
+      $show_byline = '1';
+    } else {
+      $show_byline = '1';
+    }
     $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : $fields->password;
     $copyright = isset($_POST['copyright']) ? sanitize_text_field(wp_unslash($_POST['copyright'])) : $fields->copyright;
     $permission = $fields->permission;
@@ -335,8 +345,10 @@ class Folio extends Page
     $use_folio = isset($_POST['use_folio']) ? (string) wp_unslash($_POST['use_folio']) : $fields->use_folio;
     $use_folio = $use_folio === '1' ? '1' : '0';
     $theme_id = isset($_POST['theme_id']) ? sanitize_key(wp_unslash($_POST['theme_id'])) : $fields->theme_id;
-    $primary_font = isset($_POST['fonts']) ? (string) wp_unslash($_POST['fonts']) : $fields->fonts;
-    $primary_font = Utils::normalize_primary_font_key($primary_font);
+    $header_font = isset($_POST['header_font']) ? (string) wp_unslash($_POST['header_font']) : $fields->header_font;
+    $header_font = Utils::normalize_primary_font_key($header_font);
+    $body_font = isset($_POST['body_font']) ? (string) wp_unslash($_POST['body_font']) : $fields->body_font;
+    $body_font = Utils::normalize_primary_font_key($body_font);
     $on_this_page_label = isset($_POST['on_this_page_label']) ? (string) wp_unslash($_POST['on_this_page_label']) : $fields->on_this_page_label;
     $on_this_page_label = Utils::sanitize_on_this_page_label($on_this_page_label);
 
@@ -366,10 +378,15 @@ class Folio extends Page
       'meta_input' => array(
         'theme_id' => $theme_id,
         'subtitle' => $subtitle,
+        'byline' => $byline,
+        'show_byline' => $show_byline,
         'copyright' => $copyright,
         'permission' => $permission,
         'use_folio' => $use_folio,
-        'fonts' => $primary_font,
+        // Keep legacy `fonts` synced for existing theme CSS/older installs.
+        'fonts' => $body_font,
+        'header_font' => $header_font,
+        'body_font' => $body_font,
         'on_this_page_label' => $on_this_page_label,
       )
     );
@@ -508,7 +525,8 @@ class Folio extends Page
   public function display_customization()
   {
     $fields = $this->get_fields();
-    $primary_font = Utils::normalize_primary_font_key($fields->fonts);
+    $header_font = Utils::normalize_primary_font_key($fields->header_font);
+    $body_font = Utils::normalize_primary_font_key($fields->body_font);
     $available_fonts = Utils::get_supported_primary_fonts();
     $on_this_page_label = isset($fields->on_this_page_label) ? (string) $fields->on_this_page_label : '';
     $on_this_page_placeholder = Utils::get_default_on_this_page_label();
@@ -519,25 +537,47 @@ class Folio extends Page
       </div>
       <div class="p-4 space-y-4">
         <div>
-          <label for="g-primary-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PRIMARY
+          <label for="g-header-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Primary
             FONT</label>
           <div class="flex items-center gap-2">
-            <select id="g-primary-font" name="fonts"
+            <select id="g-header-font" name="header_font"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
               <option value="">Theme Default</option>
               <?php foreach ($available_fonts as $font_key => $font): ?>
-                <option value="<?php echo esc_attr($font_key); ?>" <?php selected($primary_font, $font_key); ?>>
+                <option value="<?php echo esc_attr($font_key); ?>" <?php selected($header_font, $font_key); ?>>
                   <?php echo esc_html($font['label']); ?>
                 </option>
               <?php endforeach; ?>
             </select>
-            <button type="button" id="g-reset-primary-font"
-              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              aria-label="Reset to theme default font" title="Reset to theme default font">
+            <button type="button" id="g-reset-header-font"
+              class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="Reset to theme default header font" title="Reset to theme default header font">
               <span class="dashicons dashicons-undo" aria-hidden="true"></span>
             </button>
           </div>
         </div>
+        <div>
+          <label for="g-body-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Secondary
+            FONT</label>
+          <div class="flex items-center gap-2">
+            <select id="g-body-font" name="body_font"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+              <option value="">Theme Default</option>
+              <?php foreach ($available_fonts as $font_key => $font): ?>
+                <option value="<?php echo esc_attr($font_key); ?>" <?php selected($body_font, $font_key); ?>>
+                  <?php echo esc_html($font['label']); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+            <button type="button" id="g-reset-body-font"
+              class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="Reset to theme default secondary font" title="Reset to theme default body font">
+              <span class="dashicons dashicons-undo" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+        <p class="m-0 text-xs text-gray-500">Primary font styles titles and headings. Secondary font styles the body text.
+        </p>
         <div>
           <label for="g-on-this-page-label"
             class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">ON
@@ -645,8 +685,7 @@ class Folio extends Page
             <div class="flex items-start space-x-4">
               <div
                 class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2">
-                <img id="feature-preview" class="g-folio__media-preview-image"
-                  src="<?= esc_url($feature_image_src) ?>" />
+                <img id="feature-preview" class="g-folio__media-preview-image" src="<?= esc_url($feature_image_src) ?>" />
               </div>
               <div class="flex flex-col space-y-2">
                 <button type="button" id="feature-image" class="button button-secondary">Replace image</button>
@@ -672,9 +711,26 @@ class Folio extends Page
             </div>
           </div>
         </div>
+        <?php
+        $selected_byline = isset($fields->byline) ? (int) $fields->byline : (int) $selected_author;
+        if (isset($fields->show_byline) && (string) $fields->show_byline === '0') {
+          $selected_byline = 0;
+        } elseif ($selected_byline <= 0) {
+          $selected_byline = (int) $selected_author;
+        }
+        ?>
         <div>
-          <label for="author" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">AUTHOR</label>
-          <?php wp_dropdown_users(array('name' => 'author', 'selected' => $selected_author, 'class' => 'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm')) ?>
+          <label for="byline" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">BYLINE</label>
+          <?php
+          wp_dropdown_users(array(
+            'name' => 'byline',
+            'id' => 'byline',
+            'selected' => $selected_byline,
+            'class' => 'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+            'show_option_none' => __('Hide byline', 'groove'),
+            'option_none_value' => '0',
+          ));
+          ?>
         </div>
         <div>
           <label for="copyright"

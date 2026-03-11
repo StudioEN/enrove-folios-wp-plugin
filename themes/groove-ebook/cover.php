@@ -79,9 +79,11 @@ class Cover extends Base_Theme
       <h2 class="g-folio__theme-subtitle">
         <?= esc_html($this->subtitle) ?>
       </h2>
-      <p class="g-folio__theme-author">By
-        <?= esc_html($this->author) ?>
-      </p>
+      <?php if (!empty($this->author)): ?>
+        <p class="g-folio__theme-author">By
+          <?= esc_html($this->author) ?>
+        </p>
+      <?php endif; ?>
 
       <div class="g-folio__theme-fields g-folio__theme-password-form">
         <?php
@@ -100,9 +102,11 @@ class Cover extends Base_Theme
         }
         ?>
       </div>
-      <div class="g-folio__theme-copyright">&copy; <?= esc_html(substr(static::get_last_updated(), 0, 4)) ?>
-        <?= esc_html(static::get_author()) ?>
-      </div>
+      <?php if (!empty($this->copyright)): ?>
+        <div class="g-folio__theme-copyright">
+          <?= esc_html($this->copyright) ?>
+        </div>
+      <?php endif; ?>
     </div>
     <?php
   }
@@ -114,7 +118,13 @@ class Cover extends Base_Theme
     }
     ?>
     <div class="g-folio__theme-2 g-folio__theme-cover" style="background: url(<?= esc_url($this->theme_cover_url) ?>)">
-      <button class="g-folio__theme-nav-button"></button>
+      <button class="g-folio__theme-nav-button" aria-label="Open navigation">
+        <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
       <?php $this->display_nav() ?>
       <div class="g-folio__theme-content">
         <?php $this->display_brief() ?>

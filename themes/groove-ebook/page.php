@@ -185,7 +185,13 @@ class Page extends Base_Theme
     ?>
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
-        <button class="g-folio__theme-page-nav-button"></button>
+        <button class="g-folio__theme-page-nav-button" aria-label="Open navigation">
+          <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
         <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
             <?= esc_html($this->folio->post_title ?? 'Folio') ?> |
           </span>
@@ -287,7 +293,7 @@ class Page extends Base_Theme
         if ($prev_page) {
           ?>
           <i class="g-folio__theme-page-arrow"></i>
-          <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID) ?>">
+          <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID) ?>" title="<?= esc_attr($prev_page->post_title) ?>">
             <?= esc_html($prev_page->post_title) ?></a>
           <?php
         }
@@ -300,7 +306,7 @@ class Page extends Base_Theme
         <?php
         if ($next_page) {
           ?>
-          <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID) ?>">
+          <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID) ?>" title="<?= esc_attr($next_page->post_title) ?>">
             <?= esc_html($next_page->post_title) ?></a>
           <i class="g-folio__theme-page-arrow"></i>
           <?php

@@ -15,9 +15,14 @@ class FolioFields
   public $use_folio;
   public $permalink;
   public $title;
+  public $header_font;
+  public $body_font;
   public $fonts;
   public $on_this_page_label;
   public $password;
+  public $byline;
+  public $show_byline;
+
 
   public $theme_id;
 
@@ -34,8 +39,7 @@ class FolioFields
     if (has_post_thumbnail($post->ID)) {
       $thumbnail_id = get_post_thumbnail_id($post->ID);
       $this->feature_image = get_post($thumbnail_id);
-    }
-    else {
+    } else {
       $this->feature_image = null;
     }
 
@@ -54,8 +58,23 @@ class FolioFields
     $this->use_folio = $meta['use_folio'][0] ?? '1';
     $this->theme_id = $meta['theme_id'][0] ?? '';
     $this->permalink = $meta['permalink'][0] ?? '';
-    $this->fonts = Utils::normalize_primary_font_key($meta['fonts'][0] ?? '');
+    $legacy_font = Utils::normalize_primary_font_key($meta['fonts'][0] ?? '');
+    $this->header_font = Utils::normalize_primary_font_key($meta['header_font'][0] ?? '');
+    $this->body_font = Utils::normalize_primary_font_key($meta['body_font'][0] ?? '');
+    if ($this->header_font === '' && $legacy_font !== '') {
+      $this->header_font = $legacy_font;
+    }
+    if ($this->body_font === '' && $legacy_font !== '') {
+      $this->body_font = $legacy_font;
+    }
+    // Keep legacy property populated for older call sites.
+    $this->fonts = $this->body_font;
     $this->on_this_page_label = Utils::sanitize_on_this_page_label($meta['on_this_page_label'][0] ?? '');
+    $this->byline = isset($meta['byline'][0]) ? (int) $meta['byline'][0] : (int) $this->author;
+    if ($this->byline <= 0) {
+      $this->byline = (int) $this->author;
+    }
+    $this->show_byline = isset($meta['show_byline'][0]) ? ((string) $meta['show_byline'][0] === '0' ? '0' : '1') : '1';
   }
 }
 ?>

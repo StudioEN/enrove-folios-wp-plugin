@@ -169,11 +169,26 @@
 .g-folio__theme-1 .g-folio__theme-nav-button {
   height: 32px;
   width: 32px;
-  background: url('../images/theme-menu-icon.png') no-repeat center center #F6F7F7;
-  background-size: 24px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #F6F7F7;
+  color: #3C434A;
   border: none;
   outline: none;
   cursor: pointer;
+}
+
+.g-folio__theme-1 .g-folio__theme-menu-icon,
+.g-folio__theme-1-page .g-folio__theme-menu-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
 }
 
 .g-folio__theme-1 .g-folio__theme-nav-close {
@@ -396,8 +411,11 @@
 .g-folio__theme-1-page .g-folio__theme-page-nav-button {
   height: 32px;
   width: 32px;
-  background: url('../images/theme-menu-icon.png') no-repeat center center #F6F7F7;
-  background-size: 24px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #F6F7F7;
+  color: #3858E9;
   border: none;
   outline: none;
   cursor: pointer;
@@ -532,6 +550,7 @@
 .g-folio__theme-1-page .g-folio__theme-page-next,
 .g-folio__theme-1-page .g-folio__theme-page-powerby {
   flex: 1;
+  min-width: 0;
 }
 
 .g-folio__theme-1-page .g-folio__theme-page-powerby {
@@ -604,6 +623,13 @@
 .g-folio__theme-1-page .g-folio__theme-page-prev a {
   color: rgba(56, 88, 233, 1);
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: calc(100% - 24px);
+  /* Make room for arrow */
+  vertical-align: middle;
 }
 
 .g-folio__theme-1-page .g-folio__theme-page-next {
