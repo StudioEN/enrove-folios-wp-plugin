@@ -57,6 +57,9 @@ class Content extends BaseContent
     register_post_meta('groove_folio', 'copyright', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
     register_post_meta('groove_folio', 'permission', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
     register_post_meta('groove_folio', 'fonts', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'header_font', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'body_font', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'show_byline', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
   }
 
   public function __construct()

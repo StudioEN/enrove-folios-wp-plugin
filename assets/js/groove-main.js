@@ -313,13 +313,21 @@ jQuery(function () {
       defaultButton: '#use-default-logo'
     })
 
-    jQuery('#g-reset-primary-font').click(function () {
-      const fontSelect = jQuery('#g-primary-font')
+    function resetFontSelect(selectId) {
+      const fontSelect = jQuery(selectId)
       if (!fontSelect.length) {
         return
       }
 
       fontSelect.val('').trigger('change')
+    }
+
+    jQuery('#g-reset-header-font').click(function () {
+      resetFontSelect('#g-header-font')
+    })
+
+    jQuery('#g-reset-body-font').click(function () {
+      resetFontSelect('#g-body-font')
     })
 
     jQuery(document).on('click', '.g-folio__theme-option', function () {

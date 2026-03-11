@@ -121,6 +121,34 @@ class Utils
     return $font;
   }
 
+  static function get_folio_font_keys($folio_id)
+  {
+    $folio_id = (int) $folio_id;
+    if ($folio_id <= 0) {
+      return array(
+        'header' => '',
+        'body' => '',
+      );
+    }
+
+    $legacy_font_key = Utils::normalize_primary_font_key((string) get_post_meta($folio_id, 'fonts', true));
+    $header_font_key = Utils::normalize_primary_font_key((string) get_post_meta($folio_id, 'header_font', true));
+    $body_font_key = Utils::normalize_primary_font_key((string) get_post_meta($folio_id, 'body_font', true));
+
+    if ($header_font_key === '' && $legacy_font_key !== '') {
+      $header_font_key = $legacy_font_key;
+    }
+
+    if ($body_font_key === '' && $legacy_font_key !== '') {
+      $body_font_key = $legacy_font_key;
+    }
+
+    return array(
+      'header' => $header_font_key,
+      'body' => $body_font_key,
+    );
+  }
+
   static function sanitize_on_this_page_label($label)
   {
     if (!is_string($label)) {
