@@ -172,7 +172,7 @@ class Page extends Base_Theme
             $results .= render_block($block);
         }
 
-        return $results;
+        return $this->apply_embed_processing($results);
     }
 
     // ── Page index helpers ────────────────────────────────────────────────
