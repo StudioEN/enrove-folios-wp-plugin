@@ -336,6 +336,29 @@ abstract class Base_Theme extends Assets
     return $page;
   }
 
+  /**
+   * Apply core embed transforms to rendered page HTML.
+   *
+   * Folio page themes render blocks manually and bypass `the_content`,
+   * so bare oEmbed URLs (for example Spotify links on their own line)
+   * need explicit processing here.
+   */
+  protected function apply_embed_processing($content)
+  {
+    $content = (string) $content;
+    if ($content === '') {
+      return '';
+    }
+
+    global $wp_embed;
+    if ($wp_embed instanceof \WP_Embed) {
+      $content = $wp_embed->run_shortcode($content);
+      $content = $wp_embed->autoembed($content);
+    }
+
+    return $content;
+  }
+
   function get_pages_data($id)
   {
     $args = array(
