@@ -176,6 +176,63 @@ class Utils
     return $label !== '' ? $label : Utils::get_default_on_this_page_label();
   }
 
+  static function get_newsletter_theme_color_presets()
+  {
+    return array(
+      'coastal-slate' => array(
+        'label' => __('Coastal Slate', 'groove'),
+        'seed' => '#2E5F7B',
+      ),
+      'evergreen-ink' => array(
+        'label' => __('Evergreen Ink', 'groove'),
+        'seed' => '#2C6650',
+      ),
+      'clay-signal' => array(
+        'label' => __('Clay Signal', 'groove'),
+        'seed' => '#A3553D',
+      ),
+      'berry-graphite' => array(
+        'label' => __('Berry Graphite', 'groove'),
+        'seed' => '#6E4969',
+      ),
+      'deep-ultramarine' => array(
+        'label' => __('Deep Ultramarine', 'groove'),
+        'seed' => '#355E9D',
+      ),
+    );
+  }
+
+  static function get_default_newsletter_theme_color_preset()
+  {
+    $presets = Utils::get_newsletter_theme_color_presets();
+    $default = (string) array_key_first($presets);
+
+    return $default !== '' ? $default : 'coastal-slate';
+  }
+
+  static function sanitize_newsletter_theme_color_preset($preset_key)
+  {
+    $preset_key = is_string($preset_key) ? sanitize_key($preset_key) : '';
+    $presets = Utils::get_newsletter_theme_color_presets();
+
+    if (!isset($presets[$preset_key])) {
+      return Utils::get_default_newsletter_theme_color_preset();
+    }
+
+    return $preset_key;
+  }
+
+  static function get_folio_newsletter_theme_color_preset($folio_id)
+  {
+    $folio_id = (int) $folio_id;
+    if ($folio_id <= 0) {
+      return Utils::get_default_newsletter_theme_color_preset();
+    }
+
+    $saved = (string) get_post_meta($folio_id, 'newsletter_theme_preset', true);
+    return Utils::sanitize_newsletter_theme_color_preset($saved);
+  }
+
   static function get_folio_id()
   {
     return Utils::get_groove_post_id();

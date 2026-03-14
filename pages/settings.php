@@ -125,8 +125,7 @@ class Settings extends Page
       }
       update_option('groove_default_folio_title', $default_title);
 
-      $allow_download = isset($_POST['default_allow_pdf_download']) ? 1 : 0;
-      update_option('groove_default_allow_pdf_download', $allow_download);
+      delete_option('groove_default_allow_pdf_download');
       $base_slug = isset($_POST['folio_base_slug']) ? $this->sanitize_base_slug(wp_unslash($_POST['folio_base_slug'])) : 'folio';
       update_option('groove_folio_base_slug', $base_slug);
     } else {
@@ -150,7 +149,6 @@ class Settings extends Page
     $default_theme_id = $this->get_default_theme_id();
     $default_status = $this->get_default_folio_status();
     $default_title = $this->get_default_folio_title();
-    $default_allow_download = (int) get_option('groove_default_allow_pdf_download', 1) === 1;
     ?>
 <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4">
   <?php wp_nonce_field('groove_save_settings', 'groove_nonce'); ?>
@@ -200,18 +198,6 @@ class Settings extends Page
         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
         placeholder="<?php esc_attr_e('A new folio', 'groove'); ?>" />
     </div>
-
-    <label class="flex items-center gap-2">
-      <input
-        type="checkbox"
-        name="default_allow_pdf_download"
-        value="1"
-        class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-        <?php checked($default_allow_download, true); ?> />
-      <span class="text-sm text-gray-700">
-        <?php esc_html_e('Enable "Allow PDF Downloads" by default on newly created folios.', 'groove'); ?>
-      </span>
-    </label>
 
     <div>
       <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'groove'); ?></button>

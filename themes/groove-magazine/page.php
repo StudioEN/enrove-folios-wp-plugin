@@ -85,6 +85,9 @@ class Page extends Base_Theme
         $this->get_folio_data();
         $this->get_page_data();
         $this->get_pages_data($this->folio_id);
+        if (is_array($this->pages) && !empty($this->pages)) {
+            $this->pages = get_magazine_pages_in_display_order($this->pages);
+        }
         $this->get_theme_data();
     }
 
@@ -238,8 +241,6 @@ class Page extends Base_Theme
 
     function display_navbar()
     {
-        $current_index = $this->get_current_index();
-        $total = count($this->pages);
         ?>
         <header class="gm-page__navbar">
             <div class="gm-page__navbar-progress">
@@ -259,8 +260,7 @@ class Page extends Base_Theme
                     </span>
                 </div>
                 <div class="gm-page__navbar-progress-label">
-                    <?= ($current_index + 1) ?> /
-                    <?= $total ?>
+                    <?= esc_html__('SECTIONS', 'groove') ?>
                 </div>
             </div>
         </header>

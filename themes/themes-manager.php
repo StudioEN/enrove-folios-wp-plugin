@@ -213,7 +213,7 @@ class Themes_Manager extends Assets
 
         if ($post_type === 'groove_folio') {
             $is_cover_enabled = \Groove\Utils\Utils::is_folio_cover_enabled($folio_id);
-            if (!$is_cover_enabled && !post_password_required($folio_id)) {
+            if (!$is_cover_enabled) {
                 $first_page_id = \Groove\Utils\Utils::get_first_folio_page_id($folio_id);
                 if ($first_page_id > 0) {
                     $first_page_url = \Groove\Utils\Utils::get_folio_permalink_by_id($first_page_id);
@@ -230,15 +230,6 @@ class Themes_Manager extends Assets
             // Guard: if no folio_id was found (orphaned page), do not redirect.
             if (empty($folio_id)) {
                 return null;
-            }
-            $post_password_required = post_password_required($folio_id);
-            if ($post_password_required) {
-                $folio_url = \Groove\Utils\Utils::get_folio_permalink_by_id($folio_id);
-                if ($folio_url) {
-                    wp_safe_redirect($folio_url, 302);
-                    exit;
-                }
-                return null; // No valid URL — render nothing rather than redirect to home.
             }
             return static::create_page_theme($theme_id);
         }
@@ -437,13 +428,69 @@ class Themes_Manager extends Assets
             return new \WP_Error('bad_class', 'setup.php must define cover_class and page_class.');
         }
 
+        $dependencies = [];
+        if (!empty($info['dependencies'])) {
+            if (!is_array($info['dependencies'])) {
+                static::cleanup_dir($tmp_dir);
+                return new \WP_Error('bad_dependencies', 'setup.php dependencies must be an array of relative file paths.');
+            }
+            $dependencies = $info['dependencies'];
+        }
+
+        // Prevent fatal class redeclarations when uploading a duplicate/built-in package.
+        if (static::has($theme_id) || isset(static::get_installed_themes_meta()[$theme_id])) {
+            static::cleanup_dir($tmp_dir);
+            return new \WP_Error('theme_exists', 'A theme with this name is already registered.');
+        }
+        if (class_exists($cover_class, false) || class_exists($page_class, false)) {
+            static::cleanup_dir($tmp_dir);
+            return new \WP_Error('class_conflict', 'This package declares classes that are already loaded.');
+        }
+
         // 6. Move to the permanent themes directory.
         $dest = static::get_themes_dir() . $theme_id . '/';
         wp_mkdir_p($dest);
-        copy_dir($package_root, $dest);
+        $copy_result = copy_dir($package_root, $dest);
         static::cleanup_dir($tmp_dir);
+        if (is_wp_error($copy_result)) {
+            static::cleanup_dir($dest);
+            return $copy_result;
+        }
 
-        // 7. Persist metadata.
+        // Ensure dependency files are present before loading cover/page classes.
+        foreach ($dependencies as $dep) {
+            $dep = ltrim((string) $dep, '/\\');
+            if ($dep === '' || strpos($dep, '..') !== false) {
+                static::cleanup_dir($dest);
+                return new \WP_Error('bad_dependency_path', 'A dependency path in setup.php is invalid.');
+            }
+
+            $dep_file = $dest . $dep;
+            if (!is_readable($dep_file)) {
+                static::cleanup_dir($dest);
+                return new \WP_Error('missing_dependency', sprintf('Missing dependency file: %s', $dep));
+            }
+
+            require_once $dep_file;
+        }
+
+        if (!is_readable($dest . 'cover.php') || !is_readable($dest . 'page.php')) {
+            static::cleanup_dir($dest);
+            return new \WP_Error('missing_files', 'Package must contain readable cover.php and page.php files.');
+        }
+
+        // 7. Register immediately for the current request.
+        require_once $dest . 'cover.php';
+        require_once $dest . 'page.php';
+
+        if (!class_exists($cover_class, false) || !class_exists($page_class, false)) {
+            static::cleanup_dir($dest);
+            return new \WP_Error('class_not_found', 'cover_class/page_class could not be loaded from this package.');
+        }
+
+        static::register($cover_class, $page_class);
+
+        // 8. Persist metadata only after successful load/registration.
         $installed = static::get_installed_themes_meta();
         $installed[$theme_id] = [
             'name' => $theme_name,
@@ -454,14 +501,6 @@ class Themes_Manager extends Assets
             'page_class' => $page_class,
         ];
         update_option('groove_installed_themes', $installed);
-
-        // 8. Register immediately for the current request.
-        require_once $dest . 'cover.php';
-        require_once $dest . 'page.php';
-
-        if (class_exists($cover_class) && class_exists($page_class)) {
-            static::register($cover_class, $page_class);
-        }
 
         return $theme_name;
     }

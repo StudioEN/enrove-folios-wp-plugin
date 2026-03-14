@@ -12,6 +12,15 @@ class Cover extends Base_Theme
 {
     public $subtitle;
 
+    function get_data()
+    {
+        parent::get_data();
+
+        if (is_array($this->pages) && !empty($this->pages)) {
+            $this->pages = get_magazine_pages_in_display_order($this->pages);
+        }
+    }
+
     /**
      * Returns the latest timestamp across all folio pages using publish/modified time.
      */
@@ -108,19 +117,6 @@ class Cover extends Base_Theme
         ]);
     }
 
-    function display_password_form($post)
-    {
-        $post = get_post($post);
-        ?>
-        <form action="<?= esc_url(site_url('wp-login.php?action=postpass', 'login_post')) ?>" class="post-password-form"
-            method="post">
-            <input placeholder="Enter password" class="gm-cover__password-input" name="post_password" type="password"
-                spellcheck="false" size="20" />
-            <input class="gm-cover__password-submit" type="submit" name="Submit" value="Enter" />
-        </form>
-        <?php
-    }
-
     function display_hero()
     {
         $slideshow_images = $this->get_slideshow_images(3);
@@ -166,9 +162,11 @@ class Cover extends Base_Theme
                             <line x1="3" y1="18" x2="21" y2="18"></line>
                         </svg>
                     </button>
-                    <i class="gm-cover__logo">
-                        <img src="<?= esc_url($this->theme_logo_url) ?>" alt="<?= esc_attr($this->theme_name) ?>" />
-                    </i>
+                    <?php if (!empty($this->theme_logo_url)): ?>
+                        <i class="gm-cover__logo">
+                            <img src="<?= esc_url($this->theme_logo_url) ?>" alt="<?= esc_attr($this->theme_name) ?>" />
+                        </i>
+                    <?php endif; ?>
                     <div style="flex: 1;"></div>
                 </div>
 
@@ -182,38 +180,31 @@ class Cover extends Base_Theme
                     <?php endif; ?>
                 </div>
 
-                <?php
-                $post_password_required = post_password_required($this->id);
-                if ($post_password_required) {
-                    $this->display_password_form($this->id);
-                } else {
-                    ?>
-                    <!-- Story links -->
-                    <div class="gm-cover__stories">
-                        <?php if ($featured): ?>
-                            <div class="gm-cover__featured">
-                                <span class="gm-cover__stories-label">LATEST</span>
-                                <a class="gm-cover__featured-link" href="<?= esc_url($featured['url']) ?>"
-                                    data-gm-story-image="<?= esc_url($featured['feature_url']) ?>">
-                                    <span class="gm-cover__featured-title"><?= esc_html($featured['title']) ?></span>
-                                    <span class="gm-cover__featured-arrow">→</span>
-                                </a>
-                            </div>
-                        <?php endif; ?>
+                <!-- Story links -->
+                <div class="gm-cover__stories">
+                    <?php if ($featured): ?>
+                        <div class="gm-cover__featured">
+                            <span class="gm-cover__stories-label">LATEST</span>
+                            <a class="gm-cover__featured-link" href="<?= esc_url($featured['url']) ?>"
+                                data-gm-story-image="<?= esc_url($featured['feature_url']) ?>">
+                                <span class="gm-cover__featured-title"><?= esc_html($featured['title']) ?></span>
+                                <span class="gm-cover__featured-arrow">→</span>
+                            </a>
+                        </div>
+                    <?php endif; ?>
 
-                        <?php if (!empty($more_stories)): ?>
-                            <div class="gm-cover__more">
-                                <span class="gm-cover__stories-label">RECENT</span>
-                                <?php foreach ($more_stories as $story): ?>
-                                    <a class="gm-cover__more-link" href="<?= esc_url($story['url']) ?>"
-                                        data-gm-story-image="<?= esc_url($story['feature_url']) ?>">
-                                        <?= esc_html($story['title']) ?>
-                                    </a>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                <?php } ?>
+                    <?php if (!empty($more_stories)): ?>
+                        <div class="gm-cover__more">
+                            <span class="gm-cover__stories-label">RECENT</span>
+                            <?php foreach ($more_stories as $story): ?>
+                                <a class="gm-cover__more-link" href="<?= esc_url($story['url']) ?>"
+                                    data-gm-story-image="<?= esc_url($story['feature_url']) ?>">
+                                    <?= esc_html($story['title']) ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
                 <div class="gm-cover__footer">
                     <?php if (!empty($this->copyright)): ?>

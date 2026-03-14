@@ -8,6 +8,59 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Order magazine pages for navigation and cover rendering.
+ *
+ * Default order is latest-to-oldest by publish date. If any page has a
+ * non-zero menu_order, treat that as an explicit manual override and sort by
+ * menu_order ASC instead.
+ */
+function get_magazine_pages_in_display_order(array $pages): array
+{
+    if (empty($pages)) {
+        return [];
+    }
+
+    $ordered_pages = array_values($pages);
+    $menu_orders = [];
+    $published_timestamps = [];
+    $has_menu_order_override = false;
+
+    foreach ($ordered_pages as $page) {
+        $page_id = isset($page->ID) ? (int) $page->ID : 0;
+        $menu_order = isset($page->menu_order) ? (int) $page->menu_order : 0;
+        $menu_orders[$page_id] = $menu_order;
+        if ($menu_order !== 0) {
+            $has_menu_order_override = true;
+        }
+
+        $published_timestamps[$page_id] = $page_id > 0 ? (int) get_post_time('U', true, $page) : 0;
+    }
+
+    usort($ordered_pages, static function ($a, $b) use ($has_menu_order_override, $menu_orders, $published_timestamps): int {
+        $a_id = isset($a->ID) ? (int) $a->ID : 0;
+        $b_id = isset($b->ID) ? (int) $b->ID : 0;
+
+        if ($has_menu_order_override) {
+            $a_menu_order = $menu_orders[$a_id] ?? 0;
+            $b_menu_order = $menu_orders[$b_id] ?? 0;
+            if ($a_menu_order !== $b_menu_order) {
+                return $a_menu_order <=> $b_menu_order;
+            }
+        }
+
+        $a_published = $published_timestamps[$a_id] ?? 0;
+        $b_published = $published_timestamps[$b_id] ?? 0;
+        if ($a_published !== $b_published) {
+            return $b_published <=> $a_published;
+        }
+
+        return $a_id <=> $b_id;
+    });
+
+    return $ordered_pages;
+}
+
+/**
  * Render the magazine navigation pane.
  *
  * This is intentionally theme-local so layout redesigns stay scoped to

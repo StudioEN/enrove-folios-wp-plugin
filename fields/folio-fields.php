@@ -11,7 +11,6 @@ class FolioFields
   public $copyright;
   public $author;
   public $subtitle;
-  public $permission;
   public $use_folio;
   public $permalink;
   public $title;
@@ -19,9 +18,9 @@ class FolioFields
   public $body_font;
   public $fonts;
   public $on_this_page_label;
-  public $password;
   public $byline;
   public $show_byline;
+  public $show_logo;
 
 
   public $theme_id;
@@ -50,11 +49,9 @@ class FolioFields
     $this->name = $post->post_name ?? '';
     $this->title = $post->post_title ?? '';
     $this->author = $post->post_author ?? '';
-    $this->password = $post->post_password ?? '';
 
     $this->copyright = $meta['copyright'][0] ?? '';
     $this->subtitle = $meta['subtitle'][0] ?? '';
-    $this->permission = $meta['permission'][0] ?? '';
     $this->use_folio = $meta['use_folio'][0] ?? '1';
     $this->theme_id = $meta['theme_id'][0] ?? '';
     $this->permalink = $meta['permalink'][0] ?? '';
@@ -75,6 +72,7 @@ class FolioFields
       $this->byline = (int) $this->author;
     }
     $this->show_byline = isset($meta['show_byline'][0]) ? ((string) $meta['show_byline'][0] === '0' ? '0' : '1') : '1';
+    $this->show_logo = isset($meta['show_logo'][0]) ? ((string) $meta['show_logo'][0] === '0' ? '0' : '1') : '1';
   }
 }
 ?>

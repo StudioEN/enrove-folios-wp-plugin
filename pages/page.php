@@ -99,6 +99,47 @@ abstract class Page extends Assets
 			foreach ($button_items as $button_item) {
 				$type = isset($button_item['type']) ? $button_item['type'] : 'default';
 				$ui = isset($button_item['ui']) ? $button_item['ui'] : 'wp';
+				$text = isset($button_item['text']) ? (string) $button_item['text'] : '';
+				$icon = isset($button_item['icon']) ? trim((string) $button_item['icon']) : '';
+				$has_icon = $icon !== '';
+				$attributes = '';
+
+				if (!empty($button_item['attrs']) && is_array($button_item['attrs'])) {
+					foreach ($button_item['attrs'] as $attr_name => $attr_value) {
+						if (!is_string($attr_name) || !preg_match('/^[a-zA-Z_:][a-zA-Z0-9:._-]*$/', $attr_name)) {
+							continue;
+						}
+						if ($attr_value === null || $attr_value === false) {
+							continue;
+						}
+
+						$attributes .= ' ' . esc_attr($attr_name) . '="' . esc_attr((string) $attr_value) . '"';
+					}
+				}
+
+				$content = esc_html($text);
+				if ($has_icon) {
+					$icon_parts = preg_split('/\s+/', $icon);
+					$icon_classes = array();
+
+					if (!empty($icon_parts)) {
+						foreach ($icon_parts as $icon_part) {
+							$sanitized_icon_part = sanitize_html_class($icon_part);
+							if ($sanitized_icon_part !== '') {
+								$icon_classes[] = $sanitized_icon_part;
+							}
+						}
+					}
+
+					if (!in_array('dashicons', $icon_classes, true)) {
+						array_unshift($icon_classes, 'dashicons');
+					}
+
+					$content = '<span class="' . esc_attr(implode(' ', $icon_classes)) . '" aria-hidden="true"></span>';
+					if ($text !== '') {
+						$content .= '<span class="screen-reader-text">' . esc_html($text) . '</span>';
+					}
+				}
 
 				if ($ui === 'wp') {
 					$wp_classes = 'button';
@@ -108,10 +149,30 @@ abstract class Page extends Assets
 						$wp_classes .= ' button-secondary';
 					}
 
+					if ($has_icon) {
+						$wp_classes .= ' g-page-header__icon-button';
+					}
+
+					if (!empty($button_item['class'])) {
+						$class_parts = preg_split('/\s+/', (string) $button_item['class']);
+						if (!empty($class_parts)) {
+							foreach ($class_parts as $class_part) {
+								$sanitized_class_part = sanitize_html_class($class_part);
+								if ($sanitized_class_part !== '') {
+									$wp_classes .= ' ' . $sanitized_class_part;
+								}
+							}
+						}
+					}
+
 					if (isset($button_item['link'])) {
-						echo '<a href="' . esc_url($button_item['link']) . '" class="' . esc_attr($wp_classes) . '">' . esc_html($button_item['text']) . '</a>';
+						echo '<a href="' . esc_url($button_item['link']) . '" class="' . esc_attr($wp_classes) . '"' . $attributes . '>' . $content . '</a>';
 					} else if (isset($button_item['action'])) {
-						echo '<button type="submit" name="action" value="' . esc_attr($button_item['action']) . '" class="' . esc_attr($wp_classes) . '">' . esc_html($button_item['text']) . '</button>';
+						$button_type = 'submit';
+						if (isset($button_item['button_type']) && in_array($button_item['button_type'], array('submit', 'button'), true)) {
+							$button_type = $button_item['button_type'];
+						}
+						echo '<button type="' . esc_attr($button_type) . '" name="action" value="' . esc_attr($button_item['action']) . '" class="' . esc_attr($wp_classes) . '"' . $attributes . '>' . $content . '</button>';
 					}
 					continue;
 				}
@@ -125,10 +186,14 @@ abstract class Page extends Assets
 				}
 
 					if (isset($button_item['link'])) {
-						echo '<a href="' . esc_url($button_item['link']) . '" class="g-tailwind-link-reset ' . $classes . '">' . esc_html($button_item['text']) . '</a>';
+						echo '<a href="' . esc_url($button_item['link']) . '" class="g-tailwind-link-reset ' . $classes . '"' . $attributes . '>' . $content . '</a>';
 					} else if (isset($button_item['action'])) {
-						echo '<button type="submit" name="action" value="' . esc_attr($button_item['action']) . '" class="' . $classes . '">' . esc_html($button_item['text']) . '</button>';
-				}
+						$button_type = 'submit';
+						if (isset($button_item['button_type']) && in_array($button_item['button_type'], array('submit', 'button'), true)) {
+							$button_type = $button_item['button_type'];
+						}
+						echo '<button type="' . esc_attr($button_type) . '" name="action" value="' . esc_attr($button_item['action']) . '" class="' . $classes . '"' . $attributes . '>' . $content . '</button>';
+					}
 			}
 			echo '</div>';
 		}

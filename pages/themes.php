@@ -262,14 +262,14 @@ class Themes extends Page
 						<p><?php esc_html_e('A valid Groove theme package is a .zip file with this structure:', 'groove'); ?>
 						</p>
 						<pre class="g-themes-code">my-theme.zip
-						├── theme-info.json     ← required
+						├── setup.php           ← required
 						├── cover.php           ← folio cover template
 						├── page.php            ← folio inner-page template
 						└── assets/
 							├── thumbnail.png
 							├── cover.png
 							└── logo.png</pre>
-						<p><?php esc_html_e('The theme name in theme-info.json becomes its ID automatically.', 'groove'); ?>
+						<p><?php esc_html_e('The theme name in setup.php becomes its ID automatically.', 'groove'); ?>
 						</p>
 					</div>
 				</div>

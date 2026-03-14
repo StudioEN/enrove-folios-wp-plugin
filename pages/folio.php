@@ -27,7 +27,33 @@ class Folio extends Page
   {
     $this->add_post_action('save_groove_folio_draft', 'save_folio_draft');
     $this->add_post_action('save_groove_folio', 'save_folio_publish');
+    $this->add_post_action('save_groove_folio_manual', 'save_folio_manual');
+    $this->add_post_action('save_groove_folio_unpublish', 'save_folio_unpublish');
     $this->add_post_action('auto_save_groove_folio', 'auto_save_folio');
+
+    $folio_id = (int) Utils::get_groove_post_id();
+    $folio_copy_link = '';
+    $is_published = false;
+    if ($folio_id > 0) {
+      $folio_post = get_post($folio_id);
+      if ($folio_post && $folio_post->post_type === 'groove_folio' && $folio_post->post_status === 'publish') {
+        $is_published = true;
+      }
+
+      $folio_copy_link = (string) Utils::get_folio_permalink($folio_post, '');
+      if ($folio_copy_link === '') {
+        $folio_copy_link = (string) Utils::get_folio_permalink_by_id($folio_id);
+      }
+    }
+
+    $preview_text = $is_published ? 'View' : 'Preview';
+    $preview_tooltip_text = $is_published ? __('View Folio', 'groove') : __('Preview Folio', 'groove');
+    $preview_link = $is_published
+      ? $folio_copy_link
+      : Utils::get_folio_permalink_by_id(Utils::get_groove_post_id());
+    $publish_button_text = $is_published ? 'Unpublish' : 'Publish';
+    $publish_button_type = $is_published ? 'secondary' : 'primary';
+    $publish_button_action = $is_published ? 'save_groove_folio_unpublish' : 'save_groove_folio';
 
     $this->left_button_items = [
       array(
@@ -45,22 +71,46 @@ class Folio extends Page
 
     $this->right_button_items = [
       array(
-        'text' => 'Preview',
+        'text' => $preview_text,
         'type' => 'secondary',
         'ui' => 'wp',
-        'link' => Utils::get_folio_permalink_by_id(Utils::get_groove_post_id())
+        'link' => $preview_link,
+        'class' => 'g-tooltip-button',
+        'attrs' => array(
+          'id' => 'g-folio-preview-link',
+          'title' => $preview_tooltip_text,
+          'data-tooltip-text' => $preview_tooltip_text,
+          'aria-label' => $preview_tooltip_text,
+        ),
       ),
       array(
-        'text' => 'Save Draft',
+        'text' => 'Save',
         'type' => 'secondary',
         'ui' => 'wp',
-        'action' => 'save_groove_folio_draft'
+        'action' => 'save_groove_folio_manual'
       ),
       array(
-        'text' => 'Publish',
-        'type' => 'primary',
+        'text' => $publish_button_text,
+        'type' => $publish_button_type,
         'ui' => 'wp',
-        'action' => 'save_groove_folio'
+        'action' => $publish_button_action
+      ),
+      array(
+        'text' => __('Copy link', 'groove'),
+        'type' => 'secondary',
+        'ui' => 'wp',
+        'action' => 'copy_groove_folio_link',
+        'button_type' => 'button',
+        'icon' => 'dashicons-admin-links',
+        'class' => 'g-tooltip-button',
+        'attrs' => array(
+          'id' => 'g-copy-folio-link',
+          'aria-label' => __('Copy link', 'groove'),
+          'data-copy-link' => $folio_copy_link,
+          'data-copy-text' => __('Copy link', 'groove'),
+          'data-copied-text' => __('Copied', 'groove'),
+          'data-tooltip-text' => __('Copy link', 'groove'),
+        ),
       )
     ];
 
@@ -280,17 +330,40 @@ class Folio extends Page
     $this->save_folio('publish');
   }
 
+  public function save_folio_unpublish()
+  {
+    $this->save_folio('draft');
+  }
+
+  public function save_folio_manual()
+  {
+    $id = isset($_POST['folio_id']) ? (int) wp_unslash($_POST['folio_id']) : 0;
+    $this->save_folio($this->get_current_folio_status($id, 'draft'));
+  }
+
   public function auto_save_folio()
   {
     $id = isset($_POST['folio_id']) ? (int) wp_unslash($_POST['folio_id']) : 0;
-    $current_status = 'draft';
-    if ($id) {
-      $post = get_post($id);
-      if ($post && $post->post_status === 'publish') {
-        $current_status = 'publish';
-      }
+    $this->save_folio($this->get_current_folio_status($id, 'draft'));
+  }
+
+  private function get_current_folio_status($id, $fallback_status = 'draft')
+  {
+    if (!$id) {
+      return $fallback_status;
     }
-    $this->save_folio($current_status);
+
+    $post = get_post($id);
+    if (!$post || $post->post_type !== 'groove_folio') {
+      return $fallback_status;
+    }
+
+    $status = get_post_status($post);
+    if (!is_string($status) || $status === '' || $status === 'trash') {
+      return $fallback_status;
+    }
+
+    return $status;
   }
 
   public function save_folio($post_status = 'publish')
@@ -335,15 +408,11 @@ class Folio extends Page
     } else {
       $show_byline = '1';
     }
-    $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : $fields->password;
     $copyright = isset($_POST['copyright']) ? sanitize_text_field(wp_unslash($_POST['copyright'])) : $fields->copyright;
-    $permission = $fields->permission;
-    if (isset($_POST['permission'])) {
-      $permission_raw = (string) wp_unslash($_POST['permission']);
-      $permission = in_array($permission_raw, array('on', '1', '2'), true) ? '2' : '4';
-    }
     $use_folio = isset($_POST['use_folio']) ? (string) wp_unslash($_POST['use_folio']) : $fields->use_folio;
     $use_folio = $use_folio === '1' ? '1' : '0';
+    $show_logo = isset($_POST['show_logo']) ? (string) wp_unslash($_POST['show_logo']) : $fields->show_logo;
+    $show_logo = $show_logo === '1' ? '1' : '0';
     $theme_id = isset($_POST['theme_id']) ? sanitize_key(wp_unslash($_POST['theme_id'])) : $fields->theme_id;
     $header_font = isset($_POST['header_font']) ? (string) wp_unslash($_POST['header_font']) : $fields->header_font;
     $header_font = Utils::normalize_primary_font_key($header_font);
@@ -370,7 +439,8 @@ class Folio extends Page
     $update_args = array(
       'ID' => $id,
       'post_status' => $post_status,
-      'post_password' => $password,
+      // Password protection is temporarily disabled for folios.
+      'post_password' => '',
       'post_title' => $post_title,
       'post_name' => $post_name,
       'post_author' => $post_author,
@@ -381,8 +451,8 @@ class Folio extends Page
         'byline' => $byline,
         'show_byline' => $show_byline,
         'copyright' => $copyright,
-        'permission' => $permission,
         'use_folio' => $use_folio,
+        'show_logo' => $show_logo,
         // Keep legacy `fonts` synced for existing theme CSS/older installs.
         'fonts' => $body_font,
         'header_font' => $header_font,
@@ -407,6 +477,9 @@ class Folio extends Page
       update_post_meta($id, 'logo_id', $logo_id);
     }
     // $logo_id === -1 means field was not sent; keep existing logo.
+
+    // Newsletter colors are now generated per-visitor from local time.
+    delete_post_meta($id, 'newsletter_theme_preset');
 
     if ($post_status === 'publish' && !is_wp_error($folio_result)) {
       $pages_query = new \WP_Query(array(
@@ -550,8 +623,9 @@ class Folio extends Page
               <?php endforeach; ?>
             </select>
             <button type="button" id="g-reset-header-font"
-              class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              aria-label="Reset to theme default header font" title="Reset to theme default header font">
+              class="g-tooltip-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="<?php esc_attr_e('Reset font', 'groove'); ?>"
+              data-tooltip-text="<?php esc_attr_e('Reset font', 'groove'); ?>">
               <span class="dashicons dashicons-undo" aria-hidden="true"></span>
             </button>
           </div>
@@ -570,8 +644,9 @@ class Folio extends Page
               <?php endforeach; ?>
             </select>
             <button type="button" id="g-reset-body-font"
-              class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              aria-label="Reset to theme default secondary font" title="Reset to theme default body font">
+              class="g-tooltip-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="<?php esc_attr_e('Reset font', 'groove'); ?>"
+              data-tooltip-text="<?php esc_attr_e('Reset font', 'groove'); ?>">
               <span class="dashicons dashicons-undo" aria-hidden="true"></span>
             </button>
           </div>
@@ -596,8 +671,6 @@ class Folio extends Page
   {
     $fields = $this->get_fields();
 
-    $permission = $fields->permission;
-    $is_allowed_download = $permission == '2';
     $is_using_folio = $fields->use_folio !== '0';
 
     $permalink = isset($fields->permalink) ? $fields->permalink : '';
@@ -613,18 +686,6 @@ class Folio extends Page
           <input type="checkbox" id="use_folio" name="use_folio" value="1"
             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($is_using_folio, true, false) ?> />
           <label for="use_folio" class="ml-2 block text-sm text-gray-900">Use Folio Cover</label>
-        </div>
-        <div class="flex items-center">
-          <input type="checkbox" id="permission" name="permission"
-            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($is_allowed_download, 1, false) ?> />
-          <label for="permission" class="ml-2 block text-sm text-gray-900">Allow PDF Downloads</label>
-        </div>
-        <div>
-          <label for="password"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PASSWORD</label>
-          <input type="password" id="password" placeholder="Enter your password" name="password"
-            value="<?php echo esc_attr($fields->password) ?>"
-            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
         <div>
           <label for="permalink" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PERMALINK
@@ -659,6 +720,7 @@ class Folio extends Page
     $theme_logo_url = $current_theme["logo_url"] ?? '';
     $feature_image_src = ($feature_image instanceof \WP_Post && !empty($feature_image->guid)) ? $feature_image->guid : $theme_cover_url;
     $logo_image_src = ($logo instanceof \WP_Post && !empty($logo->guid)) ? $logo->guid : $theme_logo_url;
+    $show_logo = (string) ($fields->show_logo ?? '1') !== '0';
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
@@ -708,6 +770,12 @@ class Folio extends Page
                 <button type="button" data-default-url="<?= esc_url($theme_logo_url) ?>" id="use-default-logo"
                   class="button-link">Use default</button>
               </div>
+            </div>
+            <div class="mt-3 flex items-center">
+              <input type="hidden" name="show_logo" value="0" />
+              <input type="checkbox" id="show_logo" name="show_logo" value="1"
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($show_logo, true, false); ?> />
+              <label for="show_logo" class="ml-2 block text-sm text-gray-900">Include logo</label>
             </div>
           </div>
         </div>

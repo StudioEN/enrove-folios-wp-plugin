@@ -61,9 +61,6 @@ class Add_New extends Page
         $title = esc_html__('A new folio', 'groove');
       }
 
-      $default_allow_download = (int) get_option('groove_default_allow_pdf_download', 1) === 1;
-      $default_permission = $default_allow_download ? '2' : '4';
-
       $fields = array(
         'post_type' => 'groove_folio',
         'post_status' => $default_status,
@@ -73,8 +70,8 @@ class Add_New extends Page
         'meta_input' => array(
           'theme_id' => $theme_id,
           'subtitle' => '',
-          'permission' => $default_permission,
           'use_folio' => '1',
+          'show_logo' => '1',
           'copyright' => '',
         ),
       );

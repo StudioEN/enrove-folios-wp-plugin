@@ -38,9 +38,21 @@ jQuery(function () {
   })
 
   if (Groove.isFolioPage()) {
-    const folioForm = jQuery('form').has('input[name="folio_id"]').first()
+    const folioForm = jQuery('form[action*="admin-post.php"]')
+      .has('input[name="folio_id"]')
+      .has('input[name="groove_nonce"]')
+      .first()
+
+    createAdaptiveTooltip('#g-folio-preview-link')
+
     if (!folioForm.length) {
       return
+    }
+
+    const nonFolioSaveScopeSelector = '#pages-filter, [data-tab-content-id="pages"]'
+
+    function isWithinNonFolioSaveScope(element) {
+      return jQuery(element).closest(nonFolioSaveScopeSelector).length > 0
     }
 
     let autosaveTimer = null
@@ -92,16 +104,31 @@ jQuery(function () {
         return fields
       }
 
-      folioForm.serializeArray().forEach(function (item) {
-        if (item.name !== 'action') {
-          fields[item.name] = item.value
+      folioForm.find('input, select, textarea').each(function () {
+        const field = jQuery(this)
+        const name = String(field.attr('name') || '')
+        if (!name || name === 'action' || isWithinNonFolioSaveScope(field)) {
+          return
         }
-      })
 
-      const permissionInput = folioForm.find('input[name="permission"]')
-      if (permissionInput.length) {
-        fields.permission = permissionInput.is(':checked') ? '2' : '4'
-      }
+        if (field.is(':disabled')) {
+          return
+        }
+
+        const tagName = (this.tagName || '').toLowerCase()
+        if (tagName === 'input') {
+          const type = String(field.attr('type') || 'text').toLowerCase()
+          if (['submit', 'button', 'image', 'reset', 'file'].indexOf(type) !== -1) {
+            return
+          }
+
+          if ((type === 'checkbox' || type === 'radio') && !field.is(':checked')) {
+            return
+          }
+        }
+
+        fields[name] = field.val()
+      })
 
       if (!fields.folio_id) {
         const urlParams = new URLSearchParams(window.location.search)
@@ -116,6 +143,7 @@ jQuery(function () {
 
     function ajax(status, options = {}) {
       const shouldReload = !!options.reload
+      const reloadDelayMs = Number(options.reloadDelayMs || 0)
       const shouldUpdatePermalink = !!options.updatePermalink
       const silent = !!options.silent
       const savingText = options.savingText || 'Saving...'
@@ -152,7 +180,13 @@ jQuery(function () {
           }
 
           if (shouldReload) {
-            location.reload()
+            if (reloadDelayMs > 0) {
+              setTimeout(function () {
+                location.reload()
+              }, reloadDelayMs)
+            } else {
+              location.reload()
+            }
           }
         } else if (!silent) {
           setSaveStatus('error', errorText, saveIndicatorAutoHideMs)
@@ -216,6 +250,10 @@ jQuery(function () {
           return
         }
 
+        if (isWithinNonFolioSaveScope(this)) {
+          return
+        }
+
         if (name === 'title') {
           return
         }
@@ -224,43 +262,253 @@ jQuery(function () {
       })
     }
 
-    const publishBtn = jQuery('button[value="save_groove_folio"]')
-    const publishOriginalLabel = publishBtn.text()
-    jQuery('button[value="save_groove_folio"]').click(function (e) {
-      e.preventDefault();
-      isManualSave = true
-      clearTimeout(autosaveTimer)
-      jQuery(this).text('Publishing...');
-      ajax('save_groove_folio', {
-        reload: true,
-        updatePermalink: true,
-        savingText: 'Publishing...',
-        savedText: 'Published',
-        errorText: 'Publish failed'
-      }).always(function () {
-        isManualSave = false
-        publishBtn.text(publishOriginalLabel)
-      })
-    })
+    jQuery('button[value="save_groove_folio"], button[value="save_groove_folio_unpublish"]').click(function (e) {
+      const publishBtn = jQuery(this)
+      const action = publishBtn.val()
+      const isUnpublish = action === 'save_groove_folio_unpublish'
+      const originalLabel = publishBtn.text()
+      const savingLabel = isUnpublish ? 'Unpublishing...' : 'Publishing...'
+      const savedLabel = isUnpublish ? 'Unpublished' : 'Published'
+      const errorLabel = isUnpublish ? 'Unpublish failed' : 'Publish failed'
 
-    const draftBtn = jQuery('button[value="save_groove_folio_draft"]')
-    const draftOriginalLabel = draftBtn.text()
-    jQuery('button[value="save_groove_folio_draft"]').click(function (e) {
       e.preventDefault()
       isManualSave = true
       clearTimeout(autosaveTimer)
-      jQuery(this).text('Saving...');
-      ajax('save_groove_folio_draft', {
-        reload: false,
+      publishBtn.text(savingLabel)
+      ajax(action, {
+        reload: true,
+        reloadDelayMs: saveIndicatorAutoHideMs,
         updatePermalink: true,
-        savingText: 'Saving draft...',
-        savedText: 'Draft saved',
-        errorText: 'Draft save failed'
+        savingText: savingLabel,
+        savedText: savedLabel,
+        errorText: errorLabel
       }).always(function () {
         isManualSave = false
-        draftBtn.text(draftOriginalLabel)
+        publishBtn.text(originalLabel)
       })
     })
+
+    jQuery('button[value="save_groove_folio_manual"], button[value="save_groove_folio_draft"]').click(function (e) {
+      const saveBtn = jQuery(this)
+      const action = saveBtn.val()
+      const originalLabel = saveBtn.text()
+
+      e.preventDefault()
+      isManualSave = true
+      clearTimeout(autosaveTimer)
+      saveBtn.text('Saving...')
+      ajax(action, {
+        reload: false,
+        updatePermalink: true,
+        savingText: 'Saving...',
+        savedText: 'Saved',
+        errorText: 'Save failed'
+      }).always(function () {
+        isManualSave = false
+        saveBtn.text(originalLabel)
+      })
+    })
+
+    function createAdaptiveTooltip(buttonInput, defaultText) {
+      const tooltipBtn = buttonInput && buttonInput.jquery ? buttonInput : jQuery(buttonInput)
+      if (!tooltipBtn.length) {
+        return null
+      }
+
+      let tooltipResetTimer = null
+      let tooltipBubble = tooltipBtn.find('.g-tooltip-bubble')
+      let tooltipArrow = tooltipBtn.find('.g-tooltip-arrow')
+
+      if (!tooltipBubble.length) {
+        tooltipBubble = jQuery('<span class="g-tooltip-bubble" aria-hidden="true"></span>')
+        tooltipBtn.append(tooltipBubble)
+      }
+
+      if (!tooltipArrow.length) {
+        tooltipArrow = jQuery('<span class="g-tooltip-arrow" aria-hidden="true"></span>')
+        tooltipBtn.append(tooltipArrow)
+      }
+
+      function setTooltipText(text) {
+        const normalizedText = String(text || '')
+        tooltipBubble.text(normalizedText)
+        tooltipBtn.attr('data-tooltip-text', normalizedText)
+        if (normalizedText) {
+          tooltipBtn.attr('aria-label', normalizedText)
+        }
+      }
+
+      function clamp(value, min, max) {
+        if (max < min) {
+          return min
+        }
+        return Math.max(min, Math.min(value, max))
+      }
+
+      function updateTooltipPlacement() {
+        const buttonNode = tooltipBtn.get(0)
+        const tooltipNode = tooltipBubble.get(0)
+        if (!buttonNode || !tooltipNode) {
+          return
+        }
+
+        const buttonRect = buttonNode.getBoundingClientRect()
+        const tooltipRect = tooltipNode.getBoundingClientRect()
+        if (!tooltipRect.width || !tooltipRect.height) {
+          return
+        }
+
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight
+        const adminBar = document.getElementById('wpadminbar')
+        let topInset = 0
+        if (adminBar) {
+          const adminBarRect = adminBar.getBoundingClientRect()
+          if (adminBarRect.bottom > 0) {
+            topInset = adminBarRect.bottom
+          }
+        }
+
+        const viewportPadding = 8
+        const tooltipGap = 8
+        const tooltipArrowSize = 5
+        const safeTop = Math.max(viewportPadding, topInset + viewportPadding)
+
+        const requiredVerticalSpace = tooltipRect.height + tooltipGap + tooltipArrowSize
+        const requiredHorizontalSpace = tooltipRect.width + tooltipGap + tooltipArrowSize
+
+        const availableTop = buttonRect.top - safeTop
+        const availableBottom = viewportHeight - buttonRect.bottom - viewportPadding
+        const availableLeft = buttonRect.left - viewportPadding
+        const availableRight = viewportWidth - buttonRect.right - viewportPadding
+
+        let placement = 'right'
+        if (availableTop >= requiredVerticalSpace) {
+          placement = 'top'
+        } else if (availableBottom >= requiredVerticalSpace) {
+          placement = 'bottom'
+        } else if (availableLeft >= requiredHorizontalSpace) {
+          placement = 'left'
+        } else if (availableRight >= requiredHorizontalSpace) {
+          placement = 'right'
+        }
+
+        let shiftX = 0
+        let shiftY = 0
+        if (placement === 'top' || placement === 'bottom') {
+          const anchorCenterX = buttonRect.left + (buttonRect.width / 2)
+          const minCenterX = viewportPadding + (tooltipRect.width / 2)
+          const maxCenterX = viewportWidth - viewportPadding - (tooltipRect.width / 2)
+          const clampedCenterX = clamp(anchorCenterX, minCenterX, maxCenterX)
+          shiftX = clampedCenterX - anchorCenterX
+        } else {
+          const anchorCenterY = buttonRect.top + (buttonRect.height / 2)
+          const minCenterY = safeTop + (tooltipRect.height / 2)
+          const maxCenterY = viewportHeight - viewportPadding - (tooltipRect.height / 2)
+          const clampedCenterY = clamp(anchorCenterY, minCenterY, maxCenterY)
+          shiftY = clampedCenterY - anchorCenterY
+        }
+
+        tooltipBtn.attr('data-tooltip-placement', placement)
+        buttonNode.style.setProperty('--g-tooltip-shift-x', shiftX + 'px')
+        buttonNode.style.setProperty('--g-tooltip-shift-y', shiftY + 'px')
+      }
+
+      function showTooltip(text, autoHideMs = 0, resetText = '') {
+        if (typeof text !== 'undefined') {
+          setTooltipText(text)
+        }
+        updateTooltipPlacement()
+        tooltipBtn.addClass('is-tooltip-visible')
+        clearTimeout(tooltipResetTimer)
+        if (autoHideMs > 0) {
+          tooltipResetTimer = setTimeout(function () {
+            if (resetText !== '') {
+              setTooltipText(resetText)
+            }
+            tooltipBtn.removeClass('is-tooltip-visible')
+          }, autoHideMs)
+        }
+      }
+
+      const resolvedDefaultText = String(defaultText || tooltipBtn.data('tooltip-text') || tooltipBtn.attr('aria-label') || '')
+      setTooltipText(resolvedDefaultText)
+      tooltipBtn.attr('data-tooltip-placement', 'top')
+
+      tooltipBtn.on('mouseenter focus', function () {
+        updateTooltipPlacement()
+      })
+
+      jQuery(window).on('resize scroll', function () {
+        if (tooltipBtn.hasClass('is-tooltip-visible') || tooltipBtn.is(':hover') || tooltipBtn.is(':focus')) {
+          updateTooltipPlacement()
+        }
+      })
+
+      return {
+        show: showTooltip,
+      }
+    }
+
+    createAdaptiveTooltip('#g-reset-header-font', 'Reset font')
+    createAdaptiveTooltip('#g-reset-body-font', 'Reset font')
+
+    const copyLinkBtn = jQuery('#g-copy-folio-link')
+    if (copyLinkBtn.length) {
+      const copyTooltipText = String(copyLinkBtn.data('copy-text') || 'Copy link')
+      const copiedTooltipText = String(copyLinkBtn.data('copied-text') || 'Copied')
+      const copyTooltip = createAdaptiveTooltip(copyLinkBtn, copyTooltipText)
+
+      function fallbackCopy(text) {
+        const textArea = document.createElement('textarea')
+        textArea.value = text
+        textArea.setAttribute('readonly', '')
+        textArea.style.position = 'absolute'
+        textArea.style.left = '-9999px'
+
+        document.body.appendChild(textArea)
+        textArea.select()
+
+        try {
+          return document.execCommand('copy')
+        } catch (error) {
+          return false
+        } finally {
+          document.body.removeChild(textArea)
+        }
+      }
+
+      function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          return navigator.clipboard.writeText(text)
+        }
+
+        if (fallbackCopy(text)) {
+          return Promise.resolve()
+        }
+
+        return Promise.reject(new Error('copy_failed'))
+      }
+
+      copyLinkBtn.on('click', function (event) {
+        event.preventDefault()
+
+        const linkToCopy = String(copyLinkBtn.data('copy-link') || '').trim()
+        if (!linkToCopy) {
+          return
+        }
+
+        copyText(linkToCopy).then(function () {
+          if (copyTooltip) {
+            copyTooltip.show(copiedTooltipText, 1800, copyTooltipText)
+          }
+        }).catch(function () {
+          if (copyTooltip) {
+            copyTooltip.show(copyTooltipText, 1200, copyTooltipText)
+          }
+        })
+      })
+    }
 
     function bindMediaSelector(options) {
       const openButton = jQuery(options.openButton)
@@ -328,6 +576,29 @@ jQuery(function () {
 
     jQuery('#g-reset-body-font').click(function () {
       resetFontSelect('#g-body-font')
+    })
+
+    function syncThemeSpecificCustomizationFields() {
+      const activeThemeId = String(jQuery('#g-active-theme-id').val() || '')
+
+      jQuery('[data-theme-target]').each(function () {
+        const targetThemeId = String(jQuery(this).data('theme-target') || '')
+        if (!targetThemeId) {
+          return
+        }
+
+        if (activeThemeId === targetThemeId) {
+          jQuery(this).removeClass('hidden')
+        } else {
+          jQuery(this).addClass('hidden')
+        }
+      })
+    }
+
+    syncThemeSpecificCustomizationFields()
+
+    jQuery('#g-active-theme-id').on('change', function () {
+      syncThemeSpecificCustomizationFields()
     })
 
     jQuery(document).on('click', '.g-folio__theme-option', function () {
@@ -405,10 +676,14 @@ jQuery(function () {
 
   if (Groove.isPreview()) {
     function setNavBarBackgroundColor() {
+      const navBars = jQuery('.g-folio__theme-page-nav-bar').filter(function () {
+        return jQuery(this).closest('.gn-page').length === 0
+      })
+
       if (window.scrollY > 96) {
-        jQuery('.g-folio__theme-page-nav-bar').css('background-color', 'rgba(255, 255, 255, 1)')
+        navBars.css('background-color', 'rgba(255, 255, 255, 1)')
       } else {
-        jQuery('.g-folio__theme-page-nav-bar').css('background-color', 'rgba(255, 255, 255, 0.9)')
+        navBars.css('background-color', 'rgba(255, 255, 255, 0.9)')
       }
     }
 
