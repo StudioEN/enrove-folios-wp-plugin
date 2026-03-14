@@ -52,27 +52,16 @@ class Cover extends Base_Theme
     <?php
   }
 
-  function display_password_form($post)
-  {
-    $post = get_post($post);
-    ?>
-    <form action="<?= esc_url(site_url('wp-login.php?action=postpass', 'login_post')) ?>" class="post-password-form"
-      method="post">
-      <input placeholder="Enter password" class="g-folio__theme-fields-submit-input" name="post_password" type="password"
-        spellcheck="false" size="20" />
-      <input class="g-folio__theme-fields-submit" type="submit" name="Submit" value="Enter" />
-    </form>
-    <?php
-  }
-
   function display_brief()
   {
     $page = $this->pages[0] ?? null;
     ?>
     <div class="g-folio__theme-brief">
-      <i class="g-folio__theme-logo">
-        <img src="<?= esc_url($this->theme_logo_url) ?>" />
-      </i>
+      <?php if (!empty($this->theme_logo_url)): ?>
+        <i class="g-folio__theme-logo">
+          <img src="<?= esc_url($this->theme_logo_url) ?>" />
+        </i>
+      <?php endif; ?>
       <h1 class="g-folio__theme-title">
         <?= esc_html($this->title) ?>
       </h1>
@@ -86,21 +75,11 @@ class Cover extends Base_Theme
       <?php endif; ?>
 
       <div class="g-folio__theme-fields g-folio__theme-password-form">
-        <?php
-        $post_password_required = post_password_required($this->id);
-
-        if ($post_password_required) {
-          $this->display_password_form($this->id);
-        } else {
-          if (!empty($this->pages) && $page) {
-            ?>
-            <a class="g-folio__theme-fields-submit" href="<?= Utils::get_folio_permalink_by_id($page->ID) ?>">
-              Open folio
-            </a>
-            <?php
-          }
-        }
-        ?>
+        <?php if (!empty($this->pages) && $page): ?>
+          <a class="g-folio__theme-fields-submit" href="<?= Utils::get_folio_permalink_by_id($page->ID) ?>">
+            Open folio
+          </a>
+        <?php endif; ?>
       </div>
       <?php if (!empty($this->copyright)): ?>
         <div class="g-folio__theme-copyright">

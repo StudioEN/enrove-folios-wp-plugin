@@ -19,6 +19,7 @@ abstract class Base_Theme extends Assets
   public $theme_name;
   public $theme_cover_url;
   public $theme_logo_url;
+  public $show_logo = true;
 
   public function __construct()
   {
@@ -36,8 +37,8 @@ abstract class Base_Theme extends Assets
     // Shared plugin CSS (admin bar reset, global layout).
     wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], GROOVE_VERSION);
 
-    // Per-theme CSS — lives in themes/<theme-id>/assets/css/theme.css.
-    $theme_css_path = trailingslashit(GROOVE_PATH) . 'themes/' . static::get_id() . '/assets/css/theme.css';
+    // Per-theme CSS (built-in or installed package).
+    $theme_css_path = $this->get_theme_css_path();
     $version = file_exists($theme_css_path) ? filemtime($theme_css_path) : GROOVE_VERSION;
 
     wp_enqueue_style(
@@ -143,14 +144,29 @@ abstract class Base_Theme extends Assets
   }
 
   /**
-   * URL to this theme's folder inside the plugin.
-   * e.g. https://example.com/wp-content/plugins/groove/themes/folio-starter/
+   * Absolute path to this theme's folder.
+   *
+   * @return string
+   */
+  public static function get_theme_folder_path(): string
+  {
+    $class = static::class;
+    if (!isset(self::$theme_folder_paths[$class])) {
+      $reflector = new \ReflectionClass($class);
+      self::$theme_folder_paths[$class] = trailingslashit(dirname((string) $reflector->getFileName()));
+    }
+
+    return self::$theme_folder_paths[$class];
+  }
+
+  /**
+   * URL to this theme's folder (built-in or installed package).
    *
    * @return string
    */
   public function get_theme_folder_url(): string
   {
-    return GROOVE_URL . 'themes/' . static::get_id() . '/';
+    return static::resolve_theme_folder_url();
   }
 
   /**
@@ -165,6 +181,16 @@ abstract class Base_Theme extends Assets
   }
 
   /**
+   * Absolute path to this theme's assets/ folder.
+   *
+   * @return string
+   */
+  public function get_theme_assets_path(): string
+  {
+    return static::get_theme_folder_path() . 'assets/';
+  }
+
+  /**
    * URL to this theme's compiled CSS file.
    *
    * @return string
@@ -174,11 +200,23 @@ abstract class Base_Theme extends Assets
     return $this->get_theme_assets_url() . 'css/theme.css';
   }
 
+  /**
+   * Absolute path to this theme's compiled CSS file.
+   *
+   * @return string
+   */
+  public function get_theme_css_path(): string
+  {
+    return $this->get_theme_assets_path() . 'css/theme.css';
+  }
+
   // -----------------------------------------------------------------------
   // Theme identity
   // -----------------------------------------------------------------------
 
   protected static $setup_data = [];
+  protected static $theme_folder_paths = [];
+  protected static $theme_folder_urls = [];
 
   public static function get_setup_data(): array
   {
@@ -287,7 +325,7 @@ abstract class Base_Theme extends Assets
   final public static function get_theme_descriptor(): array
   {
     // Build URLs purely statically — no instantiation, no constructor side-effects.
-    $theme_assets_url = GROOVE_URL . 'themes/' . static::get_id() . '/assets/';
+    $theme_assets_url = static::resolve_theme_folder_url() . 'assets/';
     return [
       'ID' => static::get_id(),
       'name' => static::get_name(),
@@ -298,6 +336,32 @@ abstract class Base_Theme extends Assets
       'author' => static::get_author(),
       'last_updated' => static::get_last_updated(),
     ];
+  }
+
+  /**
+   * Resolve the public URL for this theme directory from the class file path.
+   * Supports both plugin-bundled themes and installed themes in wp-content.
+   *
+   * @return string
+   */
+  protected static function resolve_theme_folder_url(): string
+  {
+    $class = static::class;
+    if (isset(self::$theme_folder_urls[$class])) {
+      return self::$theme_folder_urls[$class];
+    }
+
+    $theme_folder_path = wp_normalize_path(static::get_theme_folder_path());
+    $content_dir = wp_normalize_path(trailingslashit(WP_CONTENT_DIR));
+
+    if (strpos($theme_folder_path, $content_dir) === 0) {
+      $relative_path = ltrim(substr($theme_folder_path, strlen($content_dir)), '/');
+      self::$theme_folder_urls[$class] = trailingslashit(WP_CONTENT_URL) . $relative_path;
+      return self::$theme_folder_urls[$class];
+    }
+
+    self::$theme_folder_urls[$class] = trailingslashit(GROOVE_URL) . 'themes/' . static::get_id() . '/';
+    return self::$theme_folder_urls[$class];
   }
 
   // -----------------------------------------------------------------------
@@ -458,9 +522,13 @@ abstract class Base_Theme extends Assets
       $this->theme_name = $theme['name'] ?? '';
       $this->theme_cover_url = $theme['cover_url'] ?? '';
       $this->theme_logo_url = $theme['logo_url'] ?? '';
+      $this->show_logo = true;
 
       $folio_id = $this->get_folio_id_for_customization();
       if ($folio_id > 0) {
+        $show_logo_meta = get_post_meta($folio_id, 'show_logo', true);
+        $this->show_logo = !in_array((string) $show_logo_meta, array('0', 'false', 'off', 'no'), true);
+
         $custom_logo_id = (int) get_post_meta($folio_id, 'logo_id', true);
         if ($custom_logo_id > 0) {
           $custom_logo_url = wp_get_attachment_image_url($custom_logo_id, 'full');
@@ -468,6 +536,10 @@ abstract class Base_Theme extends Assets
             $this->theme_logo_url = $custom_logo_url;
           }
         }
+      }
+
+      if (!$this->show_logo) {
+        $this->theme_logo_url = '';
       }
     }
   }
