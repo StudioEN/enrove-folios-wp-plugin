@@ -60,6 +60,22 @@ class Content extends BaseContent
     register_post_meta('groove_folio', 'header_font', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
     register_post_meta('groove_folio', 'body_font', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
     register_post_meta('groove_folio', 'show_byline', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_version', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_status', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_prepared_for', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_prepared_by', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_contact_email', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_contact_name', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_contact_role', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_contact_phone', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_contact_linkedin', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_contacts', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_client_name', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_client_logo_url', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_date', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_show_in_page_nav', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_color_scheme', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    register_post_meta('groove_folio', 'proposal_revision_log', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
   }
 
   public function __construct()

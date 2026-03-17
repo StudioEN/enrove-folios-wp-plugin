@@ -50,6 +50,9 @@ class Add_New extends Page
       if (empty($theme_id) || !isset($themes[$theme_id])) {
         wp_die(esc_html__('Invalid theme selection.', 'groove'));
       }
+      $seed_proposal_sample = $theme_id === 'groove-proposal'
+        && isset($_POST['seed_proposal_sample'])
+        && (string) wp_unslash($_POST['seed_proposal_sample']) === '1';
 
       $default_status = (string) get_option('groove_default_folio_status', 'draft');
       if (!in_array($default_status, ['draft', 'publish'], true)) {
@@ -76,9 +79,32 @@ class Add_New extends Page
         ),
       );
 
+      if ($theme_id === 'groove-proposal') {
+        $fields['meta_input']['proposal_show_in_page_nav'] = '1';
+        $fields['meta_input']['proposal_color_scheme'] = 'default';
+      }
+
+      if ($seed_proposal_sample) {
+        $fields['meta_input']['subtitle'] = __('Strategic proposal overview', 'groove');
+        $fields['meta_input']['proposal_version'] = 'v0.1';
+        $fields['meta_input']['proposal_status'] = __('Draft', 'groove');
+        $fields['meta_input']['proposal_prepared_for'] = __('Client Name', 'groove');
+        $fields['meta_input']['proposal_client_name'] = __('Client Name', 'groove');
+        $fields['meta_input']['proposal_prepared_by'] = __('Your Agency Name', 'groove');
+        $fields['meta_input']['proposal_contact_name'] = __('Engagement Lead', 'groove');
+        $fields['meta_input']['proposal_contact_role'] = __('Principal Consultant', 'groove');
+        $fields['meta_input']['proposal_contact_email'] = 'hello@example.com';
+        $fields['meta_input']['proposal_contact_phone'] = '+1 (555) 010-2020';
+        $fields['meta_input']['proposal_date'] = wp_date('Y-m-d');
+      }
+
       $folio_id = wp_insert_post($fields);
 
       if (!is_wp_error($folio_id)) {
+        if ($seed_proposal_sample) {
+          $this->create_proposal_sample_pages((int) $folio_id, $default_status);
+        }
+
         $redirect_url = admin_url('admin.php?page=groove-folio&folio_id=' . $folio_id);
         wp_safe_redirect($redirect_url);
         exit;
@@ -123,6 +149,7 @@ class Add_New extends Page
     }
 
     $theme_count = count($themes);
+    $show_sample_toggle = $first_theme_id === 'groove-proposal';
 ?>
 <p class="g-folio__themes-desc">
   <?php
@@ -168,6 +195,18 @@ class Add_New extends Page
 ?>
   </div>
   <input type="hidden" id="g-add-new-theme-id" name="themeId" value="<?php echo esc_attr($first_theme_id)?>" />
+  <div class="<?php echo $show_sample_toggle ? '' : 'hidden'; ?> my-5" data-add-new-theme-target="groove-proposal"
+    data-disable-hidden-fields="1">
+    <label for="seed_proposal_sample" class="inline-flex items-center text-sm text-gray-800">
+      <input type="hidden" name="seed_proposal_sample" value="0" />
+      <input type="checkbox" id="seed_proposal_sample" name="seed_proposal_sample" value="1"
+        class="mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+      <?php echo esc_html__('Create with sample proposal content', 'groove'); ?>
+    </label>
+    <p class="m-0 mt-2 text-xs text-gray-500">
+      <?php echo esc_html__('Seeds cover details and three sample pages to demonstrate the proposal template.', 'groove'); ?>
+    </p>
+  </div>
   <div class="g-folio__theme-button">
     <button type="submit" class="button button-primary">
       <?php echo esc_html__('Continue', 'groove'); ?>
@@ -175,6 +214,100 @@ class Add_New extends Page
   </div>
 </form>
 <?php
+  }
+
+  private function create_proposal_sample_pages(int $folio_id, string $status): void
+  {
+    $status = in_array($status, array('draft', 'publish', 'private', 'pending'), true) ? $status : 'draft';
+    $pages = $this->get_proposal_sample_pages();
+
+    foreach ($pages as $index => $page) {
+      wp_insert_post(array(
+        'post_type' => 'groove_folio_page',
+        'post_status' => $status,
+        'post_title' => $page['title'],
+        'post_content' => $page['content'],
+        'menu_order' => $index + 1,
+        'meta_input' => array(
+          'folio_id' => $folio_id,
+        ),
+      ));
+    }
+  }
+
+  private function get_proposal_sample_pages(): array
+  {
+    return array(
+      array(
+        'title' => __('Executive Summary', 'groove'),
+        'content' => (string) <<<HTML
+<!-- wp:heading {"level":2} -->
+<h2>Context</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph -->
+<p>Your team is preparing to scale delivery while improving positioning in a more competitive market. This proposal outlines a focused engagement to align strategy, service narrative, and execution priorities in one practical roadmap.</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2} -->
+<h2>Engagement goals</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph -->
+<p>We will clarify your growth priorities, refine your offer architecture, and define operating rhythms that support consistent delivery. The objective is measurable progress in pipeline quality, decision speed, and account confidence.</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2} -->
+<h2>Expected outcomes</h2>
+<!-- /wp:heading -->
+<!-- wp:list -->
+<ul><li>Sharper positioning and value communication.</li><li>Prioritized delivery plan with ownership.</li><li>Clear implementation milestones for the next 90 days.</li></ul>
+<!-- /wp:list -->
+HTML,
+      ),
+      array(
+        'title' => __('Scope and Approach', 'groove'),
+        'content' => (string) <<<HTML
+<!-- wp:heading {"level":2} -->
+<h2>Workstreams</h2>
+<!-- /wp:heading -->
+<!-- wp:list -->
+<ul><li>Discovery interviews and signal analysis.</li><li>Offer and messaging calibration.</li><li>Delivery model refinement with role clarity.</li></ul>
+<!-- /wp:list -->
+<!-- wp:heading {"level":2} -->
+<h2>Collaboration model</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph -->
+<p>We run weekly working sessions with concise decision memos and a shared action board. Stakeholders receive asynchronous updates between sessions to reduce meeting overhead while preserving momentum.</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2} -->
+<h2>Deliverables</h2>
+<!-- /wp:heading -->
+<!-- wp:list -->
+<ul><li>Opportunity and constraint summary.</li><li>Refined proposal and service narrative.</li><li>90-day execution plan with milestones.</li></ul>
+<!-- /wp:list -->
+HTML,
+      ),
+      array(
+        'title' => __('Timeline and Investment', 'groove'),
+        'content' => (string) <<<HTML
+<!-- wp:heading {"level":2} -->
+<h2>Timeline</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph -->
+<p>The engagement is planned over six weeks: two weeks discovery, two weeks shaping, and two weeks implementation planning. Decision checkpoints are scheduled at the end of each phase.</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2} -->
+<h2>Investment</h2>
+<!-- /wp:heading -->
+<!-- wp:paragraph -->
+<p>Project investment is structured as a fixed engagement fee with a staged payment schedule tied to phase completion. Optional follow-on support can be added as a monthly advisory retainer.</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":2} -->
+<h2>Next steps</h2>
+<!-- /wp:heading -->
+<!-- wp:list -->
+<ul><li>Confirm scope and key stakeholders.</li><li>Align kick-off date and communication cadence.</li><li>Finalize agreement and begin discovery.</li></ul>
+<!-- /wp:list -->
+HTML,
+      ),
+    );
   }
 
   public function display_content()
