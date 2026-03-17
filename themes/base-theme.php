@@ -502,7 +502,12 @@ abstract class Base_Theme extends Assets
    */
   function get_theme_data()
   {
-    $meta = get_post_meta($this->id);
+    $theme_meta_post_id = $this->get_folio_id_for_customization();
+    if ($theme_meta_post_id <= 0) {
+      $theme_meta_post_id = (int) $this->id;
+    }
+
+    $meta = get_post_meta($theme_meta_post_id);
     $theme_id = $meta['theme_id'][0] ?? '';
     $all_themes = Themes_Manager::get_all_themes();
 

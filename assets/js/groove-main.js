@@ -1,6 +1,24 @@
 jQuery(function () {
   const settings = window.GROOVE_SETTINGS || {}
 
+  function setThemeSectionVisibility(section, isVisible) {
+    const $section = jQuery(section)
+    const shouldDisableHiddenFields = String($section.data('disable-hidden-fields') || '') === '1'
+
+    if (isVisible) {
+      $section.removeClass('hidden')
+      if (shouldDisableHiddenFields) {
+        $section.find('input, select, textarea, button').prop('disabled', false)
+      }
+      return
+    }
+
+    $section.addClass('hidden')
+    if (shouldDisableHiddenFields) {
+      $section.find('input, select, textarea, button').prop('disabled', true)
+    }
+  }
+
   const Groove = Object.create({
     screenId: settings.screenId || window.GROOVE_SCREEN_ID || '',
     themeId: settings.themeId || window.GROOVE_THEME_ID || null,
@@ -246,7 +264,7 @@ jQuery(function () {
     if (folioForm.length) {
       folioForm.on('input change', 'input, select, textarea', function () {
         const name = this.name || ''
-        if (!name || name === 'groove_nonce' || name === 'folio_id' || name === 'action' || name === 'permalink') {
+        if (!name || name === 'groove_nonce' || name === 'folio_id' || name === 'action' || name === 'permalink' || name === 'proposal_revision_note') {
           return
         }
 
@@ -561,6 +579,64 @@ jQuery(function () {
       defaultButton: '#use-default-logo'
     })
 
+    // Client logo: stores URL instead of attachment ID.
+    ;(function () {
+      const selectBtn = jQuery('#g-client-logo-select')
+      if (!selectBtn.length) {
+        return
+      }
+
+      const hiddenInput = jQuery('#proposal_client_logo_url')
+      const previewImg = jQuery('#g-client-logo-preview')
+      const previewFrame = jQuery('#g-client-logo-preview-frame')
+      const defaultBtn = jQuery('#g-client-logo-default')
+      const removeBtn = jQuery('#g-client-logo-remove')
+
+      function showPreview(url) {
+        previewImg.attr('src', url)
+        previewFrame.removeClass('hidden')
+        defaultBtn.removeClass('hidden')
+        removeBtn.removeClass('hidden')
+        selectBtn.text('Replace logo')
+      }
+
+      function clearPreview() {
+        hiddenInput.val('').trigger('change')
+        previewFrame.addClass('hidden')
+        defaultBtn.addClass('hidden')
+        removeBtn.addClass('hidden')
+        selectBtn.text('Select logo')
+      }
+
+      selectBtn.on('click', function (e) {
+        e.preventDefault()
+        var uploader = wp.media({
+          title: 'Select Client Logo',
+          button: { text: 'Use this logo' },
+          multiple: false,
+          library: { type: 'image' }
+        })
+
+        uploader.on('select', function () {
+          var attachment = uploader.state().get('selection').first().toJSON()
+          hiddenInput.val(attachment.url).trigger('change')
+          showPreview(attachment.url)
+        })
+
+        uploader.open()
+      })
+
+      defaultBtn.on('click', function () {
+        var defaultUrl = jQuery(this).data('default-url')
+        hiddenInput.val(defaultUrl).trigger('change')
+        showPreview(defaultUrl)
+      })
+
+      removeBtn.on('click', function () {
+        clearPreview()
+      })
+    })()
+
     function resetFontSelect(selectId) {
       const fontSelect = jQuery(selectId)
       if (!fontSelect.length) {
@@ -578,6 +654,281 @@ jQuery(function () {
       resetFontSelect('#g-body-font')
     })
 
+    function bindProposalInformationModal() {
+      const modal = jQuery('#g-proposal-info-modal')
+      if (!modal.length) {
+        return {
+          close: function () {},
+          syncSummary: function () {}
+        }
+      }
+
+      const openButtons = jQuery('[data-g-proposal-info-open]')
+      const closeButtons = jQuery('[data-g-proposal-info-close]')
+      const body = jQuery('body')
+      let previousBodyOverflow = ''
+      let activeTrigger = null
+
+      function syncProposalSummary() {
+        jQuery('[data-g-proposal-summary-source]').each(function () {
+          const summaryItem = jQuery(this)
+          const sourceSelector = String(summaryItem.data('g-proposal-summary-source') || '')
+          if (!sourceSelector) {
+            return
+          }
+
+          const sourceField = jQuery(sourceSelector).first()
+          if (!sourceField.length) {
+            return
+          }
+
+          const summaryType = String(summaryItem.data('summary-type') || '')
+          let value = ''
+
+          if (summaryType === 'boolean') {
+            const trueLabel = String(summaryItem.data('true-label') || 'Yes')
+            const falseLabel = String(summaryItem.data('false-label') || 'No')
+            value = sourceField.is(':checked') ? trueLabel : falseLabel
+          } else {
+            value = String(sourceField.val() || '').trim()
+            if (!value) {
+              value = String(summaryItem.data('empty-label') || 'Not set')
+            }
+          }
+
+          summaryItem.text(value)
+        })
+      }
+
+      function openModal() {
+        if (!modal.hasClass('hidden')) {
+          return
+        }
+
+        activeTrigger = jQuery(document.activeElement)
+        previousBodyOverflow = body.css('overflow')
+        body.css('overflow', 'hidden')
+        modal.removeClass('hidden').css('display', 'flex').attr('aria-hidden', 'false')
+
+        window.requestAnimationFrame(function () {
+          const firstFocusable = modal.find('input:not([type="hidden"]), select, textarea, button').filter(':visible').first()
+          if (firstFocusable.length) {
+            firstFocusable.trigger('focus')
+          }
+        })
+      }
+
+      function closeModal() {
+        if (modal.hasClass('hidden')) {
+          return
+        }
+
+        modal.addClass('hidden').css('display', 'none').attr('aria-hidden', 'true')
+        body.css('overflow', previousBodyOverflow)
+        if (activeTrigger && activeTrigger.length) {
+          activeTrigger.trigger('focus')
+        }
+      }
+
+      openButtons.on('click', function (event) {
+        event.preventDefault()
+        openModal()
+      })
+
+      closeButtons.on('click', function (event) {
+        event.preventDefault()
+        closeModal()
+      })
+
+      jQuery(document).on('keydown.gProposalInfo', function (event) {
+        if (event.key !== 'Escape' || modal.hasClass('hidden')) {
+          return
+        }
+
+        event.preventDefault()
+        closeModal()
+      })
+
+      jQuery(document).on('input.gProposalSummary change.gProposalSummary', '#g-proposal-info-modal input, #g-proposal-info-modal select, #g-proposal-info-modal textarea', function () {
+        syncProposalSummary()
+      })
+
+      syncProposalSummary()
+
+      return {
+        close: closeModal,
+        syncSummary: syncProposalSummary
+      }
+    }
+
+    const proposalInformationModal = bindProposalInformationModal()
+
+    function bindVersionHistoryModal() {
+      const modal = jQuery('#g-version-history-modal')
+      if (!modal.length) {
+        return {
+          close() {}
+        }
+      }
+
+      let lastFocusedElement = null
+
+      function openModal() {
+        if (!modal.hasClass('hidden')) {
+          return
+        }
+
+        lastFocusedElement = document.activeElement
+        modal.removeClass('hidden').attr('aria-hidden', 'false')
+
+        window.requestAnimationFrame(function () {
+          const firstFocusable = modal.find('button').filter(':visible').first()
+          if (firstFocusable.length) {
+            firstFocusable.trigger('focus')
+          }
+        })
+      }
+
+      function closeModal() {
+        if (modal.hasClass('hidden')) {
+          return
+        }
+
+        modal.addClass('hidden').attr('aria-hidden', 'true')
+
+        if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+          lastFocusedElement.focus()
+        }
+      }
+
+      jQuery(document).on('click.gVersionHistoryOpen', '[data-version-history-open]', function (event) {
+        event.preventDefault()
+        openModal()
+      })
+
+      jQuery(document).on('click.gVersionHistoryClose', '[data-version-history-close]', function (event) {
+        event.preventDefault()
+        closeModal()
+      })
+
+      jQuery(document).on('keydown.gVersionHistory', function (event) {
+        if (event.key !== 'Escape' || modal.hasClass('hidden')) {
+          return
+        }
+
+        event.preventDefault()
+        closeModal()
+      })
+
+      return {
+        close: closeModal
+      }
+    }
+
+    const versionHistoryModal = bindVersionHistoryModal()
+
+    function bindThemePickerModal() {
+      const modal = jQuery('#g-theme-picker-modal')
+      if (!modal.length) {
+        return {
+          open() {},
+          close() {}
+        }
+      }
+
+      let lastFocusedElement = null
+
+      function openModal() {
+        if (!modal.hasClass('hidden')) {
+          return
+        }
+
+        lastFocusedElement = document.activeElement
+        modal.removeClass('hidden').attr('aria-hidden', 'false')
+
+        window.requestAnimationFrame(function () {
+          const selectedCard = modal.find('.g-folio__theme-option[aria-pressed="true"]').first()
+          const firstFocusable = selectedCard.length ? selectedCard : modal.find('button').filter(':visible').first()
+          if (firstFocusable.length) {
+            firstFocusable.trigger('focus')
+          }
+        })
+      }
+
+      function closeModal() {
+        if (modal.hasClass('hidden')) {
+          return
+        }
+
+        modal.addClass('hidden').attr('aria-hidden', 'true')
+
+        if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+          lastFocusedElement.focus()
+        }
+      }
+
+      jQuery(document).on('click.gThemePickerOpen', '[data-theme-picker-open]', function () {
+        openModal()
+      })
+
+      jQuery(document).on('click.gThemePickerClose', '[data-theme-picker-close]', function () {
+        closeModal()
+      })
+
+      jQuery(document).on('keydown.gThemePicker', function (event) {
+        if (event.key !== 'Escape' || modal.hasClass('hidden')) {
+          return
+        }
+
+        event.preventDefault()
+        closeModal()
+      })
+
+      return {
+        open: openModal,
+        close: closeModal
+      }
+    }
+
+    const themePickerModal = bindThemePickerModal()
+
+    function setActiveThemeOption(option) {
+      const selected = jQuery(option)
+      const options = jQuery('#g-theme-picker-modal .g-folio__theme-option')
+
+      options
+        .removeClass('is-active')
+        .attr('aria-pressed', 'false')
+
+      options.find('.active-badge').addClass('is-hidden')
+
+      selected
+        .addClass('is-active')
+        .attr('aria-pressed', 'true')
+
+      selected.find('.active-badge').removeClass('is-hidden')
+    }
+
+    function syncSelectedThemeSummary() {
+      const activeThemeId = String(jQuery('#g-active-theme-id').val() || '')
+      if (!activeThemeId) {
+        return
+      }
+
+      const selectedOption = jQuery('#g-theme-picker-modal .g-folio__theme-option[data-theme-id="' + activeThemeId + '"]').first()
+      if (!selectedOption.length) {
+        return
+      }
+
+      setActiveThemeOption(selectedOption)
+
+      jQuery('[data-theme-summary-name]').text(String(selectedOption.data('theme-name') || ''))
+      jQuery('[data-theme-summary-description]').text(String(selectedOption.data('theme-description') || ''))
+      jQuery('[data-theme-summary-thumbnail]')
+        .attr('src', String(selectedOption.data('theme-thumbnail-url') || ''))
+        .attr('alt', String(selectedOption.data('theme-name') || ''))
+    }
+
     function syncThemeSpecificCustomizationFields() {
       const activeThemeId = String(jQuery('#g-active-theme-id').val() || '')
 
@@ -587,41 +938,62 @@ jQuery(function () {
           return
         }
 
-        if (activeThemeId === targetThemeId) {
-          jQuery(this).removeClass('hidden')
-        } else {
-          jQuery(this).addClass('hidden')
-        }
+        setThemeSectionVisibility(this, activeThemeId === targetThemeId)
       })
+
+      jQuery('[data-theme-hide-on]').each(function () {
+        const hideThemeId = String(jQuery(this).data('theme-hide-on') || '')
+        if (!hideThemeId) {
+          return
+        }
+
+        setThemeSectionVisibility(this, activeThemeId !== hideThemeId)
+      })
+
+      if (activeThemeId !== 'groove-proposal') {
+        proposalInformationModal.close()
+        versionHistoryModal.close()
+      } else {
+        proposalInformationModal.syncSummary()
+      }
     }
 
     syncThemeSpecificCustomizationFields()
+    syncSelectedThemeSummary()
 
     jQuery('#g-active-theme-id').on('change', function () {
       syncThemeSpecificCustomizationFields()
+      syncSelectedThemeSummary()
     })
 
-    jQuery(document).on('click', '.g-folio__theme-option', function () {
-      jQuery('.g-folio__theme-option')
-        .removeClass('border-indigo-600 ring-1 ring-indigo-600')
-        .addClass('border-gray-200')
-      jQuery('.g-folio__theme-option .active-badge').addClass('hidden')
-
-      jQuery(this)
-        .removeClass('border-gray-200')
-        .addClass('border-indigo-600 ring-1 ring-indigo-600')
-      jQuery(this).find('.active-badge').removeClass('hidden')
+    jQuery(document).on('click', '#g-theme-picker-modal .g-folio__theme-option', function () {
+      setActiveThemeOption(this)
       jQuery('#g-active-theme-id').val(jQuery(this).data('theme-id')).trigger('change')
+      themePickerModal.close()
     })
   }
 
   if (Groove.isAddNewPage()) {
     const themeCardsSelector = '.g-folio__theme-option'
 
+    function syncAddNewThemeSpecificFields(themeId) {
+      const activeThemeId = String(themeId || '')
+
+      jQuery('[data-add-new-theme-target]').each(function () {
+        const targetThemeId = String(jQuery(this).data('add-new-theme-target') || '')
+        if (!targetThemeId) {
+          return
+        }
+
+        setThemeSectionVisibility(this, activeThemeId === targetThemeId)
+      })
+    }
+
     function selectAddNewTheme(card) {
       const selected = jQuery(card)
       const cards = jQuery(themeCardsSelector)
       const selectedName = selected.data('theme-name') || ''
+      const selectedThemeId = selected.data('theme-id')
 
       cards
         .removeClass('border-indigo-600 ring-1 ring-indigo-600')
@@ -638,8 +1010,9 @@ jQuery(function () {
         .focus()
       selected.find('.active-badge').removeClass('hidden')
 
-      jQuery('[name="themeId"]').val(selected.data('theme-id'))
+      jQuery('[name="themeId"]').val(selectedThemeId)
       jQuery('#g-folio-selected-theme-name').text(selectedName)
+      syncAddNewThemeSpecificFields(selectedThemeId)
     }
 
     jQuery(document).on('click', themeCardsSelector, function () {
@@ -672,12 +1045,19 @@ jQuery(function () {
         selectAddNewTheme(nextCard)
       }
     })
+
+    const initialSelectedCard = jQuery(themeCardsSelector + '[aria-checked="true"]').first()
+    if (initialSelectedCard.length) {
+      syncAddNewThemeSpecificFields(initialSelectedCard.data('theme-id'))
+    } else {
+      syncAddNewThemeSpecificFields(jQuery('[name="themeId"]').val())
+    }
   }
 
   if (Groove.isPreview()) {
     function setNavBarBackgroundColor() {
       const navBars = jQuery('.g-folio__theme-page-nav-bar').filter(function () {
-        return jQuery(this).closest('.gn-page').length === 0
+        return jQuery(this).closest('.gn-page, .gp-page').length === 0
       })
 
       if (window.scrollY > 96) {

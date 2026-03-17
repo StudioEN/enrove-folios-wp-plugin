@@ -40,6 +40,41 @@ class All_Folios extends Page
 		add_action('groove/menu/register', function (Menu_Manager $menu) {
 			$menu->register(static::PAGE_ID, new All_Folios_Menu_Item($this));
 		}, Overview::MENU_PRIORITY + 20);
+
+		add_action('admin_init', array($this, 'handle_duplicate_action'));
+	}
+
+	public function handle_duplicate_action()
+	{
+		if (!isset($_GET['page']) || $_GET['page'] !== static::PAGE_ID) {
+			return;
+		}
+		if (!isset($_GET['action']) || $_GET['action'] !== 'groove_duplicate_folio' || !isset($_GET['post'])) {
+			return;
+		}
+
+		$post_id = (int) $_GET['post'];
+		check_admin_referer('groove_duplicate_folio_' . $post_id);
+
+		if (get_post_type($post_id) !== static::POST_TYPE || !current_user_can('edit_post', $post_id)) {
+			return;
+		}
+
+		$new_id = $this->duplicate_folio($post_id);
+		$status = isset($_GET['post_status']) ? sanitize_key(wp_unslash($_GET['post_status'])) : 'all';
+		$search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+
+		$redirect_args = array_filter(array(
+			'post_status' => $status !== 'all' ? $status : null,
+			's' => $search !== '' ? $search : null,
+			'bulk_action' => 'duplicate',
+			'bulk_count' => $new_id ? 1 : 0,
+		), function ($value) {
+			return $value !== null;
+		});
+
+		wp_safe_redirect($this->build_page_url($redirect_args));
+		exit;
 	}
 
 	private function get_current_status()
@@ -299,6 +334,7 @@ class All_Folios extends Page
 		}
 
 		return array(
+			'duplicate' => esc_html__('Duplicate', 'groove'),
 			'trash' => esc_html__('Move to Trash', 'groove'),
 		);
 	}
@@ -363,6 +399,11 @@ class All_Folios extends Page
 						$updated_count++;
 					}
 					break;
+				case 'duplicate':
+					if ($this->duplicate_folio($post_id)) {
+						$updated_count++;
+					}
+					break;
 			}
 		}
 
@@ -418,6 +459,13 @@ class All_Folios extends Page
 					esc_html(number_format_i18n($count))
 				);
 				break;
+			case 'duplicate':
+				$message = sprintf(
+					/* translators: %s: number of folios duplicated */
+					esc_html(_n('%s folio duplicated.', '%s folios duplicated.', $count, 'groove')),
+					esc_html(number_format_i18n($count))
+				);
+				break;
 		}
 
 		if ($message === '') {
@@ -428,6 +476,88 @@ class All_Folios extends Page
 			<p><?php echo esc_html($message); ?></p>
 		</div>
 		<?php
+	}
+
+	private function duplicate_folio($post_id)
+	{
+		$source = get_post($post_id);
+		if (!$source || $source->post_type !== static::POST_TYPE) {
+			return false;
+		}
+
+		$new_title = sprintf(
+			/* translators: %s: original folio title */
+			__('Copy of %s', 'groove'),
+			$source->post_title
+		);
+
+		$new_folio_id = wp_insert_post(array(
+			'post_type'    => static::POST_TYPE,
+			'post_title'   => $new_title,
+			'post_name'    => sanitize_title($new_title),
+			'post_status'  => 'draft',
+			'post_author'  => get_current_user_id(),
+			'post_content' => $source->post_content,
+			'post_excerpt' => $source->post_excerpt,
+		));
+
+		if (is_wp_error($new_folio_id) || !$new_folio_id) {
+			return false;
+		}
+
+		// Copy all postmeta (skip internal WP keys).
+		$skip_keys = array('_edit_lock', '_edit_last', '_wp_old_slug');
+		$all_meta = get_post_meta($post_id);
+		foreach ($all_meta as $meta_key => $meta_values) {
+			if (in_array($meta_key, $skip_keys, true)) {
+				continue;
+			}
+			foreach ($meta_values as $meta_value) {
+				add_post_meta($new_folio_id, $meta_key, maybe_unserialize($meta_value));
+			}
+		}
+
+		// Duplicate child folio pages.
+		$pages = get_posts(array(
+			'post_type'      => 'groove_folio_page',
+			'post_status'    => array('publish', 'draft', 'pending', 'private', 'future'),
+			'posts_per_page' => -1,
+			'meta_key'       => 'folio_id',
+			'meta_value'     => (string) $post_id,
+			'orderby'        => 'menu_order',
+			'order'          => 'ASC',
+		));
+
+		foreach ($pages as $page) {
+			$new_page_id = wp_insert_post(array(
+				'post_type'    => 'groove_folio_page',
+				'post_title'   => $page->post_title,
+				'post_status'  => 'draft',
+				'post_author'  => get_current_user_id(),
+				'post_content' => $page->post_content,
+				'post_excerpt' => $page->post_excerpt,
+				'menu_order'   => $page->menu_order,
+			));
+
+			if (is_wp_error($new_page_id) || !$new_page_id) {
+				continue;
+			}
+
+			$page_meta = get_post_meta($page->ID);
+			foreach ($page_meta as $meta_key => $meta_values) {
+				if ($meta_key === 'folio_id' || in_array($meta_key, $skip_keys, true)) {
+					continue;
+				}
+				foreach ($meta_values as $meta_value) {
+					add_post_meta($new_page_id, $meta_key, maybe_unserialize($meta_value));
+				}
+			}
+
+			// Point to the new folio.
+			update_post_meta($new_page_id, 'folio_id', $new_folio_id);
+		}
+
+		return $new_folio_id;
 	}
 
 	private function get_folio_pages_url($folio_id)
@@ -668,8 +798,7 @@ class All_Folios extends Page
 									$view_url = get_permalink($post_id);
 								}
 								$is_preview_status = in_array($post_status, array('draft', 'pending', 'future'), true);
-								$preview_url = get_preview_post_link(get_post($post_id));
-								$row_view_url = ($is_preview_status && $preview_url) ? $preview_url : $view_url;
+								$row_view_url = $view_url;
 								$row_view_label = $is_preview_status ? esc_html__('Preview', 'groove') : esc_html__('View', 'groove');
 								$modified_label = sprintf(
 									/* translators: 1: date/time value, 2: user display name */
@@ -707,6 +836,11 @@ class All_Folios extends Page
 													<button type="button" class="button-link editinline"
 														aria-label="<?php echo esc_attr($quick_edit_aria_label); ?>"
 														aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove'); ?></button> |
+												</span>
+											<?php endif; ?>
+											<?php if ($post_status !== 'trash'): ?>
+												<span class="duplicate">
+													<a href="<?php echo esc_url(wp_nonce_url($this->build_page_url(array('action' => 'groove_duplicate_folio', 'post' => $post_id)), 'groove_duplicate_folio_' . $post_id)); ?>"><?php esc_html_e('Duplicate', 'groove'); ?></a> |
 												</span>
 											<?php endif; ?>
 											<span class="view">

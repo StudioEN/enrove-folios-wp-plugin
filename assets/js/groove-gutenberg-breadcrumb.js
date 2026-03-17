@@ -35,12 +35,13 @@
   }
 
   function upsertBreadcrumb() {
-    const bodyContent = document.querySelector('#wpbody-content');
-    if (!bodyContent) {
+    const mountPoint = document.querySelector('.interface-interface-skeleton__header')
+      || document.querySelector('#wpbody-content');
+    if (!mountPoint) {
       return;
     }
 
-    let nav = bodyContent.querySelector('.g-top-bar-post-nav');
+    let nav = document.querySelector('.g-top-bar-post-nav');
     if (!nav) {
       nav = document.createElement('nav');
       nav.className = 'g-top-bar-post-nav';
@@ -50,7 +51,10 @@
         '<i class="g-top-bar-crumb-arrow"> /</i>' +
         '<a class="g-top-bar-crumb">Page</a>' +
         '</div>';
-      bodyContent.prepend(nav);
+    }
+
+    if (nav.parentNode !== mountPoint) {
+      mountPoint.prepend(nav);
     }
 
     const parentLink = nav.querySelector('.g-top-bar-crumb-parent');
@@ -58,6 +62,15 @@
       parentLink.textContent = getFolioName();
       parentLink.setAttribute('href', getFolioUrl());
     }
+
+    if (document.body && document.body.classList.contains('block-editor-page')) {
+      document.documentElement.style.setProperty(
+        '--g-editor-breadcrumb-height',
+        Math.ceil(nav.getBoundingClientRect().height) + 'px'
+      );
+    }
+
+    return nav;
   }
 
   function sRGBtoLinear(channel) {
@@ -425,20 +438,36 @@
       }
 
       ensureNativeAdminUiVisible();
-      upsertBreadcrumb();
+      const nav = upsertBreadcrumb();
 
       const observer = new MutationObserver(function () {
         upsertBreadcrumb();
       });
       const unsubscribeSeparatorSync = initSeparatorDefaultColorSync(postType);
       const bodyContent = document.querySelector('#wpbody-content');
+      let resizeObserver;
+      const handleResize = function () {
+        upsertBreadcrumb();
+      };
 
       if (bodyContent) {
         observer.observe(bodyContent, { childList: true });
       }
 
+      if (nav && typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver(handleResize);
+        resizeObserver.observe(nav);
+      }
+
+      window.addEventListener('resize', handleResize);
+
       return function () {
         observer.disconnect();
+        if (resizeObserver) {
+          resizeObserver.disconnect();
+        }
+        window.removeEventListener('resize', handleResize);
+        document.documentElement.style.removeProperty('--g-editor-breadcrumb-height');
         if (typeof unsubscribeSeparatorSync === 'function') {
           unsubscribeSeparatorSync();
         }
