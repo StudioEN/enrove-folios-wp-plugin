@@ -67,6 +67,7 @@ class All_Folios extends Page
 		$redirect_args = array_filter(array(
 			'post_status' => $status !== 'all' ? $status : null,
 			's' => $search !== '' ? $search : null,
+			'collection_tag' => $this->get_collection_tag_query_arg($this->get_current_collection_tags()),
 			'bulk_action' => 'duplicate',
 			'bulk_count' => $new_id ? 1 : 0,
 		), function ($value) {
@@ -92,6 +93,92 @@ class All_Folios extends Page
 	private function get_search_term()
 	{
 		return isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+	}
+
+	private function get_current_collection_tags()
+	{
+		if (!isset($_GET['collection_tag'])) {
+			return array();
+		}
+
+		$raw_tags = wp_unslash($_GET['collection_tag']);
+		if (!is_array($raw_tags)) {
+			$raw_tags = array($raw_tags);
+		}
+
+		$tags = array_values(array_unique(array_filter(array_map('sanitize_title', $raw_tags))));
+		return array_values(array_filter($tags, function ($tag) {
+			return $tag !== '';
+		}));
+	}
+
+	private function get_collection_tag_query_arg($tags)
+	{
+		$tags = array_values(array_unique(array_filter(array_map('sanitize_title', (array) $tags))));
+		return empty($tags) ? null : $tags;
+	}
+
+	private function get_collection_tag_terms()
+	{
+		$terms = get_terms(array(
+			'taxonomy' => 'groove_collection_tag',
+			'hide_empty' => false,
+			'orderby' => 'name',
+			'order' => 'ASC',
+		));
+
+		return is_wp_error($terms) ? array() : (array) $terms;
+	}
+
+	private function get_collection_tag_links($post_id, $status, $search, $orderby, $order)
+	{
+		$terms = get_the_terms((int) $post_id, 'groove_collection_tag');
+		if (is_wp_error($terms) || empty($terms)) {
+			return '';
+		}
+
+		$links = array();
+		foreach ($terms as $term) {
+			if (!$term instanceof \WP_Term) {
+				continue;
+			}
+
+			$url = $this->build_page_url(array_filter(array(
+				'post_status' => $status !== 'all' ? $status : null,
+				's' => $search !== '' ? $search : null,
+				'orderby' => $orderby !== 'modified' ? $orderby : null,
+				'order' => $order !== 'DESC' ? $order : null,
+				'collection_tag' => array($term->slug),
+			), function ($value) {
+				return $value !== null;
+			}));
+
+			$links[] = '<a href="' . esc_url($url) . '">' . esc_html($term->name) . '</a>';
+		}
+
+		return implode(', ', $links);
+	}
+
+	private function get_collection_tag_toggle_url($slug, $status, $search, $orderby, $order)
+	{
+		$slug = sanitize_title($slug);
+		$current_tags = $this->get_current_collection_tags();
+
+		if (in_array($slug, $current_tags, true)) {
+			$updated_tags = array();
+		} else {
+			$updated_tags = array($slug);
+		}
+
+		return $this->build_page_url(array_filter(array(
+			'post_status' => $status !== 'all' ? $status : null,
+			's' => $search !== '' ? $search : null,
+			'orderby' => $orderby !== 'modified' ? $orderby : null,
+			'order' => $order !== 'DESC' ? $order : null,
+			'collection_tag' => $this->get_collection_tag_query_arg($updated_tags),
+		), function ($value) {
+			return $value !== null;
+		}));
 	}
 
 	private function get_current_paged()
@@ -192,6 +279,18 @@ class All_Folios extends Page
 			$query_args['meta_value'] = sanitize_key($_GET['theme_id']);
 		}
 
+		$collection_tags = $this->get_current_collection_tags();
+		if (!empty($collection_tags)) {
+			$query_args['tax_query'] = array(
+				array(
+					'taxonomy' => 'groove_collection_tag',
+					'field' => 'slug',
+					'terms' => $collection_tags,
+					'operator' => 'IN',
+				),
+			);
+		}
+
 		return new \WP_Query($query_args);
 	}
 
@@ -265,6 +364,18 @@ class All_Folios extends Page
 			$ids_query_args['meta_value'] = sanitize_key($_GET['theme_id']);
 		}
 
+		$collection_tags = $this->get_current_collection_tags();
+		if (!empty($collection_tags)) {
+			$ids_query_args['tax_query'] = array(
+				array(
+					'taxonomy' => 'groove_collection_tag',
+					'field' => 'slug',
+					'terms' => $collection_tags,
+					'operator' => 'IN',
+				),
+			);
+		}
+
 		$ids_query = new \WP_Query($ids_query_args);
 
 		$all_ids = array_map('intval', (array) $ids_query->posts);
@@ -319,6 +430,7 @@ class All_Folios extends Page
 			'orderby' => $column,
 			'order' => $next_order,
 			'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+			'collection_tag' => $this->get_collection_tag_query_arg($this->get_current_collection_tags()),
 		), function ($value) {
 			return $value !== null;
 		}));
@@ -414,6 +526,7 @@ class All_Folios extends Page
 			'order' => $order !== 'DESC' ? $order : null,
 			'paged' => $paged > 1 ? $paged : null,
 			'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+			'collection_tag' => $this->get_collection_tag_query_arg($this->get_current_collection_tags()),
 			'bulk_action' => $action,
 			'bulk_count' => $updated_count,
 		), function ($value) {
@@ -517,6 +630,11 @@ class All_Folios extends Page
 			}
 		}
 
+		$term_ids = wp_get_object_terms($post_id, 'groove_collection_tag', array('fields' => 'ids'));
+		if (!is_wp_error($term_ids) && !empty($term_ids)) {
+			wp_set_object_terms($new_folio_id, array_map('intval', $term_ids), 'groove_collection_tag', false);
+		}
+
 		// Duplicate child folio pages.
 		$pages = get_posts(array(
 			'post_type'      => 'groove_folio_page',
@@ -599,6 +717,8 @@ class All_Folios extends Page
 	{
 		$status = $this->get_current_status();
 		$search = $this->get_search_term();
+		$current_collection_tags = $this->get_current_collection_tags();
+		$collection_tag_terms = $this->get_collection_tag_terms();
 		$paged = $this->get_current_paged();
 		$orderby = $this->get_current_orderby();
 		$order = $this->get_current_order();
@@ -619,7 +739,41 @@ class All_Folios extends Page
 				<input type="hidden" name="post_status" value="<?php echo esc_attr($status); ?>" />
 				<input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>" />
 				<input type="hidden" name="order" value="<?php echo esc_attr($order); ?>" />
+				<?php foreach ($current_collection_tags as $collection_tag): ?>
+					<input type="hidden" name="collection_tag[]" value="<?php echo esc_attr($collection_tag); ?>" />
+				<?php endforeach; ?>
 				<?php wp_nonce_field('groove_bulk_folios_action', '_groove_bulk_nonce'); ?>
+
+				<div class="g-all-folios__filters-row">
+					<?php if (!empty($collection_tag_terms)): ?>
+						<div class="g-all-folios__collection-filters" aria-label="<?php esc_attr_e('Collection tag filters', 'groove'); ?>">
+							<a
+								href="<?php echo esc_url($this->build_page_url(array_filter(array(
+									'post_status' => $status !== 'all' ? $status : null,
+									's' => $search !== '' ? $search : null,
+									'orderby' => $orderby !== 'modified' ? $orderby : null,
+									'order' => $order !== 'DESC' ? $order : null,
+								), function ($value) {
+									return $value !== null;
+								}))); ?>"
+								class="g-all-folios__collection-pill<?php echo empty($current_collection_tags) ? ' is-active' : ''; ?>"
+								data-tooltip="<?php esc_attr_e('Show all collections', 'groove'); ?>">
+								<?php esc_html_e('All Collections', 'groove'); ?>
+							</a>
+							<?php foreach ($collection_tag_terms as $term): ?>
+								<?php if (!$term instanceof \WP_Term) {
+									continue;
+								} ?>
+								<a
+									href="<?php echo esc_url($this->get_collection_tag_toggle_url($term->slug, $status, $search, $orderby, $order)); ?>"
+									class="g-all-folios__collection-pill<?php echo in_array($term->slug, $current_collection_tags, true) ? ' is-active' : ''; ?>"
+									data-tooltip="<?php esc_attr_e('Show collection', 'groove'); ?>">
+									<?php echo esc_html($term->name); ?>
+								</a>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
+				</div>
 
 				<ul class="subsubsub">
 					<?php
@@ -634,6 +788,7 @@ class All_Folios extends Page
 							'orderby' => $orderby !== 'modified' ? $orderby : null,
 							'order' => $order !== 'DESC' ? $order : null,
 							'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+							'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 						), function ($value) {
 							return $value !== null;
 						}));
@@ -683,6 +838,7 @@ class All_Folios extends Page
 								'orderby' => $orderby !== 'modified' ? $orderby : null,
 								'order' => $order !== 'DESC' ? $order : null,
 								'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+								'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 								'paged' => '%#%',
 							), function ($value) {
 								return $value !== null;
@@ -752,6 +908,7 @@ class All_Folios extends Page
 											aria-hidden="true"></span></span>
 								</a>
 							</th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Collection Tags', 'groove'); ?></th>
 							<th scope="col"
 								class="manage-column <?php echo esc_attr($orderby === 'page_count' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
 								<a
@@ -840,7 +997,17 @@ class All_Folios extends Page
 											<?php endif; ?>
 											<?php if ($post_status !== 'trash'): ?>
 												<span class="duplicate">
-													<a href="<?php echo esc_url(wp_nonce_url($this->build_page_url(array('action' => 'groove_duplicate_folio', 'post' => $post_id)), 'groove_duplicate_folio_' . $post_id)); ?>"><?php esc_html_e('Duplicate', 'groove'); ?></a> |
+													<a href="<?php echo esc_url(wp_nonce_url($this->build_page_url(array_filter(array(
+														'action' => 'groove_duplicate_folio',
+														'post' => $post_id,
+														'post_status' => $status !== 'all' ? $status : null,
+														's' => $search !== '' ? $search : null,
+														'orderby' => $orderby !== 'modified' ? $orderby : null,
+														'order' => $order !== 'DESC' ? $order : null,
+														'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
+													), function ($value) {
+														return $value !== null;
+													})), 'groove_duplicate_folio_' . $post_id)); ?>"><?php esc_html_e('Duplicate', 'groove'); ?></a> |
 												</span>
 											<?php endif; ?>
 											<span class="view">
@@ -882,6 +1049,12 @@ class All_Folios extends Page
 										}
 										?>
 									</td>
+									<td data-colname="<?php esc_attr_e('Collection Tags', 'groove'); ?>">
+										<?php
+										$collection_tag_links = $this->get_collection_tag_links($post_id, $status, $search, $orderby, $order);
+										echo $collection_tag_links !== '' ? wp_kses_post($collection_tag_links) : '&mdash;';
+										?>
+									</td>
 									<td data-colname="<?php esc_attr_e('Page Count', 'groove'); ?>">
 										<a href="<?php echo esc_url($pages_url); ?>">
 											<?php echo esc_html(number_format_i18n($page_count)); ?>
@@ -897,7 +1070,7 @@ class All_Folios extends Page
 							<?php endforeach; ?>
 						<?php else: ?>
 							<tr class="no-items">
-								<td class="colspanchange" colspan="6">
+								<td class="colspanchange" colspan="7">
 									<?php esc_html_e('No folios found for the current filters.', 'groove'); ?>
 								</td>
 							</tr>
@@ -913,6 +1086,7 @@ class All_Folios extends Page
 							<th scope="col" class="manage-column column-primary"><?php esc_html_e('Folio Name', 'groove'); ?>
 							</th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Theme Name', 'groove'); ?></th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Collection Tags', 'groove'); ?></th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Page Count', 'groove'); ?></th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove'); ?></th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Last Updated', 'groove'); ?></th>
@@ -963,6 +1137,7 @@ class All_Folios extends Page
 								'orderby' => $orderby !== 'modified' ? $orderby : null,
 								'order' => $order !== 'DESC' ? $order : null,
 								'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+								'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 								'paged' => '%#%',
 							), function ($value) {
 								return $value !== null;

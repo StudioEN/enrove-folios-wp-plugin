@@ -55,6 +55,113 @@ jQuery(function () {
     }
   })
 
+  function initCollectionTagsCombobox(inputEl) {
+    const allTags = JSON.parse(inputEl.dataset.tags || '[]')
+
+    // Wrap input in a relative-positioned container so the dropdown anchors to it
+    const wrapper = document.createElement('div')
+    wrapper.style.position = 'relative'
+    inputEl.parentNode.insertBefore(wrapper, inputEl)
+    wrapper.appendChild(inputEl)
+
+    const dropdown = document.createElement('ul')
+    dropdown.className = 'g-tag-dropdown'
+    wrapper.appendChild(dropdown)
+
+    let activeIndex = -1
+
+    function getCurrentToken() {
+      const val = inputEl.value
+      const lastComma = val.lastIndexOf(',')
+      return lastComma === -1 ? val.trim() : val.slice(lastComma + 1).trim()
+    }
+
+    function getAssignedTags() {
+      return inputEl.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+    }
+
+    function renderDropdown(token) {
+      const assigned = getAssignedTags()
+      const lowerToken = token.toLowerCase()
+
+      const matches = allTags.filter(tag => {
+        const lowerTag = tag.toLowerCase()
+        return lowerTag.includes(lowerToken) && !assigned.includes(lowerTag)
+      })
+
+      const hasExactMatch = allTags.some(tag => tag.toLowerCase() === lowerToken)
+      const showCreate = token.length > 0 && !hasExactMatch
+
+      dropdown.innerHTML = ''
+      activeIndex = -1
+
+      matches.forEach(tag => {
+        const li = document.createElement('li')
+        li.textContent = tag
+        li.addEventListener('mousedown', e => { e.preventDefault(); selectTag(tag) })
+        dropdown.appendChild(li)
+      })
+
+      if (showCreate) {
+        const li = document.createElement('li')
+        li.className = 'g-tag-dropdown__create'
+        li.textContent = 'Create "' + token + '"'
+        li.addEventListener('mousedown', e => { e.preventDefault(); selectTag(token) })
+        dropdown.appendChild(li)
+      }
+
+      dropdown.classList.toggle('is-open', dropdown.children.length > 0)
+    }
+
+    function selectTag(tag) {
+      const val = inputEl.value
+      const lastComma = val.lastIndexOf(',')
+      inputEl.value = (lastComma === -1 ? '' : val.slice(0, lastComma + 1) + ' ') + tag + ', '
+      closeDropdown()
+      inputEl.focus()
+      inputEl.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+
+    function closeDropdown() {
+      dropdown.classList.remove('is-open')
+      activeIndex = -1
+    }
+
+    function updateActiveItem() {
+      Array.from(dropdown.children).forEach((li, i) => {
+        li.classList.toggle('is-active', i === activeIndex)
+      })
+    }
+
+    inputEl.addEventListener('input', () => renderDropdown(getCurrentToken()))
+    inputEl.addEventListener('focus', () => renderDropdown(getCurrentToken()))
+    inputEl.addEventListener('blur', () => setTimeout(closeDropdown, 150))
+
+    inputEl.addEventListener('keydown', e => {
+      const items = dropdown.querySelectorAll('li')
+      if (!items.length || !dropdown.classList.contains('is-open')) return
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        activeIndex = Math.min(activeIndex + 1, items.length - 1)
+        updateActiveItem()
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        activeIndex = Math.max(activeIndex - 1, 0)
+        updateActiveItem()
+      } else if (e.key === 'Enter' && activeIndex >= 0) {
+        e.preventDefault()
+        const text = items[activeIndex].textContent
+        const createMatch = text.match(/^Create "(.+)"$/)
+        selectTag(createMatch ? createMatch[1] : text)
+      } else if (e.key === 'Escape') {
+        closeDropdown()
+      }
+    })
+  }
+
+  window.grooveInitCollectionTagsCombobox = initCollectionTagsCombobox
+
   if (Groove.isFolioPage()) {
     const folioForm = jQuery('form[action*="admin-post.php"]')
       .has('input[name="folio_id"]')
@@ -62,6 +169,11 @@ jQuery(function () {
       .first()
 
     createAdaptiveTooltip('#g-folio-preview-link')
+
+    const collectionTagsInput = document.getElementById('collection_tags')
+    if (collectionTagsInput && collectionTagsInput.dataset.tags !== undefined) {
+      initCollectionTagsCombobox(collectionTagsInput)
+    }
 
     if (!folioForm.length) {
       return

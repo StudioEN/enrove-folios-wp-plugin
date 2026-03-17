@@ -634,6 +634,26 @@ class List_Table extends \WP_List_Table
 		if (!($post instanceof \WP_Post)) {
 			$post = get_default_post_to_edit('post');
 		}
+		if (!($post instanceof \WP_Post)) {
+			// Quick Edit's date fields call touch_time(), which expects a valid global post.
+			$fallback_date = current_time('mysql');
+			$post = new \WP_Post((object) array(
+				'ID' => 0,
+				'post_type' => $screen->post_type ?: 'post',
+				'post_status' => 'draft',
+				'post_date' => $fallback_date,
+				'post_author' => get_current_user_id(),
+				'post_password' => '',
+				'post_name' => '',
+				'post_parent' => 0,
+				'menu_order' => 0,
+			));
+		}
+		if ($post instanceof \WP_Post) {
+			$post->filter = 'raw';
+		}
+		$GLOBALS['post'] = $post;
+		$_inline_default_post = $GLOBALS['post']; // snapshot before hooks can corrupt $post
 		$post_type_object = get_post_type_object($screen->post_type);
 
 		$taxonomy_names = get_object_taxonomies($screen->post_type);
@@ -742,6 +762,7 @@ class List_Table extends \WP_List_Table
 													<legend><span class="title">
 															<?php _e('Date'); ?>
 														</span></legend>
+													<?php $GLOBALS['post'] = $_inline_default_post; ?>
 													<?php touch_time(1, 1, 0, 1); ?>
 												</fieldset>
 												<br class="clear" />
@@ -950,6 +971,12 @@ class List_Table extends \WP_List_Table
 
 													<?php if (current_user_can($taxonomy->cap->assign_terms)): ?>
 														<?php $taxonomy_name = esc_attr($taxonomy->name); ?>
+														<?php
+														$_flat_tax_terms = get_terms(array('taxonomy' => $taxonomy->name, 'hide_empty' => false));
+														$_flat_tax_tag_names = is_wp_error($_flat_tax_terms) ? [] : array_map(function ($t) {
+															return $t->name;
+														}, $_flat_tax_terms);
+														?>
 														<div class="inline-edit-tags-wrap">
 															<label class="inline-edit-tags">
 																<span class="title">
@@ -958,6 +985,7 @@ class List_Table extends \WP_List_Table
 																<textarea data-wp-taxonomy="<?php echo $taxonomy_name; ?>" cols="22" rows="1"
 																	name="tax_input[<?php echo esc_attr($taxonomy->name); ?>]"
 																	class="tax_input_<?php echo esc_attr($taxonomy->name); ?>"
+																	data-tags="<?php echo esc_attr(wp_json_encode($_flat_tax_tag_names)); ?>"
 																	aria-describedby="inline-edit-<?php echo esc_attr($taxonomy->name); ?>-desc"></textarea>
 															</label>
 															<p class="howto" id="inline-edit-<?php echo esc_attr($taxonomy->name); ?>-desc">
