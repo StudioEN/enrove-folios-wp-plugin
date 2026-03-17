@@ -1548,3 +1548,171 @@ body.groove .g-proposal-info-modal__body {
   max-height: 75vh;
   overflow-y: auto;
 }
+
+/* WordPress admin notices conflict with Tailwind's global `.inline` utility. */
+body.groove .notice.inline {
+  display: block;
+}
+
+/* All Folios collection filter pills */
+body.groove .g-all-folios__collection-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+}
+
+body.groove .g-all-folios__filters-row {
+  clear: both;
+  margin: 4px 0 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #b9c0c8;
+}
+
+body.groove .g-all-folios__collection-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid #c3c4c7;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d2327;
+  text-decoration: none;
+  line-height: 1;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.groove .g-all-folios__collection-pill[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1d2327;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 9999;
+}
+
+body.groove .g-all-folios__collection-pill[data-tooltip]:hover::after,
+body.groove .g-all-folios__collection-pill[data-tooltip]:focus::after {
+  opacity: 1;
+}
+
+body.groove .g-all-folios__collection-pill:hover,
+body.groove .g-all-folios__collection-pill:focus {
+  border-color: #2271b1;
+  color: #135e96;
+  box-shadow: 0 0 0 1px rgba(34, 113, 177, 0.15);
+  outline: none;
+}
+
+body.groove .g-all-folios__collection-pill.is-active {
+  border-color: #2271b1;
+  background: #2271b1;
+  color: #fff;
+  box-shadow: none;
+}
+
+body.groove .g-all-folios__collection-pill.is-active:hover,
+body.groove .g-all-folios__collection-pill.is-active:focus {
+  border-color: #135e96;
+  background: #135e96;
+  color: #fff;
+}
+
+/* All Folios table — fixed column widths so pill filtering doesn't shift columns */
+body.groove .wp-list-table.table-view-list.posts {
+  table-layout: fixed;
+}
+
+body.groove .wp-list-table.table-view-list.posts .column-cb {
+  width: 38px;
+}
+
+body.groove .wp-list-table.table-view-list.posts th:nth-child(3),
+body.groove .wp-list-table.table-view-list.posts th:nth-child(4),
+body.groove .wp-list-table.table-view-list.posts th:nth-child(5),
+body.groove .wp-list-table.table-view-list.posts th:nth-child(6),
+body.groove .wp-list-table.table-view-list.posts th:nth-child(7) {
+  white-space: nowrap;
+}
+
+body.groove .wp-list-table.table-view-list.posts th:nth-child(3) {
+  width: 155px;
+}
+
+body.groove .wp-list-table.table-view-list.posts th:nth-child(4) {
+  width: 155px;
+}
+
+body.groove .wp-list-table.table-view-list.posts th:nth-child(5) {
+  width: 115px;
+}
+
+body.groove .wp-list-table.table-view-list.posts th:nth-child(6) {
+  width: 115px;
+}
+
+body.groove .wp-list-table.table-view-list.posts th:nth-child(7) {
+  width: 195px;
+}
+
+/* Collection tags combobox dropdown */
+body.groove .g-tag-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  padding: 4px 0;
+  margin-left: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 9999;
+}
+
+body.groove .g-tag-dropdown.is-open {
+  display: block;
+}
+
+body.groove .g-tag-dropdown li {
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #374151;
+  margin: 0;
+}
+
+body.groove .g-tag-dropdown li:hover,
+body.groove .g-tag-dropdown li.is-active {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+body.groove .g-tag-dropdown li.g-tag-dropdown__create {
+  color: #6b7280;
+  font-style: italic;
+}
+
+body.groove .g-tag-dropdown li.g-tag-dropdown__create:hover,
+body.groove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
+  background: #eef2ff;
+  color: #4338ca;
+}

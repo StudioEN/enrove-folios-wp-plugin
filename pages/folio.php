@@ -449,6 +449,8 @@ class Folio extends Page
     $proposal_color_scheme = isset($_POST['proposal_color_scheme']) ? (string) wp_unslash($_POST['proposal_color_scheme']) : (string) ($fields->proposal_color_scheme ?? 'default');
     $proposal_color_scheme = $proposal_color_scheme === 'dynamic' ? 'dynamic' : 'default';
     $proposal_open_text = isset($_POST['proposal_open_text']) ? sanitize_text_field(wp_unslash($_POST['proposal_open_text'])) : (string) ($fields->proposal_open_text ?? '');
+    $collection_tags_raw = isset($_POST['collection_tags']) ? sanitize_text_field(wp_unslash($_POST['collection_tags'])) : '';
+    $collection_tag_names = array_values(array_unique(array_filter(array_map('trim', explode(',', $collection_tags_raw)))));
 
     // feature_image_id: empty-string means 'clear image', positive int means 'set image'.
     // A missing or null field means 'keep existing' — we do NOT delete in that case.
@@ -507,6 +509,10 @@ class Folio extends Page
     );
 
     $folio_result = wp_update_post($update_args);
+
+    if (!is_wp_error($folio_result)) {
+      wp_set_object_terms($id, $collection_tag_names, 'groove_collection_tag', false);
+    }
 
     // Record a revision log entry on explicit publish.
     if ($is_explicit_publish && !is_wp_error($folio_result)) {
@@ -602,6 +608,18 @@ class Folio extends Page
     }
 
     return esc_html__('Folio', 'groove');
+  }
+
+  private function get_collection_tag_names($folio_id)
+  {
+    $terms = get_the_terms((int) $folio_id, 'groove_collection_tag');
+    if (is_wp_error($terms) || empty($terms)) {
+      return array();
+    }
+
+    return array_values(array_filter(array_map(function ($term) {
+      return $term instanceof \WP_Term ? (string) $term->name : '';
+    }, $terms)));
   }
 
   public function create_tabs()
@@ -1143,6 +1161,18 @@ class Folio extends Page
 
     $subtitle = isset($fields->subtitle) ? $fields->subtitle : '';
     $copyright = isset($fields->copyright) ? $fields->copyright : '';
+    $collection_tags = implode(', ', $this->get_collection_tag_names((int) $fields->ID));
+    $all_collection_tags_terms = get_terms(array('taxonomy' => 'groove_collection_tag', 'hide_empty' => false));
+    $all_collection_tag_names_list = is_wp_error($all_collection_tags_terms) ? [] : array_map(function ($t) {
+      return $t->name;
+    }, $all_collection_tags_terms);
+    $collection_tags_settings_url = add_query_arg(
+      array(
+        'page' => 'groove-settings',
+        'tab_key' => 'collections',
+      ),
+      admin_url('admin.php')
+    );
 
     // Get current theme info for default image fallback
     $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
@@ -1169,6 +1199,21 @@ class Folio extends Page
             class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">SUBTITLE</label>
           <input placeholder="Option" type="text" id="subtitle" name="subtitle" value="<?php echo esc_attr($subtitle) ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+        </div>
+        <div>
+          <label for="collection_tags"
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Collection Tags', 'groove'); ?></label>
+          <input type="text" id="collection_tags" name="collection_tags" value="<?php echo esc_attr($collection_tags) ?>"
+            placeholder="<?php esc_attr_e('Magazine, 2026, Weekly', 'groove'); ?>"
+            autocomplete="off"
+            data-tags="<?php echo esc_attr(wp_json_encode($all_collection_tag_names_list)); ?>"
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+          <p class="mt-1 mb-0 text-xs text-gray-400">
+            <?php esc_html_e('Comma-separated tags. Manage available tags from Settings.', 'groove'); ?>
+            <?php if (current_user_can('manage_options')): ?>
+              <a href="<?php echo esc_url($collection_tags_settings_url); ?>"><?php esc_html_e('Open Collections settings', 'groove'); ?></a>
+            <?php endif; ?>
+          </p>
         </div>
         <div class="g-folio__media-row">
           <div class="g-folio__media-col">

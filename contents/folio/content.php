@@ -52,6 +52,44 @@ class Content extends BaseContent
 
     register_post_type('groove_' . $this->get_key(), $args);
 
+    $taxonomy_labels = array(
+      'name' => _x('Collection Tags', 'taxonomy general name', 'groove'),
+      'singular_name' => _x('Collection Tag', 'taxonomy singular name', 'groove'),
+      'search_items' => __('Search Collection Tags', 'groove'),
+      'popular_items' => __('Popular Collection Tags', 'groove'),
+      'all_items' => __('All Collection Tags', 'groove'),
+      'edit_item' => __('Edit Collection Tag', 'groove'),
+      'update_item' => __('Update Collection Tag', 'groove'),
+      'add_new_item' => __('Add New Collection Tag', 'groove'),
+      'new_item_name' => __('New Collection Tag Name', 'groove'),
+      'separate_items_with_commas' => __('Separate collection tags with commas', 'groove'),
+      'add_or_remove_items' => __('Add or remove collection tags', 'groove'),
+      'choose_from_most_used' => __('Choose from the most used collection tags', 'groove'),
+      'not_found' => __('No collection tags found.', 'groove'),
+      'menu_name' => __('Collection Tags', 'groove'),
+    );
+
+    register_taxonomy('groove_collection_tag', array('groove_folio'), array(
+      'labels' => $taxonomy_labels,
+      'public' => false,
+      'publicly_queryable' => false,
+      'show_ui' => true,
+      'show_in_menu' => false,
+      'show_admin_column' => false,
+      'show_in_nav_menus' => false,
+      'show_tagcloud' => false,
+      'show_in_rest' => true,
+      'hierarchical' => false,
+      'capabilities' => array(
+        'manage_terms' => 'edit_posts',
+        'edit_terms' => 'edit_posts',
+        'delete_terms' => 'edit_posts',
+        'assign_terms' => 'edit_posts',
+      ),
+      'query_var' => true,
+      'rewrite' => false,
+    ));
+
     register_post_meta('groove_folio', 'theme_id', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
     register_post_meta('groove_folio', 'subtitle', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
     register_post_meta('groove_folio', 'copyright', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));

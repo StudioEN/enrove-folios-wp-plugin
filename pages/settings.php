@@ -27,6 +27,9 @@ class Settings extends Page
       'general' => [
         'label' => esc_html__('General', 'groove'),
       ],
+      'collections' => [
+        'label' => esc_html__('Collection Tags', 'groove'),
+      ],
       'routing' => [
         'label' => esc_html__('Routing', 'groove'),
       ],
@@ -39,6 +42,8 @@ class Settings extends Page
   public function __construct()
   {
     $this->add_post_action('save_groove_settings', 'handle_save');
+    $this->add_post_action('save_groove_collection_tag', 'handle_collection_tag_save');
+    $this->add_post_action('delete_groove_collection_tag', 'handle_collection_tag_delete');
 
     add_action('groove/menu/register', function (Menu_Manager $menu) {
       $menu->register(static::PAGE_ID, new Settings_Menu_Item($this));
@@ -88,6 +93,58 @@ class Settings extends Page
     }
 
     return $slug;
+  }
+
+  private function get_settings_tab_url($tab, $args = array())
+  {
+    return add_query_arg(
+      array_merge(
+        array(
+          'page' => static::PAGE_ID,
+          'tab_key' => $tab,
+        ),
+        $args
+      ),
+      admin_url('admin.php')
+    );
+  }
+
+  private function can_manage_collection_tags()
+  {
+    return current_user_can('manage_options');
+  }
+
+  private function get_collection_tag_terms()
+  {
+    $terms = get_terms(array(
+      'taxonomy' => 'groove_collection_tag',
+      'hide_empty' => false,
+      'orderby' => 'name',
+      'order' => 'ASC',
+    ));
+
+    return is_wp_error($terms) ? array() : (array) $terms;
+  }
+
+  private function get_collection_tag_edit_term()
+  {
+    $term_id = isset($_GET['edit_collection_tag']) ? (int) wp_unslash($_GET['edit_collection_tag']) : 0;
+    if ($term_id <= 0) {
+      return null;
+    }
+
+    $term = get_term($term_id, 'groove_collection_tag');
+    if (!$term instanceof \WP_Term || is_wp_error($term)) {
+      return null;
+    }
+
+    return $term;
+  }
+
+  private function redirect_to_collections_tab($args = array())
+  {
+    wp_safe_redirect($this->get_settings_tab_url('collections', $args));
+    exit;
   }
 
   /**
@@ -141,6 +198,83 @@ class Settings extends Page
 
     wp_safe_redirect($redirect);
     exit;
+  }
+
+  public function handle_collection_tag_save()
+  {
+    check_admin_referer('groove_save_collection_tag', 'groove_nonce');
+
+    if (!$this->can_manage_collection_tags()) {
+      wp_die(esc_html__('You do not have permission to manage collection tags.', 'groove'));
+    }
+
+    $term_name = isset($_POST['collection_tag_name']) ? sanitize_text_field(wp_unslash($_POST['collection_tag_name'])) : '';
+    $term_slug = isset($_POST['collection_tag_slug']) ? sanitize_title(wp_unslash($_POST['collection_tag_slug'])) : '';
+    $term_id = isset($_POST['collection_tag_id']) ? (int) wp_unslash($_POST['collection_tag_id']) : 0;
+
+    if ($term_name === '') {
+      $redirect_args = array('message' => 'collection_tag_empty');
+      if ($term_id > 0) {
+        $redirect_args['edit_collection_tag'] = $term_id;
+      }
+      $this->redirect_to_collections_tab($redirect_args);
+    }
+
+    $term_args = array();
+    if ($term_slug !== '') {
+      $term_args['slug'] = $term_slug;
+    }
+
+    if ($term_id > 0) {
+      $result = wp_update_term($term_id, 'groove_collection_tag', array_merge($term_args, array(
+        'name' => $term_name,
+      )));
+
+      if (is_wp_error($result)) {
+        $this->redirect_to_collections_tab(array(
+          'message' => 'collection_tag_error',
+          'error_code' => $result->get_error_code(),
+          'edit_collection_tag' => $term_id,
+        ));
+      }
+
+      $this->redirect_to_collections_tab(array('message' => 'collection_tag_updated'));
+    }
+
+    $result = wp_insert_term($term_name, 'groove_collection_tag', $term_args);
+
+    if (is_wp_error($result)) {
+      $this->redirect_to_collections_tab(array(
+        'message' => 'collection_tag_error',
+        'error_code' => $result->get_error_code(),
+      ));
+    }
+
+    $this->redirect_to_collections_tab(array('message' => 'collection_tag_created'));
+  }
+
+  public function handle_collection_tag_delete()
+  {
+    check_admin_referer('groove_delete_collection_tag', 'groove_nonce');
+
+    if (!$this->can_manage_collection_tags()) {
+      wp_die(esc_html__('You do not have permission to manage collection tags.', 'groove'));
+    }
+
+    $term_id = isset($_POST['collection_tag_id']) ? (int) wp_unslash($_POST['collection_tag_id']) : 0;
+    if ($term_id <= 0) {
+      $this->redirect_to_collections_tab(array('message' => 'collection_tag_error'));
+    }
+
+    $result = wp_delete_term($term_id, 'groove_collection_tag');
+    if (is_wp_error($result)) {
+      $this->redirect_to_collections_tab(array(
+        'message' => 'collection_tag_error',
+        'error_code' => $result->get_error_code(),
+      ));
+    }
+
+    $this->redirect_to_collections_tab(array('message' => 'collection_tag_deleted'));
   }
 
   public function display_general_fields()
@@ -255,6 +389,109 @@ class Settings extends Page
 <?php
   }
 
+  public function display_collections_fields()
+  {
+    $terms = $this->get_collection_tag_terms();
+    $edit_term = $this->get_collection_tag_edit_term();
+    $is_editing = $edit_term instanceof \WP_Term;
+    $form_title = $is_editing ? __('Edit Collection Tag', 'groove') : __('Add Collection Tag', 'groove');
+    $submit_label = $is_editing ? __('Update Tag', 'groove') : __('Add Tag', 'groove');
+    ?>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4 xl:col-span-1">
+    <div>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php echo esc_html($form_title); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('Manage the tags used to group folios into collections.', 'groove'); ?></p>
+    </div>
+
+    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4">
+      <?php wp_nonce_field('groove_save_collection_tag', 'groove_nonce'); ?>
+      <input type="hidden" name="action" value="save_groove_collection_tag" />
+      <input type="hidden" name="collection_tag_id" value="<?php echo esc_attr($is_editing ? (string) $edit_term->term_id : '0'); ?>" />
+
+      <div>
+        <label for="groove-collection-tag-name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+          <?php esc_html_e('Name', 'groove'); ?>
+        </label>
+        <input
+          id="groove-collection-tag-name"
+          type="text"
+          name="collection_tag_name"
+          value="<?php echo esc_attr($is_editing ? $edit_term->name : ''); ?>"
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          placeholder="<?php esc_attr_e('Magazine', 'groove'); ?>" />
+      </div>
+
+      <div>
+        <label for="groove-collection-tag-slug" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+          <?php esc_html_e('Slug', 'groove'); ?>
+        </label>
+        <input
+          id="groove-collection-tag-slug"
+          type="text"
+          name="collection_tag_slug"
+          value="<?php echo esc_attr($is_editing ? $edit_term->slug : ''); ?>"
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          placeholder="<?php esc_attr_e('magazine', 'groove'); ?>" />
+        <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Optional. Leave blank to generate from the name.', 'groove'); ?></p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button type="submit" class="button button-primary"><?php echo esc_html($submit_label); ?></button>
+        <?php if ($is_editing): ?>
+          <a href="<?php echo esc_url($this->get_settings_tab_url('collections')); ?>" class="button button-secondary"><?php esc_html_e('Cancel', 'groove'); ?></a>
+        <?php endif; ?>
+      </div>
+    </form>
+  </section>
+
+  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 xl:col-span-2">
+    <div class="mb-4">
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Existing Collection Tags', 'groove'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('These tags can be assigned on folio setup screens and used to filter All Folios.', 'groove'); ?></p>
+    </div>
+
+    <?php if (empty($terms)): ?>
+      <p class="m-0 text-sm text-gray-600"><?php esc_html_e('No collection tags yet.', 'groove'); ?></p>
+    <?php else: ?>
+      <table class="widefat striped">
+        <thead>
+          <tr>
+            <th><?php esc_html_e('Name', 'groove'); ?></th>
+            <th><?php esc_html_e('Slug', 'groove'); ?></th>
+            <th><?php esc_html_e('Folios', 'groove'); ?></th>
+            <th><?php esc_html_e('Actions', 'groove'); ?></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($terms as $term): ?>
+            <?php if ($term instanceof \WP_Term): ?>
+              <tr>
+                <td><?php echo esc_html($term->name); ?></td>
+                <td><code><?php echo esc_html($term->slug); ?></code></td>
+                <td><?php echo esc_html(number_format_i18n((int) $term->count)); ?></td>
+                <td>
+                  <a href="<?php echo esc_url($this->get_settings_tab_url('collections', array('edit_collection_tag' => (int) $term->term_id))); ?>">
+                    <?php esc_html_e('Edit', 'groove'); ?>
+                  </a>
+                  <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="inline-block ml-3" onsubmit="return window.confirm('<?php echo esc_js(__('Delete this collection tag?', 'groove')); ?>');">
+                    <?php wp_nonce_field('groove_delete_collection_tag', 'groove_nonce'); ?>
+                    <input type="hidden" name="action" value="delete_groove_collection_tag" />
+                    <input type="hidden" name="collection_tag_id" value="<?php echo esc_attr((string) $term->term_id); ?>" />
+                    <button type="submit" class="button-link delete"><?php esc_html_e('Delete', 'groove'); ?></button>
+                  </form>
+                </td>
+              </tr>
+            <?php endif; ?>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    <?php endif; ?>
+  </section>
+</div>
+<?php
+  }
+
   public function display_privacy_fields()
   {
     ?>
@@ -316,6 +553,15 @@ class Settings extends Page
 <?php
   }
 
+  public function display_tab_collections()
+  {
+    ?>
+<div>
+  <?php $this->display_collections_fields(); ?>
+</div>
+<?php
+  }
+
   public function display_tab_privacy()
   {
     ?>
@@ -332,12 +578,34 @@ class Settings extends Page
     ?>
 <div class="space-y-4">
   <?php if ('settings_saved' === $message): ?>
-  <div class="notice notice-success inline">
+  <div class="notice notice-success">
     <p><?php esc_html_e('Settings saved.', 'groove'); ?></p>
+  </div>
+  <?php elseif ('collection_tag_created' === $message): ?>
+  <div class="notice notice-success">
+    <p><?php esc_html_e('Collection tag created.', 'groove'); ?></p>
+  </div>
+  <?php elseif ('collection_tag_updated' === $message): ?>
+  <div class="notice notice-success">
+    <p><?php esc_html_e('Collection tag updated.', 'groove'); ?></p>
+  </div>
+  <?php elseif ('collection_tag_deleted' === $message): ?>
+  <div class="notice notice-success">
+    <p><?php esc_html_e('Collection tag deleted.', 'groove'); ?></p>
+  </div>
+  <?php elseif ('collection_tag_empty' === $message): ?>
+  <div class="notice notice-error">
+    <p><?php esc_html_e('Collection tag name is required.', 'groove'); ?></p>
+  </div>
+  <?php elseif ('collection_tag_error' === $message): ?>
+  <div class="notice notice-error">
+    <p><?php esc_html_e('Collection tag could not be saved.', 'groove'); ?></p>
   </div>
   <?php endif; ?>
 
-  <?php if ('routing' === $tab_key): ?>
+  <?php if ('collections' === $tab_key): ?>
+    <?php $this->display_tab_collections(); ?>
+  <?php elseif ('routing' === $tab_key): ?>
     <?php $this->display_tab_routing(); ?>
   <?php elseif ('privacy' === $tab_key): ?>
     <?php $this->display_tab_privacy(); ?>
