@@ -80,18 +80,17 @@ class Overview extends Page
       + (int)($folio_counts->private ?? 0)
       + (int)($folio_counts->pending ?? 0);
 
-    // Collections: post type not yet implemented — show 0.
-    $collection_total = 0;
-    if (post_type_exists('groove_collection')) {
-      $col_counts = wp_count_posts('groove_collection');
-      $collection_total = (int)($col_counts->publish ?? 0)
-        + (int)($col_counts->draft ?? 0)
-        + (int)($col_counts->private ?? 0)
-        + (int)($col_counts->pending ?? 0);
+    // Count collection tags that are actually assigned to folios.
+    $collection_total = wp_count_terms(array(
+      'taxonomy' => 'groove_collection_tag',
+      'hide_empty' => false,
+    ));
+    if (is_wp_error($collection_total)) {
+      $collection_total = 0;
     }
+    $collection_total = (int) $collection_total;
 
     $folios_url = admin_url('admin.php?page=groove-all-folios');
-    $collections_url = '#'; // placeholder until groove_collection is registered
     ?>
 <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
   <div class="flex items-center justify-between mb-4">
@@ -113,24 +112,16 @@ class Overview extends Page
       </div>
     </a>
 
-    <?php if ($collection_total > 0): ?>
-    <a href="<?php echo esc_url($collections_url); ?>" class="block rounded-lg border border-gray-200 bg-gray-50/50 p-4 hover:bg-gray-100">
+    <div class="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
       <div class="text-xs font-medium text-gray-500 uppercase tracking-wide"><?php esc_html_e('Collections', 'groove'); ?></div>
       <div class="mt-2 text-2xl font-semibold text-gray-900"><?php echo esc_html(number_format_i18n($collection_total)); ?></div>
       <div class="mt-1 text-xs text-gray-600">
         <?php
-        /* translators: %s: number of collections */
-        printf(esc_html(_n('%s item', '%s items', $collection_total, 'groove')), esc_html(number_format_i18n($collection_total)));
+        /* translators: %s: number of collection tags */
+        printf(esc_html(_n('%s tag', '%s tags', $collection_total, 'groove')), esc_html(number_format_i18n($collection_total)));
         ?>
       </div>
-    </a>
-    <?php else: ?>
-    <div class="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
-      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide"><?php esc_html_e('Collections', 'groove'); ?></div>
-      <div class="mt-2 text-2xl font-semibold text-gray-900">0</div>
-      <div class="mt-1 text-xs text-gray-600"><?php esc_html_e('Coming soon', 'groove'); ?></div>
     </div>
-    <?php endif; ?>
   </div>
 </section>
 <?php
