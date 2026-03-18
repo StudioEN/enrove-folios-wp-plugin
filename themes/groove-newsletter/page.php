@@ -331,15 +331,25 @@ class Page extends Base_Theme
 
   function display_nav()
   {
-    $fallback_folio_id = (int) $this->folio_id;
-    $folio_id = isset($this->folio->ID) ? (int) $this->folio->ID : $fallback_folio_id;
-    $folio_title = $this->folio->post_title ?? 'Folio';
-    $can_link_to_cover = Utils::is_folio_cover_enabled($folio_id);
-    $folio_url = ($folio_id > 0 && $can_link_to_cover) ? Utils::get_folio_permalink_by_id($folio_id) : '';
+    $folio = $this->folio;
+    if (!$folio) {
+      $current_path = Utils::get_current_path();
+      $base_slug = Utils::get_folio_base_slug();
+      $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
+      if (preg_match($pattern, $current_path, $matches)) {
+        $folio_slug = rtrim($matches[1], '/');
+        $folio = Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+      }
+    }
+    $folio_id = isset($folio->ID) ? (int) $folio->ID : 0;
+    $folio_title = isset($folio->post_title) ? (string) $folio->post_title : '';
+    $folio_url = ($folio_id > 0 && Utils::is_folio_cover_enabled($folio_id))
+      ? (string) Utils::get_folio_permalink_by_id($folio_id)
+      : '';
 
     display_recent_navigation_pane($this, array(
       'class_prefix' => 'g-folio__theme-page-nav',
-      'folio_id' => $folio_id,
+      'folio_id' => (int) $this->folio_id,
       'title' => $folio_title,
       'title_url' => $folio_url,
       'current_page_id' => (int) $this->id,

@@ -1002,7 +1002,7 @@ jQuery(function () {
       }
     }
 
-    const themePickerModal = bindThemePickerModal()
+    bindThemePickerModal()
 
     function setActiveThemeOption(option) {
       const selected = jQuery(option)
@@ -1081,7 +1081,6 @@ jQuery(function () {
     jQuery(document).on('click', '#g-theme-picker-modal .g-folio__theme-option', function () {
       setActiveThemeOption(this)
       jQuery('#g-active-theme-id').val(jQuery(this).data('theme-id')).trigger('change')
-      themePickerModal.close()
     })
   }
 

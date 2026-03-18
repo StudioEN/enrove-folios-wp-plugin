@@ -618,17 +618,8 @@ class All_Folios extends Page
 			return false;
 		}
 
-		// Copy all postmeta (skip internal WP keys).
 		$skip_keys = array('_edit_lock', '_edit_last', '_wp_old_slug');
-		$all_meta = get_post_meta($post_id);
-		foreach ($all_meta as $meta_key => $meta_values) {
-			if (in_array($meta_key, $skip_keys, true)) {
-				continue;
-			}
-			foreach ($meta_values as $meta_value) {
-				add_post_meta($new_folio_id, $meta_key, maybe_unserialize($meta_value));
-			}
-		}
+		$this->copy_post_meta_values($post_id, $new_folio_id, $skip_keys);
 
 		$term_ids = wp_get_object_terms($post_id, 'groove_collection_tag', array('fields' => 'ids'));
 		if (!is_wp_error($term_ids) && !empty($term_ids)) {
@@ -646,6 +637,7 @@ class All_Folios extends Page
 			'order'          => 'ASC',
 		));
 
+		$page_id_map = array();
 		foreach ($pages as $page) {
 			$new_page_id = wp_insert_post(array(
 				'post_type'    => 'groove_folio_page',
@@ -661,21 +653,254 @@ class All_Folios extends Page
 				continue;
 			}
 
-			$page_meta = get_post_meta($page->ID);
-			foreach ($page_meta as $meta_key => $meta_values) {
-				if ($meta_key === 'folio_id' || in_array($meta_key, $skip_keys, true)) {
-					continue;
-				}
-				foreach ($meta_values as $meta_value) {
-					add_post_meta($new_page_id, $meta_key, maybe_unserialize($meta_value));
-				}
+			$new_page_slug = wp_unique_post_slug(
+				sanitize_title((string) $page->post_title),
+				(int) $new_page_id,
+				'draft',
+				'groove_folio_page',
+				0
+			);
+			if ($new_page_slug !== '') {
+				wp_update_post(array(
+					'ID' => (int) $new_page_id,
+					'post_name' => $new_page_slug,
+				));
 			}
+
+			$page_id_map[(int) $page->ID] = (int) $new_page_id;
+			$this->copy_post_meta_values($page->ID, $new_page_id, array_merge($skip_keys, array('folio_id')));
 
 			// Point to the new folio.
 			update_post_meta($new_page_id, 'folio_id', $new_folio_id);
 		}
 
+		$replacement_map = $this->build_duplication_replacement_map($source, (int) $new_folio_id, $page_id_map);
+		$this->rewrite_duplicated_post((int) $new_folio_id, $replacement_map, $skip_keys);
+
+		foreach ($page_id_map as $new_page_id) {
+			$this->rewrite_duplicated_post((int) $new_page_id, $replacement_map, array_merge($skip_keys, array('folio_id')));
+		}
+
 		return $new_folio_id;
+	}
+
+	private function copy_post_meta_values($source_post_id, $target_post_id, $skip_keys = array())
+	{
+		$all_meta = get_post_meta((int) $source_post_id);
+		foreach ($all_meta as $meta_key => $meta_values) {
+			if (in_array($meta_key, $skip_keys, true)) {
+				continue;
+			}
+			foreach ((array) $meta_values as $meta_value) {
+				add_post_meta((int) $target_post_id, $meta_key, maybe_unserialize($meta_value));
+			}
+		}
+	}
+
+	private function rewrite_duplicated_post($post_id, array $replacement_map, $skip_meta_keys = array())
+	{
+		$post = get_post((int) $post_id);
+		if (!$post) {
+			return;
+		}
+
+		$post_update = array('ID' => (int) $post_id);
+		$content = $this->rewrite_duplicated_text((string) $post->post_content, $replacement_map);
+		$excerpt = $this->rewrite_duplicated_text((string) $post->post_excerpt, $replacement_map);
+
+		if ($content !== (string) $post->post_content) {
+			$post_update['post_content'] = $content;
+		}
+
+		if ($excerpt !== (string) $post->post_excerpt) {
+			$post_update['post_excerpt'] = $excerpt;
+		}
+
+		if (count($post_update) > 1) {
+			wp_update_post($post_update);
+		}
+
+		$this->rewrite_post_meta_values((int) $post_id, $replacement_map, $skip_meta_keys);
+	}
+
+	private function rewrite_post_meta_values($post_id, array $replacement_map, $skip_keys = array())
+	{
+		$all_meta = get_post_meta((int) $post_id);
+		foreach ($all_meta as $meta_key => $meta_values) {
+			if (in_array($meta_key, $skip_keys, true)) {
+				continue;
+			}
+
+			$rewritten_values = array();
+			$has_changes = false;
+
+			foreach ((array) $meta_values as $meta_value) {
+				$original_value = maybe_unserialize($meta_value);
+				$rewritten_value = $this->rewrite_duplicated_meta_value($original_value, $replacement_map);
+				if ($rewritten_value !== $original_value) {
+					$has_changes = true;
+				}
+				$rewritten_values[] = $rewritten_value;
+			}
+
+			if (!$has_changes) {
+				continue;
+			}
+
+			delete_post_meta((int) $post_id, $meta_key);
+			foreach ($rewritten_values as $rewritten_value) {
+				add_post_meta((int) $post_id, $meta_key, $rewritten_value);
+			}
+		}
+	}
+
+	private function rewrite_duplicated_meta_value($value, array $replacement_map)
+	{
+		if (is_string($value)) {
+			return $this->rewrite_duplicated_text($value, $replacement_map);
+		}
+
+		if (!is_array($value)) {
+			return $value;
+		}
+
+		foreach ($value as $key => $item) {
+			$value[$key] = $this->rewrite_duplicated_meta_value($item, $replacement_map);
+		}
+
+		return $value;
+	}
+
+	private function rewrite_duplicated_text($value, array $replacement_map)
+	{
+		if (!is_string($value) || $value === '') {
+			return $value;
+		}
+
+		$rewritten = strtr($value, $replacement_map['strings'] ?? array());
+
+		foreach ($replacement_map['regex'] ?? array() as $pattern => $replacement) {
+			$rewritten = (string) preg_replace($pattern, $replacement, $rewritten);
+		}
+
+		return $rewritten;
+	}
+
+	private function build_duplication_replacement_map(\WP_Post $source_folio, int $new_folio_id, array $page_id_map): array
+	{
+		$string_replacements = array();
+		$regex_replacements = array();
+		$source_folio_id = (int) $source_folio->ID;
+
+		$this->add_post_replacement_variants($string_replacements, $source_folio_id, $new_folio_id, 0, 0);
+
+		foreach ($page_id_map as $source_page_id => $new_page_id) {
+			$this->add_post_replacement_variants(
+				$string_replacements,
+				(int) $source_page_id,
+				(int) $new_page_id,
+				$source_folio_id,
+				$new_folio_id
+			);
+		}
+
+		$id_map = array($source_folio_id => $new_folio_id);
+		foreach ($page_id_map as $source_page_id => $new_page_id) {
+			$id_map[(int) $source_page_id] = (int) $new_page_id;
+		}
+
+		foreach ($id_map as $old_id => $new_id) {
+			$old_id = (int) $old_id;
+			$new_id = (int) $new_id;
+
+			$regex_replacements['/([?&](?:folio_id|p|post|page_id|post_id)=)' . preg_quote((string) $old_id, '/') . '\b/'] = '$1' . $new_id;
+			$regex_replacements['/(["\'](?:folio_id|p|post|page_id|post_id)["\']\s*:\s*)' . preg_quote((string) $old_id, '/') . '\b/'] = '$1' . $new_id;
+			$regex_replacements['/(\b(?:folio_id|p|post|page_id|post_id)\b\s*:\s*)' . preg_quote((string) $old_id, '/') . '\b/'] = '$1' . $new_id;
+		}
+
+		return array(
+			'strings' => $string_replacements,
+			'regex' => $regex_replacements,
+		);
+	}
+
+	private function add_post_replacement_variants(array &$string_replacements, int $source_post_id, int $new_post_id, int $source_folio_id, int $new_folio_id)
+	{
+		$this->add_url_replacement_variants(
+			$string_replacements,
+			Utils::get_folio_preview_query_url_by_id($source_post_id),
+			Utils::get_folio_preview_query_url_by_id($new_post_id)
+		);
+
+		$this->add_url_replacement_variants(
+			$string_replacements,
+			$this->get_frontend_folio_url($source_post_id, $source_folio_id),
+			$this->get_frontend_folio_url($new_post_id, $new_folio_id)
+		);
+	}
+
+	private function get_frontend_folio_url(int $post_id, int $folio_id = 0): string
+	{
+		$post = get_post($post_id);
+		if (!$post || !Utils::is_groove_post($post)) {
+			return '';
+		}
+
+		$prefix = '';
+		if ($post->post_type === 'groove_folio_page') {
+			$resolved_folio_id = $folio_id > 0 ? $folio_id : (int) get_post_meta($post_id, 'folio_id', true);
+			$folio = get_post($resolved_folio_id);
+			if ($folio) {
+				$prefix = Utils::get_post_slug($folio);
+			}
+		}
+
+		return (string) Utils::get_folio_permalink($post, $prefix);
+	}
+
+	private function add_url_replacement_variants(array &$string_replacements, $source_url, $new_url)
+	{
+		$source_url = is_string($source_url) ? trim($source_url) : '';
+		$new_url = is_string($new_url) ? trim($new_url) : '';
+		if ($source_url === '' || $new_url === '' || $source_url === $new_url) {
+			return;
+		}
+
+		$this->add_string_replacement($string_replacements, $source_url, $new_url);
+		$this->add_string_replacement($string_replacements, str_replace('&', '&amp;', $source_url), str_replace('&', '&amp;', $new_url));
+		$this->add_string_replacement($string_replacements, str_replace('&', '&#038;', $source_url), str_replace('&', '&#038;', $new_url));
+		if (wp_parse_url($source_url, PHP_URL_QUERY) === null && wp_parse_url($new_url, PHP_URL_QUERY) === null) {
+			$this->add_string_replacement($string_replacements, trailingslashit(untrailingslashit($source_url)), trailingslashit(untrailingslashit($new_url)));
+		}
+
+		$source_relative = $this->get_relative_url($source_url);
+		$new_relative = $this->get_relative_url($new_url);
+		$this->add_string_replacement($string_replacements, $source_relative, $new_relative);
+		$this->add_string_replacement($string_replacements, str_replace('&', '&amp;', $source_relative), str_replace('&', '&amp;', $new_relative));
+		$this->add_string_replacement($string_replacements, str_replace('&', '&#038;', $source_relative), str_replace('&', '&#038;', $new_relative));
+		if (wp_parse_url($source_relative, PHP_URL_QUERY) === null && wp_parse_url($new_relative, PHP_URL_QUERY) === null) {
+			$this->add_string_replacement($string_replacements, trailingslashit(untrailingslashit($source_relative)), trailingslashit(untrailingslashit($new_relative)));
+		}
+	}
+
+	private function get_relative_url(string $url): string
+	{
+		$path = (string) wp_parse_url($url, PHP_URL_PATH);
+		$query = (string) wp_parse_url($url, PHP_URL_QUERY);
+		if ($path === '' && $query === '') {
+			return '';
+		}
+
+		return $query !== '' ? $path . '?' . $query : $path;
+	}
+
+	private function add_string_replacement(array &$string_replacements, string $source_value, string $new_value)
+	{
+		if ($source_value === '' || $new_value === '' || $source_value === $new_value) {
+			return;
+		}
+
+		$string_replacements[$source_value] = $new_value;
 	}
 
 	private function get_folio_pages_url($folio_id)

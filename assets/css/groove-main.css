@@ -1422,7 +1422,7 @@ body.groove .g-theme-picker-modal__option.is-active:hover {
 }
 
 body.groove .g-theme-picker-modal__option-media {
-  height: 132px;
+  height: 96px;
   overflow: hidden;
   border-bottom: 1px solid #dcdcde;
   background: #eef1f4;

@@ -176,20 +176,26 @@ class Themes_Manager extends Assets
         }
 
         if ($post_type === 'groove_folio_page') {
-            $meta = get_post_meta($id);
-            $folio_id = $meta['folio_id'][0] ?? null;
+            $folio_id = null;
 
-            if (!$folio_id) {
-                $current_path = \Groove\Utils\Utils::get_current_path();
-                $base_slug = \Groove\Utils\Utils::get_folio_base_slug();
-                $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
-                if (preg_match($pattern, $current_path, $matches)) {
-                    $folio_slug = rtrim($matches[1], '/');
-                    $folio_post = \Groove\Utils\Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
-                    if ($folio_post) {
-                        $folio_id = $folio_post->ID;
-                    }
+            // Prefer URL-based resolution: the folio slug in the path is
+            // always correct, even when the page's folio_id meta is stale
+            // (e.g. after duplication + deletion of the source folio).
+            $current_path = \Groove\Utils\Utils::get_current_path();
+            $base_slug = \Groove\Utils\Utils::get_folio_base_slug();
+            $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
+            if (preg_match($pattern, $current_path, $matches)) {
+                $folio_slug = rtrim($matches[1], '/');
+                $folio_post = \Groove\Utils\Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+                if ($folio_post) {
+                    $folio_id = $folio_post->ID;
                 }
+            }
+
+            // Fall back to folio_id from page meta (admin previews, query-param URLs).
+            if (!$folio_id) {
+                $meta = get_post_meta($id);
+                $folio_id = $meta['folio_id'][0] ?? null;
             }
         } else {
             $folio_id = $id;
