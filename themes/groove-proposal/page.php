@@ -18,11 +18,19 @@ class Page extends Base_Theme
   {
     parent::__construct();
 
-    $this->folio_id = isset($_REQUEST['folio_id']) ? (int) wp_unslash($_REQUEST['folio_id']) : 0;
+    $this->folio_id = (int) Utils::get_folio_id_from_current_path();
+    if ($this->folio_id <= 0) {
+      $this->folio_id = isset($_REQUEST['folio_id']) ? (int) wp_unslash($_REQUEST['folio_id']) : 0;
+    }
 
-    if ($this->post_type === 'groove_folio_page') {
+    if ($this->post_type === 'groove_folio_page' && $this->folio_id <= 0) {
       $meta = get_post_meta($this->id);
       $this->folio_id = isset($meta['folio_id'][0]) ? (int) $meta['folio_id'][0] : $this->folio_id;
+    }
+
+    // URL-based fallback: extract folio from the URL path when meta gives 0
+    if ($this->folio_id <= 0 && $this->post_type === 'groove_folio_page') {
+      $this->folio_id = (int) Utils::get_folio_id_from_current_path();
     }
   }
 
@@ -60,8 +68,16 @@ class Page extends Base_Theme
     ]);
 
     $folio = $wp_query->post;
-    $this->folio = $folio;
 
+    // Direct fallback: WP_Query may miss the folio in some status-filtering edge cases
+    if (!$folio && $this->folio_id > 0) {
+      $direct = get_post($this->folio_id);
+      if ($direct && $direct->post_type === 'groove_folio' && Utils::can_current_request_view_post($direct)) {
+        $folio = $direct;
+      }
+    }
+
+    $this->folio = $folio;
     return $folio;
   }
 
@@ -325,10 +341,26 @@ class Page extends Base_Theme
 
   protected function display_nav(): void
   {
-    $fallback_folio_id = (int) $this->folio_id;
-    $folio_id = isset($this->folio->ID) ? (int) $this->folio->ID : $fallback_folio_id;
-    $folio_title = $this->folio->post_title ?? __('Folio', 'groove');
+    $folio = $this->folio;
+    if (!$folio) {
+      $current_path = Utils::get_current_path();
+      $base_slug = Utils::get_folio_base_slug();
+      $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
+      if (preg_match($pattern, $current_path, $matches)) {
+        $folio_slug = rtrim($matches[1], '/');
+        $folio = Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+      }
+    }
+    $folio_id = isset($folio->ID) ? (int) $folio->ID : 0;
+    $folio_title = isset($folio->post_title) ? (string) $folio->post_title : '';
     $folio_url = ($folio_id > 0 && Utils::is_folio_cover_enabled($folio_id)) ? (string) Utils::get_folio_permalink_by_id($folio_id) : '';
+
+    // Ensure pages are loaded — reload if empty and we have a valid folio
+    $pages = is_array($this->pages) ? $this->pages : [];
+    if (empty($pages) && $folio_id > 0) {
+      $this->get_pages_data($folio_id);
+      $pages = is_array($this->pages) ? $this->pages : [];
+    }
 
     $nav_meta = $this->get_nav_info($folio_id);
 
@@ -338,7 +370,7 @@ class Page extends Base_Theme
       'title_url'     => $folio_url,
       'label'         => __('Proposal', 'groove'),
       'aria_label'    => __('Proposal navigation', 'groove'),
-      'pages'         => is_array($this->pages) ? $this->pages : [],
+      'pages'         => $pages,
       'current_page_id' => (int) $this->id,
       'info_version'  => $nav_meta['version'],
       'info_status'   => $nav_meta['status'],
@@ -550,6 +582,9 @@ class Page extends Base_Theme
     $page_role = $this->get_page_role();
     $container_role_class = $page_role['key'] !== '' ? ' gp-page__container--role-' . sanitize_html_class($page_role['key']) : '';
     $folio_id = isset($this->folio->ID) ? (int) $this->folio->ID : (int) $this->folio_id;
+    if ($folio_id <= 0) {
+      $folio_id = $this->get_folio_id_for_customization();
+    }
     $proposal_color_scheme = $this->get_proposal_color_scheme($folio_id);
     $palette_source_url = $this->get_palette_source_url($folio_id);
     ?>

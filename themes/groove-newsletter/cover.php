@@ -67,7 +67,7 @@ class Cover extends Base_Theme
     display_recent_navigation_pane($this, array(
       'class_prefix' => 'g-folio__theme-nav',
       'folio_id' => (int) $this->id,
-      'title' => $this->theme_name,
+      'title' => $this->title,
       'limit' => 10,
     ));
   }

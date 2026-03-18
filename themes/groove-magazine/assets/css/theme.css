@@ -1349,6 +1349,27 @@ html {
     width: 100%;
     justify-content: center;
   }
+
+  .gm-cover__footer {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    row-gap: 4px;
+  }
+
+  .gm-cover__copyright {
+    grid-column: 1 / -1;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .gm-cover__powerby {
+    justify-self: start;
+  }
+
+  .gm-cover__updated {
+    justify-self: end;
+  }
 }
 
 /* ── Theme Toggle ── */

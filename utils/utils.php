@@ -360,7 +360,7 @@ class Utils
       return '';
     return $post->post_name
       ? $post->post_name
-      : preg_replace('/\s+/', '-', strtolower($post->post_title ?? ''));
+      : sanitize_title((string) ($post->post_title ?? ''));
   }
 
   static function get_folio_permalink($post, $prefix)
@@ -409,6 +409,30 @@ class Utils
     }
 
     return $current_path;
+  }
+
+  static function get_folio_slug_from_current_path()
+  {
+    $current_path = Utils::get_current_path();
+    $base_slug = Utils::get_folio_base_slug();
+    $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)(?:/page/.*)?/?$#';
+
+    if (!preg_match($pattern, $current_path, $matches)) {
+      return '';
+    }
+
+    return isset($matches[1]) ? rtrim((string) $matches[1], '/') : '';
+  }
+
+  static function get_folio_id_from_current_path()
+  {
+    $folio_slug = Utils::get_folio_slug_from_current_path();
+    if ($folio_slug === '') {
+      return 0;
+    }
+
+    $folio_post = Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+    return $folio_post ? (int) $folio_post->ID : 0;
   }
 
   static function is_groove_post_name_url()
@@ -493,15 +517,29 @@ class Utils
     if (empty($post_name)) {
       $post_name = Utils::get_groove_post_name();
     }
-
-
-
-    $wp_query = new \WP_Query(array(
+    $query_args = array(
       'post_type' => $post_type,
       'name' => $post_name,
       'posts_per_page' => 1,
       'post_status' => Utils::get_viewable_post_statuses(),
-    ));
+    );
+
+    $scoped_folio_id = 0;
+    if ($post_type === 'groove_folio_page') {
+      $scoped_folio_id = Utils::get_folio_id_from_current_path();
+      if ($scoped_folio_id > 0) {
+        $query_args['meta_query'] = array(
+          array(
+            'key' => 'folio_id',
+            'value' => $scoped_folio_id,
+            'compare' => '=',
+            'type' => 'NUMERIC',
+          ),
+        );
+      }
+    }
+
+    $wp_query = new \WP_Query($query_args);
 
     $post = $wp_query->post;
 
@@ -518,15 +556,23 @@ class Utils
       $fallback_query = new \WP_Query(array(
         'post_type' => $post_type,
         'posts_per_page' => -1,
-        'post_status' => $fallback_statuses
+        'post_status' => $fallback_statuses,
+        'meta_query' => $scoped_folio_id > 0
+          ? array(
+            array(
+              'key' => 'folio_id',
+              'value' => $scoped_folio_id,
+              'compare' => '=',
+              'type' => 'NUMERIC',
+            ),
+          )
+          : array(),
       ));
       foreach ($fallback_query->posts as $p) {
-        if (empty($p->post_name)) {
-          $slug = preg_replace('/\s+/', '-', strtolower($p->post_title ?? ''));
-          if ($slug === $post_name) {
-            $post = $p;
-            break;
-          }
+        $slug = Utils::get_post_slug($p);
+        if ($slug === $post_name) {
+          $post = $p;
+          break;
         }
       }
     }

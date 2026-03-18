@@ -68,20 +68,14 @@ abstract class Base_Theme extends Assets
       return 0;
     }
 
+    $path_folio_id = (int) Utils::get_folio_id_from_current_path();
+    if ($path_folio_id > 0) {
+      return $path_folio_id;
+    }
+
     $folio_id = (int) get_post_meta($post_id, 'folio_id', true);
     if ($folio_id > 0) {
       return $folio_id;
-    }
-
-    $current_path = Utils::get_current_path();
-    $base_slug = Utils::get_folio_base_slug();
-    $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
-    if (preg_match($pattern, $current_path, $matches)) {
-      $folio_slug = rtrim($matches[1], '/');
-      $folio_post = Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
-      if ($folio_post) {
-        return (int) $folio_post->ID;
-      }
     }
 
     return 0;
