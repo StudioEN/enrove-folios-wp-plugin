@@ -256,7 +256,9 @@ window.wp = window.wp || {};
 					return;
 				}
 
-				$( element ).wpTagsSuggest();
+				if ( typeof $.fn.wpTagsSuggest === 'function' ) {
+					$( element ).wpTagsSuggest();
+				}
 			} );
 		}
 
@@ -372,7 +374,13 @@ window.wp = window.wp || {};
 				textarea.val(terms);
 			}
 
-			textarea.wpTagsSuggest();
+			if ( typeof $.fn.wpTagsSuggest === 'function' ) {
+				textarea.wpTagsSuggest();
+			}
+
+			if ( typeof window.grooveInitCollectionTagsCombobox === 'function' && textarea.attr('data-tags') !== undefined ) {
+				window.grooveInitCollectionTagsCombobox( textarea[0] );
+			}
 		});
 
 		// Handle the post status.

@@ -134,7 +134,7 @@ class Page extends Base_Theme
       $results .= render_block($block);
     }
 
-    return $results;
+    return $this->apply_embed_processing($results);
   }
 
   function is_first_page()
@@ -185,9 +185,15 @@ class Page extends Base_Theme
     ?>
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
-        <button class="g-folio__theme-page-nav-button"></button>
+        <button class="g-folio__theme-page-nav-button" aria-label="Open navigation">
+          <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
         <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
-            <?= esc_html($this->folio->post_title ?? 'Folio') ?> |
+            <?= esc_html(isset($this->folio->post_title) ? $this->folio->post_title : '') ?> |
           </span>
           <?= esc_html($this->page->post_title ?? 'Page') ?>
         </div>
@@ -236,10 +242,20 @@ class Page extends Base_Theme
 
   function display_nav()
   {
-    $folio_title = $this->folio->post_title ?? 'Folio';
+    $folio = $this->folio;
+    if (!$folio) {
+      $current_path = Utils::get_current_path();
+      $base_slug = Utils::get_folio_base_slug();
+      $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
+      if (preg_match($pattern, $current_path, $matches)) {
+        $folio_slug = rtrim($matches[1], '/');
+        $folio = Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+      }
+    }
+    $folio_title = isset($folio->post_title) ? (string) $folio->post_title : '';
     $folio_url = '';
-    if ($this->folio && Utils::is_folio_cover_enabled((int) $this->folio->ID)) {
-      $folio_url = Utils::get_folio_permalink_by_id($this->folio->ID);
+    if ($folio && Utils::is_folio_cover_enabled((int) $folio->ID)) {
+      $folio_url = Utils::get_folio_permalink_by_id($folio->ID);
     }
     ?>
     <nav class="g-folio__theme-page-nav">
@@ -287,7 +303,7 @@ class Page extends Base_Theme
         if ($prev_page) {
           ?>
           <i class="g-folio__theme-page-arrow"></i>
-          <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID) ?>">
+          <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID) ?>" title="<?= esc_attr($prev_page->post_title) ?>">
             <?= esc_html($prev_page->post_title) ?></a>
           <?php
         }
@@ -300,7 +316,7 @@ class Page extends Base_Theme
         <?php
         if ($next_page) {
           ?>
-          <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID) ?>">
+          <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID) ?>" title="<?= esc_attr($next_page->post_title) ?>">
             <?= esc_html($next_page->post_title) ?></a>
           <i class="g-folio__theme-page-arrow"></i>
           <?php

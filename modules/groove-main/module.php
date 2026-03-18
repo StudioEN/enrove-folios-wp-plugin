@@ -93,7 +93,9 @@ class Module extends BaseModule
 		wp_enqueue_script('groove-inline-edit', $this->get_js_assets_url('groove-inline-edit'), ['jquery'], GROOVE_VERSION, true);
 
 		if ($this->is_in_block_editor_page()) {
-			wp_enqueue_script('groove-gutenberg-breadcrumb', $this->get_js_assets_url('groove-gutenberg-breadcrumb'), ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-data', 'wp-components'], GROOVE_VERSION, true);
+			$groove_breadcrumb_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-gutenberg-breadcrumb.js';
+			$groove_breadcrumb_js_version = file_exists($groove_breadcrumb_js_path) ? (string) filemtime($groove_breadcrumb_js_path) : GROOVE_VERSION;
+			wp_enqueue_script('groove-gutenberg-breadcrumb', $this->get_js_assets_url('groove-gutenberg-breadcrumb'), ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-data', 'wp-components'], $groove_breadcrumb_js_version, true);
 		}
 
 		wp_enqueue_media();
@@ -103,12 +105,21 @@ class Module extends BaseModule
 	{
 		$folio_name = '';
 		$folio_setup_url = '';
+		$editor_theme_color_source_url = '';
 		$post = get_post();
 		if (!$post && !empty($_GET['post'])) {
 			$post = get_post((int) $_GET['post']);
 		}
 
 		if ($post && $post->post_type === 'groove_folio_page') {
+			$page_featured_image_id = (int) get_post_thumbnail_id($post->ID);
+			if ($page_featured_image_id > 0) {
+				$editor_theme_color_source_url = (string) wp_get_attachment_image_url($page_featured_image_id, 'large');
+				if ($editor_theme_color_source_url === '') {
+					$editor_theme_color_source_url = (string) wp_get_attachment_image_url($page_featured_image_id, 'full');
+				}
+			}
+
 			$folio_id = get_post_meta($post->ID, 'folio_id', true);
 			if (!$folio_id && !empty($_GET['folio_id'])) {
 				$folio_id = (int) wp_unslash($_GET['folio_id']);
@@ -136,6 +147,7 @@ class Module extends BaseModule
 			'postType' => $post_action,
 			'folioName' => $folio_name,
 			'folioSetupUrl' => $folio_setup_url,
+			'editorThemeColorSourceUrl' => $editor_theme_color_source_url,
 			'adminPostUrl' => admin_url('admin-post.php'),
 		);
 
@@ -147,6 +159,7 @@ class Module extends BaseModule
 			'window.GROOVE_POST_TYPE = window.GROOVE_SETTINGS.postType;' .
 			'window.GROOVE_FOLIO_NAME = window.GROOVE_SETTINGS.folioName;' .
 			'window.GROOVE_FOLIO_SETUP_URL = window.GROOVE_SETTINGS.folioSetupUrl;' .
+			'window.GROOVE_EDITOR_THEME_COLOR_SOURCE_URL = window.GROOVE_SETTINGS.editorThemeColorSourceUrl;' .
 			'window.GROOVE_ADMIN_POST_URL = window.GROOVE_SETTINGS.adminPostUrl;',
 			'before'
 		);
@@ -213,7 +226,9 @@ class Module extends BaseModule
 				'enqueue_block_editor_assets',
 				function () {
 					if ($this->is_in_block_editor_page()) {
-						wp_enqueue_script('groove-gutenberg-breadcrumb', $this->get_js_assets_url('groove-gutenberg-breadcrumb'), ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-data', 'wp-components'], GROOVE_VERSION, true);
+						$groove_breadcrumb_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-gutenberg-breadcrumb.js';
+						$groove_breadcrumb_js_version = file_exists($groove_breadcrumb_js_path) ? (string) filemtime($groove_breadcrumb_js_path) : GROOVE_VERSION;
+						wp_enqueue_script('groove-gutenberg-breadcrumb', $this->get_js_assets_url('groove-gutenberg-breadcrumb'), ['wp-plugins', 'wp-edit-post', 'wp-element', 'wp-data', 'wp-components'], $groove_breadcrumb_js_version, true);
 					}
 				}
 			);

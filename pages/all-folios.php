@@ -40,6 +40,42 @@ class All_Folios extends Page
 		add_action('groove/menu/register', function (Menu_Manager $menu) {
 			$menu->register(static::PAGE_ID, new All_Folios_Menu_Item($this));
 		}, Overview::MENU_PRIORITY + 20);
+
+		add_action('admin_init', array($this, 'handle_duplicate_action'));
+	}
+
+	public function handle_duplicate_action()
+	{
+		if (!isset($_GET['page']) || $_GET['page'] !== static::PAGE_ID) {
+			return;
+		}
+		if (!isset($_GET['action']) || $_GET['action'] !== 'groove_duplicate_folio' || !isset($_GET['post'])) {
+			return;
+		}
+
+		$post_id = (int) $_GET['post'];
+		check_admin_referer('groove_duplicate_folio_' . $post_id);
+
+		if (get_post_type($post_id) !== static::POST_TYPE || !current_user_can('edit_post', $post_id)) {
+			return;
+		}
+
+		$new_id = $this->duplicate_folio($post_id);
+		$status = isset($_GET['post_status']) ? sanitize_key(wp_unslash($_GET['post_status'])) : 'all';
+		$search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+
+		$redirect_args = array_filter(array(
+			'post_status' => $status !== 'all' ? $status : null,
+			's' => $search !== '' ? $search : null,
+			'collection_tag' => $this->get_collection_tag_query_arg($this->get_current_collection_tags()),
+			'bulk_action' => 'duplicate',
+			'bulk_count' => $new_id ? 1 : 0,
+		), function ($value) {
+			return $value !== null;
+		});
+
+		wp_safe_redirect($this->build_page_url($redirect_args));
+		exit;
 	}
 
 	private function get_current_status()
@@ -57,6 +93,92 @@ class All_Folios extends Page
 	private function get_search_term()
 	{
 		return isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+	}
+
+	private function get_current_collection_tags()
+	{
+		if (!isset($_GET['collection_tag'])) {
+			return array();
+		}
+
+		$raw_tags = wp_unslash($_GET['collection_tag']);
+		if (!is_array($raw_tags)) {
+			$raw_tags = array($raw_tags);
+		}
+
+		$tags = array_values(array_unique(array_filter(array_map('sanitize_title', $raw_tags))));
+		return array_values(array_filter($tags, function ($tag) {
+			return $tag !== '';
+		}));
+	}
+
+	private function get_collection_tag_query_arg($tags)
+	{
+		$tags = array_values(array_unique(array_filter(array_map('sanitize_title', (array) $tags))));
+		return empty($tags) ? null : $tags;
+	}
+
+	private function get_collection_tag_terms()
+	{
+		$terms = get_terms(array(
+			'taxonomy' => 'groove_collection_tag',
+			'hide_empty' => false,
+			'orderby' => 'name',
+			'order' => 'ASC',
+		));
+
+		return is_wp_error($terms) ? array() : (array) $terms;
+	}
+
+	private function get_collection_tag_links($post_id, $status, $search, $orderby, $order)
+	{
+		$terms = get_the_terms((int) $post_id, 'groove_collection_tag');
+		if (is_wp_error($terms) || empty($terms)) {
+			return '';
+		}
+
+		$links = array();
+		foreach ($terms as $term) {
+			if (!$term instanceof \WP_Term) {
+				continue;
+			}
+
+			$url = $this->build_page_url(array_filter(array(
+				'post_status' => $status !== 'all' ? $status : null,
+				's' => $search !== '' ? $search : null,
+				'orderby' => $orderby !== 'modified' ? $orderby : null,
+				'order' => $order !== 'DESC' ? $order : null,
+				'collection_tag' => array($term->slug),
+			), function ($value) {
+				return $value !== null;
+			}));
+
+			$links[] = '<a href="' . esc_url($url) . '">' . esc_html($term->name) . '</a>';
+		}
+
+		return implode(', ', $links);
+	}
+
+	private function get_collection_tag_toggle_url($slug, $status, $search, $orderby, $order)
+	{
+		$slug = sanitize_title($slug);
+		$current_tags = $this->get_current_collection_tags();
+
+		if (in_array($slug, $current_tags, true)) {
+			$updated_tags = array();
+		} else {
+			$updated_tags = array($slug);
+		}
+
+		return $this->build_page_url(array_filter(array(
+			'post_status' => $status !== 'all' ? $status : null,
+			's' => $search !== '' ? $search : null,
+			'orderby' => $orderby !== 'modified' ? $orderby : null,
+			'order' => $order !== 'DESC' ? $order : null,
+			'collection_tag' => $this->get_collection_tag_query_arg($updated_tags),
+		), function ($value) {
+			return $value !== null;
+		}));
 	}
 
 	private function get_current_paged()
@@ -157,6 +279,18 @@ class All_Folios extends Page
 			$query_args['meta_value'] = sanitize_key($_GET['theme_id']);
 		}
 
+		$collection_tags = $this->get_current_collection_tags();
+		if (!empty($collection_tags)) {
+			$query_args['tax_query'] = array(
+				array(
+					'taxonomy' => 'groove_collection_tag',
+					'field' => 'slug',
+					'terms' => $collection_tags,
+					'operator' => 'IN',
+				),
+			);
+		}
+
 		return new \WP_Query($query_args);
 	}
 
@@ -230,6 +364,18 @@ class All_Folios extends Page
 			$ids_query_args['meta_value'] = sanitize_key($_GET['theme_id']);
 		}
 
+		$collection_tags = $this->get_current_collection_tags();
+		if (!empty($collection_tags)) {
+			$ids_query_args['tax_query'] = array(
+				array(
+					'taxonomy' => 'groove_collection_tag',
+					'field' => 'slug',
+					'terms' => $collection_tags,
+					'operator' => 'IN',
+				),
+			);
+		}
+
 		$ids_query = new \WP_Query($ids_query_args);
 
 		$all_ids = array_map('intval', (array) $ids_query->posts);
@@ -284,6 +430,7 @@ class All_Folios extends Page
 			'orderby' => $column,
 			'order' => $next_order,
 			'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+			'collection_tag' => $this->get_collection_tag_query_arg($this->get_current_collection_tags()),
 		), function ($value) {
 			return $value !== null;
 		}));
@@ -299,6 +446,7 @@ class All_Folios extends Page
 		}
 
 		return array(
+			'duplicate' => esc_html__('Duplicate', 'groove'),
 			'trash' => esc_html__('Move to Trash', 'groove'),
 		);
 	}
@@ -363,6 +511,11 @@ class All_Folios extends Page
 						$updated_count++;
 					}
 					break;
+				case 'duplicate':
+					if ($this->duplicate_folio($post_id)) {
+						$updated_count++;
+					}
+					break;
 			}
 		}
 
@@ -373,6 +526,7 @@ class All_Folios extends Page
 			'order' => $order !== 'DESC' ? $order : null,
 			'paged' => $paged > 1 ? $paged : null,
 			'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+			'collection_tag' => $this->get_collection_tag_query_arg($this->get_current_collection_tags()),
 			'bulk_action' => $action,
 			'bulk_count' => $updated_count,
 		), function ($value) {
@@ -418,6 +572,13 @@ class All_Folios extends Page
 					esc_html(number_format_i18n($count))
 				);
 				break;
+			case 'duplicate':
+				$message = sprintf(
+					/* translators: %s: number of folios duplicated */
+					esc_html(_n('%s folio duplicated.', '%s folios duplicated.', $count, 'groove')),
+					esc_html(number_format_i18n($count))
+				);
+				break;
 		}
 
 		if ($message === '') {
@@ -428,6 +589,318 @@ class All_Folios extends Page
 			<p><?php echo esc_html($message); ?></p>
 		</div>
 		<?php
+	}
+
+	private function duplicate_folio($post_id)
+	{
+		$source = get_post($post_id);
+		if (!$source || $source->post_type !== static::POST_TYPE) {
+			return false;
+		}
+
+		$new_title = sprintf(
+			/* translators: %s: original folio title */
+			__('Copy of %s', 'groove'),
+			$source->post_title
+		);
+
+		$new_folio_id = wp_insert_post(array(
+			'post_type'    => static::POST_TYPE,
+			'post_title'   => $new_title,
+			'post_name'    => sanitize_title($new_title),
+			'post_status'  => 'draft',
+			'post_author'  => get_current_user_id(),
+			'post_content' => $source->post_content,
+			'post_excerpt' => $source->post_excerpt,
+		));
+
+		if (is_wp_error($new_folio_id) || !$new_folio_id) {
+			return false;
+		}
+
+		$skip_keys = array('_edit_lock', '_edit_last', '_wp_old_slug');
+		$this->copy_post_meta_values($post_id, $new_folio_id, $skip_keys);
+
+		$term_ids = wp_get_object_terms($post_id, 'groove_collection_tag', array('fields' => 'ids'));
+		if (!is_wp_error($term_ids) && !empty($term_ids)) {
+			wp_set_object_terms($new_folio_id, array_map('intval', $term_ids), 'groove_collection_tag', false);
+		}
+
+		// Duplicate child folio pages.
+		$pages = get_posts(array(
+			'post_type'      => 'groove_folio_page',
+			'post_status'    => array('publish', 'draft', 'pending', 'private', 'future'),
+			'posts_per_page' => -1,
+			'meta_key'       => 'folio_id',
+			'meta_value'     => (string) $post_id,
+			'orderby'        => 'menu_order',
+			'order'          => 'ASC',
+		));
+
+		$page_id_map = array();
+		foreach ($pages as $page) {
+			$new_page_id = wp_insert_post(array(
+				'post_type'    => 'groove_folio_page',
+				'post_title'   => $page->post_title,
+				'post_status'  => 'draft',
+				'post_author'  => get_current_user_id(),
+				'post_content' => $page->post_content,
+				'post_excerpt' => $page->post_excerpt,
+				'menu_order'   => $page->menu_order,
+			));
+
+			if (is_wp_error($new_page_id) || !$new_page_id) {
+				continue;
+			}
+
+			$new_page_slug = wp_unique_post_slug(
+				sanitize_title((string) $page->post_title),
+				(int) $new_page_id,
+				'draft',
+				'groove_folio_page',
+				0
+			);
+			if ($new_page_slug !== '') {
+				wp_update_post(array(
+					'ID' => (int) $new_page_id,
+					'post_name' => $new_page_slug,
+				));
+			}
+
+			$page_id_map[(int) $page->ID] = (int) $new_page_id;
+			$this->copy_post_meta_values($page->ID, $new_page_id, array_merge($skip_keys, array('folio_id')));
+
+			// Point to the new folio.
+			update_post_meta($new_page_id, 'folio_id', $new_folio_id);
+		}
+
+		$replacement_map = $this->build_duplication_replacement_map($source, (int) $new_folio_id, $page_id_map);
+		$this->rewrite_duplicated_post((int) $new_folio_id, $replacement_map, $skip_keys);
+
+		foreach ($page_id_map as $new_page_id) {
+			$this->rewrite_duplicated_post((int) $new_page_id, $replacement_map, array_merge($skip_keys, array('folio_id')));
+		}
+
+		return $new_folio_id;
+	}
+
+	private function copy_post_meta_values($source_post_id, $target_post_id, $skip_keys = array())
+	{
+		$all_meta = get_post_meta((int) $source_post_id);
+		foreach ($all_meta as $meta_key => $meta_values) {
+			if (in_array($meta_key, $skip_keys, true)) {
+				continue;
+			}
+			foreach ((array) $meta_values as $meta_value) {
+				add_post_meta((int) $target_post_id, $meta_key, maybe_unserialize($meta_value));
+			}
+		}
+	}
+
+	private function rewrite_duplicated_post($post_id, array $replacement_map, $skip_meta_keys = array())
+	{
+		$post = get_post((int) $post_id);
+		if (!$post) {
+			return;
+		}
+
+		$post_update = array('ID' => (int) $post_id);
+		$content = $this->rewrite_duplicated_text((string) $post->post_content, $replacement_map);
+		$excerpt = $this->rewrite_duplicated_text((string) $post->post_excerpt, $replacement_map);
+
+		if ($content !== (string) $post->post_content) {
+			$post_update['post_content'] = $content;
+		}
+
+		if ($excerpt !== (string) $post->post_excerpt) {
+			$post_update['post_excerpt'] = $excerpt;
+		}
+
+		if (count($post_update) > 1) {
+			wp_update_post($post_update);
+		}
+
+		$this->rewrite_post_meta_values((int) $post_id, $replacement_map, $skip_meta_keys);
+	}
+
+	private function rewrite_post_meta_values($post_id, array $replacement_map, $skip_keys = array())
+	{
+		$all_meta = get_post_meta((int) $post_id);
+		foreach ($all_meta as $meta_key => $meta_values) {
+			if (in_array($meta_key, $skip_keys, true)) {
+				continue;
+			}
+
+			$rewritten_values = array();
+			$has_changes = false;
+
+			foreach ((array) $meta_values as $meta_value) {
+				$original_value = maybe_unserialize($meta_value);
+				$rewritten_value = $this->rewrite_duplicated_meta_value($original_value, $replacement_map);
+				if ($rewritten_value !== $original_value) {
+					$has_changes = true;
+				}
+				$rewritten_values[] = $rewritten_value;
+			}
+
+			if (!$has_changes) {
+				continue;
+			}
+
+			delete_post_meta((int) $post_id, $meta_key);
+			foreach ($rewritten_values as $rewritten_value) {
+				add_post_meta((int) $post_id, $meta_key, $rewritten_value);
+			}
+		}
+	}
+
+	private function rewrite_duplicated_meta_value($value, array $replacement_map)
+	{
+		if (is_string($value)) {
+			return $this->rewrite_duplicated_text($value, $replacement_map);
+		}
+
+		if (!is_array($value)) {
+			return $value;
+		}
+
+		foreach ($value as $key => $item) {
+			$value[$key] = $this->rewrite_duplicated_meta_value($item, $replacement_map);
+		}
+
+		return $value;
+	}
+
+	private function rewrite_duplicated_text($value, array $replacement_map)
+	{
+		if (!is_string($value) || $value === '') {
+			return $value;
+		}
+
+		$rewritten = strtr($value, $replacement_map['strings'] ?? array());
+
+		foreach ($replacement_map['regex'] ?? array() as $pattern => $replacement) {
+			$rewritten = (string) preg_replace($pattern, $replacement, $rewritten);
+		}
+
+		return $rewritten;
+	}
+
+	private function build_duplication_replacement_map(\WP_Post $source_folio, int $new_folio_id, array $page_id_map): array
+	{
+		$string_replacements = array();
+		$regex_replacements = array();
+		$source_folio_id = (int) $source_folio->ID;
+
+		$this->add_post_replacement_variants($string_replacements, $source_folio_id, $new_folio_id, 0, 0);
+
+		foreach ($page_id_map as $source_page_id => $new_page_id) {
+			$this->add_post_replacement_variants(
+				$string_replacements,
+				(int) $source_page_id,
+				(int) $new_page_id,
+				$source_folio_id,
+				$new_folio_id
+			);
+		}
+
+		$id_map = array($source_folio_id => $new_folio_id);
+		foreach ($page_id_map as $source_page_id => $new_page_id) {
+			$id_map[(int) $source_page_id] = (int) $new_page_id;
+		}
+
+		foreach ($id_map as $old_id => $new_id) {
+			$old_id = (int) $old_id;
+			$new_id = (int) $new_id;
+
+			$regex_replacements['/([?&](?:folio_id|p|post|page_id|post_id)=)' . preg_quote((string) $old_id, '/') . '\b/'] = '$1' . $new_id;
+			$regex_replacements['/(["\'](?:folio_id|p|post|page_id|post_id)["\']\s*:\s*)' . preg_quote((string) $old_id, '/') . '\b/'] = '$1' . $new_id;
+			$regex_replacements['/(\b(?:folio_id|p|post|page_id|post_id)\b\s*:\s*)' . preg_quote((string) $old_id, '/') . '\b/'] = '$1' . $new_id;
+		}
+
+		return array(
+			'strings' => $string_replacements,
+			'regex' => $regex_replacements,
+		);
+	}
+
+	private function add_post_replacement_variants(array &$string_replacements, int $source_post_id, int $new_post_id, int $source_folio_id, int $new_folio_id)
+	{
+		$this->add_url_replacement_variants(
+			$string_replacements,
+			Utils::get_folio_preview_query_url_by_id($source_post_id),
+			Utils::get_folio_preview_query_url_by_id($new_post_id)
+		);
+
+		$this->add_url_replacement_variants(
+			$string_replacements,
+			$this->get_frontend_folio_url($source_post_id, $source_folio_id),
+			$this->get_frontend_folio_url($new_post_id, $new_folio_id)
+		);
+	}
+
+	private function get_frontend_folio_url(int $post_id, int $folio_id = 0): string
+	{
+		$post = get_post($post_id);
+		if (!$post || !Utils::is_groove_post($post)) {
+			return '';
+		}
+
+		$prefix = '';
+		if ($post->post_type === 'groove_folio_page') {
+			$resolved_folio_id = $folio_id > 0 ? $folio_id : (int) get_post_meta($post_id, 'folio_id', true);
+			$folio = get_post($resolved_folio_id);
+			if ($folio) {
+				$prefix = Utils::get_post_slug($folio);
+			}
+		}
+
+		return (string) Utils::get_folio_permalink($post, $prefix);
+	}
+
+	private function add_url_replacement_variants(array &$string_replacements, $source_url, $new_url)
+	{
+		$source_url = is_string($source_url) ? trim($source_url) : '';
+		$new_url = is_string($new_url) ? trim($new_url) : '';
+		if ($source_url === '' || $new_url === '' || $source_url === $new_url) {
+			return;
+		}
+
+		$this->add_string_replacement($string_replacements, $source_url, $new_url);
+		$this->add_string_replacement($string_replacements, str_replace('&', '&amp;', $source_url), str_replace('&', '&amp;', $new_url));
+		$this->add_string_replacement($string_replacements, str_replace('&', '&#038;', $source_url), str_replace('&', '&#038;', $new_url));
+		if (wp_parse_url($source_url, PHP_URL_QUERY) === null && wp_parse_url($new_url, PHP_URL_QUERY) === null) {
+			$this->add_string_replacement($string_replacements, trailingslashit(untrailingslashit($source_url)), trailingslashit(untrailingslashit($new_url)));
+		}
+
+		$source_relative = $this->get_relative_url($source_url);
+		$new_relative = $this->get_relative_url($new_url);
+		$this->add_string_replacement($string_replacements, $source_relative, $new_relative);
+		$this->add_string_replacement($string_replacements, str_replace('&', '&amp;', $source_relative), str_replace('&', '&amp;', $new_relative));
+		$this->add_string_replacement($string_replacements, str_replace('&', '&#038;', $source_relative), str_replace('&', '&#038;', $new_relative));
+		if (wp_parse_url($source_relative, PHP_URL_QUERY) === null && wp_parse_url($new_relative, PHP_URL_QUERY) === null) {
+			$this->add_string_replacement($string_replacements, trailingslashit(untrailingslashit($source_relative)), trailingslashit(untrailingslashit($new_relative)));
+		}
+	}
+
+	private function get_relative_url(string $url): string
+	{
+		$path = (string) wp_parse_url($url, PHP_URL_PATH);
+		$query = (string) wp_parse_url($url, PHP_URL_QUERY);
+		if ($path === '' && $query === '') {
+			return '';
+		}
+
+		return $query !== '' ? $path . '?' . $query : $path;
+	}
+
+	private function add_string_replacement(array &$string_replacements, string $source_value, string $new_value)
+	{
+		if ($source_value === '' || $new_value === '' || $source_value === $new_value) {
+			return;
+		}
+
+		$string_replacements[$source_value] = $new_value;
 	}
 
 	private function get_folio_pages_url($folio_id)
@@ -469,6 +942,8 @@ class All_Folios extends Page
 	{
 		$status = $this->get_current_status();
 		$search = $this->get_search_term();
+		$current_collection_tags = $this->get_current_collection_tags();
+		$collection_tag_terms = $this->get_collection_tag_terms();
 		$paged = $this->get_current_paged();
 		$orderby = $this->get_current_orderby();
 		$order = $this->get_current_order();
@@ -489,7 +964,41 @@ class All_Folios extends Page
 				<input type="hidden" name="post_status" value="<?php echo esc_attr($status); ?>" />
 				<input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>" />
 				<input type="hidden" name="order" value="<?php echo esc_attr($order); ?>" />
+				<?php foreach ($current_collection_tags as $collection_tag): ?>
+					<input type="hidden" name="collection_tag[]" value="<?php echo esc_attr($collection_tag); ?>" />
+				<?php endforeach; ?>
 				<?php wp_nonce_field('groove_bulk_folios_action', '_groove_bulk_nonce'); ?>
+
+				<div class="g-all-folios__filters-row">
+					<?php if (!empty($collection_tag_terms)): ?>
+						<div class="g-all-folios__collection-filters" aria-label="<?php esc_attr_e('Collection tag filters', 'groove'); ?>">
+							<a
+								href="<?php echo esc_url($this->build_page_url(array_filter(array(
+									'post_status' => $status !== 'all' ? $status : null,
+									's' => $search !== '' ? $search : null,
+									'orderby' => $orderby !== 'modified' ? $orderby : null,
+									'order' => $order !== 'DESC' ? $order : null,
+								), function ($value) {
+									return $value !== null;
+								}))); ?>"
+								class="g-all-folios__collection-pill<?php echo empty($current_collection_tags) ? ' is-active' : ''; ?>"
+								data-tooltip="<?php esc_attr_e('Show all collections', 'groove'); ?>">
+								<?php esc_html_e('All Collections', 'groove'); ?>
+							</a>
+							<?php foreach ($collection_tag_terms as $term): ?>
+								<?php if (!$term instanceof \WP_Term) {
+									continue;
+								} ?>
+								<a
+									href="<?php echo esc_url($this->get_collection_tag_toggle_url($term->slug, $status, $search, $orderby, $order)); ?>"
+									class="g-all-folios__collection-pill<?php echo in_array($term->slug, $current_collection_tags, true) ? ' is-active' : ''; ?>"
+									data-tooltip="<?php esc_attr_e('Show collection', 'groove'); ?>">
+									<?php echo esc_html($term->name); ?>
+								</a>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
+				</div>
 
 				<ul class="subsubsub">
 					<?php
@@ -504,6 +1013,7 @@ class All_Folios extends Page
 							'orderby' => $orderby !== 'modified' ? $orderby : null,
 							'order' => $order !== 'DESC' ? $order : null,
 							'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+							'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 						), function ($value) {
 							return $value !== null;
 						}));
@@ -553,6 +1063,7 @@ class All_Folios extends Page
 								'orderby' => $orderby !== 'modified' ? $orderby : null,
 								'order' => $order !== 'DESC' ? $order : null,
 								'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+								'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 								'paged' => '%#%',
 							), function ($value) {
 								return $value !== null;
@@ -622,6 +1133,7 @@ class All_Folios extends Page
 											aria-hidden="true"></span></span>
 								</a>
 							</th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Collection Tags', 'groove'); ?></th>
 							<th scope="col"
 								class="manage-column <?php echo esc_attr($orderby === 'page_count' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
 								<a
@@ -668,8 +1180,7 @@ class All_Folios extends Page
 									$view_url = get_permalink($post_id);
 								}
 								$is_preview_status = in_array($post_status, array('draft', 'pending', 'future'), true);
-								$preview_url = get_preview_post_link(get_post($post_id));
-								$row_view_url = ($is_preview_status && $preview_url) ? $preview_url : $view_url;
+								$row_view_url = $view_url;
 								$row_view_label = $is_preview_status ? esc_html__('Preview', 'groove') : esc_html__('View', 'groove');
 								$modified_label = sprintf(
 									/* translators: 1: date/time value, 2: user display name */
@@ -707,6 +1218,21 @@ class All_Folios extends Page
 													<button type="button" class="button-link editinline"
 														aria-label="<?php echo esc_attr($quick_edit_aria_label); ?>"
 														aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove'); ?></button> |
+												</span>
+											<?php endif; ?>
+											<?php if ($post_status !== 'trash'): ?>
+												<span class="duplicate">
+													<a href="<?php echo esc_url(wp_nonce_url($this->build_page_url(array_filter(array(
+														'action' => 'groove_duplicate_folio',
+														'post' => $post_id,
+														'post_status' => $status !== 'all' ? $status : null,
+														's' => $search !== '' ? $search : null,
+														'orderby' => $orderby !== 'modified' ? $orderby : null,
+														'order' => $order !== 'DESC' ? $order : null,
+														'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
+													), function ($value) {
+														return $value !== null;
+													})), 'groove_duplicate_folio_' . $post_id)); ?>"><?php esc_html_e('Duplicate', 'groove'); ?></a> |
 												</span>
 											<?php endif; ?>
 											<span class="view">
@@ -748,6 +1274,12 @@ class All_Folios extends Page
 										}
 										?>
 									</td>
+									<td data-colname="<?php esc_attr_e('Collection Tags', 'groove'); ?>">
+										<?php
+										$collection_tag_links = $this->get_collection_tag_links($post_id, $status, $search, $orderby, $order);
+										echo $collection_tag_links !== '' ? wp_kses_post($collection_tag_links) : '&mdash;';
+										?>
+									</td>
 									<td data-colname="<?php esc_attr_e('Page Count', 'groove'); ?>">
 										<a href="<?php echo esc_url($pages_url); ?>">
 											<?php echo esc_html(number_format_i18n($page_count)); ?>
@@ -763,7 +1295,7 @@ class All_Folios extends Page
 							<?php endforeach; ?>
 						<?php else: ?>
 							<tr class="no-items">
-								<td class="colspanchange" colspan="6">
+								<td class="colspanchange" colspan="7">
 									<?php esc_html_e('No folios found for the current filters.', 'groove'); ?>
 								</td>
 							</tr>
@@ -779,6 +1311,7 @@ class All_Folios extends Page
 							<th scope="col" class="manage-column column-primary"><?php esc_html_e('Folio Name', 'groove'); ?>
 							</th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Theme Name', 'groove'); ?></th>
+							<th scope="col" class="manage-column"><?php esc_html_e('Collection Tags', 'groove'); ?></th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Page Count', 'groove'); ?></th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove'); ?></th>
 							<th scope="col" class="manage-column"><?php esc_html_e('Last Updated', 'groove'); ?></th>
@@ -829,6 +1362,7 @@ class All_Folios extends Page
 								'orderby' => $orderby !== 'modified' ? $orderby : null,
 								'order' => $order !== 'DESC' ? $order : null,
 								'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+								'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 								'paged' => '%#%',
 							), function ($value) {
 								return $value !== null;

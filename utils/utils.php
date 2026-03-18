@@ -121,6 +121,34 @@ class Utils
     return $font;
   }
 
+  static function get_folio_font_keys($folio_id)
+  {
+    $folio_id = (int) $folio_id;
+    if ($folio_id <= 0) {
+      return array(
+        'header' => '',
+        'body' => '',
+      );
+    }
+
+    $legacy_font_key = Utils::normalize_primary_font_key((string) get_post_meta($folio_id, 'fonts', true));
+    $header_font_key = Utils::normalize_primary_font_key((string) get_post_meta($folio_id, 'header_font', true));
+    $body_font_key = Utils::normalize_primary_font_key((string) get_post_meta($folio_id, 'body_font', true));
+
+    if ($header_font_key === '' && $legacy_font_key !== '') {
+      $header_font_key = $legacy_font_key;
+    }
+
+    if ($body_font_key === '' && $legacy_font_key !== '') {
+      $body_font_key = $legacy_font_key;
+    }
+
+    return array(
+      'header' => $header_font_key,
+      'body' => $body_font_key,
+    );
+  }
+
   static function sanitize_on_this_page_label($label)
   {
     if (!is_string($label)) {
@@ -146,6 +174,63 @@ class Utils
     $label = Utils::sanitize_on_this_page_label($label);
 
     return $label !== '' ? $label : Utils::get_default_on_this_page_label();
+  }
+
+  static function get_newsletter_theme_color_presets()
+  {
+    return array(
+      'coastal-slate' => array(
+        'label' => __('Coastal Slate', 'groove'),
+        'seed' => '#2E5F7B',
+      ),
+      'evergreen-ink' => array(
+        'label' => __('Evergreen Ink', 'groove'),
+        'seed' => '#2C6650',
+      ),
+      'clay-signal' => array(
+        'label' => __('Clay Signal', 'groove'),
+        'seed' => '#A3553D',
+      ),
+      'berry-graphite' => array(
+        'label' => __('Berry Graphite', 'groove'),
+        'seed' => '#6E4969',
+      ),
+      'deep-ultramarine' => array(
+        'label' => __('Deep Ultramarine', 'groove'),
+        'seed' => '#355E9D',
+      ),
+    );
+  }
+
+  static function get_default_newsletter_theme_color_preset()
+  {
+    $presets = Utils::get_newsletter_theme_color_presets();
+    $default = (string) array_key_first($presets);
+
+    return $default !== '' ? $default : 'coastal-slate';
+  }
+
+  static function sanitize_newsletter_theme_color_preset($preset_key)
+  {
+    $preset_key = is_string($preset_key) ? sanitize_key($preset_key) : '';
+    $presets = Utils::get_newsletter_theme_color_presets();
+
+    if (!isset($presets[$preset_key])) {
+      return Utils::get_default_newsletter_theme_color_preset();
+    }
+
+    return $preset_key;
+  }
+
+  static function get_folio_newsletter_theme_color_preset($folio_id)
+  {
+    $folio_id = (int) $folio_id;
+    if ($folio_id <= 0) {
+      return Utils::get_default_newsletter_theme_color_preset();
+    }
+
+    $saved = (string) get_post_meta($folio_id, 'newsletter_theme_preset', true);
+    return Utils::sanitize_newsletter_theme_color_preset($saved);
   }
 
   static function get_folio_id()
@@ -275,7 +360,7 @@ class Utils
       return '';
     return $post->post_name
       ? $post->post_name
-      : preg_replace('/\s+/', '-', strtolower($post->post_title ?? ''));
+      : sanitize_title((string) ($post->post_title ?? ''));
   }
 
   static function get_folio_permalink($post, $prefix)
@@ -324,6 +409,30 @@ class Utils
     }
 
     return $current_path;
+  }
+
+  static function get_folio_slug_from_current_path()
+  {
+    $current_path = Utils::get_current_path();
+    $base_slug = Utils::get_folio_base_slug();
+    $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)(?:/page/.*)?/?$#';
+
+    if (!preg_match($pattern, $current_path, $matches)) {
+      return '';
+    }
+
+    return isset($matches[1]) ? rtrim((string) $matches[1], '/') : '';
+  }
+
+  static function get_folio_id_from_current_path()
+  {
+    $folio_slug = Utils::get_folio_slug_from_current_path();
+    if ($folio_slug === '') {
+      return 0;
+    }
+
+    $folio_post = Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+    return $folio_post ? (int) $folio_post->ID : 0;
   }
 
   static function is_groove_post_name_url()
@@ -408,15 +517,29 @@ class Utils
     if (empty($post_name)) {
       $post_name = Utils::get_groove_post_name();
     }
-
-
-
-    $wp_query = new \WP_Query(array(
+    $query_args = array(
       'post_type' => $post_type,
       'name' => $post_name,
       'posts_per_page' => 1,
       'post_status' => Utils::get_viewable_post_statuses(),
-    ));
+    );
+
+    $scoped_folio_id = 0;
+    if ($post_type === 'groove_folio_page') {
+      $scoped_folio_id = Utils::get_folio_id_from_current_path();
+      if ($scoped_folio_id > 0) {
+        $query_args['meta_query'] = array(
+          array(
+            'key' => 'folio_id',
+            'value' => $scoped_folio_id,
+            'compare' => '=',
+            'type' => 'NUMERIC',
+          ),
+        );
+      }
+    }
+
+    $wp_query = new \WP_Query($query_args);
 
     $post = $wp_query->post;
 
@@ -433,15 +556,23 @@ class Utils
       $fallback_query = new \WP_Query(array(
         'post_type' => $post_type,
         'posts_per_page' => -1,
-        'post_status' => $fallback_statuses
+        'post_status' => $fallback_statuses,
+        'meta_query' => $scoped_folio_id > 0
+          ? array(
+            array(
+              'key' => 'folio_id',
+              'value' => $scoped_folio_id,
+              'compare' => '=',
+              'type' => 'NUMERIC',
+            ),
+          )
+          : array(),
       ));
       foreach ($fallback_query->posts as $p) {
-        if (empty($p->post_name)) {
-          $slug = preg_replace('/\s+/', '-', strtolower($p->post_title ?? ''));
-          if ($slug === $post_name) {
-            $post = $p;
-            break;
-          }
+        $slug = Utils::get_post_slug($p);
+        if ($slug === $post_name) {
+          $post = $p;
+          break;
         }
       }
     }

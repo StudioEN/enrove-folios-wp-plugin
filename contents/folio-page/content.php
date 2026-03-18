@@ -43,7 +43,7 @@ class Content extends BaseContent
       'show_in_nav_menus' => false,
       'has_archive' => false,
       // page-attributes gives us menu_order for drag-and-drop ordering within a folio.
-      'supports' => array('title', 'editor', 'thumbnail', 'custom-fields', 'excerpt', 'page-attributes'),
+      'supports' => array('title', 'editor', 'thumbnail', 'custom-fields', 'excerpt', 'page-attributes', 'revisions'),
       // Slug was 'folio pages' (with a space) — fixed to 'folio-page'.
       'rewrite' => array('slug' => 'folio-page', 'with_front' => false),
       'capability_type' => 'post',

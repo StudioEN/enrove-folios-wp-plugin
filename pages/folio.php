@@ -27,7 +27,33 @@ class Folio extends Page
   {
     $this->add_post_action('save_groove_folio_draft', 'save_folio_draft');
     $this->add_post_action('save_groove_folio', 'save_folio_publish');
+    $this->add_post_action('save_groove_folio_manual', 'save_folio_manual');
+    $this->add_post_action('save_groove_folio_unpublish', 'save_folio_unpublish');
     $this->add_post_action('auto_save_groove_folio', 'auto_save_folio');
+
+    $folio_id = (int) Utils::get_groove_post_id();
+    $folio_copy_link = '';
+    $is_published = false;
+    if ($folio_id > 0) {
+      $folio_post = get_post($folio_id);
+      if ($folio_post && $folio_post->post_type === 'groove_folio' && $folio_post->post_status === 'publish') {
+        $is_published = true;
+      }
+
+      $folio_copy_link = (string) Utils::get_folio_permalink($folio_post, '');
+      if ($folio_copy_link === '') {
+        $folio_copy_link = (string) Utils::get_folio_permalink_by_id($folio_id);
+      }
+    }
+
+    $preview_text = $is_published ? 'View' : 'Preview';
+    $preview_tooltip_text = $is_published ? __('View Folio', 'groove') : __('Preview Folio', 'groove');
+    $preview_link = $is_published
+      ? $folio_copy_link
+      : Utils::get_folio_permalink_by_id(Utils::get_groove_post_id());
+    $publish_button_text = $is_published ? 'Unpublish' : 'Publish';
+    $publish_button_type = $is_published ? 'secondary' : 'primary';
+    $publish_button_action = $is_published ? 'save_groove_folio_unpublish' : 'save_groove_folio';
 
     $this->left_button_items = [
       array(
@@ -45,22 +71,46 @@ class Folio extends Page
 
     $this->right_button_items = [
       array(
-        'text' => 'Preview',
+        'text' => $preview_text,
         'type' => 'secondary',
         'ui' => 'wp',
-        'link' => Utils::get_folio_permalink_by_id(Utils::get_groove_post_id())
+        'link' => $preview_link,
+        'class' => 'g-tooltip-button',
+        'attrs' => array(
+          'id' => 'g-folio-preview-link',
+          'title' => $preview_tooltip_text,
+          'data-tooltip-text' => $preview_tooltip_text,
+          'aria-label' => $preview_tooltip_text,
+        ),
       ),
       array(
-        'text' => 'Save Draft',
+        'text' => 'Save',
         'type' => 'secondary',
         'ui' => 'wp',
-        'action' => 'save_groove_folio_draft'
+        'action' => 'save_groove_folio_manual'
       ),
       array(
-        'text' => 'Publish',
-        'type' => 'primary',
+        'text' => $publish_button_text,
+        'type' => $publish_button_type,
         'ui' => 'wp',
-        'action' => 'save_groove_folio'
+        'action' => $publish_button_action
+      ),
+      array(
+        'text' => __('Copy link', 'groove'),
+        'type' => 'secondary',
+        'ui' => 'wp',
+        'action' => 'copy_groove_folio_link',
+        'button_type' => 'button',
+        'icon' => 'dashicons-admin-links',
+        'class' => 'g-tooltip-button',
+        'attrs' => array(
+          'id' => 'g-copy-folio-link',
+          'aria-label' => __('Copy link', 'groove'),
+          'data-copy-link' => $folio_copy_link,
+          'data-copy-text' => __('Copy link', 'groove'),
+          'data-copied-text' => __('Copied', 'groove'),
+          'data-tooltip-text' => __('Copy link', 'groove'),
+        ),
       )
     ];
 
@@ -280,17 +330,40 @@ class Folio extends Page
     $this->save_folio('publish');
   }
 
+  public function save_folio_unpublish()
+  {
+    $this->save_folio('draft');
+  }
+
+  public function save_folio_manual()
+  {
+    $id = isset($_POST['folio_id']) ? (int) wp_unslash($_POST['folio_id']) : 0;
+    $this->save_folio($this->get_current_folio_status($id, 'draft'));
+  }
+
   public function auto_save_folio()
   {
     $id = isset($_POST['folio_id']) ? (int) wp_unslash($_POST['folio_id']) : 0;
-    $current_status = 'draft';
-    if ($id) {
-      $post = get_post($id);
-      if ($post && $post->post_status === 'publish') {
-        $current_status = 'publish';
-      }
+    $this->save_folio($this->get_current_folio_status($id, 'draft'));
+  }
+
+  private function get_current_folio_status($id, $fallback_status = 'draft')
+  {
+    if (!$id) {
+      return $fallback_status;
     }
-    $this->save_folio($current_status);
+
+    $post = get_post($id);
+    if (!$post || $post->post_type !== 'groove_folio') {
+      return $fallback_status;
+    }
+
+    $status = get_post_status($post);
+    if (!is_string($status) || $status === '' || $status === 'trash') {
+      return $fallback_status;
+    }
+
+    return $status;
   }
 
   public function save_folio($post_status = 'publish')
@@ -323,22 +396,61 @@ class Folio extends Page
     $fields = new FolioFields($folio_post);
 
     $post_title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : $fields->title;
-    $post_author = isset($_POST['author']) ? (int) wp_unslash($_POST['author']) : $fields->author;
+    $post_author = $fields->author;
     $subtitle = isset($_POST['subtitle']) ? sanitize_text_field(wp_unslash($_POST['subtitle'])) : $fields->subtitle;
-    $password = isset($_POST['password']) ? sanitize_text_field(wp_unslash($_POST['password'])) : $fields->password;
-    $copyright = isset($_POST['copyright']) ? sanitize_text_field(wp_unslash($_POST['copyright'])) : $fields->copyright;
-    $permission = $fields->permission;
-    if (isset($_POST['permission'])) {
-      $permission_raw = (string) wp_unslash($_POST['permission']);
-      $permission = in_array($permission_raw, array('on', '1', '2'), true) ? '2' : '4';
+    $byline = isset($_POST['byline']) ? (int) wp_unslash($_POST['byline']) : (int) $fields->byline;
+    if ($byline <= 0) {
+      $byline = 0;
+      $show_byline = '0';
+    } elseif (!get_userdata($byline)) {
+      $byline = $post_author;
+      $show_byline = '1';
+    } else {
+      $show_byline = '1';
     }
+    $copyright = isset($_POST['copyright']) ? sanitize_text_field(wp_unslash($_POST['copyright'])) : $fields->copyright;
     $use_folio = isset($_POST['use_folio']) ? (string) wp_unslash($_POST['use_folio']) : $fields->use_folio;
     $use_folio = $use_folio === '1' ? '1' : '0';
+    $show_logo = isset($_POST['show_logo']) ? (string) wp_unslash($_POST['show_logo']) : $fields->show_logo;
+    $show_logo = $show_logo === '1' ? '1' : '0';
     $theme_id = isset($_POST['theme_id']) ? sanitize_key(wp_unslash($_POST['theme_id'])) : $fields->theme_id;
-    $primary_font = isset($_POST['fonts']) ? (string) wp_unslash($_POST['fonts']) : $fields->fonts;
-    $primary_font = Utils::normalize_primary_font_key($primary_font);
+    $header_font = isset($_POST['header_font']) ? (string) wp_unslash($_POST['header_font']) : $fields->header_font;
+    $header_font = Utils::normalize_primary_font_key($header_font);
+    $body_font = isset($_POST['body_font']) ? (string) wp_unslash($_POST['body_font']) : $fields->body_font;
+    $body_font = Utils::normalize_primary_font_key($body_font);
     $on_this_page_label = isset($_POST['on_this_page_label']) ? (string) wp_unslash($_POST['on_this_page_label']) : $fields->on_this_page_label;
     $on_this_page_label = Utils::sanitize_on_this_page_label($on_this_page_label);
+    $proposal_version = isset($_POST['proposal_version']) ? sanitize_text_field(wp_unslash($_POST['proposal_version'])) : (string) ($fields->proposal_version ?? '');
+
+    // Auto-increment version on explicit publish if the user didn't manually change it.
+    $is_explicit_publish = isset($_POST['action']) && $_POST['action'] === 'save_groove_folio';
+    $stored_version = (string) ($fields->proposal_version ?? '');
+    if ($is_explicit_publish && $proposal_version === $stored_version && preg_match('/^(v?)(\d+)\.(\d+)$/', $proposal_version, $m)) {
+      $proposal_version = $m[1] . $m[2] . '.' . ((int) $m[3] + 1);
+    }
+
+    $proposal_status = $this->get_folio_status_label($post_status);
+    $proposal_prepared_for = isset($_POST['proposal_prepared_for']) ? sanitize_text_field(wp_unslash($_POST['proposal_prepared_for'])) : (string) ($fields->proposal_prepared_for ?? '');
+    $proposal_prepared_by = isset($_POST['proposal_prepared_by']) ? sanitize_text_field(wp_unslash($_POST['proposal_prepared_by'])) : (string) ($fields->proposal_prepared_by ?? '');
+    $proposal_contact_email = isset($_POST['proposal_contact_email']) ? sanitize_email(wp_unslash($_POST['proposal_contact_email'])) : (string) ($fields->proposal_contact_email ?? '');
+    $proposal_contact_name = isset($_POST['proposal_contact_name']) ? sanitize_text_field(wp_unslash($_POST['proposal_contact_name'])) : (string) ($fields->proposal_contact_name ?? '');
+    $proposal_contact_role = isset($_POST['proposal_contact_role']) ? sanitize_text_field(wp_unslash($_POST['proposal_contact_role'])) : (string) ($fields->proposal_contact_role ?? '');
+    $proposal_contact_phone = isset($_POST['proposal_contact_phone']) ? sanitize_text_field(wp_unslash($_POST['proposal_contact_phone'])) : (string) ($fields->proposal_contact_phone ?? '');
+    $proposal_contact_linkedin = isset($_POST['proposal_contact_linkedin']) ? esc_url_raw(wp_unslash($_POST['proposal_contact_linkedin'])) : (string) ($fields->proposal_contact_linkedin ?? '');
+    $proposal_contacts = isset($_POST['proposal_contacts']) ? sanitize_textarea_field(wp_unslash($_POST['proposal_contacts'])) : (string) ($fields->proposal_contacts ?? '');
+    $proposal_client_name = isset($_POST['proposal_client_name']) ? sanitize_text_field(wp_unslash($_POST['proposal_client_name'])) : (string) ($fields->proposal_client_name ?? '');
+    $proposal_client_logo_url = isset($_POST['proposal_client_logo_url']) ? esc_url_raw(wp_unslash($_POST['proposal_client_logo_url'])) : (string) ($fields->proposal_client_logo_url ?? '');
+    $proposal_date = isset($_POST['proposal_date']) ? sanitize_text_field(wp_unslash($_POST['proposal_date'])) : (string) ($fields->proposal_date ?? '');
+    if (!preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $proposal_date)) {
+      $proposal_date = '';
+    }
+    $proposal_show_in_page_nav = isset($_POST['proposal_show_in_page_nav']) ? (string) wp_unslash($_POST['proposal_show_in_page_nav']) : (string) ($fields->proposal_show_in_page_nav ?? '1');
+    $proposal_show_in_page_nav = $proposal_show_in_page_nav === '0' ? '0' : '1';
+    $proposal_color_scheme = isset($_POST['proposal_color_scheme']) ? (string) wp_unslash($_POST['proposal_color_scheme']) : (string) ($fields->proposal_color_scheme ?? 'default');
+    $proposal_color_scheme = $proposal_color_scheme === 'dynamic' ? 'dynamic' : 'default';
+    $proposal_open_text = isset($_POST['proposal_open_text']) ? sanitize_text_field(wp_unslash($_POST['proposal_open_text'])) : (string) ($fields->proposal_open_text ?? '');
+    $collection_tags_raw = isset($_POST['collection_tags']) ? sanitize_text_field(wp_unslash($_POST['collection_tags'])) : '';
+    $collection_tag_names = array_values(array_unique(array_filter(array_map('trim', explode(',', $collection_tags_raw)))));
 
     // feature_image_id: empty-string means 'clear image', positive int means 'set image'.
     // A missing or null field means 'keep existing' — we do NOT delete in that case.
@@ -358,7 +470,8 @@ class Folio extends Page
     $update_args = array(
       'ID' => $id,
       'post_status' => $post_status,
-      'post_password' => $password,
+      // Password protection is temporarily disabled for folios.
+      'post_password' => '',
       'post_title' => $post_title,
       'post_name' => $post_name,
       'post_author' => $post_author,
@@ -366,15 +479,67 @@ class Folio extends Page
       'meta_input' => array(
         'theme_id' => $theme_id,
         'subtitle' => $subtitle,
+        'byline' => $byline,
+        'show_byline' => $show_byline,
         'copyright' => $copyright,
-        'permission' => $permission,
         'use_folio' => $use_folio,
-        'fonts' => $primary_font,
+        'show_logo' => $show_logo,
+        // Keep legacy `fonts` synced for existing theme CSS/older installs.
+        'fonts' => $body_font,
+        'header_font' => $header_font,
+        'body_font' => $body_font,
         'on_this_page_label' => $on_this_page_label,
+        'proposal_version' => $proposal_version,
+        'proposal_status' => $proposal_status,
+        'proposal_prepared_for' => $proposal_prepared_for,
+        'proposal_prepared_by' => $proposal_prepared_by,
+        'proposal_contact_email' => $proposal_contact_email,
+        'proposal_contact_name' => $proposal_contact_name,
+        'proposal_contact_role' => $proposal_contact_role,
+        'proposal_contact_phone' => $proposal_contact_phone,
+        'proposal_contact_linkedin' => $proposal_contact_linkedin,
+        'proposal_contacts' => $proposal_contacts,
+        'proposal_client_name' => $proposal_client_name,
+        'proposal_client_logo_url' => $proposal_client_logo_url,
+        'proposal_date' => $proposal_date,
+        'proposal_show_in_page_nav' => $proposal_show_in_page_nav,
+        'proposal_color_scheme' => $proposal_color_scheme,
+        'proposal_open_text' => $proposal_open_text,
       )
     );
 
     $folio_result = wp_update_post($update_args);
+
+    if (!is_wp_error($folio_result)) {
+      wp_set_object_terms($id, $collection_tag_names, 'groove_collection_tag', false);
+    }
+
+    // Record a revision log entry on explicit publish.
+    if ($is_explicit_publish && !is_wp_error($folio_result)) {
+      $revision_log_raw = get_post_meta($id, 'proposal_revision_log', true);
+      $revision_log = is_string($revision_log_raw) && $revision_log_raw !== '' ? json_decode($revision_log_raw, true) : array();
+      if (!is_array($revision_log)) {
+        $revision_log = array();
+      }
+
+      $revision_note = isset($_POST['proposal_revision_note']) ? sanitize_text_field(wp_unslash($_POST['proposal_revision_note'])) : '';
+      $current_user = wp_get_current_user();
+
+      $revision_log[] = array(
+        'version' => $proposal_version,
+        'status'  => $proposal_status,
+        'date'    => gmdate('c'),
+        'user'    => $current_user->display_name ?: $current_user->user_login,
+        'note'    => $revision_note,
+      );
+
+      // Cap at 50 entries, keeping the most recent.
+      if (count($revision_log) > 50) {
+        $revision_log = array_slice($revision_log, -50);
+      }
+
+      update_post_meta($id, 'proposal_revision_log', wp_json_encode($revision_log));
+    }
 
     if ($feature_image_id === 0) {
       // Explicitly cleared (value was sent as empty string -> 0).
@@ -390,6 +555,9 @@ class Folio extends Page
       update_post_meta($id, 'logo_id', $logo_id);
     }
     // $logo_id === -1 means field was not sent; keep existing logo.
+
+    // Newsletter colors are now generated per-visitor from local time.
+    delete_post_meta($id, 'newsletter_theme_preset');
 
     if ($post_status === 'publish' && !is_wp_error($folio_result)) {
       $pages_query = new \WP_Query(array(
@@ -442,8 +610,23 @@ class Folio extends Page
     return esc_html__('Folio', 'groove');
   }
 
+  private function get_collection_tag_names($folio_id)
+  {
+    $terms = get_the_terms((int) $folio_id, 'groove_collection_tag');
+    if (is_wp_error($terms) || empty($terms)) {
+      return array();
+    }
+
+    return array_values(array_filter(array_map(function ($term) {
+      return $term instanceof \WP_Term ? (string) $term->name : '';
+    }, $terms)));
+  }
+
   public function create_tabs()
   {
+    $fields = $this->get_fields();
+    $is_proposal_theme = (string) ($fields->theme_id ?? '') === 'groove-proposal';
+
     $tabs = [
       'setup' => [
         'label' => esc_html__('Setup', 'groove'),
@@ -452,6 +635,13 @@ class Folio extends Page
         'label' => esc_html__('Pages', 'groove'),
       ]
     ];
+
+    if ($is_proposal_theme) {
+      $tabs['proposal'] = [
+        'label' => esc_html__('Proposal', 'groove'),
+        'attrs' => ['data-theme-target' => 'groove-proposal'],
+      ];
+    }
 
     return $tabs;
   }
@@ -476,6 +666,8 @@ class Folio extends Page
 
         if ('setup' === $tab_id) {
           $this->display_tab_fields();
+        } elseif ('proposal' === $tab_id) {
+          $this->display_tab_proposal();
         } else {
           $this->display_tab_pages();
         }
@@ -494,7 +686,6 @@ class Folio extends Page
       <input hidden name="folio_id" value="<?php echo esc_attr($fields->ID) ?>" />
       <div class="lg:col-span-2 space-y-6">
         <?php $this->display_essentials() ?>
-        <?php $this->display_theme_selection() ?>
       </div>
 
       <div class="space-y-6">
@@ -505,13 +696,333 @@ class Folio extends Page
     <?php
   }
 
+  public function display_tab_proposal()
+  {
+    $fields = $this->get_fields();
+    $proposal_version          = (string) ($fields->proposal_version ?? '');
+    $proposal_status           = $this->get_folio_status_label((string) ($this->folio->post_status ?? 'draft'));
+    $proposal_prepared_for     = (string) ($fields->proposal_prepared_for ?? '');
+    $proposal_contact_email    = (string) ($fields->proposal_contact_email ?? '');
+    $proposal_contact_name     = (string) ($fields->proposal_contact_name ?? '');
+    $proposal_contact_role     = (string) ($fields->proposal_contact_role ?? '');
+    $proposal_contact_phone    = (string) ($fields->proposal_contact_phone ?? '');
+    $proposal_contact_linkedin = (string) ($fields->proposal_contact_linkedin ?? '');
+    $proposal_contacts         = (string) ($fields->proposal_contacts ?? '');
+    $proposal_client_name      = (string) ($fields->proposal_client_name ?? '');
+    $proposal_client_logo_url  = (string) ($fields->proposal_client_logo_url ?? '');
+    $proposal_date             = (string) ($fields->proposal_date ?? '');
+    $proposal_show_in_page_nav = (string) ($fields->proposal_show_in_page_nav ?? '1') !== '0';
+    $proposal_color_scheme     = (string) ($fields->proposal_color_scheme ?? 'default');
+    $proposal_color_scheme     = $proposal_color_scheme === 'dynamic' ? 'dynamic' : 'default';
+    $proposal_open_text        = (string) ($fields->proposal_open_text ?? '');
+    ?>
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Left column: Document + Client -->
+      <div class="min-w-0 space-y-6">
+
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Document', 'groove'); ?></h3>
+          </div>
+          <div class="p-4 space-y-4">
+            <div>
+              <label for="proposal_version" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Version', 'groove'); ?></label>
+              <input type="text" id="proposal_version" name="proposal_version"
+                value="<?php echo esc_attr($proposal_version); ?>"
+                placeholder="v1.0"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Auto-increments on publish. Edit to override.', 'groove'); ?></p>
+              <button
+                type="button"
+                class="button-link mt-2"
+                data-version-history-open>
+                <?php esc_html_e('View version history', 'groove'); ?>
+              </button>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Status', 'groove'); ?></label>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-sm font-medium text-gray-700"><?php echo esc_html($proposal_status ?: __('Draft', 'groove')); ?></span>
+              </div>
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Read-only. Mirrors the folio publish status.', 'groove'); ?></p>
+            </div>
+            <div>
+              <label for="proposal_date" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Date', 'groove'); ?></label>
+              <input type="date" id="proposal_date" name="proposal_date"
+                value="<?php echo esc_attr($proposal_date); ?>"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            </div>
+            <div>
+              <label for="proposal_revision_note" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Revision Note', 'groove'); ?></label>
+              <input type="text" id="proposal_revision_note" name="proposal_revision_note"
+                value=""
+                placeholder="<?php esc_attr_e('Optional note for this version', 'groove'); ?>"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Included in version history when you publish. Not saved between sessions.', 'groove'); ?></p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Client', 'groove'); ?></h3>
+          </div>
+          <div class="p-4 space-y-4">
+            <div>
+              <label for="proposal_client_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Name', 'groove'); ?></label>
+              <input type="text" id="proposal_client_name" name="proposal_client_name"
+                value="<?php echo esc_attr($proposal_client_name); ?>"
+                placeholder="Client Name"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Logo', 'groove'); ?></label>
+              <?php
+                $default_client_logo_url = esc_url(GROOVE_URL . 'themes/groove-proposal/assets/images/theme-g-logo.png');
+                $client_logo_preview = $proposal_client_logo_url !== '' ? esc_url($proposal_client_logo_url) : '';
+              ?>
+              <input type="hidden" id="proposal_client_logo_url" name="proposal_client_logo_url"
+                value="<?php echo esc_attr($proposal_client_logo_url); ?>" />
+              <div class="flex items-start space-x-4">
+                <div class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"
+                  id="g-client-logo-preview-frame">
+                  <img id="g-client-logo-preview" class="g-folio__media-preview-image"
+                    src="<?php echo $client_logo_preview !== '' ? $client_logo_preview : $default_client_logo_url; ?>" />
+                </div>
+                <div class="flex flex-col space-y-2">
+                  <button type="button" id="g-client-logo-select" class="button button-secondary"><?php echo $client_logo_preview !== '' ? esc_html__('Replace logo', 'groove') : esc_html__('Select logo', 'groove'); ?></button>
+                  <button type="button" id="g-client-logo-default" data-default-url="<?php echo $default_client_logo_url; ?>"
+                    class="button-link <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Use default', 'groove'); ?></button>
+                  <button type="button" id="g-client-logo-remove"
+                    class="button-link text-red-600 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Remove', 'groove'); ?></button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label for="proposal_prepared_for" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                <?php esc_html_e('Prepared For', 'groove'); ?>
+                <span class="font-normal text-gray-400 normal-case tracking-normal ml-1">(<?php esc_html_e('legacy', 'groove'); ?>)</span>
+              </label>
+              <input type="text" id="proposal_prepared_for" name="proposal_prepared_for"
+                value="<?php echo esc_attr($proposal_prepared_for); ?>"
+                placeholder="Client Name"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Superseded by Client Name above when set.', 'groove'); ?></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right column: Contact + Additional Contacts + Behaviour -->
+      <div class="min-w-0 space-y-6">
+
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Primary Contact', 'groove'); ?></h3>
+          </div>
+          <div class="p-4 space-y-4">
+            <div>
+              <label for="proposal_contact_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Name', 'groove'); ?></label>
+              <input type="text" id="proposal_contact_name" name="proposal_contact_name"
+                value="<?php echo esc_attr($proposal_contact_name); ?>"
+                placeholder="Alex Morgan"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            </div>
+            <div>
+              <label for="proposal_contact_role" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Role', 'groove'); ?></label>
+              <input type="text" id="proposal_contact_role" name="proposal_contact_role"
+                value="<?php echo esc_attr($proposal_contact_role); ?>"
+                placeholder="Engagement Lead"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            </div>
+            <div>
+              <label for="proposal_contact_email" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Email', 'groove'); ?></label>
+              <input type="email" id="proposal_contact_email" name="proposal_contact_email"
+                value="<?php echo esc_attr($proposal_contact_email); ?>"
+                placeholder="hello@example.com"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            </div>
+            <div>
+              <label for="proposal_contact_phone" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Phone', 'groove'); ?></label>
+              <input type="text" id="proposal_contact_phone" name="proposal_contact_phone"
+                value="<?php echo esc_attr($proposal_contact_phone); ?>"
+                placeholder="+1 (555) 123-4567"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Additional Contacts', 'groove'); ?></h3>
+          </div>
+          <div class="p-4">
+            <textarea id="proposal_contacts" name="proposal_contacts" rows="5"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="Name | Role | email@example.com | +1 555-555-5555 | https://linkedin.com/in/username&#10;Name | Role | email@example.com"><?php echo esc_textarea($proposal_contacts); ?></textarea>
+            <p class="mt-2 mb-0 text-xs text-gray-500">
+              <?php esc_html_e('Optional. One contact per line using pipes: Name | Role | Email | Phone | LinkedIn URL. When set, replaces the primary contact above.', 'groove'); ?>
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Behaviour', 'groove'); ?></h3>
+          </div>
+          <div class="p-4 space-y-4">
+            <div>
+              <label for="proposal_open_text" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                <?php esc_html_e('Cover CTA Text', 'groove'); ?>
+              </label>
+              <input type="text" id="proposal_open_text" name="proposal_open_text"
+                value="<?php echo esc_attr($proposal_open_text); ?>"
+                placeholder="<?php esc_attr_e('Open proposal', 'groove'); ?>"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+              <p class="mt-2 mb-0 text-xs text-gray-500">
+                <?php esc_html_e('Optional. Defaults to “Open proposal” on the cover CTA.', 'groove'); ?>
+              </p>
+            </div>
+            <div>
+              <label for="proposal_color_scheme" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                <?php esc_html_e('Color Scheme', 'groove'); ?>
+              </label>
+              <select id="proposal_color_scheme" name="proposal_color_scheme"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <option value="default" <?php selected($proposal_color_scheme, 'default'); ?>><?php esc_html_e('Default', 'groove'); ?></option>
+                <option value="dynamic" <?php selected($proposal_color_scheme, 'dynamic'); ?>><?php esc_html_e('Dynamic (from feature image)', 'groove'); ?></option>
+              </select>
+              <p class="mt-2 mb-0 text-xs text-gray-500">
+                <?php esc_html_e('Dynamic mode extracts accent colors from the folio feature image and applies them across cover and pages.', 'groove'); ?>
+              </p>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                <?php esc_html_e('In-Page Navigation', 'groove'); ?>
+              </label>
+              <div class="flex items-center gap-2">
+                <input type="hidden" name="proposal_show_in_page_nav" value="0" />
+                <input type="checkbox" id="g-proposal-show-in-page-nav" name="proposal_show_in_page_nav" value="1"
+                  class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  <?php echo checked($proposal_show_in_page_nav, true, false); ?> />
+                <label for="g-proposal-show-in-page-nav" class="text-sm text-gray-700">
+                  <?php esc_html_e('Show in-page section navigation', 'groove'); ?>
+                </label>
+              </div>
+              <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('When enabled, an "On this page" sidebar shows links to sections within each page.', 'groove'); ?></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <?php $this->display_version_history(); ?>
+    <?php
+  }
+
+  public function display_version_history()
+  {
+    $fields = $this->get_fields();
+    $log_raw = (string) ($fields->proposal_revision_log ?? '[]');
+    $revision_log = json_decode($log_raw, true);
+    if (!is_array($revision_log)) {
+      $revision_log = array();
+    }
+    // Show newest first.
+    $revision_log = array_reverse($revision_log);
+    $total = count($revision_log);
+    $visible_limit = 10;
+    ?>
+    <div
+      id="g-version-history-modal"
+      class="g-theme-picker-modal hidden"
+      aria-hidden="true">
+      <div class="g-theme-picker-modal__backdrop" data-version-history-close></div>
+      <div class="g-theme-picker-modal__frame g-version-history-modal__frame">
+        <div class="g-theme-picker-modal__header">
+          <div class="g-theme-picker-modal__heading">
+            <h3 class="g-theme-picker-modal__title"><?php esc_html_e('Version History', 'groove'); ?></h3>
+            <p class="g-theme-picker-modal__subtitle"><?php esc_html_e('History is recorded each time you publish the proposal.', 'groove'); ?></p>
+          </div>
+          <button
+            type="button"
+            class="g-theme-picker-modal__close"
+            data-version-history-close
+            aria-label="<?php esc_attr_e('Close version history', 'groove'); ?>">
+            <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="g-theme-picker-modal__body">
+        <?php if ($total === 0) : ?>
+          <p class="text-sm text-gray-400 m-0"><?php esc_html_e('No version history yet. History is recorded when you publish.', 'groove'); ?></p>
+        <?php else : ?>
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                <th class="pb-2 pr-3"><?php esc_html_e('Version', 'groove'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('Status', 'groove'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('Date', 'groove'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('By', 'groove'); ?></th>
+                <th class="pb-2"><?php esc_html_e('Note', 'groove'); ?></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($revision_log as $i => $entry) :
+                $hidden = $i >= $visible_limit && $total > $visible_limit;
+                $version = esc_html($entry['version'] ?? '');
+                $status = esc_html($entry['status'] ?? '');
+                $date_raw = $entry['date'] ?? '';
+                $date_display = $date_raw ? esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($date_raw))) : '';
+                $user = esc_html($entry['user'] ?? '');
+                $note = esc_html($entry['note'] ?? '');
+              ?>
+                <tr class="border-b border-gray-100 <?php echo $hidden ? 'g-revision-row-hidden hidden' : ''; ?>">
+                  <td class="py-1.5 pr-3 font-medium text-gray-800"><?php echo $version; ?></td>
+                  <td class="py-1.5 pr-3 text-gray-600"><?php echo $status; ?></td>
+                  <td class="py-1.5 pr-3 text-gray-500 whitespace-nowrap"><?php echo $date_display; ?></td>
+                  <td class="py-1.5 pr-3 text-gray-500"><?php echo $user; ?></td>
+                  <td class="py-1.5 text-gray-500"><?php echo $note; ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+          <?php if ($total > $visible_limit) : ?>
+            <button type="button"
+              class="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer bg-transparent border-0 p-0"
+              onclick="document.querySelectorAll('.g-revision-row-hidden').forEach(function(r){r.classList.toggle('hidden')});this.textContent=this.textContent==='<?php echo esc_js(__('Show all', 'groove')); ?>'?'<?php echo esc_js(__('Show less', 'groove')); ?>':'<?php echo esc_js(__('Show all', 'groove')); ?>'">
+              <?php esc_html_e('Show all', 'groove'); ?>
+            </button>
+          <?php endif; ?>
+        <?php endif; ?>
+        </div>
+        <div class="g-theme-picker-modal__footer">
+          <button
+            type="button"
+            class="g-theme-picker-modal__done"
+            data-version-history-close>
+            <?php esc_html_e('Done', 'groove'); ?>
+          </button>
+        </div>
+      </div>
+    </div>
+    <?php
+  }
+
   public function display_customization()
   {
     $fields = $this->get_fields();
-    $primary_font = Utils::normalize_primary_font_key($fields->fonts);
+    $header_font = Utils::normalize_primary_font_key($fields->header_font);
+    $body_font = Utils::normalize_primary_font_key($fields->body_font);
     $available_fonts = Utils::get_supported_primary_fonts();
     $on_this_page_label = isset($fields->on_this_page_label) ? (string) $fields->on_this_page_label : '';
     $on_this_page_placeholder = Utils::get_default_on_this_page_label();
+    $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
+    $current_id = (string) ($fields->theme_id ?? '');
+    if ($current_id === '' || !isset($all_themes[$current_id])) {
+      $current_id = !empty($all_themes) ? (string) array_key_first($all_themes) : '';
+    }
+    $current_theme = $current_id !== '' && isset($all_themes[$current_id]) ? $all_themes[$current_id] : null;
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
@@ -519,24 +1030,75 @@ class Folio extends Page
       </div>
       <div class="p-4 space-y-4">
         <div>
-          <label for="g-primary-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PRIMARY
-            FONT</label>
-          <div class="flex items-center gap-2">
-            <select id="g-primary-font" name="fonts"
-              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-              <option value="">Theme Default</option>
-              <?php foreach ($available_fonts as $font_key => $font): ?>
-                <option value="<?php echo esc_attr($font_key); ?>" <?php selected($primary_font, $font_key); ?>>
-                  <?php echo esc_html($font['label']); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
-            <button type="button" id="g-reset-primary-font"
-              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              aria-label="Reset to theme default font" title="Reset to theme default font">
-              <span class="dashicons dashicons-undo" aria-hidden="true"></span>
-            </button>
+          <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Theme', 'groove'); ?></label>
+          <div class="g-theme-picker-summary">
+            <div class="g-theme-picker-summary__layout">
+              <div class="g-theme-picker-summary__thumb">
+                <img
+                  src="<?php echo esc_url($current_theme['thumbnail_url'] ?? ''); ?>"
+                  alt="<?php echo esc_attr($current_theme['name'] ?? __('Selected theme', 'groove')); ?>"
+                  class="g-theme-picker-summary__thumb-image"
+                  data-theme-summary-thumbnail />
+              </div>
+              <div class="g-theme-picker-summary__content">
+                <p class="g-theme-picker-summary__name" data-theme-summary-name><?php echo esc_html($current_theme['name'] ?? __('No theme selected', 'groove')); ?></p>
+                <p class="g-theme-picker-summary__description" data-theme-summary-description><?php echo esc_html($current_theme['description'] ?? ''); ?></p>
+                <button
+                  type="button"
+                  class="button button-secondary g-theme-picker-summary__button"
+                  data-theme-picker-open>
+                  <?php esc_html_e('Change theme', 'groove'); ?>
+                </button>
+              </div>
+            </div>
           </div>
+          <input type="hidden" name="theme_id" id="g-active-theme-id" value="<?php echo esc_attr($current_id); ?>" />
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label for="g-header-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Primary
+              FONT</label>
+            <div class="flex items-center gap-2">
+              <select id="g-header-font" name="header_font"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <option value="">Theme Default</option>
+                <?php foreach ($available_fonts as $font_key => $font): ?>
+                  <option value="<?php echo esc_attr($font_key); ?>" <?php selected($header_font, $font_key); ?>>
+                    <?php echo esc_html($font['label']); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+              <button type="button" id="g-reset-header-font"
+                class="g-tooltip-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                aria-label="<?php esc_attr_e('Reset font', 'groove'); ?>"
+                data-tooltip-text="<?php esc_attr_e('Reset font', 'groove'); ?>">
+                <span class="dashicons dashicons-undo" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label for="g-body-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Secondary
+              FONT</label>
+            <div class="flex items-center gap-2">
+              <select id="g-body-font" name="body_font"
+                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                <option value="">Theme Default</option>
+                <?php foreach ($available_fonts as $font_key => $font): ?>
+                  <option value="<?php echo esc_attr($font_key); ?>" <?php selected($body_font, $font_key); ?>>
+                    <?php echo esc_html($font['label']); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+              <button type="button" id="g-reset-body-font"
+                class="g-tooltip-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                aria-label="<?php esc_attr_e('Reset font', 'groove'); ?>"
+                data-tooltip-text="<?php esc_attr_e('Reset font', 'groove'); ?>">
+                <span class="dashicons dashicons-undo" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+          <p class="m-0 text-xs text-gray-500">Primary font styles titles and headings. Secondary font styles the body text.
+          </p>
         </div>
         <div>
           <label for="g-on-this-page-label"
@@ -549,15 +1111,15 @@ class Folio extends Page
         </div>
       </div>
     </div>
+    <?php $this->display_theme_selection(); ?>
     <?php
   }
+
 
   public function display_publishing()
   {
     $fields = $this->get_fields();
 
-    $permission = $fields->permission;
-    $is_allowed_download = $permission == '2';
     $is_using_folio = $fields->use_folio !== '0';
 
     $permalink = isset($fields->permalink) ? $fields->permalink : '';
@@ -573,18 +1135,6 @@ class Folio extends Page
           <input type="checkbox" id="use_folio" name="use_folio" value="1"
             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($is_using_folio, true, false) ?> />
           <label for="use_folio" class="ml-2 block text-sm text-gray-900">Use Folio Cover</label>
-        </div>
-        <div class="flex items-center">
-          <input type="checkbox" id="permission" name="permission"
-            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($is_allowed_download, 1, false) ?> />
-          <label for="permission" class="ml-2 block text-sm text-gray-900">Allow PDF Downloads</label>
-        </div>
-        <div>
-          <label for="password"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PASSWORD</label>
-          <input type="password" id="password" placeholder="Enter your password" name="password"
-            value="<?php echo esc_attr($fields->password) ?>"
-            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
         <div>
           <label for="permalink" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PERMALINK
@@ -611,6 +1161,18 @@ class Folio extends Page
 
     $subtitle = isset($fields->subtitle) ? $fields->subtitle : '';
     $copyright = isset($fields->copyright) ? $fields->copyright : '';
+    $collection_tags = implode(', ', $this->get_collection_tag_names((int) $fields->ID));
+    $all_collection_tags_terms = get_terms(array('taxonomy' => 'groove_collection_tag', 'hide_empty' => false));
+    $all_collection_tag_names_list = is_wp_error($all_collection_tags_terms) ? [] : array_map(function ($t) {
+      return $t->name;
+    }, $all_collection_tags_terms);
+    $collection_tags_settings_url = add_query_arg(
+      array(
+        'page' => 'groove-settings',
+        'tab_key' => 'collections',
+      ),
+      admin_url('admin.php')
+    );
 
     // Get current theme info for default image fallback
     $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
@@ -619,6 +1181,7 @@ class Folio extends Page
     $theme_logo_url = $current_theme["logo_url"] ?? '';
     $feature_image_src = ($feature_image instanceof \WP_Post && !empty($feature_image->guid)) ? $feature_image->guid : $theme_cover_url;
     $logo_image_src = ($logo instanceof \WP_Post && !empty($logo->guid)) ? $logo->guid : $theme_logo_url;
+    $show_logo = (string) ($fields->show_logo ?? '1') !== '0';
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
@@ -637,6 +1200,21 @@ class Folio extends Page
           <input placeholder="Option" type="text" id="subtitle" name="subtitle" value="<?php echo esc_attr($subtitle) ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
+        <div>
+          <label for="collection_tags"
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Collection Tags', 'groove'); ?></label>
+          <input type="text" id="collection_tags" name="collection_tags" value="<?php echo esc_attr($collection_tags) ?>"
+            placeholder="<?php esc_attr_e('Magazine, 2026, Weekly', 'groove'); ?>"
+            autocomplete="off"
+            data-tags="<?php echo esc_attr(wp_json_encode($all_collection_tag_names_list)); ?>"
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+          <p class="mt-1 mb-0 text-xs text-gray-400">
+            <?php esc_html_e('Comma-separated tags. Manage available tags from Settings.', 'groove'); ?>
+            <?php if (current_user_can('manage_options')): ?>
+              <a href="<?php echo esc_url($collection_tags_settings_url); ?>"><?php esc_html_e('Open Collections settings', 'groove'); ?></a>
+            <?php endif; ?>
+          </p>
+        </div>
         <div class="g-folio__media-row">
           <div class="g-folio__media-col">
             <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">FEATURE IMAGE</label>
@@ -645,8 +1223,7 @@ class Folio extends Page
             <div class="flex items-start space-x-4">
               <div
                 class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2">
-                <img id="feature-preview" class="g-folio__media-preview-image"
-                  src="<?= esc_url($feature_image_src) ?>" />
+                <img id="feature-preview" class="g-folio__media-preview-image" src="<?= esc_url($feature_image_src) ?>" />
               </div>
               <div class="flex flex-col space-y-2">
                 <button type="button" id="feature-image" class="button button-secondary">Replace image</button>
@@ -670,11 +1247,34 @@ class Folio extends Page
                   class="button-link">Use default</button>
               </div>
             </div>
+            <div class="mt-3 flex items-center">
+              <input type="hidden" name="show_logo" value="0" />
+              <input type="checkbox" id="show_logo" name="show_logo" value="1"
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($show_logo, true, false); ?> />
+              <label for="show_logo" class="ml-2 block text-sm text-gray-900">Include logo</label>
+            </div>
           </div>
         </div>
+        <?php
+        $selected_byline = isset($fields->byline) ? (int) $fields->byline : (int) $selected_author;
+        if (isset($fields->show_byline) && (string) $fields->show_byline === '0') {
+          $selected_byline = 0;
+        } elseif ($selected_byline <= 0) {
+          $selected_byline = (int) $selected_author;
+        }
+        ?>
         <div>
-          <label for="author" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">AUTHOR</label>
-          <?php wp_dropdown_users(array('name' => 'author', 'selected' => $selected_author, 'class' => 'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm')) ?>
+          <label for="byline" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">BYLINE</label>
+          <?php
+          wp_dropdown_users(array(
+            'name' => 'byline',
+            'id' => 'byline',
+            'selected' => $selected_byline,
+            'class' => 'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+            'show_option_none' => __('Hide byline', 'groove'),
+            'option_none_value' => '0',
+          ));
+          ?>
         </div>
         <div>
           <label for="copyright"
@@ -691,34 +1291,71 @@ class Folio extends Page
   {
     $fields = $this->get_fields();
     $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
-    $current_id = $fields->theme_id;
+    $current_id = (string) ($fields->theme_id ?? '');
+    if ($current_id === '' || !isset($all_themes[$current_id])) {
+      $current_id = !empty($all_themes) ? (string) array_key_first($all_themes) : '';
+    }
     ?>
-    <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
-      <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-        <h3 class="text-sm font-semibold text-gray-800 m-0">Active Theme</h3>
-      </div>
-      <div class="p-4">
-        <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(150px,1fr))]">
-          <?php foreach ($all_themes as $id => $theme):
-            $active = ($id === $current_id);
-            ?>
-            <div
-              class="g-folio__theme-option relative cursor-pointer rounded-lg border-2 transition-all <?php echo $active ? 'border-indigo-600 ring-1 ring-indigo-600' : 'border-gray-200 hover:border-gray-300'; ?>"
-              data-theme-id="<?php echo esc_attr($id); ?>">
-              <div class="aspect-w-16 aspect-h-9 overflow-hidden rounded-t-lg rounded-b-none border-b border-gray-200">
-                <img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="<?php echo esc_attr($theme['name']); ?>"
-                  class="object-cover w-full h-full" />
-              </div>
-              <div
-                class="p-2 text-center text-sm font-medium text-gray-900 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">
-                <?php echo esc_html($theme['name']); ?>
-              </div>
-              <span
-                class="active-badge absolute -top-2 -right-2 inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ring-2 ring-white <?php echo $active ? '' : 'hidden'; ?>">Active</span>
-            </div>
-          <?php endforeach; ?>
+    <div
+      id="g-theme-picker-modal"
+      class="g-theme-picker-modal hidden"
+      aria-hidden="true">
+      <div class="g-theme-picker-modal__backdrop" data-theme-picker-close></div>
+      <div class="g-theme-picker-modal__frame">
+        <div class="g-theme-picker-modal__header">
+          <div class="g-theme-picker-modal__heading">
+            <h3 class="g-theme-picker-modal__title"><?php esc_html_e('Choose a theme', 'groove'); ?></h3>
+            <p class="g-theme-picker-modal__subtitle"><?php esc_html_e('Switch the folio theme for the cover and inner pages.', 'groove'); ?></p>
+          </div>
+          <button
+            type="button"
+            class="g-theme-picker-modal__close"
+            data-theme-picker-close
+            aria-label="<?php esc_attr_e('Close theme picker', 'groove'); ?>">
+            <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+          </button>
         </div>
-        <input type="hidden" name="theme_id" id="g-active-theme-id" value="<?php echo esc_attr($current_id); ?>" />
+        <div class="g-theme-picker-modal__body">
+          <div class="g-theme-picker-modal__grid">
+            <?php foreach ($all_themes as $id => $theme):
+              $active = ($id === $current_id);
+              ?>
+              <button
+                type="button"
+                class="g-folio__theme-option g-theme-picker-modal__option <?php echo $active ? 'is-active' : ''; ?>"
+                data-theme-id="<?php echo esc_attr($id); ?>"
+                data-theme-name="<?php echo esc_attr($theme['name']); ?>"
+                data-theme-thumbnail-url="<?php echo esc_url($theme['thumbnail_url']); ?>"
+                data-theme-description="<?php echo esc_attr($theme['description'] ?? ''); ?>"
+                aria-pressed="<?php echo $active ? 'true' : 'false'; ?>">
+                <div class="g-theme-picker-modal__option-media">
+                  <img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="<?php echo esc_attr($theme['name']); ?>"
+                    class="g-theme-picker-modal__option-image" />
+                </div>
+                <div class="g-theme-picker-modal__option-copy">
+                  <div class="g-theme-picker-modal__option-name">
+                    <?php echo esc_html($theme['name']); ?>
+                  </div>
+                  <?php if (!empty($theme['description'])): ?>
+                    <div class="g-theme-picker-modal__option-description">
+                      <?php echo esc_html($theme['description']); ?>
+                    </div>
+                  <?php endif; ?>
+                </div>
+                <span
+                  class="active-badge g-theme-picker-modal__badge <?php echo $active ? '' : 'is-hidden'; ?>"><?php esc_html_e('Selected', 'groove'); ?></span>
+              </button>
+            <?php endforeach; ?>
+          </div>
+        </div>
+        <div class="g-theme-picker-modal__footer">
+          <button
+            type="button"
+            class="g-theme-picker-modal__done"
+            data-theme-picker-close>
+            <?php esc_html_e('Done', 'groove'); ?>
+          </button>
+        </div>
       </div>
     </div>
     <?php
@@ -738,7 +1375,13 @@ class Folio extends Page
         $q['tab_key'] = $tab_id;
         $sanitized_tab_label = esc_html($tab['label']);
         $tab_url = add_query_arg($q, admin_url('admin.php'));
-        echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . $active_class . '">' . $sanitized_tab_label . '</a>';
+        $extra_attrs = '';
+      if (!empty($tab['attrs']) && is_array($tab['attrs'])) {
+        foreach ($tab['attrs'] as $attr_name => $attr_val) {
+          $extra_attrs .= ' ' . esc_attr($attr_name) . '="' . esc_attr($attr_val) . '"';
+        }
+      }
+      echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . $active_class . '"' . $extra_attrs . '>' . $sanitized_tab_label . '</a>';
       }
       ?>
     </nav>
@@ -815,6 +1458,30 @@ class Folio extends Page
         return esc_html__('Trash', 'groove');
       default:
         return esc_html__('All', 'groove');
+    }
+  }
+
+  private function get_folio_status_label($status)
+  {
+    switch ($status) {
+      case 'publish':
+        return esc_html__('Published', 'groove');
+      case 'draft':
+      case 'auto-draft':
+        return esc_html__('Draft', 'groove');
+      case 'pending':
+        return esc_html__('Pending', 'groove');
+      case 'private':
+        return esc_html__('Private', 'groove');
+      case 'trash':
+        return esc_html__('Trash', 'groove');
+      default:
+        $status = is_string($status) ? trim($status) : '';
+        if ($status === '') {
+          return esc_html__('Draft', 'groove');
+        }
+
+        return esc_html(ucwords(str_replace(array('-', '_'), ' ', $status)));
     }
   }
 
@@ -1292,10 +1959,12 @@ class Folio extends Page
                   admin_url('post.php')
                 );
               }
-              $view_url = get_permalink($post_id);
-              $preview_url = get_preview_post_link(get_post($post_id), array('folio_id' => (int) $folio_id));
+              $view_url = Utils::get_folio_permalink_by_id($post_id);
+              if (!$view_url) {
+                $view_url = get_permalink($post_id);
+              }
               $is_preview_status = in_array($post_status, array('draft', 'pending', 'future'), true);
-              $row_view_url = ($is_preview_status && $preview_url) ? $preview_url : $view_url;
+              $row_view_url = $view_url;
               $row_view_label = $is_preview_status ? esc_html__('Preview', 'groove') : esc_html__('View', 'groove');
               $modified_label = sprintf(
                 /* translators: 1: date/time value, 2: user display name */

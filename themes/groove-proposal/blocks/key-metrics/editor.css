@@ -1,0 +1,73 @@
+/*
+ * Key Metrics block — editor styles.
+ * Mirrors the front-end .gp-metrics rules from theme.css so the block
+ * renders a faithful preview while editing.
+ */
+
+/* Outer wrapper — block chrome */
+.gp-metrics--editor-wrap {
+  padding: 0 !important;
+}
+
+/* Grid container */
+.gp-metrics--editor {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  padding: 1.75rem 1.5rem;
+  border: 1px solid #d4d2cb;
+  border-radius: 0.5rem;
+  background: #fafaf8;
+}
+
+/* Adjust columns for 2 or 4 items via JS class would be complex,
+   so auto-fit handles it gracefully */
+.gp-metrics--editor:has(.gp-metrics__item:nth-child(4)) {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.gp-metrics--editor:has(.gp-metrics__item:nth-child(2)):not(:has(.gp-metrics__item:nth-child(3))) {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Each metric item */
+.gp-metrics--editor .gp-metrics__item {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.375rem;
+  text-align: center;
+}
+
+/* Value — large display number */
+.gp-metrics--editor .gp-metrics__value,
+.gp-metrics--editor .gp-metrics__value[role="textbox"] {
+  font-family: 'Fraunces', Georgia, serif !important;
+  font-size: 2.25rem !important;
+  font-weight: 300 !important;
+  font-style: italic !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em !important;
+  color: #181510 !important;
+  text-align: center !important;
+}
+
+/* Label — small uppercase */
+.gp-metrics--editor .gp-metrics__label,
+.gp-metrics--editor .gp-metrics__label[role="textbox"] {
+  font-family: 'Inter', -apple-system, sans-serif !important;
+  font-size: 0.6875rem !important;
+  font-weight: 500 !important;
+  color: #999690 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1.4 !important;
+  text-align: center !important;
+}
+
+/* RichText focus outline */
+.gp-metrics--editor .gp-metrics__value:focus,
+.gp-metrics--editor .gp-metrics__label:focus {
+  outline: 1px dashed #bbb;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
