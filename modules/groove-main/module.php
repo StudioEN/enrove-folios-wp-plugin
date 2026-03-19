@@ -193,7 +193,7 @@ class Module extends BaseModule
 		}
 
 
-			$is_groove_page = (strpos($current_screen->id ?? '', 'groove') !== false);
+		$is_groove_page = (strpos($current_screen->id ?? '', 'groove') !== false);
 
 		return apply_filters(
 			'groove/top-bar-tabs/is-active',
@@ -202,9 +202,12 @@ class Module extends BaseModule
 		);
 	}
 
-	public function remove_wp_footer()
+	public function remove_wp_footer($default)
 	{
-		return '<span class="g-folio__footer-version">Groove version ' . esc_html(GROOVE_VERSION) . ' by <a href="https://groove.com">StudioEN</a></span>';
+		if (!$this->is_top_bar_active()) {
+			return $default;
+		}
+		return '<span class="g-folio__footer-version">Groove Folios v' . esc_html(GROOVE_VERSION) . ' by StudioEN</span>';
 	}
 
 	public function __construct()
