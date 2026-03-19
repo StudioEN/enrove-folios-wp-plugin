@@ -243,6 +243,38 @@ class Themes_Manager extends Assets
         return null;
     }
 
+    /**
+     * Returns the folio WP_Post if the current request targets a
+     * password-protected folio whose password hasn't been entered yet.
+     *
+     * @return \WP_Post|null
+     */
+    public static function get_password_protected_post_for_current_request()
+    {
+        $id = \Groove\Utils\Utils::get_groove_post_id();
+        if (!$id) {
+            return null;
+        }
+
+        $post = get_post($id);
+        if (!$post || !\Groove\Utils\Utils::is_groove_post($post)) {
+            return null;
+        }
+
+        // Resolve to the parent folio if the request targets a folio page.
+        $folio_post = $post;
+        if ($post->post_type === 'groove_folio_page') {
+            $folio_id = (int) get_post_meta($id, 'folio_id', true);
+            $folio_post = $folio_id ? get_post($folio_id) : null;
+        }
+
+        if ($folio_post && post_password_required($folio_post)) {
+            return $folio_post;
+        }
+
+        return null;
+    }
+
     // ── Installed theme management (packages uploaded by admins) ───────────
 
     /**

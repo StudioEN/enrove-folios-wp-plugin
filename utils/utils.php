@@ -5,7 +5,40 @@ class Utils
 {
   static function can_preview_unpublished_posts()
   {
-    return is_admin() || (is_user_logged_in() && current_user_can('edit_posts'));
+    if (is_admin() || (is_user_logged_in() && current_user_can('edit_posts'))) {
+      return true;
+    }
+
+    // Guard against infinite recursion: get_groove_post_id() may call
+    // get_groove_post_by_post_type_and_post_name() which calls
+    // get_viewable_post_statuses() which calls this method again.
+    static $checking = false;
+    if ($checking) {
+      return false;
+    }
+    $checking = true;
+
+    // Allow viewing unpublished posts when the folio's password has been
+    // correctly entered (cookie set). Resolve the folio post from the
+    // current request — if it's a folio page, check the parent folio.
+    $result = false;
+    $id = self::get_groove_post_id();
+    if ($id) {
+      $post = get_post($id);
+      if ($post) {
+        $folio_post = $post;
+        if ($post->post_type === 'groove_folio_page') {
+          $folio_id = (int) get_post_meta($id, 'folio_id', true);
+          $folio_post = $folio_id ? get_post($folio_id) : null;
+        }
+        if ($folio_post && !empty($folio_post->post_password) && !post_password_required($folio_post)) {
+          $result = true;
+        }
+      }
+    }
+
+    $checking = false;
+    return $result;
   }
 
   static function get_viewable_post_statuses()
@@ -23,6 +56,34 @@ class Utils
       return false;
     }
 
+    // Logged-in users who can edit the post bypass password protection.
+    if (is_user_logged_in() && current_user_can('edit_post', $post->ID)) {
+      return true;
+    }
+
+    // Password-protected posts require the visitor to enter the password first.
+    if (post_password_required($post)) {
+      return false;
+    }
+
+    // If the post has a password and the visitor has entered it correctly,
+    // allow access regardless of post status (draft, pending, etc.).
+    if (!empty($post->post_password)) {
+      return true;
+    }
+
+    // Folio pages inherit password protection from the parent folio.
+    // If the parent folio's password has been entered, allow the page.
+    if ($post->post_type === 'groove_folio_page') {
+      $folio_id = (int) get_post_meta($post->ID, 'folio_id', true);
+      if ($folio_id) {
+        $folio_post = get_post($folio_id);
+        if ($folio_post && !empty($folio_post->post_password) && !post_password_required($folio_post)) {
+          return true;
+        }
+      }
+    }
+
     if ($post->post_status === 'publish') {
       return true;
     }
@@ -31,7 +92,7 @@ class Utils
       return true;
     }
 
-    return is_user_logged_in() && current_user_can('edit_post', $post->ID);
+    return false;
   }
 
   static function get_folio_base_slug()
@@ -320,17 +381,29 @@ class Utils
     }
 
     $post = get_post($post_id);
-    $prefix = '';
-
-    if ($post && isset($post->post_type) && $post->post_type === 'groove_folio_page') {
-      $folio_id = get_post_meta($post_id, 'folio_id');
-      $folio_post = get_post($folio_id[0]);
-      if ($folio_post) {
-        $prefix = Utils::get_post_slug($folio_post);
-      }
+    if (!$post) {
+      return null;
     }
 
-    return Utils::get_folio_permalink(get_post($post_id), $prefix);
+    // Resolve the parent folio for folio pages.
+    $folio_post = $post;
+    if ($post->post_type === 'groove_folio_page') {
+      $folio_id = get_post_meta($post_id, 'folio_id');
+      $folio_post = !empty($folio_id) ? get_post($folio_id[0]) : null;
+    }
+
+    // Non-published folios use query-param URLs because slug resolution
+    // doesn't work reliably for drafts.
+    if (!$folio_post || $folio_post->post_status !== 'publish') {
+      return Utils::get_folio_preview_query_url_by_id($post_id);
+    }
+
+    $prefix = '';
+    if ($post->post_type === 'groove_folio_page' && $folio_post) {
+      $prefix = Utils::get_post_slug($folio_post);
+    }
+
+    return Utils::get_folio_permalink($post, $prefix);
   }
 
   static function get_folio_preview_query_url_by_id($post_id)

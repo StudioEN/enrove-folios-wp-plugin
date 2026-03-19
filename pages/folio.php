@@ -6,6 +6,7 @@ use Groove\Pages\Overview;
 use Groove\Menu\Menu_Manager;
 use Groove\Menu\Folio_Menu_Item;
 use Groove\List\Folio_Page_List_Table;
+use Groove\List\Folio_List_Table;
 use Groove\Themes\Default_Themes;
 use Groove\Utils\Utils;
 
@@ -233,16 +234,21 @@ class Folio extends Page
     // Update the post.
     edit_post();
 
+    $saved_post = get_post($post_id);
+    $saved_post_type = $saved_post ? $saved_post->post_type : static::POST_TYPE;
 
-    $post_type = static::POST_TYPE;
-    $table = new Folio_Page_List_Table($this, $post_type);
+    if ($saved_post_type === 'groove_folio') {
+      $table = new Folio_List_Table($this, 'groove_folio');
+    } else {
+      $table = new Folio_Page_List_Table($this, static::POST_TYPE);
+    }
 
     $post_view = isset($_POST['post_view']) ? sanitize_key(wp_unslash($_POST['post_view'])) : '';
     $mode = 'excerpt' === $post_view ? 'excerpt' : 'list';
 
     $level = 0;
     if (is_post_type_hierarchical($table->screen->post_type)) {
-      $request_post = array(get_post($post_id));
+      $request_post = array($saved_post);
       $parent = $request_post[0]->post_parent;
 
       while ($parent > 0) {
@@ -252,7 +258,7 @@ class Folio extends Page
       }
     }
 
-    $table->ajax_rows(array(get_post($post_id)), $level);
+    $table->ajax_rows(array($saved_post), $level);
 
     wp_die();
   }
