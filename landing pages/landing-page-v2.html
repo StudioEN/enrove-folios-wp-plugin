@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groove Folios — Strict Fluid Manifesto</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;800;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* RESET */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Palette */
+      --color-base: #F0EDE8; /* Warm off-white paper */
+      --color-ink: #0A0A0A; /* Deep almost-black */
+      --color-ink-light: #555555;
+      --color-line: rgba(10, 10, 10, 0.15); /* Structural lines */
+      
+      /* Vibrant Accents */
+      --gradient-accent: linear-gradient(135deg, #FF3366 0%, #FF9933 50%, #6633FF 100%);
+      
+      /* Typography */
+      --font-display: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      /* Grid Settings */
+      --grid-gap: clamp(1.5rem, 3vw, 4rem);
+      --margin: clamp(2rem, 5vw, 6rem);
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--color-base);
+      color: var(--color-ink);
+      font-family: var(--font-display);
+      overflow-x: hidden;
+      line-height: 1.4;
+      
+      /* Extremely subtle noise for editorial friction */
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+
+    ::selection {
+      background-color: var(--color-ink);
+      color: var(--color-base);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* THE STRICT GRID
+       This is not a stacked set of blocks. It is a single, continuous 12-column 
+       grid that runs the entire length of the page. All content snaps to this.
+    */
+    .manifesto-canvas {
+      width: 100%;
+      min-height: 100vh;
+      padding: var(--margin);
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-column-gap: var(--grid-gap);
+      grid-auto-rows: min-content;
+      /* Vertical rhythm space between continuous thoughts */
+      row-gap: clamp(6rem, 15vh, 12rem);
+      position: relative;
+    }
+
+    /* VISUAL STRUCTURE (Grid Lines overlay) */
+    .structure-lines {
+      position: absolute;
+      top: 0;
+      left: var(--margin);
+      right: var(--margin);
+      bottom: 0;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-column-gap: var(--grid-gap);
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .structure-lines span {
+      display: block;
+      height: 100%;
+      /* Sharp, deliberate grid lines to evoke MIT Media Lab logic */
+      border-left: 1px solid var(--color-line);
+    }
+    .structure-lines span:last-child {
+      border-right: 1px solid var(--color-line);
+    }
+
+    /* TYPOGRAPHIC SYSTEM */
+    .text-massive {
+      font-weight: 900;
+      font-size: clamp(3rem, 7vw, 10rem);
+      line-height: 0.88;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      /* Strict baseline alignment */
+      margin-top: -0.15em; 
+    }
+
+    .text-large {
+      font-weight: 900;
+      font-size: clamp(2rem, 4vw, 5rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      margin-top: -0.15em;
+    }
+
+    .meta-data {
+      font-family: var(--font-mono);
+      font-size: clamp(0.6rem, 0.8vw, 0.85rem);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--color-ink-light);
+      position: relative;
+    }
+
+    /* Accent line next to meta-data running down the page */
+    .meta-data::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: calc((var(--margin) / -2));
+      width: 2px;
+      height: 1em;
+      background: var(--color-ink);
+    }
+    .meta-data.accented::before {
+      background: var(--gradient-accent);
+      height: 3em; /* Pull attention to this specific marker */
+    }
+
+    .technical-copy {
+      font-weight: 500;
+      font-size: clamp(1rem, 1.25vw, 1.5rem);
+      line-height: 1.5;
+      color: var(--color-ink);
+    }
+
+    /* CONTINUOUS FLOW SYSTEM (Placing items directly on the rigid grid grid) */
+    
+    .grid-item {
+      position: relative;
+      z-index: 10;
+    }
+
+    /* ROW 1: HEADER / INITIATION */
+    .mark-init { grid-column: 1 / 3; }
+    .title-main { grid-column: 3 / 10; }
+    .tech-version { grid-column: 10 / 13; }
+
+    /* ROW 2: CORE VALUE */
+    .mark-ethos { grid-column: 1 / 3; }
+    .ethos-main { grid-column: 3 / 10; }
+    .ethos-detail { grid-column: 10 / 13; }
+
+    /* ROW 3: PERFORMANCE */
+    .mark-perf { grid-column: 1 / 3; }
+    .perf-main { grid-column: 3 / 10; }
+    .perf-detail { grid-column: 10 / 13; }
+
+    /* ROW 4: APPLICATIONS MATRIX */
+    .mark-apps { grid-column: 1 / 3; }
+    .apps-main { grid-column: 3 / 8; }
+    .apps-list { 
+      grid-column: 8 / 13; 
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.5rem, 3vw, 3rem);
+    }
+    
+    .application-item {
+      border-top: 1px solid var(--color-ink);
+      padding-top: 1rem;
+    }
+
+    /* ROW 5: ACCESS / TIERS */
+    .mark-access { grid-column: 1 / 3; }
+    .access-main { grid-column: 3 / 10; }
+    .access-matrix { grid-column: 10 / 13; }
+
+    .tier-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 1px solid var(--color-line);
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+      font-family: var(--font-mono);
+    }
+    .tier-name { font-weight: 800; font-size: 1.25rem; font-family: var(--font-display); }
+    .tier-price { font-weight: 700; font-size: 1rem; }
+
+    /* ROW 6: CONCLUSION / CTA */
+    .mark-end { grid-column: 1 / 3; }
+    .cta-main { grid-column: 3 / 10; }
+    .cta-action { grid-column: 10 / 13; }
+
+    /* BUTTON */
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: clamp(1rem, 2vw, 1.5rem);
+      background-color: var(--color-ink);
+      color: var(--color-base);
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: clamp(0.8rem, 1vw, 1rem);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 1px solid var(--color-ink);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.2s;
+    }
+
+    .btn-action::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--gradient-accent);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1;
+    }
+
+    .btn-action span {
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn-action:hover {
+      color: var(--color-base);
+      border-color: transparent;
+    }
+
+    .btn-action:hover::before {
+      transform: translateY(0);
+    }
+
+    /* GLOBAL NAV TOP RE-ALIGN (Optional Top Line) */
+    .top-bar {
+      position: absolute;
+      top: var(--margin);
+      left: var(--margin);
+      right: var(--margin);
+      height: 1px;
+      background: var(--color-ink);
+      z-index: 20;
+    }
+
+    /* Responsive shift: at narrow widths, linearize the grid naturally */
+    @media (max-width: 1100px) {
+      .mark-init, .mark-ethos, .mark-perf, .mark-apps, .mark-access, .mark-end { grid-column: 1 / 4; }
+      .title-main, .ethos-main, .perf-main { grid-column: 5 / 13; }
+      .tech-version, .ethos-detail, .perf-detail { grid-column: 5 / 13; margin-top: -clamp(4rem, 10vh, 10rem); }
+      
+      .apps-main { grid-column: 5 / 13; margin-bottom: 2rem; }
+      .apps-list { grid-column: 5 / 13; margin-top: -clamp(3rem, 8vh, 6rem); }
+      
+      .access-main { grid-column: 5 / 13; }
+      .access-matrix { grid-column: 5 / 13; margin-top: -clamp(4rem, 10vh, 8rem); }
+      
+      .cta-main { grid-column: 5 / 13; }
+      .cta-action { grid-column: 5 / 13; margin-top: -clamp(4rem, 10vh, 8rem); }
+    }
+
+    @media (max-width: 768px) {
+      .manifesto-canvas {
+        grid-template-columns: 1fr;
+        row-gap: 4rem;
+      }
+      .structure-lines { display: none; }
+      
+      /* Reset all columns to span full on mobile */
+      [class*="mark-"], [class*="-main"], [class*="-detail"], .tech-version, .apps-list, .access-matrix, .cta-action {
+        grid-column: 1 / -1;
+        margin-top: 0 !important;
+      }
+      
+      .meta-data::before { left: -1rem; }
+      
+      /* Increase gaps between the meta and the massive text on mobile */
+      [class*="mark-"] { margin-bottom: -2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar"></div>
+
+  <div class="manifesto-canvas">
+    
+    <!-- BACKGROUND STRUCTURE -->
+    <div class="structure-lines">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- ROW 1 -->
+    <div class="grid-item meta-data accented mark-init">
+      groove_folios.sys<br>
+      2026.03.20<br>
+      the_platform
+    </div>
+    <div class="grid-item title-main">
+      <h1 class="text-massive">GROOVE FOLIOS.</h1>
+      <h2 class="text-large" style="margin-top: 2rem;">DIGITAL PUBLISHING BUILT FOR WORDPRESS.</h2>
+    </div>
+    <div class="grid-item technical-copy tech-version">
+      <p style="font-family: var(--font-mono); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; margin-bottom: 1rem;">Spec Sheet_</p>
+      Create, manage, and publish high-fidelity folios natively. Open source architecture. Free forever at the core.
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="grid-item meta-data mark-ethos">
+      01. ethos<br>
+      capabilities_
+    </div>
+    <div class="grid-item text-massive ethos-main">
+      WHAT YOU SEE IS EXACTLY <span style="opacity: 0.3;">WHAT THE WORLD GETS.</span>
+    </div>
+    <div class="grid-item technical-copy ethos-detail">
+      The visual editor provides real-time composing with precision typography controls. No layout shift. Uncompromising fidelity.
+    </div>
+
+    <!-- ROW 3 -->
+    <div class="grid-item meta-data mark-perf">
+      02. velocity<br>
+      performance_
+    </div>
+    <div class="grid-item text-massive perf-main">
+      ZERO BLOAT. STATIC-LIKE SPEED.
+    </div>
+    <div class="grid-item technical-copy perf-detail">
+      Folios compile instantly and leverage native lightweight structures. Speed without sacrificing absolute dynamic connectivity.
+    </div>
+
+    <!-- ROW 4 -->
+    <div class="grid-item meta-data mark-apps">
+      03. vectors<br>
+      applications_
+    </div>
+    <div class="grid-item text-large apps-main">
+      BUILT TO SUPPORT EVERY MEDIUM NATIVELY.
+    </div>
+    <div class="grid-item apps-list technical-copy">
+      <div class="application-item">
+        <h3 style="font-family: var(--font-display); font-weight: 900; margin-bottom: 0.5rem; text-transform: uppercase;">Portfolios</h3>
+        High-res imagery mixed seamlessly with text.
+      </div>
+      <div class="application-item">
+        <h3 style="font-family: var(--font-display); font-weight: 900; margin-bottom: 0.5rem; text-transform: uppercase;">Proposals</h3>
+        Interactive, secure, pitch documents.
+      </div>
+      <div class="application-item">
+        <h3 style="font-family: var(--font-display); font-weight: 900; margin-bottom: 0.5rem; text-transform: uppercase;">Case Studies</h3>
+        Deep dives demanding analytical attention.
+      </div>
+    </div>
+
+    <!-- ROW 5 -->
+    <div class="grid-item meta-data mark-access">
+      04. strata<br>
+      access_tiers_
+    </div>
+    <div class="grid-item text-large access-main">
+      OPEN. PRO. AGENCY.
+    </div>
+    <div class="grid-item access-matrix">
+      <div class="tier-item">
+        <span class="tier-name">CORE</span>
+        <span class="tier-price">FREE</span>
+      </div>
+      <div class="tier-item">
+        <span class="tier-name">PRO</span>
+        <span class="tier-price">99/YR</span>
+      </div>
+      <div class="tier-item" style="border-bottom: none;">
+        <span class="tier-name">AGENCY</span>
+        <span class="tier-price">249/YR</span>
+      </div>
+    </div>
+
+    <!-- ROW 6 -->
+    <div class="grid-item meta-data accented mark-end">
+      05. initiate<br>
+      terminal_
+    </div>
+    <div class="grid-item text-massive cta-main">
+      PUBLISH WITH INTENT.
+    </div>
+    <div class="grid-item cta-action">
+      <a href="#" class="btn-action">
+        <span>Download Core 2.4.0</span>
+        <span>→</span>
+      </a>
+      <p style="font-family: var(--font-mono); font-size: 0.7rem; margin-top: 1rem; opacity: 0.5; text-transform: uppercase;">
+        © 2026 GROOVE FOLIOS. GPL V2.
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -20,6 +20,7 @@ abstract class Base_Theme extends Assets
   public $theme_cover_url;
   public $theme_logo_url;
   public $show_logo = true;
+  public $is_preview_mode = false;
 
   public function __construct()
   {
@@ -545,6 +546,7 @@ abstract class Base_Theme extends Assets
 
   function get_data()
   {
+    if ($this->is_preview_mode) { return; }
     $this->get_page_data();
     $this->get_pages_data($this->id);
     $this->get_theme_data();

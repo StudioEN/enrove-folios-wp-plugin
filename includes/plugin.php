@@ -215,6 +215,12 @@ class Plugin
 		// Run before redirect_canonical (priority 10) to prevent WP from
 		// "helpfully" redirecting 404s (drafts) to the homepage.
 		add_action('template_redirect', function () {
+			// Theme picker preview — admin-only, nonce verified inside the template.
+			if (isset($_GET['groove_theme_preview'])) {
+				require_once plugin_dir_path(__FILE__) . 'theme-picker-preview-template.php';
+				exit;
+			}
+
 			$current_path = Utils::get_current_path();
 			$base_slug = Utils::get_folio_base_slug();
 			$pattern = '#^/' . preg_quote($base_slug, '#') . '/#';

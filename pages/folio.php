@@ -592,6 +592,24 @@ class Folio extends Page
     }
 
     if (!is_wp_error($folio_result)) {
+      $save_action = isset($_POST['action']) ? sanitize_key(wp_unslash($_POST['action'])) : '';
+      if ($save_action === 'save_groove_folio') {
+        \Groove\Analytics::track('folio_published', [
+          'theme'      => $theme_id,
+          'page_count' => $post_status === 'publish' ? (int) (new \WP_Query([
+            'post_type'      => 'groove_folio_page',
+            'post_status'    => 'any',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_query'     => [['key' => 'folio_id', 'value' => $id]],
+          ]))->found_posts : 0,
+        ]);
+      } elseif ($save_action === 'save_groove_folio_unpublish') {
+        \Groove\Analytics::track('folio_unpublished', ['theme' => $theme_id]);
+      } elseif ($save_action !== 'auto_save_groove_folio') {
+        \Groove\Analytics::track('folio_saved', ['theme' => $theme_id]);
+      }
+
       // The JS button handler uses AJAX and expects JSON {code:0} to trigger location.reload().
       wp_send_json(array(
         'code' => 0,

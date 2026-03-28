@@ -111,7 +111,8 @@ class Autoloader {
 
 	private static function init_classes_map() {
 		self::$classes_map = [
-			'Settings' => 'includes/settings.php',
+			'Settings'  => 'includes/settings.php',
+			'Analytics' => 'includes/analytics.php',
 		];
 	}
 

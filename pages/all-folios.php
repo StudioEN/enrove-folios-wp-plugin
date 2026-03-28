@@ -31,9 +31,11 @@ class All_Folios extends Page
 	{
 		$this->left_button_items = [
 			array(
-				'text' => esc_html__('Add New', 'groove'),
-				'type' => 'primary',
-				'link' => admin_url('admin.php?page=groove-add-new&from=groove-all-folios')
+				'text'        => esc_html__('Add New', 'groove'),
+				'type'        => 'primary',
+				'action'      => 'groove_open_add_new',
+				'button_type' => 'button',
+				'attrs'       => ['data-groove-open-add-new' => '1'],
 			)
 		];
 
@@ -1400,6 +1402,34 @@ class All_Folios extends Page
 					</div>
 				<?php endif; ?>
 			</form>
+		</div>
+		<?php $this->display_add_new_modal(); ?>
+		<?php
+	}
+
+	private function display_add_new_modal()
+	{
+		?>
+		<div id="g-add-new-modal" class="g-add-new-modal" role="dialog" aria-modal="true"
+			aria-labelledby="g-add-new-modal-title" hidden>
+			<div class="g-add-new-modal__backdrop"></div>
+			<div class="g-add-new-modal__dialog">
+				<div class="g-add-new-modal__header">
+					<h2 id="g-add-new-modal-title" class="g-add-new-modal__title">
+						<?php echo esc_html__('Themes', 'groove'); ?>
+					</h2>
+					<button type="button" class="g-add-new-modal__close"
+						aria-label="<?php echo esc_attr__('Close', 'groove'); ?>">
+						<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+							<path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75"
+								stroke-linecap="round" />
+						</svg>
+					</button>
+				</div>
+				<div class="g-add-new-modal__body">
+					<?php \Groove\Plugin::instance()->add_new->display__themes(); ?>
+				</div>
+			</div>
 		</div>
 		<?php
 	}

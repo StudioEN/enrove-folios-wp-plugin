@@ -46,6 +46,7 @@ class Cover extends Base_Theme
 
   public function get_data()
   {
+    if ($this->is_preview_mode) { return; }
     parent::get_data();
     $this->proposal_meta = $this->get_proposal_meta((int) $this->id);
   }

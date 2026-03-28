@@ -95,7 +95,7 @@ class Overview extends Page
 <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('At a Glance', 'groove'); ?></h2>
-    <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=groove-add-new&from=groove-overview')); ?>">
+    <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=groove-all-folios&open_add_new=1')); ?>">
       <?php esc_html_e('Add New Folio', 'groove'); ?>
     </a>
   </div>

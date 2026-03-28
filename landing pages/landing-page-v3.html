@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groove Folios — Editorial Manifesto</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,800;0,900;1,400;1,500&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* RESET */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Palette */
+      --color-base: #F0EDE8; /* Warm off-white paper */
+      --color-ink: #0A0A0A; /* Deep almost-black */
+      --color-ink-mid: #555555;
+      --color-line: rgba(10, 10, 10, 0.15); 
+      
+      /* Vibrant Accents */
+      --gradient-accent: linear-gradient(135deg, #FF3366 0%, #FF9933 50%, #6633FF 100%);
+      
+      /* Typography */
+      --font-display: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      /* Spacing */
+      --margin-x: clamp(1.5rem, 5vw, 6rem);
+      --margin-y: clamp(2rem, 8vh, 8rem);
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--color-base);
+      color: var(--color-ink);
+      font-family: var(--font-display);
+      overflow-x: hidden;
+      
+      /* Extremely subtle noise for editorial friction */
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+    }
+
+    ::selection {
+      background-color: var(--color-ink);
+      color: var(--color-base);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* EDITORIAL LAYOUT */
+    .article-wrap {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: var(--margin-y) var(--margin-x);
+    }
+
+    /* HEADER: The Title */
+    .article-header {
+      margin-bottom: clamp(4rem, 15vh, 12rem);
+      position: relative;
+    }
+
+    .title-massive {
+      font-weight: 900;
+      font-size: clamp(3.5rem, 8.5vw, 12rem);
+      line-height: 0.85;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      margin-left: -0.05em; /* Optical alignment */
+    }
+
+    /* ARTICLE GRID: Margin notes + Main Text */
+    .article-grid {
+      display: grid;
+      grid-template-columns: 2fr 7fr 3fr; /* Margin | Essay | Right Margin */
+      gap: clamp(2rem, 5vw, 6rem);
+      position: relative;
+    }
+
+    /* LEFT MARGIN (Meta / Index) */
+    .margin-notes {
+      grid-column: 1 / 2;
+      border-top: 2px solid var(--color-ink);
+      padding-top: 1rem;
+      position: sticky;
+      top: var(--margin-y);
+      height: min-content;
+    }
+
+    .meta-item {
+      font-family: var(--font-mono);
+      font-size: clamp(0.6rem, 0.8vw, 0.8rem);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--color-ink-mid);
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .meta-item strong {
+      color: var(--color-ink);
+    }
+
+    /* MAIN TEXT (The Essay) */
+    .article-content {
+      grid-column: 2 / 3;
+      font-size: clamp(1.2rem, 2vw, 2.2rem);
+      line-height: 1.45;
+      font-weight: 500;
+      color: var(--color-ink);
+    }
+
+    .article-content p {
+      margin-bottom: 2em;
+      max-width: 38ch; /* Optimal reading width for large text */
+    }
+
+    .article-content p.lead {
+      font-weight: 800;
+      font-size: clamp(1.5rem, 2.5vw, 3rem);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      max-width: 25ch;
+      margin-bottom: 1.5em;
+    }
+
+    /* KINETIC HIGHLIGHT (The Accent) */
+    mark.highlight {
+      background: var(--gradient-accent);
+      color: var(--color-base);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      padding: 0 0.1em;
+      font-weight: 900;
+    }
+
+    /* MASSIVE PULL QUOTE (Breaks the grid) */
+    .pull-quote {
+      grid-column: 1 / 4; /* Spans entire width */
+      font-weight: 900;
+      font-size: clamp(3rem, 7vw, 10rem);
+      line-height: 0.85;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      margin: clamp(4rem, 15vh, 8rem) 0;
+      color: var(--color-ink);
+      border-top: 2px solid var(--color-ink);
+      border-bottom: 2px solid var(--color-ink);
+      padding: clamp(2rem, 5vh, 4rem) 0;
+    }
+
+    .pull-quote span.fade {
+      opacity: 0.2;
+      display: block;
+      margin-left: 10vw;
+    }
+
+    /* ARTICLE CONCLUSION / CTA */
+    .article-conclusion {
+      grid-column: 2 / 3;
+      margin-top: clamp(3rem, 10vh, 6rem);
+      border-top: 1px solid var(--color-line);
+      padding-top: clamp(2rem, 5vh, 4rem);
+    }
+
+    .pricing-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: clamp(0.7rem, 1vw, 1rem);
+      margin-bottom: 4rem;
+    }
+
+    .pricing-table td {
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--color-line);
+      vertical-align: bottom;
+    }
+    
+    .pricing-table td:nth-child(2) {
+      text-align: right;
+      font-weight: 800;
+      font-family: var(--font-display);
+      font-size: clamp(1.2rem, 1.5vw, 2rem);
+      letter-spacing: -0.03em;
+    }
+
+    /* INLINE CTA BUTTON */
+    .action-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: clamp(0.9rem, 1.5vw, 1.25rem);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-ink);
+      border-bottom: 2px solid var(--color-ink);
+      padding-bottom: 0.25rem;
+      transition: all 0.2s ease;
+    }
+
+    .action-link:hover {
+      color: transparent;
+      background: var(--gradient-accent);
+      -webkit-background-clip: text;
+      border-color: #FF3366;
+    }
+
+    .action-link span {
+      transition: transform 0.2s ease;
+    }
+
+    .action-link:hover span {
+      transform: translateX(10px);
+    }
+
+    /* RIGHT COLUMN (Optional technical notes) */
+    .tech-notes {
+      grid-column: 3 / 4;
+      font-family: var(--font-mono);
+      font-size: clamp(0.6rem, 0.75vw, 0.8rem);
+      color: var(--color-ink-mid);
+      line-height: 1.6;
+      padding-top: 1rem;
+      border-top: 1px solid var(--color-line);
+    }
+
+    @media (max-width: 1024px) {
+      .article-grid {
+        grid-template-columns: 1fr;
+      }
+      .margin-notes {
+        position: relative;
+        top: 0;
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        border-top: none;
+        border-bottom: 2px solid var(--color-ink);
+        padding-bottom: 1rem;
+      }
+      .article-content {
+        grid-column: 1 / -1;
+      }
+      .article-content p {
+        max-width: 100%;
+      }
+      .pull-quote {
+        grid-column: 1 / -1;
+      }
+      .article-conclusion {
+        grid-column: 1 / -1;
+      }
+      .tech-notes {
+        grid-column: 1 / -1;
+        margin-top: 4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="article-wrap">
+    
+    <header class="article-header">
+      <h1 class="title-massive">A NEW PRIMITIVE<br>FOR PUBLISHING.</h1>
+    </header>
+
+    <main class="article-grid">
+      
+      <!-- LEFT MARGIN: Index and Meta -->
+      <aside class="margin-notes">
+        <div class="meta-item">
+          <strong>PROJECT__</strong>
+          <span>Groove Folios</span>
+        </div>
+        <div class="meta-item">
+          <strong>VERSION__</strong>
+          <span>2.4.0 (Stable)</span>
+        </div>
+        <div class="meta-item">
+          <strong>LICENSE__</strong>
+          <span>GPL v2 / Open Source</span>
+        </div>
+        <div class="meta-item" style="margin-top: 4rem;">
+          <strong>INDEX__</strong>
+          <span style="opacity: 0.5;">01. Context</span>
+          <span style="opacity: 0.5;">02. Ethos</span>
+          <span style="opacity: 0.5;">03. Execution</span>
+          <span style="opacity: 0.5;">04. Access</span>
+        </div>
+      </aside>
+
+      <!-- CENTER COLUMN: The Narrative Essay -->
+      <article class="article-content">
+        <p class="lead">The current state of digital publishing demands a brutal compromise between high-fidelity design tools that lack native content management, and robust CMS platforms that severely limit visual control.</p>
+        
+        <p>Groove Folios is engineered to obliterate this compromise directly within WordPress. By treating the folio not as a rigid template, but as a fluid structural primitive, we return absolute creative control to the designer and editor.</p>
+
+        <p>The visual editor isn't a proxy; it is the final rendering engine. What you compose on the canvas is exactly, pixel-for-pixel, the artifact that is published to the web. <mark class="highlight">There is zero layout shift.</mark> There is no degradation of original intent.</p>
+
+        <!-- PULL QUOTE: Breaks the essay grid, acts as the massive "energy" injection -->
+        <h2 class="pull-quote">WHAT YOU SEE IS EXACTLY <span class="fade">WHAT THE WORLD GETS.</span></h2>
+
+        <p>In our architecture, performance is treated as a foundational aesthetic. The system contains zero bloat—by compiling layouts into static-like structures, we achieve maximum velocity while maintaining dynamic, database-driven connectivity.</p>
+
+        <p>This strict logic makes the system ideal for an uncompromising range of applications: from highly visual portfolios and interactive proposals, to data-dense case studies and long-form editorial essays. It is built to support every medium natively.</p>
+
+        <!-- CONCLUSION & PRICING EMBEDDED IN FLOW -->
+        <div class="article-conclusion">
+          <p style="font-size: clamp(1rem, 1.5vw, 1.5rem); margin-bottom: 2rem; max-width: 45ch;">
+            Extensibility is guaranteed by our commitment to open protocols. The Core engine remains entirely free and available to the community forever. Advanced deployments are supported via dedicated tiers.
+          </p>
+
+          <table class="pricing-table">
+            <tbody>
+              <tr>
+                <td><strong>CORE</strong><br>Full Editor, Unlimited Folios.</td>
+                <td>FREE</td>
+              </tr>
+              <tr>
+                <td><strong>PRO</strong><br>Advanced Blocks, Client Portals.</td>
+                <td>$99 / YR</td>
+              </tr>
+              <tr>
+                <td><strong>AGENCY</strong><br>White-label, API, Multisite.</td>
+                <td>$249 / YR</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <a href="#" class="action-link">Initiate Core Download <span>→</span></a>
+        </div>
+      </article>
+
+      <!-- RIGHT MARGIN: Technical / Utility -->
+      <aside class="tech-notes">
+        <p>
+          SYS_REQ: WordPress 6.2+ <br>
+          PHP: 8.0+ recommended <br>
+          BROWSER: Modern Chromium, WebKit, Gecko.
+        </p>
+        <p style="margin-top: 2rem;">
+          Groove Folios does not lock your data. Content remains accessible via standard WP data structures natively.
+        </p>
+      </aside>
+
+    </main>
+  </div>
+
+</body>
+</html>

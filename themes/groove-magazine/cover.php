@@ -14,6 +14,7 @@ class Cover extends Base_Theme
 
     function get_data()
     {
+        if ($this->is_preview_mode) { return; }
         parent::get_data();
 
         if (is_array($this->pages) && !empty($this->pages)) {

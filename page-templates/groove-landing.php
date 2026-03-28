@@ -1,0 +1,750 @@
+<?php
+/**
+ * Template Name: Groove Folios — Landing Page
+ * Template Post Type: page
+ *
+ * Fully standalone — bypasses the theme header/footer entirely.
+ * Copy this file to your theme's root directory, then assign
+ * "Groove Folios — Landing Page" in Page Attributes > Template.
+ */
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groove Folios — Digital Publishing for WordPress</title>
+  <meta name="description"
+    content="Create, manage, and publish beautiful folios directly inside WordPress. Free and open source.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@500;800;900&family=JetBrains+Mono:wght@700;800&display=swap"
+    rel="stylesheet">
+
+  <style>
+    /* RESET */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Palette */
+      --color-base: #EAE6DE;
+      --color-ink: #0F0F0F;
+      --color-stroke: rgba(15, 15, 15, 0.15);
+
+      /* Vibrant Accents */
+      --color-accent-1: #FF3366;
+      --color-accent-2: #FF9933;
+      --color-accent-3: #6633FF;
+
+      /* Continuous dynamic gradient */
+      --gradient-accent: linear-gradient(120deg, var(--color-accent-1) 0%, var(--color-accent-2) 50%, var(--color-accent-3) 100%);
+
+      /* Scroll percentage driven by JS for the bg-position */
+      --scroll-p: 0%;
+
+      /* Typography */
+      --font-display: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Spacing */
+      --margin-x: clamp(2rem, 6vw, 8rem);
+      --margin-y: clamp(3rem, 10vh, 12rem);
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--color-base);
+      color: var(--color-ink);
+      font-family: var(--font-display);
+      overflow-x: hidden;
+
+      /* Extremely subtle noise for editorial friction */
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+
+    ::selection {
+      background-color: var(--color-ink);
+      color: var(--color-base);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /*
+      ===============================================
+      SCROLL REVEAL (JS INTERSECTION OBSERVER)
+      ===============================================
+    */
+    .reveal-target {
+      opacity: 0;
+      transform: translateY(40px);
+      filter: blur(8px);
+      transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+        filter 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform, filter;
+    }
+
+    .reveal-target.is-revealed {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+
+    /* Staggering utility */
+    .delay-1 {
+      transition-delay: 0.1s;
+    }
+
+    .delay-2 {
+      transition-delay: 0.2s;
+    }
+
+    .delay-3 {
+      transition-delay: 0.3s;
+    }
+
+    /* THE ASYMMETRIC POSTER SPLIT */
+    .manifesto-split {
+      display: flex;
+      width: 100%;
+      border-bottom: 2px solid var(--color-ink);
+      position: relative;
+    }
+
+    /* LEFT SIDE: The Anchor Statement (Sticky) */
+    .split-left {
+      width: 45%;
+      border-right: 2px solid var(--color-ink);
+      padding: var(--margin-y) var(--margin-x);
+      position: relative;
+      container-type: inline-size;
+    }
+
+    .sticky-lockup {
+      position: sticky;
+      top: var(--margin-y);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - (var(--margin-y) * 2));
+      gap: 2rem;
+      z-index: 10;
+    }
+
+    /*
+      ===============================================
+      SCROLL-LINKED GRADIENT TEXT (TOP ONLY)
+      ===============================================
+    */
+    .scroll-gradient {
+      /* Vibrant scroll-linked gradient */
+      background: var(--gradient-accent);
+      background-size: 300% 300%;
+      background-position: var(--scroll-p) 50%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+
+      /* Make transition smooth in case scrolling is choppy */
+      transition: background-position 0.1s ease-out;
+    }
+
+    /*
+      ===============================================
+      AUTOMATIC KINETIC GRADIENT (BOTTOM CALL-TO-ACTION)
+      ===============================================
+    */
+    .auto-gradient {
+      background: var(--gradient-accent);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shift-text-gradient 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes shift-text-gradient {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .master-head {
+      font-weight: 900;
+      font-size: clamp(3rem, 24cqi, 11rem);
+      line-height: 0.85;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      margin-left: -0.04em;
+    }
+
+    .master-sub {
+      font-weight: 800;
+      font-size: clamp(1.2rem, 2vw, 2.5rem);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      max-width: 15ch;
+      text-transform: uppercase;
+    }
+
+    .tech-specs {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: clamp(0.7rem, 0.9vw, 0.95rem);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 4rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--color-ink);
+    }
+
+    /* RIGHT SIDE: The Flowing Essay */
+    .split-right {
+      width: 55%;
+      padding: var(--margin-y) var(--margin-x) 10rem var(--margin-x);
+      display: flex;
+      flex-direction: column;
+      z-index: 5;
+    }
+
+    .essay-stream {
+      max-width: 55ch;
+      margin: 0 auto 0 0;
+    }
+
+    .essay-stream p {
+      font-size: clamp(1.25rem, 2.2vw, 2.75rem);
+      line-height: 1.35;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      margin-bottom: 2em;
+      color: var(--color-ink);
+    }
+
+    .essay-stream p.lead {
+      font-weight: 800;
+    }
+
+    /* Energetic inline highlight (Scroll-linked) */
+    mark.highlight {
+      padding: 0 0.05em;
+      font-weight: 900;
+      position: relative;
+    }
+
+    /* MASSIVE ENDNOTE IN THE ESSAY */
+    .pull-manifesto {
+      font-weight: 900;
+      font-size: clamp(2.5rem, 5vw, 6rem);
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      margin: 3em 0;
+      padding-left: 2rem;
+      border-left: 10px solid var(--color-ink);
+    }
+
+    .pull-manifesto span {
+      display: block;
+      opacity: 0.2;
+    }
+
+    /* UTILITY TABLES IN THE FLOW */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      margin: 3em 0;
+      border-top: 2px solid var(--color-ink);
+    }
+
+    .data-table td {
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--color-stroke);
+      font-size: clamp(0.75rem, 1vw, 1.1rem);
+      vertical-align: top;
+      color: var(--color-ink);
+    }
+
+    .data-table td:first-child {
+      font-weight: 800;
+      width: 35%;
+      color: var(--color-ink);
+    }
+
+    /* ==========================================================
+       THE FOOTER ANCHOR (MASSIVE INVERTED BLOCK)
+       ========================================================== */
+    .anchor-footer {
+      background-color: var(--color-ink);
+      color: var(--color-base);
+      padding: clamp(6rem, 15vh, 12rem) var(--margin-x) clamp(4rem, 10vh, 8rem);
+      position: relative;
+      overflow: hidden;
+      z-index: 20;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      margin-bottom: 8rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .footer-pricing {
+      grid-column: 1 / 2;
+      border-top: 1px solid rgba(234, 230, 222, 0.2);
+    }
+
+    .tier-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid rgba(234, 230, 222, 0.2);
+      font-family: var(--font-mono);
+    }
+
+    .tier-row .name {
+      font-weight: 800;
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+    }
+
+    .tier-row .price {
+      font-size: 1.25rem;
+      opacity: 0.7;
+    }
+
+    .massive-footer-cta {
+      grid-column: 1 / -1;
+      text-align: left;
+      position: relative;
+      z-index: 10;
+    }
+
+    .massive-footer-text {
+      font-weight: 900;
+      font-size: clamp(4rem, 11vw, 16rem);
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      margin-bottom: 4rem;
+      margin-left: -0.03em;
+    }
+
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 2rem;
+      background-color: var(--color-base);
+      color: var(--color-ink);
+      padding: clamp(1.2rem, 3vw, 2.5rem) clamp(2.5rem, 5vw, 5rem);
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: clamp(1rem, 2vw, 1.5rem);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    /* Download button background uses the automatic gradient */
+    .download-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--gradient-accent);
+      background-size: 300% 300%;
+      z-index: -1;
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: shift-text-gradient 8s ease-in-out infinite alternate;
+    }
+
+    .download-btn:hover {
+      color: var(--color-base);
+      border-color: transparent;
+      box-shadow: 0 20px 40px rgba(255, 51, 102, 0.2);
+      transform: translateY(-4px);
+    }
+
+    .download-btn:hover::before {
+      transform: scaleY(1);
+    }
+
+    .download-btn .arrow {
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .download-btn:hover .arrow {
+      transform: translateX(12px);
+    }
+
+    .footer-baseline {
+      margin-top: 8rem;
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      opacity: 0.5;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(234, 230, 222, 0.2);
+      position: relative;
+      z-index: 10;
+    }
+
+    /* ==========================================================
+       DARK THEME (scoped to main split only — footer unaffected)
+       ========================================================== */
+
+    /* Manual override via toggle */
+    [data-theme="dark"] .manifesto-split {
+      --color-base: #0F0F0F;
+      --color-ink: #EAE6DE;
+      --color-stroke: rgba(234, 230, 222, 0.15);
+      background-color: var(--color-base);
+      color: var(--color-ink);
+    }
+
+    /* System preference (when no manual override set) */
+    @media (prefers-color-scheme: dark) {
+      html:not([data-theme="light"]) .manifesto-split {
+        --color-base: #0F0F0F;
+        --color-ink: #EAE6DE;
+        --color-stroke: rgba(234, 230, 222, 0.15);
+        background-color: var(--color-base);
+        color: var(--color-ink);
+      }
+    }
+
+    /* Smooth theme transition */
+    .manifesto-split,
+    .split-left,
+    .split-right,
+    .essay-stream p,
+    .pull-manifesto,
+    .data-table,
+    .data-table td,
+    .tech-specs {
+      transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+    }
+
+    /* ==========================================================
+       THEME TOGGLE
+       ========================================================== */
+    .theme-toggle {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: clamp(0.65rem, 0.8vw, 0.85rem);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: none;
+      border: 1px solid var(--color-stroke);
+      color: var(--color-ink);
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      opacity: 0.75;
+      transition: opacity 0.3s, background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .controls-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .theme-toggle:hover {
+      opacity: 1;
+    }
+
+    /* CTA scroll link */
+    .cta-link {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: clamp(0.65rem, 0.8vw, 0.85rem);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-ink);
+      opacity: 0.75;
+      transition: opacity 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+
+    .cta-link:hover {
+      opacity: 1;
+    }
+
+    .cta-link .arrow-down {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cta-link:hover .arrow-down {
+      transform: translateY(3px);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .manifesto-split {
+        flex-direction: column;
+      }
+
+      .split-left {
+        width: 100%;
+        border-right: none;
+        border-bottom: 2px solid var(--color-ink);
+        padding-bottom: 4rem;
+      }
+
+      .sticky-lockup {
+        position: relative;
+        top: 0;
+        height: auto;
+      }
+
+      .split-right {
+        width: 100%;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-pricing {
+        margin-bottom: 4rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="manifesto-split">
+
+    <!-- LEFT PANE: The Sticky Anchor -->
+    <div class="split-left">
+      <div class="sticky-lockup reveal-target">
+        <!-- TOP TEXT: Scroll-Linked Gradient -->
+        <h1 class="master-head scroll-gradient">GROOVE FOLIOS.</h1>
+
+        <div class="master-sub">PUBLISH ANYTHING. BEAUTIFULLY.</div>
+
+        <div class="tech-specs reveal-target delay-1">
+          <span>License: Open Source / MIT</span>
+          <span>Editor: Block Native</span>
+          <span>Deploy: Under One Minute</span>
+          <span>Cost: Free</span>
+        </div>
+
+        <div class="controls-row reveal-target delay-2">
+          <button type="button" class="theme-toggle" id="themeToggle">Mode: Light</button>
+          <a href="#cta" class="cta-link">Get the plugin <span class="arrow-down">↓</span></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANE: The Flowing Essay -->
+    <div class="split-right">
+      <article class="essay-stream">
+        <p class="lead reveal-target">Your team already creates portfolios, proposals, case studies, and lookbooks. But
+          you're scattered across Google Docs, Canva, PDF exports, and tools that were never built for this.</p>
+
+        <p class="reveal-target delay-1">Groove Folios brings all of it inside WordPress. Create multi-page folios using
+          the Block Editor you already know. Pick a theme. Set permissions. Publish. <mark
+            class="highlight scroll-gradient">That's the whole workflow.</mark></p>
+
+        <p class="reveal-target">No design skills required. No separate platform. No vendor lock-in. Your content lives
+          on your server, in your database, under your control. Always.</p>
+
+        <h2 class="pull-manifesto reveal-target">YOUR CONTENT.<br>YOUR SERVER.<br><span>YOUR RULES.</span></h2>
+
+        <p class="reveal-target">Password-protect a proposal for a single client. Restrict a case study to logged-in
+          team members. Or publish openly for the world. You decide who sees what, and you can change it anytime.</p>
+
+        <p class="reveal-target">Preview exactly what visitors will see as you build. Switch between purpose-built
+          themes that handle the design so you can focus on the writing. Every folio is responsive, fast, and ready to
+          share the moment you hit publish.</p>
+
+        <!-- What you can build -->
+        <table class="data-table reveal-target">
+          <tbody>
+            <tr>
+              <td>PORTFOLIOS</td>
+              <td>Visual showcases that pair imagery with narrative — no code, no constraints.</td>
+            </tr>
+            <tr>
+              <td>PROPOSALS</td>
+              <td>Secure, password-protected pitch documents you can update after sending.</td>
+            </tr>
+            <tr>
+              <td>CASE STUDIES</td>
+              <td>Structured deep-dives with themed layouts that hold attention.</td>
+            </tr>
+            <tr>
+              <td>LOOKBOOKS</td>
+              <td>Product and brand collections with multi-page, magazine-style flow.</td>
+            </tr>
+            <tr>
+              <td>REPORTS</td>
+              <td>Internal or client-facing documents with controlled access and clean formatting.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="reveal-target">Three steps to go live: install the plugin, build your folio, publish. You'll have your
+          first piece of content out in under a minute. And because it's open source and MIT-licensed, <mark
+            class="highlight scroll-gradient">it's free forever.</mark></p>
+      </article>
+    </div>
+
+  </main>
+
+  <!-- THE INVERTED HEAVY FOOTER -->
+  <footer class="anchor-footer" id="cta">
+    <div class="footer-grid">
+
+      <!-- HOW IT WORKS -->
+      <div class="footer-pricing reveal-target">
+        <div class="tier-row">
+          <span class="name">01. INSTALL.</span>
+          <span class="price">ONE MINUTE</span>
+        </div>
+        <div class="tier-row reveal-target delay-1">
+          <span class="name">02. BUILD.</span>
+          <span class="price">BLOCK EDITOR</span>
+        </div>
+        <div class="tier-row reveal-target delay-2" style="border-bottom: none;">
+          <span class="name">03. PUBLISH.</span>
+          <span class="price">INSTANTLY</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MASSIVE CALL TO ACTION -->
+    <div class="massive-footer-cta">
+      <!-- BOTTOM TEXT: Automatic Pulsing Gradient -->
+      <h2 class="massive-footer-text auto-gradient reveal-target">A BETTER<br>STAGE.</h2>
+      <div class="reveal-target delay-1">
+        <a href="#" class="download-btn">GET GROOVE FOLIOS — FREE <span class="arrow">→</span></a>
+      </div>
+    </div>
+
+    <div class="footer-baseline reveal-target delay-2">
+      <span>GROOVE FOLIOS &copy; 2026.</span>
+      <span>FREE &amp; OPEN SOURCE.</span>
+    </div>
+  </footer>
+
+  <!-- INTERACTION SCRIPT -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Scroll-triggered entrance animations
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-revealed');
+          }
+        });
+      }, {
+        threshold: 0.15,
+        rootMargin: "0px 0px -50px 0px"
+      });
+
+      const revealElements = document.querySelectorAll('.reveal-target');
+      revealElements.forEach(el => observer.observe(el));
+
+      // Scroll-Linked Text Gradient (Only applies to elements with .scroll-gradient)
+      // Calculates percentage down the page and maps to 0% -> 100% for bg-position
+      const setScrollVar = () => {
+        const h = document.documentElement;
+        // prevent divide by zero bounds
+        const maxScroll = Math.max(h.scrollHeight - h.clientHeight, 1);
+        const scrollPercent = (h.scrollTop / maxScroll) * 100;
+
+        // Pin strictly to root
+        h.style.setProperty('--scroll-p', scrollPercent + '%');
+      };
+
+      window.addEventListener('scroll', setScrollVar, { passive: true });
+      window.addEventListener('resize', setScrollVar, { passive: true });
+
+      // Init once on load
+      setScrollVar();
+
+      // Theme toggle — respects system preference, toggle is an override
+      const toggle = document.getElementById('themeToggle');
+      if (toggle) {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+        // Determine effective mode (manual override or system)
+        const getEffective = () => {
+          const manual = document.documentElement.getAttribute('data-theme');
+          if (manual) return manual === 'dark';
+          return prefersDark.matches;
+        };
+
+        const updateLabel = () => {
+          toggle.textContent = getEffective() ? 'Mode: Dark' : 'Mode: Light';
+        };
+
+        // Set initial label based on system preference
+        updateLabel();
+
+        toggle.addEventListener('click', () => {
+          const nowDark = getEffective();
+          document.documentElement.setAttribute('data-theme', nowDark ? 'light' : 'dark');
+          updateLabel();
+        });
+
+        // If system preference changes and no manual override, update label
+        prefersDark.addEventListener('change', () => {
+          if (!document.documentElement.getAttribute('data-theme')) {
+            updateLabel();
+          }
+        });
+      }
+    });
+  </script>
+
+</body>
+
+</html>

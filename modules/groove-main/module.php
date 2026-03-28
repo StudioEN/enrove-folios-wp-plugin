@@ -55,8 +55,13 @@ class Module extends BaseModule
 		if (in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'])) {
 			$connection = @fsockopen('localhost', $vite_port, $errno, $errstr, 0.1);
 			if (is_resource($connection)) {
-				$is_vite_dev = true;
 				fclose($connection);
+				
+				// Verify it's actually Vite responding, not another local app holding the port
+				$response = wp_remote_head('http://localhost:' . $vite_port . '/@vite/client', ['timeout' => 0.5]);
+				if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+					$is_vite_dev = true;
+				}
 			}
 		}
 
@@ -141,6 +146,19 @@ class Module extends BaseModule
 		}
 
 		$post_action = isset($_GET['action']) ? sanitize_key(wp_unslash($_GET['action'])) : 'create';
+
+		$current_page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+		$theme_preview_base_url = '';
+		$theme_preview_nonce = '';
+		$open_add_new_modal = false;
+		if (in_array($current_page, ['groove-add-new', 'groove-all-folios'], true)) {
+			$theme_preview_base_url = add_query_arg([], site_url('/'));
+			$theme_preview_nonce    = wp_create_nonce('groove_theme_preview');
+		}
+		if ($current_page === 'groove-all-folios' && !empty($_GET['open_add_new'])) {
+			$open_add_new_modal = true;
+		}
+
 		$settings = array(
 			'screenId' => $this->get_scrren_id() ?? '',
 			'isPost' => $this->is_in_block_editor_page(),
@@ -149,6 +167,9 @@ class Module extends BaseModule
 			'folioSetupUrl' => $folio_setup_url,
 			'editorThemeColorSourceUrl' => $editor_theme_color_source_url,
 			'adminPostUrl' => admin_url('admin-post.php'),
+			'themePreviewBaseUrl' => $theme_preview_base_url,
+			'themePreviewNonce' => $theme_preview_nonce,
+			'openAddNewModal' => $open_add_new_modal,
 		);
 
 		wp_add_inline_script(

@@ -24,6 +24,14 @@ class Add_New extends Page
     add_action('groove/menu/register', function (Menu_Manager $menu) {
       $menu->register(static::PAGE_ID, new Add_New_Menu_Item($this));
     }, Overview::MENU_PRIORITY + 20);
+
+    add_action('admin_init', function () {
+      if (!isset($_GET['page']) || sanitize_key(wp_unslash($_GET['page'])) !== static::PAGE_ID) {
+        return;
+      }
+      wp_safe_redirect(admin_url('admin.php?page=groove-all-folios&open_add_new=1'));
+      exit;
+    });
   }
 
   public function create_folio()
@@ -105,6 +113,11 @@ class Add_New extends Page
           $this->create_proposal_sample_pages((int) $folio_id, $default_status);
         }
 
+        \Groove\Analytics::track('folio_created', [
+          'theme'  => $theme_id,
+          'status' => $default_status,
+        ]);
+
         $redirect_url = admin_url('admin.php?page=groove-folio&folio_id=' . $folio_id);
         wp_safe_redirect($redirect_url);
         exit;
@@ -175,7 +188,8 @@ class Add_New extends Page
       $is_first = ($id === $first_theme_id);
       $card_classes = 'g-folio__theme-option g-folio__theme-option--add-new relative cursor-pointer rounded-lg border-2 transition-all';
       $card_classes .= $is_first ? ' border-indigo-600 ring-1 ring-indigo-600' : ' border-gray-200 hover:border-gray-300';
-      echo '<button type="button" class="' . esc_attr($card_classes) . '" 
+      echo '<div class="g-folio__theme-card-wrap">';
+      echo '<button type="button" class="' . esc_attr($card_classes) . '"
                  data-theme-id="' . esc_attr($id) . '"
                  data-theme-name="' . esc_attr($theme['name']) . '"
                  role="radio"
@@ -191,6 +205,10 @@ class Add_New extends Page
       echo esc_html__('Selected', 'groove');
       echo '</span>';
       echo '</button>';
+      echo '<button type="button" class="g-theme-preview-btn" data-theme-id="' . esc_attr($id) . '" aria-label="' . esc_attr(sprintf(__('Preview %s theme', 'groove'), $theme['name'])) . '">';
+      echo esc_html__('Preview', 'groove');
+      echo '</button>';
+      echo '</div>';
     }
 ?>
   </div>

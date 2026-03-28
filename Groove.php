@@ -4,7 +4,7 @@
  * Description: Create, manage, and publish beautiful portfolios directly within WordPress. Groove Folios provides a robust foundation with custom themes, access permissions, dynamic previews, and a dedicated folio builder interface powered by the modern Block Editor.
  * Plugin URI: https://studioen.us/groove/
  * Author: StudioEN
- * Version: 0.1.11
+ * Version: 0.2.0
  * Author URI: https://studioen.us/
  *
  * Text Domain: groove
@@ -45,6 +45,14 @@ if (!version_compare(PHP_VERSION, '7.0', '>=')) {
 
 	// Flush rewrite rules once on activation so /folio/ URLs resolve immediately.
 	register_activation_hook(__FILE__, 'groove_flush_rewrite_rules');
+
+	register_activation_hook(__FILE__, function () {
+		\Groove\Analytics::track('plugin_activated');
+	});
+
+	register_deactivation_hook(__FILE__, function () {
+		\Groove\Analytics::track('plugin_deactivated');
+	});
 }
 
 /**

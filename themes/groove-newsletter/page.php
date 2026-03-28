@@ -104,6 +104,7 @@ class Page extends Base_Theme
 
   function get_data()
   {
+    if ($this->is_preview_mode) { return; }
     $this->get_folio_data();
     $this->get_page_data();
     $this->get_pages_data($this->folio_id);
