@@ -2198,4 +2198,3 @@ class Folio extends Page
     <?php
   }
 }
-?>

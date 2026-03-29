@@ -636,4 +636,3 @@ class Settings extends Page
 <?php
   }
 }
-?>

@@ -1434,4 +1434,3 @@ class All_Folios extends Page
 		<?php
 	}
 }
-?>

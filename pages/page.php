@@ -243,5 +243,3 @@ abstract class Page extends Assets
 		}
 	}
 }
-
-?>
