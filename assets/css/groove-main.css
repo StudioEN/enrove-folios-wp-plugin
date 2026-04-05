@@ -1,5 +1,4 @@
-@import url(./theme-2.css);
-@import url(./theme-1.css);
+
 
 @font-face {
   font-family: gicons;
@@ -679,7 +678,10 @@ body.groove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible
   align-content: start;
   max-height: 360px;
   overflow-y: auto;
-  padding-right: 8px;
+  /* Extra padding gives room for the absolutely-positioned Selected badge
+     that sticks -8px above and to the right of the first-row cards */
+  padding-top: 10px;
+  padding-right: 12px;
   scrollbar-gutter: stable;
 }
 
@@ -751,6 +753,20 @@ body.groove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible
 
 .g-folio__theme-thumb img {
   width: 100%;
+}
+
+/* Uniform thumbnail height across all theme cards in the Add New modal */
+.g-folio__theme-option-thumb {
+  height: 120px !important;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.g-folio__theme-option-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .g-folio__footer-version {}
@@ -1550,7 +1566,7 @@ body.groove .g-proposal-info-modal__body {
 }
 
 /* WordPress admin notices conflict with Tailwind's global `.inline` utility. */
-body.groove .notice.inline {
+body.groove .notice.inline:not(.hidden) {
   display: block;
 }
 
@@ -1715,4 +1731,374 @@ body.groove .g-tag-dropdown li.g-tag-dropdown__create:hover,
 body.groove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
   background: #eef2ff;
   color: #4338ca;
+}
+
+/* ── Add New Folio modal ────────────────────────────────────────────────── */
+
+.g-add-new-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.g-add-new-modal[hidden] {
+  display: flex !important;
+  visibility: hidden;
+}
+
+.g-add-new-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.g-add-new-modal.is-open {
+  visibility: visible;
+}
+
+.g-add-new-modal.is-open .g-add-new-modal__backdrop {
+  opacity: 1;
+}
+
+.g-add-new-modal__dialog {
+  position: relative;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  width: 700px;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.g-add-new-modal.is-open .g-add-new-modal__dialog {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.g-add-new-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.g-add-new-modal__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.g-add-new-modal__close {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 6px;
+  margin: 0;
+  cursor: pointer;
+  color: #9ca3af;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.g-add-new-modal__close:hover,
+.g-add-new-modal__close:focus-visible {
+  color: #374151;
+  background: #f3f4f6;
+  outline: none;
+}
+
+.g-add-new-modal__body {
+  overflow-y: auto;
+  padding: 20px;
+  flex: 1 1 auto;
+}
+
+/* Remove the existing postbox chrome when rendered inside the modal */
+.g-add-new-modal__body .g-folio__content,
+.g-add-new-modal__body .g-folio__postbox-themes {
+  display: block !important;
+}
+
+.g-add-new-modal__body .g-folio__postbox,
+.g-add-new-modal__body .postbox-container,
+.g-add-new-modal__body .postbox {
+  width: auto !important;
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+}
+
+.g-add-new-modal__body .g-folio__postbox-header,
+.g-add-new-modal__body .g-folio__postbox-close {
+  display: none !important;
+}
+
+.g-add-new-modal__body .g-folio__postbox-body {
+  padding: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-add-new-modal__backdrop {
+    transition: none;
+  }
+  .g-add-new-modal__dialog {
+    transition: none;
+  }
+}
+
+/* ── Theme card wrap + preview button ───────────────────────────────────── */
+
+.g-folio__theme-card-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.g-theme-preview-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 11px;
+  color: #6b7280;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.g-theme-preview-btn:hover,
+.g-theme-preview-btn:focus-visible {
+  color: #374151;
+  text-decoration-color: currentColor;
+  outline: none;
+}
+
+/* ── Theme Picker Preview overlay ───────────────────────────────────────── */
+
+.g-tpp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  background: #111;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  /* pointer-events blocked while hidden so clicks pass through */
+  pointer-events: none;
+}
+
+.g-tpp-overlay[hidden] {
+  /* hidden attr hides, but we keep it in the DOM for transitions */
+  display: flex !important;
+  visibility: hidden;
+}
+
+.g-tpp-overlay.is-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+/* Header */
+.g-tpp-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 44px;
+  background: #1a1a1a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0 12px 0 16px;
+}
+
+/* Tab bar */
+.g-tpp-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex: 1 1 auto;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.g-tpp-tab {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0 14px;
+  margin: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  position: relative;
+  height: 100%;
+  transition: color 0.15s;
+}
+
+.g-tpp-tab:hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.g-tpp-tab.is-active {
+  color: #fff;
+}
+
+/* Tab active indicator — view-transition animates this */
+.g-tpp-tab.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: rgba(255, 255, 255, 0.7);
+  view-transition-name: gfp-tab-active;
+}
+
+/* Close button */
+.g-tpp-close {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 6px;
+  margin: 0 0 0 8px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.45);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.g-tpp-close:hover,
+.g-tpp-close:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+/* Iframe container */
+.g-tpp-iframe-wrap {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+  background: #1e1e1e;
+}
+
+.g-tpp-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  transition: opacity 0.18s;
+}
+
+/* Loading state */
+.g-tpp-iframe-wrap.is-loading .g-tpp-iframe {
+  opacity: 0;
+}
+
+.g-tpp-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+
+.g-tpp-iframe-wrap.is-loading .g-tpp-loader {
+  opacity: 1;
+}
+
+/* Spinner ring */
+.g-tpp-loader::after {
+  content: '';
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.5);
+  animation: g-tpp-spin 0.7s linear infinite;
+}
+
+@keyframes g-tpp-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── View Transition — tab indicator slide ──────────────────────────────── */
+
+::view-transition-old(gfp-tab-active),
+::view-transition-new(gfp-tab-active) {
+  animation-duration: 0.2s;
+  animation-timing-function: ease;
+  mix-blend-mode: normal;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .g-tpp-overlay {
+    transition: none;
+  }
+  .g-tpp-iframe {
+    transition: none;
+  }
+  .g-tpp-loader {
+    transition: none;
+  }
+  .g-tpp-loader::after {
+    animation: none;
+    border-top-color: rgba(255, 255, 255, 0.5);
+  }
+  ::view-transition-old(gfp-tab-active),
+  ::view-transition-new(gfp-tab-active) {
+    animation: none;
+  }
 }

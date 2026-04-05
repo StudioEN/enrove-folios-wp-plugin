@@ -30,7 +30,7 @@ jQuery(function () {
 
     isAddNewPage() {
       const page = new URLSearchParams(window.location.search).get('page')
-      return page === 'groove-add-new'
+      return page === 'groove-add-new' || page === 'groove-all-folios'
     },
 
     isFolioPage() {
@@ -1217,4 +1217,182 @@ jQuery(function () {
 
   // Breadcrumbs on groove_folio_page editor screens are handled by
   // assets/js/groove-gutenberg-breadcrumb.js to avoid duplicate injection.
+
+  // ── Add New Folio Modal ──────────────────────────────────────────────────────
+
+  const $addNewModal = jQuery('#g-add-new-modal')
+  if ($addNewModal.length) {
+    const addNewModalEl  = $addNewModal[0]
+    const $backdrop      = $addNewModal.find('.g-add-new-modal__backdrop')
+
+    function openAddNewModal() {
+      addNewModalEl.removeAttribute('hidden')
+      requestAnimationFrame(function () {
+        addNewModalEl.classList.add('is-open')
+      })
+      document.body.style.overflow = 'hidden'
+      $addNewModal.find('.g-add-new-modal__close').trigger('focus')
+    }
+
+    function closeAddNewModal() {
+      addNewModalEl.classList.remove('is-open')
+      document.body.style.overflow = ''
+      addNewModalEl.addEventListener('transitionend', function handler() {
+        addNewModalEl.removeEventListener('transitionend', handler)
+        addNewModalEl.setAttribute('hidden', '')
+      }, { once: true })
+    }
+
+    jQuery(document).on('click', '[data-groove-open-add-new]', openAddNewModal)
+    $addNewModal.on('click', '.g-add-new-modal__close', closeAddNewModal)
+    $backdrop.on('click', closeAddNewModal)
+
+    jQuery(document).on('keydown', function (e) {
+      if (e.key === 'Escape' && addNewModalEl.classList.contains('is-open')) {
+        closeAddNewModal()
+      }
+    })
+
+    // Auto-open when redirected from groove-add-new nav link.
+    if (settings.openAddNewModal) {
+      openAddNewModal()
+    }
+
+    // Intercept the sidebar "Add New Folio" nav link so it opens the modal
+    // in-place when already on the All Folios page.
+    jQuery('a[href*="page=groove-add-new"]').on('click', function (e) {
+      e.preventDefault()
+      openAddNewModal()
+    })
+  }
+
+  // ── Theme Picker Preview Overlay ────────────────────────────────────────────
+
+  if (Groove.isAddNewPage()) {
+    const previewBaseUrl = (settings.themePreviewBaseUrl || '').replace(/\?.*$/, '')
+    const previewNonce   = settings.themePreviewNonce || ''
+
+    if (previewBaseUrl && previewNonce) {
+
+      // Build the overlay DOM once and append to body.
+      const $overlay = jQuery(
+        '<div id="g-tpp-overlay" class="g-tpp-overlay" role="dialog" aria-modal="true" aria-label="Theme preview" hidden>' +
+          '<div class="g-tpp-header">' +
+            '<div class="g-tpp-tabs" role="tablist">' +
+              '<button class="g-tpp-tab is-active" role="tab" aria-selected="true"  data-view="cover" data-page-index="0">Cover</button>' +
+              '<button class="g-tpp-tab"            role="tab" aria-selected="false" data-view="page"  data-page-index="0">Page 1</button>' +
+              '<button class="g-tpp-tab"            role="tab" aria-selected="false" data-view="page"  data-page-index="1">Page 2</button>' +
+            '</div>' +
+            '<button class="g-tpp-close" aria-label="Close preview">' +
+              '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+                '<path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
+              '</svg>' +
+            '</button>' +
+          '</div>' +
+          '<div id="g-tpp-iframe-wrap" class="g-tpp-iframe-wrap">' +
+            '<div class="g-tpp-loader" aria-hidden="true"><span></span><span></span><span></span></div>' +
+            '<iframe id="g-tpp-iframe" class="g-tpp-iframe" src="about:blank" title="Theme preview" sandbox="allow-scripts allow-same-origin"></iframe>' +
+          '</div>' +
+        '</div>'
+      )
+      jQuery('body').append($overlay)
+
+      const overlayEl   = $overlay[0]
+      const iframeEl    = document.getElementById('g-tpp-iframe')
+      const iframeWrap  = document.getElementById('g-tpp-iframe-wrap')
+      let   currentThemeId = null
+
+      function buildPreviewUrl(themeId, view, pageIndex) {
+        return previewBaseUrl +
+          '?groove_theme_preview=' + encodeURIComponent(themeId) +
+          '&groove_preview_view='  + encodeURIComponent(view) +
+          '&groove_preview_page='  + encodeURIComponent(pageIndex) +
+          '&_wpnonce='             + encodeURIComponent(previewNonce)
+      }
+
+      function setActiveTab(tabEl) {
+        $overlay.find('.g-tpp-tab')
+          .removeClass('is-active')
+          .attr('aria-selected', 'false')
+        jQuery(tabEl)
+          .addClass('is-active')
+          .attr('aria-selected', 'true')
+      }
+
+      function loadIframe(view, pageIndex) {
+        const url = buildPreviewUrl(currentThemeId, view, pageIndex)
+        iframeWrap.classList.add('is-loading')
+        iframeEl.src = url
+        iframeEl.addEventListener('load', function handler() {
+          iframeEl.removeEventListener('load', handler)
+          iframeWrap.classList.remove('is-loading')
+        }, { once: true })
+      }
+
+      // Open overlay when a Preview button is clicked.
+      jQuery(document).on('click', '.g-theme-preview-btn', function (e) {
+        e.stopPropagation()
+        currentThemeId = String(jQuery(this).data('theme-id') || '')
+        if (!currentThemeId) return
+
+        // Reset to Cover tab.
+        $overlay.find('.g-tpp-tab').removeClass('is-active').attr('aria-selected', 'false')
+        $overlay.find('.g-tpp-tab[data-view="cover"]').addClass('is-active').attr('aria-selected', 'true')
+
+        // Show overlay (remove hidden attr so CSS transition fires).
+        overlayEl.removeAttribute('hidden')
+        requestAnimationFrame(function () {
+          overlayEl.classList.add('is-open')
+        })
+        document.body.style.overflow = 'hidden'
+
+        loadIframe('cover', 0)
+        $overlay.find('.g-tpp-close').trigger('focus')
+      })
+
+      // Tab switching with View Transition for the active indicator.
+      $overlay.on('click', '.g-tpp-tab', function () {
+        if (this.classList.contains('is-active')) return
+        const view      = String(jQuery(this).data('view') || 'cover')
+        const pageIndex = parseInt(jQuery(this).data('page-index') || 0, 10)
+        const tabEl     = this
+
+        if ('startViewTransition' in document) {
+          document.startViewTransition(function () {
+            setActiveTab(tabEl)
+          })
+        } else {
+          setActiveTab(tabEl)
+        }
+
+        loadIframe(view, pageIndex)
+      })
+
+      // Close helpers.
+      function closeOverlay() {
+        overlayEl.classList.remove('is-open')
+        document.body.style.overflow = ''
+        overlayEl.addEventListener('transitionend', function handler() {
+          overlayEl.removeEventListener('transitionend', handler)
+          overlayEl.setAttribute('hidden', '')
+          iframeEl.src = 'about:blank'
+          iframeWrap.classList.remove('is-loading')
+        }, { once: true })
+      }
+
+      $overlay.on('click', '.g-tpp-close', closeOverlay)
+
+      // Close on backdrop click.
+      $overlay.on('click', function (e) {
+        if (e.target === overlayEl) closeOverlay()
+      })
+
+      // Escape key.
+      jQuery(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && overlayEl.classList.contains('is-open')) {
+          closeOverlay()
+        }
+      })
+    }
+  }
 })
