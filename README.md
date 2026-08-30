@@ -38,7 +38,7 @@ Admin UI is scoped under `body.groove` and built with Tailwind utility classes a
 
 | Path | Purpose |
 |---|---|
-| `Groove.php` | Plugin bootstrap |
+| `groove-folios.php` | Plugin bootstrap |
 | `includes/` | Core plugin wiring (CPTs, taxonomy, hooks) |
 | `pages/` | Admin page templates (All Folios, Folio editor, Settings, Themes, etc.) |
 | `list/` | WP_List_Table implementations for the admin list views |
