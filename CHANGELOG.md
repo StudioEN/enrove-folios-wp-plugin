@@ -37,6 +37,11 @@
 - Fixed embed/oEmbed display in theme page templates.
 - Removed legacy Insights module and related scripts that were no longer in use.
 
+## [2026-03-12]
+
+### Fixed
+- Fixed folio-page embed rendering: Spotify/YouTube/X URLs showed as raw text instead of embedded players because folio page themes rendered blocks via `render_block()` and bypassed WordPress's standard embed processing. Added `apply_embed_processing()` helper in `themes/base-theme.php` (runs `run_shortcode`/`autoembed`) and wired it into the render paths for Folio Starter, Groove eBook, Groove Newsletter, and Groove Magazine page templates.
+
 ## [2026-02-25]
 
 ### Added
