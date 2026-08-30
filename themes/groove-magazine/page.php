@@ -19,32 +19,7 @@ class Page extends Base_Theme
     {
         parent::__construct();
 
-        $this->folio_id = isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '';
-
-        if ($this->post_type == 'groove_folio_page') {
-            $meta = get_post_meta($this->id);
-            $this->folio_id = $meta['folio_id'][0] ?? '';
-
-            // Auto-heal missing folio_id from URL.
-            if (empty($this->folio_id) && $this->id) {
-                $path = Utils::get_current_path();
-                $base_slug = Utils::get_folio_base_slug();
-                $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
-                if (preg_match($pattern, $path, $url_matches)) {
-                    $folio_slug = $url_matches[1];
-                    $folio_query = new \WP_Query(array(
-                        'post_type' => 'groove_folio',
-                        'name' => $folio_slug,
-                        'posts_per_page' => 1,
-                        'post_status' => Utils::get_viewable_post_statuses(),
-                    ));
-                    if ($folio_query->post) {
-                        $this->folio_id = $folio_query->post->ID;
-                        update_post_meta($this->id, 'folio_id', $this->folio_id);
-                    }
-                }
-            }
-        }
+        $this->folio_id = $this->resolve_page_folio_id();
     }
 
     /**

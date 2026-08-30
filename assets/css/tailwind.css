@@ -4,3 +4,37 @@
 @source "../../pages/**/*.php";
 @source "../../modules/**/*.php";
 @source "../../templates/**/*.php";
+
+/* ── WordPress admin palette ──────────────────────────────────────────────
+   Remap the Tailwind scales this project actually uses onto the WordPress
+   admin palette, so `text-gray-500`, `ring-indigo-500` and friends render in
+   core admin colours without touching the markup.
+
+   Tokens are defined in assets/css/groove-main.css (:root); the hex
+   fallbacks are the same values, in case only this stylesheet is loaded.
+   ────────────────────────────────────────────────────────────────────── */
+@theme {
+  /* Gray → WP admin gray ramp */
+  --color-gray-50: var(--g-gray-0, #f6f7f7);
+  --color-gray-100: var(--g-gray-5, #f0f0f1);
+  --color-gray-200: var(--g-gray-10, #dcdcde);
+  --color-gray-300: var(--g-gray-20, #c3c4c7);
+  --color-gray-400: var(--g-gray-30, #a7aaad);
+  --color-gray-500: var(--g-gray-60, #646970);
+  --color-gray-600: var(--g-gray-70, #50575e);
+  --color-gray-700: var(--g-gray-80, #3c434a);
+  --color-gray-800: var(--g-gray-90, #2c3338);
+  --color-gray-900: var(--g-gray-100, #1d2327);
+
+  /* Indigo → WP admin theme colour (follows the user's admin colour scheme) */
+  --color-indigo-50: var(--g-blue-0, #f0f6fc);
+  --color-indigo-200: var(--g-blue-5, #c5d9ed);
+  --color-indigo-500: var(--g-accent, #3858e9);
+  --color-indigo-600: var(--g-accent, #3858e9);
+  --color-indigo-700: var(--g-accent-hover, #2145e6);
+  --color-indigo-800: var(--g-accent-active, #183ad6);
+  --color-indigo-900: var(--g-blue-70, #0a4b78);
+
+  /* Red → WP admin red ramp (destructive text) */
+  --color-red-600: var(--g-red-50, #b32d2e);
+}

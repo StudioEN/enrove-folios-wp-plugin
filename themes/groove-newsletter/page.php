@@ -64,12 +64,7 @@ class Page extends Base_Theme
   {
     parent::__construct();
 
-    $this->folio_id = isset($_REQUEST['folio_id']) ? $_REQUEST['folio_id'] : '';
-
-    if ($this->post_type == 'groove_folio_page') {
-      $meta = get_post_meta($this->id);
-      $this->folio_id = $meta['folio_id'][0] ?? '';
-    }
+    $this->folio_id = $this->resolve_page_folio_id();
   }
 
   public function ensure_script()

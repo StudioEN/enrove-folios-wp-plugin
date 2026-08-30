@@ -18,20 +18,7 @@ class Page extends Base_Theme
   {
     parent::__construct();
 
-    $this->folio_id = (int) Utils::get_folio_id_from_current_path();
-    if ($this->folio_id <= 0) {
-      $this->folio_id = isset($_REQUEST['folio_id']) ? (int) wp_unslash($_REQUEST['folio_id']) : 0;
-    }
-
-    if ($this->post_type === 'groove_folio_page' && $this->folio_id <= 0) {
-      $meta = get_post_meta($this->id);
-      $this->folio_id = isset($meta['folio_id'][0]) ? (int) $meta['folio_id'][0] : $this->folio_id;
-    }
-
-    // URL-based fallback: extract folio from the URL path when meta gives 0
-    if ($this->folio_id <= 0 && $this->post_type === 'groove_folio_page') {
-      $this->folio_id = (int) Utils::get_folio_id_from_current_path();
-    }
+    $this->folio_id = $this->resolve_page_folio_id();
   }
 
   public function ensure_script()

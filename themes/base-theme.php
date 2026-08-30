@@ -82,6 +82,49 @@ abstract class Base_Theme extends Assets
     return 0;
   }
 
+  /**
+   * Resolve the parent folio ID for a folio-page request.
+   *
+   * Canonical resolution order, matching Themes_Manager::create_theme_for_current_request():
+   *   1. The folio slug in the URL path — always correct, even when the page's
+   *      folio_id meta is stale (e.g. after duplication + deletion of the source folio).
+   *   2. The folio_id meta stored on the page.
+   *   3. A folio_id request parameter (admin previews and query-param URLs).
+   *
+   * When meta is missing entirely, it is backfilled from the URL so admin screens
+   * (which have no folio path to read) resolve the folio too. Meta that merely
+   * disagrees with the URL is left alone: page lookup in
+   * Utils::get_groove_post_by_post_type_and_post_name() is itself scoped by
+   * folio_id, so a page that resolved from a folio path already matches it.
+   *
+   * Page themes should call this from their constructor rather than re-implementing it.
+   *
+   * @return int Folio ID, or 0 when it cannot be resolved.
+   */
+  protected function resolve_page_folio_id()
+  {
+    $post_id = (int) $this->id;
+
+    if ($this->post_type === 'groove_folio_page') {
+      $meta_folio_id = $post_id > 0 ? (int) get_post_meta($post_id, 'folio_id', true) : 0;
+      $path_folio_id = (int) Utils::get_folio_id_from_current_path();
+
+      if ($path_folio_id > 0) {
+        if ($post_id > 0 && $meta_folio_id <= 0) {
+          update_post_meta($post_id, 'folio_id', $path_folio_id);
+        }
+
+        return $path_folio_id;
+      }
+
+      if ($meta_folio_id > 0) {
+        return $meta_folio_id;
+      }
+    }
+
+    return isset($_REQUEST['folio_id']) ? (int) wp_unslash($_REQUEST['folio_id']) : 0;
+  }
+
   protected function get_selected_font_data($font_role = 'body')
   {
     $folio_id = $this->get_folio_id_for_customization();
