@@ -1,6 +1,8 @@
 # Groove Folios
 
-Create, manage, and publish beautiful portfolios directly within WordPress. Groove Folios provides custom themes, access permissions, dynamic previews, and a dedicated folio builder interface powered by the Block Editor.
+Create, manage, and publish beautiful digital literature directly within WordPress — ebooks, newsletters, product catalogs, portfolios, proposals, and more. Groove Folios provides custom themes, access permissions, dynamic previews, and a dedicated folio builder interface powered by the Block Editor.
+
+A "Folio" is a general-purpose multi-page document container; the theme you pick determines whether it reads as an ebook, newsletter, portfolio, proposal, or another format.
 
 - **Plugin URI:** https://studioen.us/groove/
 - **Author:** [StudioEN](https://studioen.us/)
