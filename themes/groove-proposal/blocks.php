@@ -627,6 +627,121 @@ function groove_proposal_render_comparison_columns(array $attributes): string
     return $out;
 }
 
+// ── Case Study block ────────────────────────────────────────────────────────
+
+add_action('init', function () {
+    register_block_type('groove-proposal/case-study', [
+        'api_version'     => 3,
+        'attributes'      => [
+            'clientName'   => ['type' => 'string', 'default' => ''],
+            'clientLogo'   => ['type' => 'string', 'default' => ''],
+            'projectTitle' => ['type' => 'string', 'default' => ''],
+            'heroImage'    => ['type' => 'string', 'default' => ''],
+            'tagsText'     => ['type' => 'string', 'default' => ''],
+            'stats'        => [
+                'type'    => 'array',
+                'default' => [],
+                'items'   => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'value' => ['type' => 'string'],
+                        'label' => ['type' => 'string'],
+                    ],
+                ],
+            ],
+            'link'   => ['type' => 'string', 'default' => ''],
+            'layout' => ['type' => 'string', 'default' => 'spotlight'],
+        ],
+        'render_callback' => 'groove_proposal_render_case_study',
+    ]);
+});
+
+/**
+ * Server-side render for the Case Study block.
+ *
+ * $content is the already-rendered InnerBlocks.Content HTML for the
+ * narrative body (challenge / approach / results). It is final, safe HTML
+ * produced by WordPress's own block rendering — do not re-parse or re-render it.
+ */
+function groove_proposal_render_case_study(array $attributes, string $content): string
+{
+    $client_name   = wp_kses_post($attributes['clientName'] ?? '');
+    $client_logo   = esc_url($attributes['clientLogo'] ?? '');
+    $project_title = wp_kses_post($attributes['projectTitle'] ?? '');
+    $hero_image    = esc_url($attributes['heroImage'] ?? '');
+    $tags_text     = (string) ($attributes['tagsText'] ?? '');
+    $stats         = $attributes['stats'] ?? [];
+    $link          = esc_url($attributes['link'] ?? '');
+    $layout        = $attributes['layout'] ?? 'spotlight';
+
+    if (!in_array($layout, ['spotlight', 'compact'], true)) {
+        $layout = 'spotlight';
+    }
+
+    if ($project_title === '' && trim(wp_strip_all_tags($content)) === '') {
+        return '';
+    }
+
+    $tags = array_filter(array_map('trim', explode(',', $tags_text)), function (string $tag): bool {
+        return $tag !== '';
+    });
+
+    $out = '<article class="gp-case-study gp-case-study--' . esc_attr($layout) . '">';
+
+    $out .= '<header class="gp-case-study__header">';
+    if ($client_logo !== '' || $client_name !== '') {
+        $out .= '<div class="gp-case-study__client">';
+        if ($client_logo !== '') {
+            $out .= '<img class="gp-case-study__logo" src="' . $client_logo . '" alt="' . esc_attr(wp_strip_all_tags($client_name)) . '">';
+        }
+        if ($client_name !== '') {
+            $out .= '<span class="gp-case-study__client-name">' . $client_name . '</span>';
+        }
+        $out .= '</div>';
+    }
+    if (!empty($tags)) {
+        $out .= '<div class="gp-case-study__tags">';
+        foreach ($tags as $tag) {
+            $out .= '<span class="gp-case-study__tag">' . esc_html($tag) . '</span>';
+        }
+        $out .= '</div>';
+    }
+    if ($project_title !== '') {
+        $out .= '<h3 class="gp-case-study__title">' . $project_title . '</h3>';
+    }
+    $out .= '</header>';
+
+    if ($hero_image !== '') {
+        $out .= '<figure class="gp-case-study__hero">'
+            . '<img src="' . $hero_image . '" alt="' . esc_attr(wp_strip_all_tags($project_title)) . '">'
+            . '</figure>';
+    }
+
+    if (!empty($stats)) {
+        $out .= '<div class="gp-case-study__stats">';
+        foreach ($stats as $stat) {
+            $value = wp_kses_post($stat['value'] ?? '');
+            $label = wp_kses_post($stat['label'] ?? '');
+            $out .= '<div class="gp-case-study__stat">'
+                . '<span class="gp-case-study__stat-value">' . $value . '</span>'
+                . '<span class="gp-case-study__stat-label">' . $label . '</span>'
+                . '</div>';
+        }
+        $out .= '</div>';
+    }
+
+    $out .= '<div class="gp-case-study__body">' . $content . '</div>';
+
+    if ($link !== '') {
+        $out .= '<a class="gp-case-study__link" href="' . $link . '" target="_blank" rel="noopener noreferrer">'
+            . esc_html__('View live project', 'groove') . ' &rarr;</a>';
+    }
+
+    $out .= '</article>';
+
+    return $out;
+}
+
 // ── Editor assets ───────────────────────────────────────────────────────────
 
 add_action('enqueue_block_editor_assets', function () {
@@ -724,6 +839,16 @@ add_action('enqueue_block_editor_assets', function () {
         $theme_url . 'blocks/comparison-columns/index.js',
         ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
         file_exists($compare_js) ? (string) filemtime($compare_js) : GROOVE_VERSION,
+        true
+    );
+
+    // Case Study block JS
+    $case_study_js = __DIR__ . '/blocks/case-study/index.js';
+    wp_enqueue_script(
+        'groove-proposal-block-case-study',
+        $theme_url . 'blocks/case-study/index.js',
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        file_exists($case_study_js) ? (string) filemtime($case_study_js) : GROOVE_VERSION,
         true
     );
 
