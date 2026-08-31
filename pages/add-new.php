@@ -222,7 +222,7 @@ class Add_New extends Page
       <?php echo esc_html__('Create with sample proposal content', 'groove'); ?>
     </label>
     <p class="m-0 mt-2 text-xs text-gray-500">
-      <?php echo esc_html__('Seeds cover details and three sample pages to demonstrate the proposal template.', 'groove'); ?>
+      <?php echo esc_html__('Seeds cover details and five sample pages that showcase every proposal content block.', 'groove'); ?>
     </p>
   </div>
   <div class="g-folio__theme-button">
@@ -255,6 +255,11 @@ class Add_New extends Page
 
   private function get_proposal_sample_pages(): array
   {
+    $acme_logo_url      = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/acme.svg';
+    $nordlight_logo_url = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/nordlight.svg';
+    $vale_logo_url      = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/vale.svg';
+    $zhou_logo_url      = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/zhou-studio.svg';
+
     return array(
       array(
         'title' => __('Executive Summary', 'groove'),
@@ -265,6 +270,10 @@ class Add_New extends Page
 <!-- wp:paragraph -->
 <p>Your team is preparing to scale delivery while improving positioning in a more competitive market. This proposal outlines a focused engagement to align strategy, service narrative, and execution priorities in one practical roadmap.</p>
 <!-- /wp:paragraph -->
+<!-- wp:paragraph -->
+<p>We've partnered with organizations facing a similar inflection point, from early-stage teams to established players resetting their story for a new market.</p>
+<!-- /wp:paragraph -->
+<!-- wp:groove-proposal/logo-strip {"logos":[{"url":"{$acme_logo_url}","name":"Acme Inc.","link":""},{"url":"{$nordlight_logo_url}","name":"Nordlight Group","link":""},{"url":"{$vale_logo_url}","name":"Vale & Co.","link":""},{"url":"{$zhou_logo_url}","name":"Zhou Studio","link":""}]} /-->
 <!-- wp:heading {"level":2} -->
 <h2>Engagement goals</h2>
 <!-- /wp:heading -->
@@ -277,6 +286,7 @@ class Add_New extends Page
 <!-- wp:list -->
 <ul><li>Sharper positioning and value communication.</li><li>Prioritized delivery plan with ownership.</li><li>Clear implementation milestones for the next 90 days.</li></ul>
 <!-- /wp:list -->
+<!-- wp:groove-proposal/key-metrics /-->
 HTML,
       ),
       array(
@@ -288,18 +298,50 @@ HTML,
 <!-- wp:list -->
 <ul><li>Discovery interviews and signal analysis.</li><li>Offer and messaging calibration.</li><li>Delivery model refinement with role clarity.</li></ul>
 <!-- /wp:list -->
+<!-- wp:groove-proposal/process-steps /-->
 <!-- wp:heading {"level":2} -->
 <h2>Collaboration model</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
 <p>We run weekly working sessions with concise decision memos and a shared action board. Stakeholders receive asynchronous updates between sessions to reduce meeting overhead while preserving momentum.</p>
 <!-- /wp:paragraph -->
+<!-- wp:groove-proposal/team-grid /-->
 <!-- wp:heading {"level":2} -->
 <h2>Deliverables</h2>
 <!-- /wp:heading -->
-<!-- wp:list -->
-<ul><li>Opportunity and constraint summary.</li><li>Refined proposal and service narrative.</li><li>90-day execution plan with milestones.</li></ul>
-<!-- /wp:list -->
+<!-- wp:groove-proposal/deliverables /-->
+<!-- wp:groove-proposal/callout-box {"title":"A note on scope","body":"This proposal assumes access to existing brand assets and a single point of contact on your side. If either isn't available yet, we'll adjust the Phase 1 timeline together.","style":"important"} /-->
+HTML,
+      ),
+      array(
+        'title' => __('Case Studies', 'groove'),
+        'content' => (string) <<<HTML
+<!-- wp:paragraph -->
+<p>The clearest way to evaluate a partner is to see how they've handled a comparable challenge. Here's a recent engagement with a client in a similar position.</p>
+<!-- /wp:paragraph -->
+<!-- wp:groove-proposal/case-study {"clientName":"Nordlight Group","clientLogo":"{$nordlight_logo_url}","projectTitle":"Repositioning Nordlight for a category shift","tagsText":"Brand, Positioning, Web","stats":[{"value":"3.2x","label":"Qualified pipeline growth"},{"value":"6 weeks","label":"Kickoff to launch"}],"layout":"spotlight"} -->
+<!-- wp:heading {"level":3} -->
+<h3>The Challenge</h3>
+<!-- /wp:heading -->
+<!-- wp:paragraph -->
+<p>Nordlight had outgrown the positioning that took them to their first major revenue milestone. Every proposal was competing on price because prospects couldn't tell them apart from larger, better-funded competitors.</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":3} -->
+<h3>Our Approach</h3>
+<!-- /wp:heading -->
+<!-- wp:paragraph -->
+<p>We ran structured interviews with their best and lost accounts, mapped where Nordlight actually won, and rebuilt the narrative and site around that evidence rather than aspiration.</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading {"level":3} -->
+<h3>The Results</h3>
+<!-- /wp:heading -->
+<!-- wp:paragraph -->
+<p>Within two quarters of launch, the new positioning was showing up directly in sales conversations and win rates.</p>
+<!-- /wp:paragraph -->
+<!-- wp:groove-proposal/key-metrics {"items":[{"value":"41%","label":"Shorter sales cycle"},{"value":"9","label":"New logos in Q1"}]} /-->
+<!-- /wp:groove-proposal/case-study -->
+<!-- wp:groove-proposal/testimonial-grid /-->
+<!-- wp:groove-proposal/pull-quote /-->
 HTML,
       ),
       array(
@@ -309,20 +351,33 @@ HTML,
 <h2>Timeline</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
-<p>The engagement is planned over six weeks: two weeks discovery, two weeks shaping, and two weeks implementation planning. Decision checkpoints are scheduled at the end of each phase.</p>
+<p>The engagement is planned over twelve weeks, structured in four phases with a decision checkpoint at the end of each one.</p>
 <!-- /wp:paragraph -->
+<!-- wp:groove-proposal/timeline /-->
 <!-- wp:heading {"level":2} -->
 <h2>Investment</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
 <p>Project investment is structured as a fixed engagement fee with a staged payment schedule tied to phase completion. Optional follow-on support can be added as a monthly advisory retainer.</p>
 <!-- /wp:paragraph -->
+<!-- wp:groove-proposal/pricing-table /-->
 <!-- wp:heading {"level":2} -->
-<h2>Next steps</h2>
+<h2>Package options</h2>
 <!-- /wp:heading -->
-<!-- wp:list -->
-<ul><li>Confirm scope and key stakeholders.</li><li>Align kick-off date and communication cadence.</li><li>Finalize agreement and begin discovery.</li></ul>
-<!-- /wp:list -->
+<!-- wp:paragraph -->
+<p>If a broader or lighter-touch engagement suits your team better, here's how the tiers compare.</p>
+<!-- /wp:paragraph -->
+<!-- wp:groove-proposal/comparison-columns /-->
+HTML,
+      ),
+      array(
+        'title' => __('Next Steps', 'groove'),
+        'content' => (string) <<<HTML
+<!-- wp:paragraph -->
+<p>Here's what happens once you're ready to move forward, along with answers to the questions we hear most often at this stage.</p>
+<!-- /wp:paragraph -->
+<!-- wp:groove-proposal/faq /-->
+<!-- wp:groove-proposal/cta /-->
 HTML,
       ),
     );
