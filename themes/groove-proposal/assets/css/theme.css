@@ -13,19 +13,19 @@
   --gp-font-display: var(--g-folio-header-font, 'Fraunces', Georgia, 'Times New Roman', serif);
   --gp-font-sans: var(--g-folio-body-font, 'Inter', system-ui, -apple-system, sans-serif);
 
-  /* Surface */
-  --gp-bg: #f2f1ed;
-  --gp-surface: #fbfaf7;
-  --gp-surface-muted: #efede8;
-  --gp-border: rgba(24, 21, 16, 0.1);
-  --gp-border-strong: rgba(24, 21, 16, 0.18);
+  /* Surface — cool slate, not the warm oat/cream neutral common in AI-generated palettes */
+  --gp-bg: #eef0f1;
+  --gp-surface: #f8f9fa;
+  --gp-surface-muted: #e6e9ea;
+  --gp-border: rgba(15, 23, 26, 0.1);
+  --gp-border-strong: rgba(15, 23, 26, 0.18);
 
-  /* Text */
-  --gp-text: #181510;
-  --gp-text-muted: #4f483e;
-  --gp-text-subtle: #746c62;
+  /* Text — cool ink, not warm brown-black */
+  --gp-text: #10181b;
+  --gp-text-muted: #45525a;
+  --gp-text-subtle: #586669;
 
-  /* Accent — warm petrol/teal (~190°), split-complementary to the warm neutrals */
+  /* Accent — petrol/teal (~190°), the neutrals above are drawn from the same cool family */
   --gp-accent: #2b6b78;
   --gp-accent-hover: #1f545f;
   --gp-accent-soft: rgba(43, 107, 120, 0.08);
@@ -33,7 +33,7 @@
 
   /* Misc */
   --gp-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.06);
-  --gp-overlay: rgba(8, 7, 6, 0.52);
+  --gp-overlay: rgba(6, 9, 10, 0.52);
   --gp-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Layout */
@@ -43,15 +43,15 @@
 /* ─── Dark Mode ─── */
 
 :root.gp-theme-dark {
-  --gp-bg: #0f0d0a;
-  --gp-surface: #191612;
-  --gp-surface-muted: #221e18;
-  --gp-border: rgba(238, 231, 219, 0.1);
-  --gp-border-strong: rgba(238, 231, 219, 0.18);
+  --gp-bg: #0b0f10;
+  --gp-surface: #14191a;
+  --gp-surface-muted: #1b2122;
+  --gp-border: rgba(223, 232, 234, 0.1);
+  --gp-border-strong: rgba(223, 232, 234, 0.18);
 
-  --gp-text: #eee7db;
-  --gp-text-muted: #c8bfb0;
-  --gp-text-subtle: #9d9487;
+  --gp-text: #e3ebec;
+  --gp-text-muted: #b7c3c5;
+  --gp-text-subtle: #8b9799;
 
   --gp-accent: #7ec0cc;
   --gp-accent-hover: #9ad0d9;
@@ -64,15 +64,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not(.gp-theme-light):not(.gp-theme-dark) {
-    --gp-bg: #0f0d0a;
-    --gp-surface: #191612;
-    --gp-surface-muted: #221e18;
-    --gp-border: rgba(238, 231, 219, 0.1);
-    --gp-border-strong: rgba(238, 231, 219, 0.18);
+    --gp-bg: #0b0f10;
+    --gp-surface: #14191a;
+    --gp-surface-muted: #1b2122;
+    --gp-border: rgba(223, 232, 234, 0.1);
+    --gp-border-strong: rgba(223, 232, 234, 0.18);
 
-    --gp-text: #eee7db;
-    --gp-text-muted: #c8bfb0;
-    --gp-text-subtle: #9d9487;
+    --gp-text: #e3ebec;
+    --gp-text-muted: #b7c3c5;
+    --gp-text-subtle: #8b9799;
 
     --gp-accent: #7ec0cc;
     --gp-accent-hover: #9ad0d9;
@@ -127,7 +127,7 @@
   background: transparent;
   color: var(--gp-text-muted);
   padding: 0.375rem 0.625rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.02em;
   display: inline-flex;
@@ -150,7 +150,7 @@
   background: transparent;
   color: var(--gp-text-subtle);
   padding: 0.375rem 0.625rem;
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -276,7 +276,7 @@
   color: var(--gp-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1;
 }
@@ -325,7 +325,7 @@
   bottom: 0;
   right: 0;
   padding: 0.35rem 0.6rem;
-  font-size: 0.5rem;
+  font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -364,7 +364,7 @@
   color: var(--gp-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 600;
   line-height: 1;
 }
@@ -385,7 +385,7 @@
   color: var(--gp-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 600;
   margin: 0 0 0.9rem;
   line-height: 1;
@@ -422,7 +422,7 @@
 
 .gp-cover__contact-detail {
   margin: 0 0 0.15rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--gp-text-subtle);
   line-height: 1.4;
 }
@@ -483,7 +483,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   color: var(--gp-text-subtle);
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -582,7 +582,7 @@
   color: var(--gp-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.13em;
-  font-size: 0.5rem;
+  font-size: 0.625rem;
   font-weight: 600;
   line-height: 1;
 }
@@ -658,7 +658,7 @@
   color: var(--gp-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-size: 0.5rem;
+  font-size: 0.625rem;
   font-weight: 600;
   line-height: 1;
 }
@@ -711,7 +711,7 @@
 
 .gp .g-folio__theme-page-nav-item-order {
   color: var(--gp-text-subtle);
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.07em;
   flex-shrink: 0;
@@ -778,7 +778,7 @@
   border: none;
   background: none;
   color: var(--gp-text-muted);
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -833,7 +833,7 @@
 
 .gp-nav__info-group-label {
   color: var(--gp-text-subtle);
-  font-size: 0.5rem;
+  font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -843,7 +843,7 @@
 .gp-nav__info-empty {
   margin: 0;
   color: var(--gp-text-subtle);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   line-height: 1.35;
 }
 
@@ -855,7 +855,7 @@
 
 .gp-nav__info-label {
   color: var(--gp-text-subtle);
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -863,7 +863,7 @@
 
 .gp-nav__info-value {
   color: var(--gp-text-muted);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.4;
 }
@@ -880,21 +880,21 @@
 
 .gp-nav__info-contact-name {
   color: var(--gp-text);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.4;
 }
 
 .gp-nav__info-contact-role {
   color: var(--gp-text-subtle);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 400;
   line-height: 1.3;
 }
 
 .gp-nav__info-contact-link {
   color: var(--gp-text-muted);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   text-decoration: none;
   transition: color var(--gp-transition);
 }
@@ -905,7 +905,7 @@
 
 .gp-nav__info-contact-detail {
   color: var(--gp-text-muted);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   line-height: 1.3;
 }
 
@@ -978,7 +978,7 @@
   background: transparent;
   color: var(--gp-text-muted);
   padding: 0.375rem 0.625rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.02em;
   display: inline-flex;
@@ -996,7 +996,7 @@
 
 .gp-page__progress-text {
   color: var(--gp-text-subtle);
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   letter-spacing: 0.08em;
   font-weight: 600;
   text-transform: uppercase;
@@ -1060,7 +1060,7 @@
   color: var(--gp-accent);
   text-transform: uppercase;
   letter-spacing: 0.13em;
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 600;
   line-height: 1;
   display: inline-flex;
@@ -1255,7 +1255,7 @@
 
 .gp-page__content .wp-block-table th {
   color: var(--gp-text-muted);
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.09em;
   font-weight: 600;
@@ -1276,7 +1276,7 @@
   color: var(--gp-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-size: 0.5rem;
+  font-size: 0.625rem;
   font-weight: 600;
 }
 
@@ -1291,7 +1291,7 @@
   padding: 0.38rem 0 0.38rem 0.8rem;
   text-decoration: none;
   color: var(--gp-text-subtle);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1.45;
   border-left: 2px solid transparent;
   margin-left: -1px;
@@ -1334,7 +1334,7 @@
 
 .gp-page__locator-role {
   color: var(--gp-text-subtle);
-  font-size: 0.5rem;
+  font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -1362,7 +1362,7 @@
   color: var(--gp-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-size: 0.5rem;
+  font-size: 0.625rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
@@ -1401,7 +1401,7 @@
   border-radius: 2px;
   background: transparent;
   color: var(--gp-text-muted);
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 500;
   padding: 0.35rem 0.5rem;
   cursor: pointer;
@@ -1517,7 +1517,7 @@ a.gp-page__footer-arrow:hover::after {
 }
 
 .gp-metrics__label {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--gp-text-subtle);
   text-transform: uppercase;
@@ -1542,7 +1542,7 @@ a.gp-page__footer-arrow:hover::after {
 }
 
 .gp-pricing__col-label {
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 600;
   color: var(--gp-text-muted);
   text-transform: uppercase;
@@ -1670,7 +1670,7 @@ a.gp-page__footer-arrow:hover::after {
 
 .gp-timeline__date {
   display: block;
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--gp-text-subtle);
   text-transform: uppercase;
@@ -1821,7 +1821,7 @@ a.gp-page__footer-arrow:hover::after {
 
 .gp-team__role {
   display: block;
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--gp-text-muted);
   text-transform: uppercase;
@@ -2008,7 +2008,7 @@ a.gp-page__footer-arrow:hover::after {
 
 .gp-callout-box__label {
   display: block;
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -2134,7 +2134,7 @@ a.gp-page__footer-arrow:hover::after {
   top: -0.7rem;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.5rem;
+  font-size: 0.625rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -2155,7 +2155,7 @@ a.gp-page__footer-arrow:hover::after {
 }
 
 .gp-compare__subtitle {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--gp-text-subtle);
   line-height: 1.4;
   margin-top: 0.2rem;
@@ -2302,7 +2302,7 @@ a.gp-page__footer-arrow:hover::after {
 }
 
 .gp-case-study__stat-label {
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--gp-text-subtle);
   text-transform: uppercase;
@@ -2838,7 +2838,7 @@ a.gp-page__footer-arrow:hover::after {
 
 .gp-testimonials__role {
   font-family: var(--gp-font-sans);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 400;
   font-style: normal;
   color: var(--gp-text-subtle);
@@ -2863,7 +2863,7 @@ a.gp-page__footer-arrow:hover::after {
 
 .gp-logos__heading {
   margin: 0 0 1.25rem;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--gp-text-muted);
   text-transform: uppercase;

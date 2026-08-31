@@ -78,10 +78,10 @@ add_action('init', function () {
             'phases' => [
                 'type'    => 'array',
                 'default' => [
-                    ['date' => 'Weeks 1–2', 'title' => 'Discovery',                'desc' => 'Stakeholder interviews, competitive audit, and user research to establish the project foundation.'],
-                    ['date' => 'Weeks 3–5', 'title' => 'Strategy & architecture',   'desc' => 'Define the roadmap, information architecture, and content strategy based on research findings.'],
-                    ['date' => 'Weeks 6–10', 'title' => 'Design & prototyping',     'desc' => 'Visual design, interactive prototyping, and iterative review cycles with your team.'],
-                    ['date' => 'Weeks 11–12', 'title' => 'Handoff & launch support', 'desc' => 'Design system documentation, developer handoff, and launch QA.'],
+                    ['date' => 'Weeks 1-2', 'title' => 'Discovery',                'desc' => 'Stakeholder interviews, competitive audit, and user research to establish the project foundation.'],
+                    ['date' => 'Weeks 3-5', 'title' => 'Strategy & architecture',   'desc' => 'Define the roadmap, information architecture, and content strategy based on research findings.'],
+                    ['date' => 'Weeks 6-10', 'title' => 'Design & prototyping',     'desc' => 'Visual design, interactive prototyping, and iterative review cycles with your team.'],
+                    ['date' => 'Weeks 11-12', 'title' => 'Handoff & launch support', 'desc' => 'Design system documentation, developer handoff, and launch QA.'],
                 ],
                 'items'   => [
                     'type'       => 'object',
@@ -752,7 +752,7 @@ add_action('init', function () {
                 'type'    => 'array',
                 'default' => [
                     ['question' => 'What are the payment terms?', 'answer' => 'We require a 50% deposit to begin work, with the remaining balance due upon project completion. For larger engagements we can arrange milestone-based payments instead.'],
-                    ['question' => 'Is the timeline flexible if our needs change?', 'answer' => 'Yes — the schedule outlined in this proposal reflects the current scope. If priorities shift once we’re underway, we’ll revisit the timeline together and adjust accordingly.'],
+                    ['question' => 'Is the timeline flexible if our needs change?', 'answer' => 'Yes. The schedule outlined in this proposal reflects the current scope, and if priorities shift once we’re underway, we’ll revisit the timeline together and adjust accordingly.'],
                     ['question' => 'What happens after we sign?', 'answer' => 'Once the agreement is signed, we’ll schedule a kickoff call within three business days to align on goals, gather assets, and confirm the project timeline.'],
                 ],
                 'items'   => [
@@ -871,7 +871,7 @@ add_action('init', function () {
                 'type'    => 'array',
                 'default' => [
                     ['text' => 'They took a vague brief and turned it into a roadmap we actually trusted.', 'author' => 'Priya Anand',   'role' => 'COO, Nordlight Group'],
-                    ['text' => 'Communication was clear at every step — no surprises, no scope creep.',      'author' => 'Diego Fernandez', 'role' => 'Head of Marketing, Vale & Co.'],
+                    ['text' => 'Communication was clear at every step, with no surprises and no scope creep.', 'author' => 'Diego Fernandez', 'role' => 'Head of Marketing, Vale & Co.'],
                     ['text' => 'The final result exceeded what we thought was possible on this timeline.',   'author' => 'Emily Zhou',      'role' => 'Founder, Zhou Studio'],
                 ],
                 'items'   => [

@@ -20,7 +20,7 @@
     },
     {
       question: 'Is the timeline flexible if our needs change?',
-      answer: 'Yes — the schedule outlined in this proposal reflects the current scope. If priorities shift once we’re underway, we’ll revisit the timeline together and adjust accordingly.',
+      answer: 'Yes. The schedule outlined in this proposal reflects the current scope, and if priorities shift once we’re underway, we’ll revisit the timeline together and adjust accordingly.',
     },
     {
       question: 'What happens after we sign?',

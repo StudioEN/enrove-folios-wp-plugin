@@ -105,7 +105,7 @@
 
   registerBlockType('groove-proposal/key-metrics', {
     title: 'Key Metrics',
-    description: 'Large stat values with labels — supports 2 to 4 items.',
+    description: 'Large stat values with labels. Supports 2 to 4 items.',
     icon: BLOCK_ICON,
     category: 'groove-proposal',
     keywords: ['metrics', 'stats', 'numbers', 'kpi'],

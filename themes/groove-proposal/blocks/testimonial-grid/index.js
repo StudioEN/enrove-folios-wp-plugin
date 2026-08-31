@@ -20,7 +20,7 @@
 
   var DEFAULT_ITEMS = [
     { text: 'They took a vague brief and turned it into a roadmap we actually trusted.', author: 'Priya Anand', role: 'COO, Nordlight Group' },
-    { text: 'Communication was clear at every step — no surprises, no scope creep.', author: 'Diego Fernandez', role: 'Head of Marketing, Vale & Co.' },
+    { text: 'Communication was clear at every step, with no surprises and no scope creep.', author: 'Diego Fernandez', role: 'Head of Marketing, Vale & Co.' },
     { text: 'The final result exceeded what we thought was possible on this timeline.', author: 'Emily Zhou', role: 'Founder, Zhou Studio' },
   ];
 

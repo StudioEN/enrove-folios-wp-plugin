@@ -334,7 +334,7 @@
 
   registerBlockType('groove-proposal/case-study', {
     title: 'Case Study',
-    description: 'An elaborate client story — challenge, approach, and results — with flexible rich content.',
+    description: 'An elaborate client story with challenge, approach, and results sections, plus flexible rich content.',
     icon: BLOCK_ICON,
     category: 'groove-proposal',
     keywords: ['case study', 'portfolio', 'proof', 'client story'],

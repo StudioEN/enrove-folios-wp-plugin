@@ -14,10 +14,10 @@
   var ToolbarButton = wp.components.ToolbarButton;
 
   var DEFAULT_PHASES = [
-    { date: 'Weeks 1\u20132', title: 'Discovery', desc: 'Stakeholder interviews, competitive audit, and user research to establish the project foundation.' },
-    { date: 'Weeks 3\u20135', title: 'Strategy & architecture', desc: 'Define the roadmap, information architecture, and content strategy based on research findings.' },
-    { date: 'Weeks 6\u201310', title: 'Design & prototyping', desc: 'Visual design, interactive prototyping, and iterative review cycles with your team.' },
-    { date: 'Weeks 11\u201312', title: 'Handoff & launch support', desc: 'Design system documentation, developer handoff, and launch QA.' },
+    { date: 'Weeks 1-2', title: 'Discovery', desc: 'Stakeholder interviews, competitive audit, and user research to establish the project foundation.' },
+    { date: 'Weeks 3-5', title: 'Strategy & architecture', desc: 'Define the roadmap, information architecture, and content strategy based on research findings.' },
+    { date: 'Weeks 6-10', title: 'Design & prototyping', desc: 'Visual design, interactive prototyping, and iterative review cycles with your team.' },
+    { date: 'Weeks 11-12', title: 'Handoff & launch support', desc: 'Design system documentation, developer handoff, and launch QA.' },
   ];
 
   var MIN_PHASES = 2;
