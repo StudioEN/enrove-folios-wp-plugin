@@ -778,6 +778,17 @@ function groove_proposal_render_faq(array $attributes): string
         return '';
     }
 
+    $has_content = false;
+    foreach ($items as $item) {
+        if (trim(wp_strip_all_tags($item['question'] ?? '')) !== '' || trim(wp_strip_all_tags($item['answer'] ?? '')) !== '') {
+            $has_content = true;
+            break;
+        }
+    }
+    if (!$has_content) {
+        return '';
+    }
+
     $out = '<div class="gp-faq">';
     foreach ($items as $item) {
         $question = wp_kses_post($item['question'] ?? '');
@@ -818,9 +829,9 @@ add_action('init', function () {
  */
 function groove_proposal_render_cta(array $attributes): string
 {
-    $heading     = esc_html($attributes['heading'] ?? '');
+    $heading     = wp_kses_post($attributes['heading'] ?? '');
     $body        = wp_kses_post($attributes['body'] ?? '');
-    $button_text = esc_html($attributes['buttonText'] ?? '');
+    $button_text = wp_kses_post($attributes['buttonText'] ?? '');
     $button_url  = esc_url($attributes['buttonUrl'] ?? '');
     $style       = $attributes['style'] ?? 'primary';
 
