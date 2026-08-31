@@ -627,6 +627,222 @@ function groove_proposal_render_comparison_columns(array $attributes): string
     return $out;
 }
 
+// ── Testimonial Grid block ──────────────────────────────────────────────────
+
+add_action('init', function () {
+    register_block_type('groove-proposal/testimonial-grid', [
+        'api_version'     => 3,
+        'attributes'      => [
+            'items' => [
+                'type'    => 'array',
+                'default' => [
+                    ['text' => 'They took a vague brief and turned it into a roadmap we actually trusted.', 'author' => 'Priya Anand',   'role' => 'COO, Nordlight Group'],
+                    ['text' => 'Communication was clear at every step — no surprises, no scope creep.',      'author' => 'Diego Fernandez', 'role' => 'Head of Marketing, Vale & Co.'],
+                    ['text' => 'The final result exceeded what we thought was possible on this timeline.',   'author' => 'Emily Zhou',      'role' => 'Founder, Zhou Studio'],
+                ],
+                'items'   => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'text'   => ['type' => 'string'],
+                        'author' => ['type' => 'string'],
+                        'role'   => ['type' => 'string'],
+                    ],
+                ],
+            ],
+            'columns' => ['type' => 'number', 'default' => 3],
+        ],
+        'render_callback' => 'groove_proposal_render_testimonial_grid',
+    ]);
+});
+
+/**
+ * Server-side render for the Testimonial Grid block.
+ */
+function groove_proposal_render_testimonial_grid(array $attributes): string
+{
+    $items   = $attributes['items'] ?? [];
+    $columns = (int) ($attributes['columns'] ?? 3);
+    if ($columns !== 2 && $columns !== 3) {
+        $columns = 3;
+    }
+
+    if (empty($items)) {
+        return '';
+    }
+
+    $has_content = false;
+    foreach ($items as $item) {
+        if (trim(wp_strip_all_tags($item['text'] ?? '')) !== '') {
+            $has_content = true;
+            break;
+        }
+    }
+    if (!$has_content) {
+        return '';
+    }
+
+    $class = 'gp-testimonials gp-testimonials--cols-' . $columns;
+    $out = '<div class="' . esc_attr($class) . '">';
+
+    foreach ($items as $item) {
+        $text   = wp_kses_post($item['text'] ?? '');
+        $author = wp_kses_post($item['author'] ?? '');
+        $role   = wp_kses_post($item['role'] ?? '');
+
+        if ($text === '') {
+            continue;
+        }
+
+        $out .= '<figure class="gp-testimonials__item">'
+            . '<blockquote class="gp-testimonials__text">' . $text . '</blockquote>'
+            . '<figcaption class="gp-testimonials__cite">';
+        if ($author !== '') {
+            $out .= '<span class="gp-testimonials__author">' . $author . '</span>';
+        }
+        if ($role !== '') {
+            $out .= '<span class="gp-testimonials__role">' . $role . '</span>';
+        }
+        $out .= '</figcaption></figure>';
+    }
+
+    $out .= '</div>';
+    return $out;
+}
+
+// ── Trusted-by Logo Strip block ─────────────────────────────────────────────
+
+add_action('init', function () {
+    register_block_type('groove-proposal/logo-strip', [
+        'api_version'     => 3,
+        'attributes'      => [
+            'heading' => ['type' => 'string', 'default' => 'Trusted by teams like yours'],
+            'logos'   => [
+                'type'    => 'array',
+                'default' => [
+                    ['url' => '', 'name' => '', 'link' => ''],
+                    ['url' => '', 'name' => '', 'link' => ''],
+                    ['url' => '', 'name' => '', 'link' => ''],
+                    ['url' => '', 'name' => '', 'link' => ''],
+                ],
+                'items'   => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'url'  => ['type' => 'string'],
+                        'name' => ['type' => 'string'],
+                        'link' => ['type' => 'string'],
+                    ],
+                ],
+            ],
+        ],
+        'render_callback' => 'groove_proposal_render_logo_strip',
+    ]);
+});
+
+/**
+ * Server-side render for the Trusted-by Logo Strip block.
+ */
+function groove_proposal_render_logo_strip(array $attributes): string
+{
+    $heading = wp_kses_post($attributes['heading'] ?? '');
+    $logos   = $attributes['logos'] ?? [];
+
+    $has_logo = false;
+    foreach ($logos as $logo) {
+        if (trim((string) ($logo['url'] ?? '')) !== '') {
+            $has_logo = true;
+            break;
+        }
+    }
+    if (!$has_logo) {
+        return '';
+    }
+
+    $out = '<div class="gp-logos">';
+    if ($heading !== '') {
+        $out .= '<p class="gp-logos__heading">' . $heading . '</p>';
+    }
+
+    $out .= '<div class="gp-logos__row">';
+    foreach ($logos as $logo) {
+        $url = esc_url($logo['url'] ?? '');
+        if ($url === '') {
+            continue;
+        }
+        $name = esc_attr($logo['name'] ?? '');
+        $link = esc_url($logo['link'] ?? '');
+
+        $img = '<img class="gp-logos__img" src="' . $url . '" alt="' . $name . '">';
+
+        if ($link !== '') {
+            $out .= '<a class="gp-logos__item" href="' . $link . '">' . $img . '</a>';
+        } else {
+            $out .= '<span class="gp-logos__item">' . $img . '</span>';
+        }
+    }
+    $out .= '</div></div>';
+
+    return $out;
+}
+
+// ── Deliverables Checklist block ────────────────────────────────────────────
+
+add_action('init', function () {
+    register_block_type('groove-proposal/deliverables', [
+        'api_version'     => 3,
+        'attributes'      => [
+            'heading' => ['type' => 'string', 'default' => ''],
+            'items'   => [
+                'type'    => 'array',
+                'default' => [
+                    'Discovery workshop and stakeholder interviews',
+                    'Complete visual identity and brand guidelines',
+                    'Responsive website design and development',
+                    '30 days of post-launch support',
+                ],
+                'items'   => ['type' => 'string'],
+            ],
+        ],
+        'render_callback' => 'groove_proposal_render_deliverables',
+    ]);
+});
+
+/**
+ * Server-side render for the Deliverables Checklist block.
+ */
+function groove_proposal_render_deliverables(array $attributes): string
+{
+    $heading = wp_kses_post($attributes['heading'] ?? '');
+    $items   = $attributes['items'] ?? [];
+
+    $has_content = false;
+    foreach ($items as $item) {
+        if (trim(wp_strip_all_tags((string) $item)) !== '') {
+            $has_content = true;
+            break;
+        }
+    }
+    if (!$has_content) {
+        return '';
+    }
+
+    $out = '<div class="gp-checklist">';
+    if ($heading !== '') {
+        $out .= '<p class="gp-checklist__heading">' . $heading . '</p>';
+    }
+
+    $out .= '<ul class="gp-checklist__list">';
+    foreach ($items as $item) {
+        $text = wp_kses_post((string) $item);
+        if ($text === '') {
+            continue;
+        }
+        $out .= '<li class="gp-checklist__item">' . $text . '</li>';
+    }
+    $out .= '</ul></div>';
+
+    return $out;
+}
+
 // ── Editor assets ───────────────────────────────────────────────────────────
 
 add_action('enqueue_block_editor_assets', function () {
@@ -724,6 +940,36 @@ add_action('enqueue_block_editor_assets', function () {
         $theme_url . 'blocks/comparison-columns/index.js',
         ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
         file_exists($compare_js) ? (string) filemtime($compare_js) : GROOVE_VERSION,
+        true
+    );
+
+    // Testimonial Grid block JS
+    $testimonials_js = __DIR__ . '/blocks/testimonial-grid/index.js';
+    wp_enqueue_script(
+        'groove-proposal-block-testimonial-grid',
+        $theme_url . 'blocks/testimonial-grid/index.js',
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        file_exists($testimonials_js) ? (string) filemtime($testimonials_js) : GROOVE_VERSION,
+        true
+    );
+
+    // Trusted-by Logo Strip block JS
+    $logo_strip_js = __DIR__ . '/blocks/logo-strip/index.js';
+    wp_enqueue_script(
+        'groove-proposal-block-logo-strip',
+        $theme_url . 'blocks/logo-strip/index.js',
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        file_exists($logo_strip_js) ? (string) filemtime($logo_strip_js) : GROOVE_VERSION,
+        true
+    );
+
+    // Deliverables Checklist block JS
+    $deliverables_js = __DIR__ . '/blocks/deliverables/index.js';
+    wp_enqueue_script(
+        'groove-proposal-block-deliverables',
+        $theme_url . 'blocks/deliverables/index.js',
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        file_exists($deliverables_js) ? (string) filemtime($deliverables_js) : GROOVE_VERSION,
         true
     );
 
