@@ -2659,3 +2659,129 @@ a.gp-page__footer-arrow:hover::after {
     display: block;
   }
 }
+
+/* ─── FAQ Accordion ─── */
+
+.gp-page__content .gp-faq {
+  margin: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gp-faq__item {
+  border: 1px solid var(--gp-border);
+  border-radius: 3px;
+  padding: 1rem 1.25rem;
+  background: var(--gp-surface);
+}
+
+.gp-faq__question {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gp-text);
+  line-height: 1.4;
+}
+
+.gp-faq__question::-webkit-details-marker {
+  display: none;
+}
+
+.gp-faq__question::after {
+  content: '';
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.35rem;
+  border-right: 1.5px solid var(--gp-accent);
+  border-bottom: 1.5px solid var(--gp-accent);
+  transform: rotate(45deg);
+  transition: transform var(--gp-transition);
+}
+
+.gp-faq__item[open] .gp-faq__question::after {
+  transform: rotate(-135deg);
+}
+
+.gp-page__content .gp-faq__answer {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gp-border);
+  font-size: 0.8125rem;
+  color: var(--gp-text-muted);
+  line-height: 1.65;
+}
+
+/* ─── Closing CTA ─── */
+
+.gp-page__content .gp-cta {
+  margin: 3rem 0;
+  padding: 2.5rem 2rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  background: var(--gp-accent-soft);
+}
+
+.gp-cta__heading {
+  font-family: var(--gp-font-display);
+  font-size: clamp(1.5rem, 3vw, 1.75rem);
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--gp-text);
+  margin: 0 0 0.75rem;
+}
+
+.gp-page__content .gp-cta__body {
+  font-family: var(--gp-font-sans);
+  font-size: 0.9375rem;
+  color: var(--gp-text-muted);
+  line-height: 1.6;
+  max-width: 32rem;
+  margin: 0 auto 1.5rem;
+}
+
+.gp-cta__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.75rem;
+  border-radius: 0.25rem;
+  background: var(--gp-accent);
+  color: #fff;
+  font-family: var(--gp-font-sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background var(--gp-transition), color var(--gp-transition), border-color var(--gp-transition);
+}
+
+.gp-cta__button:hover {
+  background: var(--gp-accent-hover);
+}
+
+/* Subtle variant */
+.gp-cta--subtle {
+  background: transparent;
+  border: 1px solid var(--gp-border);
+}
+
+.gp-cta--subtle .gp-cta__button {
+  background: transparent;
+  color: var(--gp-accent);
+  border-color: var(--gp-accent);
+}
+
+.gp-cta--subtle .gp-cta__button:hover {
+  background: var(--gp-accent-soft);
+  color: var(--gp-accent-hover);
+  border-color: var(--gp-accent-hover);
+}
