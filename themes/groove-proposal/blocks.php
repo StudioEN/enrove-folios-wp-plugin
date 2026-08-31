@@ -627,6 +627,114 @@ function groove_proposal_render_comparison_columns(array $attributes): string
     return $out;
 }
 
+// ── FAQ Accordion block ─────────────────────────────────────────────────────
+
+add_action('init', function () {
+    register_block_type('groove-proposal/faq', [
+        'api_version'     => 3,
+        'attributes'      => [
+            'items' => [
+                'type'    => 'array',
+                'default' => [
+                    ['question' => 'What are the payment terms?', 'answer' => 'We require a 50% deposit to begin work, with the remaining balance due upon project completion. For larger engagements we can arrange milestone-based payments instead.'],
+                    ['question' => 'Is the timeline flexible if our needs change?', 'answer' => 'Yes — the schedule outlined in this proposal reflects the current scope. If priorities shift once we’re underway, we’ll revisit the timeline together and adjust accordingly.'],
+                    ['question' => 'What happens after we sign?', 'answer' => 'Once the agreement is signed, we’ll schedule a kickoff call within three business days to align on goals, gather assets, and confirm the project timeline.'],
+                ],
+                'items'   => [
+                    'type'       => 'object',
+                    'properties' => [
+                        'question' => ['type' => 'string'],
+                        'answer'   => ['type' => 'string'],
+                    ],
+                ],
+            ],
+        ],
+        'render_callback' => 'groove_proposal_render_faq',
+    ]);
+});
+
+/**
+ * Server-side render for the FAQ Accordion block.
+ */
+function groove_proposal_render_faq(array $attributes): string
+{
+    $items = $attributes['items'] ?? [];
+    if (empty($items)) {
+        return '';
+    }
+
+    $out = '<div class="gp-faq">';
+    foreach ($items as $item) {
+        $question = wp_kses_post($item['question'] ?? '');
+        $answer   = wp_kses_post($item['answer'] ?? '');
+
+        if ($question === '' && $answer === '') {
+            continue;
+        }
+
+        $out .= '<details class="gp-faq__item">'
+            . '<summary class="gp-faq__question">' . $question . '</summary>'
+            . '<div class="gp-faq__answer">' . $answer . '</div>'
+            . '</details>';
+    }
+    $out .= '</div>';
+
+    return $out;
+}
+
+// ── Closing CTA block ───────────────────────────────────────────────────────
+
+add_action('init', function () {
+    register_block_type('groove-proposal/cta', [
+        'api_version'     => 3,
+        'attributes'      => [
+            'heading'    => ['type' => 'string', 'default' => 'Ready to get started?'],
+            'body'       => ['type' => 'string', 'default' => 'Let’s schedule a call to walk through next steps and answer any questions.'],
+            'buttonText' => ['type' => 'string', 'default' => 'Schedule a call'],
+            'buttonUrl'  => ['type' => 'string', 'default' => ''],
+            'style'      => ['type' => 'string', 'default' => 'primary'],
+        ],
+        'render_callback' => 'groove_proposal_render_cta',
+    ]);
+});
+
+/**
+ * Server-side render for the Closing CTA block.
+ */
+function groove_proposal_render_cta(array $attributes): string
+{
+    $heading     = esc_html($attributes['heading'] ?? '');
+    $body        = wp_kses_post($attributes['body'] ?? '');
+    $button_text = esc_html($attributes['buttonText'] ?? '');
+    $button_url  = esc_url($attributes['buttonUrl'] ?? '');
+    $style       = $attributes['style'] ?? 'primary';
+
+    $allowed = ['primary', 'subtle'];
+    if (!in_array($style, $allowed, true)) {
+        $style = 'primary';
+    }
+
+    if ($heading === '' && $body === '' && $button_text === '') {
+        return '';
+    }
+
+    $class = 'gp-cta gp-cta--' . esc_attr($style);
+    $out = '<div class="' . $class . '">';
+
+    if ($heading !== '') {
+        $out .= '<h3 class="gp-cta__heading">' . $heading . '</h3>';
+    }
+    if ($body !== '') {
+        $out .= '<div class="gp-cta__body">' . $body . '</div>';
+    }
+    if ($button_text !== '' && $button_url !== '') {
+        $out .= '<a class="gp-cta__button" href="' . $button_url . '">' . $button_text . '</a>';
+    }
+
+    $out .= '</div>';
+    return $out;
+}
+
 // ── Editor assets ───────────────────────────────────────────────────────────
 
 add_action('enqueue_block_editor_assets', function () {
@@ -724,6 +832,26 @@ add_action('enqueue_block_editor_assets', function () {
         $theme_url . 'blocks/comparison-columns/index.js',
         ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
         file_exists($compare_js) ? (string) filemtime($compare_js) : GROOVE_VERSION,
+        true
+    );
+
+    // FAQ Accordion block JS
+    $faq_js = __DIR__ . '/blocks/faq/index.js';
+    wp_enqueue_script(
+        'groove-proposal-block-faq',
+        $theme_url . 'blocks/faq/index.js',
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        file_exists($faq_js) ? (string) filemtime($faq_js) : GROOVE_VERSION,
+        true
+    );
+
+    // Closing CTA block JS
+    $cta_js = __DIR__ . '/blocks/cta/index.js';
+    wp_enqueue_script(
+        'groove-proposal-block-cta',
+        $theme_url . 'blocks/cta/index.js',
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        file_exists($cta_js) ? (string) filemtime($cta_js) : GROOVE_VERSION,
         true
     );
 
