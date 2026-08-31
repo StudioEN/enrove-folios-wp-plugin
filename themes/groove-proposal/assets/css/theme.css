@@ -2785,3 +2785,158 @@ a.gp-page__footer-arrow:hover::after {
   color: var(--gp-accent-hover);
   border-color: var(--gp-accent-hover);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PATTERNS — Testimonial Grid
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.gp-page__content .gp-testimonials {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+
+.gp-page__content .gp-testimonials--cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.gp-testimonials__item {
+  margin: 0;
+  padding: 1.125rem 1.25rem;
+  border: 1px solid var(--gp-border);
+  border-radius: 3px;
+  background: var(--gp-surface);
+}
+
+.gp-page__content .gp-testimonials__text {
+  margin: 0 0 0.625rem;
+  padding: 0;
+  border: none;
+  font-family: var(--gp-font-display);
+  font-size: 0.9375rem;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--gp-text);
+}
+
+.gp-testimonials__cite {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.gp-testimonials__author {
+  font-family: var(--gp-font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--gp-text);
+  line-height: 1.3;
+}
+
+.gp-testimonials__role {
+  font-family: var(--gp-font-sans);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  font-style: normal;
+  color: var(--gp-text-subtle);
+  line-height: 1.3;
+}
+
+@media (max-width: 640px) {
+  .gp-page__content .gp-testimonials,
+  .gp-page__content .gp-testimonials--cols-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PATTERNS — Trusted-by Logo Strip
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.gp-page__content .gp-logos {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.gp-logos__heading {
+  margin: 0 0 1.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--gp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.gp-logos__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.gp-logos__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gp-logos__img {
+  height: 28px;
+  width: auto;
+  filter: grayscale(1);
+  opacity: 0.6;
+  transition: filter var(--gp-transition), opacity var(--gp-transition);
+}
+
+.gp-logos__item:hover .gp-logos__img,
+.gp-logos__item:focus-within .gp-logos__img {
+  filter: grayscale(0);
+  opacity: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PATTERNS — Deliverables Checklist
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.gp-page__content .gp-checklist {
+  margin: 2rem 0;
+}
+
+.gp-checklist__heading {
+  margin: 0 0 0.75rem;
+  font-family: var(--gp-font-display);
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: var(--gp-text);
+  line-height: 1.35;
+}
+
+.gp-page__content .gp-checklist__list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.gp-page__content .gp-checklist__item {
+  position: relative;
+  padding-left: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--gp-text-muted);
+  line-height: 1.55;
+}
+
+.gp-checklist__item::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 700;
+  color: var(--gp-accent);
+}
