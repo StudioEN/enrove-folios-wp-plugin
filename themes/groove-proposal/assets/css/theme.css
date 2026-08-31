@@ -1279,12 +1279,15 @@
   background: var(--gp-surface-muted);
 }
 
-/* Sidebar: on-page navigation */
+/* Sidebar: decorative section ordinal, then on-page navigation.
+   Both stack in one column so the rail keeps the same shape on every page. */
 .gp-page__sidebar {
   position: sticky;
   top: 1.5rem;
   align-self: start;
   animation: gp-fade-in 380ms ease both;
+  display: flex;
+  flex-direction: column;
 }
 
 .gp-page__sidebar .g-folio__theme-page-catalogs-label {
@@ -1325,36 +1328,27 @@
   border-left-color: var(--gp-accent);
 }
 
-/* Sidebar locator (shown when in-page nav is off) */
-.gp-page__sidebar--locator {
-  display: flex;
-  justify-content: flex-end;
-}
-
+/* Decorative section marker. Shares the rail's left axis with the contents
+   label; the hairline is drawn only when contents actually follow it. */
 .gp-page__locator {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.5rem;
-  padding-top: 0.25rem;
+}
+
+.gp-page__locator:not(:last-child) {
+  margin-bottom: 1.15rem;
+  padding-bottom: 1.15rem;
+  border-bottom: 1px solid var(--gp-border);
 }
 
 .gp-page__locator-ordinal {
   font-family: var(--gp-font-display);
   font-style: italic;
   font-weight: 300;
-  font-size: 4rem;
+  font-size: 3rem;
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--gp-warm-mid);
-}
-
-.gp-page__locator-role {
-  color: var(--gp-text-subtle);
-  font-size: 0.625rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
 }
 
 /* Mobile in-page nav */

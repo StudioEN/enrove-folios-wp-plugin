@@ -475,41 +475,48 @@ class Page extends Base_Theme
     <?php
   }
 
+  /**
+   * The right rail: a decorative section ordinal, then the on-page contents.
+   *
+   * Both are rendered from the same container so the rail keeps one shape from
+   * page to page — previously a page showed either the ordinal or the contents,
+   * never both, so the column changed character as you moved through the folio.
+   * The role label is deliberately not repeated here; it already sits above the
+   * page title as the eyebrow.
+   */
   protected function display_catalogs(array $anchors, bool $show_in_page_nav): void
   {
-    if ($show_in_page_nav) {
-      ?>
-      <aside class="gp-page__sidebar" aria-label="<?= esc_attr__('On this page', 'groove') ?>">
-        <label class="g-folio__theme-page-catalogs-label"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></label>
-        <div class="g-folio__theme-page-catalogs-content">
-          <?php foreach ($anchors as $anchor): ?>
-            <div class="g-folio__theme-page-catalog">
-              <a class="g-folio__theme-page-catalog-link" data-g-scroll-target="#<?= esc_attr($anchor['anchor']) ?>" href="#<?= esc_attr($anchor['anchor']) ?>">
-                <?= esc_html($anchor['title']) ?>
-              </a>
-            </div>
-          <?php endforeach; ?>
-        </div>
-      </aside>
-      <?php
-      return;
-    }
-
     $current_index = $this->get_current_index();
     $ordinal       = $current_index >= 0 ? str_pad((string) ($current_index + 1), 2, '0', STR_PAD_LEFT) : '';
-    $page_role     = $this->get_page_role();
-    $role_label    = (string) ($page_role['label'] ?? '');
+
+    // No marker and nothing to list: drop the rail so the article takes the
+    // full width (see .gp-page__center:not(:has(> .gp-page__sidebar))).
+    if ($ordinal === '' && !$show_in_page_nav) {
+      return;
+    }
     ?>
-    <aside class="gp-page__sidebar gp-page__sidebar--locator" aria-hidden="true">
-      <div class="gp-page__locator">
-        <?php if ($ordinal !== ''): ?>
+    <div class="gp-page__sidebar">
+      <?php if ($ordinal !== ''): ?>
+        <div class="gp-page__locator" aria-hidden="true">
           <span class="gp-page__locator-ordinal"><?= esc_html($ordinal) ?></span>
-        <?php endif; ?>
-        <?php if ($role_label !== ''): ?>
-          <span class="gp-page__locator-role"><?= esc_html($role_label) ?></span>
-        <?php endif; ?>
-      </div>
-    </aside>
+        </div>
+      <?php endif; ?>
+
+      <?php if ($show_in_page_nav): ?>
+        <nav class="gp-page__toc" aria-label="<?= esc_attr(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?>">
+          <label class="g-folio__theme-page-catalogs-label"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></label>
+          <div class="g-folio__theme-page-catalogs-content">
+            <?php foreach ($anchors as $anchor): ?>
+              <div class="g-folio__theme-page-catalog">
+                <a class="g-folio__theme-page-catalog-link" data-g-scroll-target="#<?= esc_attr($anchor['anchor']) ?>" href="#<?= esc_attr($anchor['anchor']) ?>">
+                  <?= esc_html($anchor['title']) ?>
+                </a>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </nav>
+      <?php endif; ?>
+    </div>
     <?php
   }
 
