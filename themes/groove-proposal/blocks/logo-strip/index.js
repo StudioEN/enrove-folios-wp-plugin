@@ -30,9 +30,9 @@
 
   var headingStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.6875rem',
+    fontSize: '0.75rem',
     fontWeight: '600',
-    color: '#999690',
+    color: '#8a8781',
     textTransform: 'uppercase',
     letterSpacing: '0.09em',
     textAlign: 'center',
@@ -59,7 +59,7 @@
     transition: 'background 150ms ease, box-shadow 150ms ease',
   };
 
-  var ACTIVE_BG = '#f5f4f0';
+  var ACTIVE_BG = '#ededeb';
 
   var logoBoxStyle = {
     position: 'relative',
@@ -68,16 +68,16 @@
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
-    background: '#fbfaf7',
+    background: '#f7f7f5',
     overflow: 'hidden',
     cursor: 'pointer',
   };
 
   var logoBoxEmptyStyle = Object.assign({}, logoBoxStyle, {
-    border: '1px dashed #d4d2cb',
-    background: '#fafaf8',
+    border: '1px dashed #d6d5d0',
+    background: '#f7f7f5',
   });
 
   var logoImgStyle = {
@@ -91,7 +91,7 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.625rem',
     fontWeight: '500',
-    color: '#999690',
+    color: '#8a8781',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
   };
@@ -118,8 +118,8 @@
 
   var fieldInputStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.6875rem',
-    color: '#181510',
+    fontSize: '0.75rem',
+    color: '#1b1a18',
     width: '104px',
     border: '1px solid transparent',
     borderRadius: '3px',
@@ -194,7 +194,7 @@
     var currentItemStyle = Object.assign({}, itemWrapStyle);
     if (isActive) {
       currentItemStyle.background = ACTIVE_BG;
-      currentItemStyle.boxShadow = 'inset 0 0 0 1px #2b6b78';
+      currentItemStyle.boxShadow = 'inset 0 0 0 1px #27498c';
     }
 
     return el('div', {

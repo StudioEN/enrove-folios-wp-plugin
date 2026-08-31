@@ -33,11 +33,11 @@
     if (style === 'subtle') {
       return Object.assign({}, base, {
         background: 'transparent',
-        border: '1px solid #d4d2cb',
+        border: '1px solid #d6d5d0',
       });
     }
     return Object.assign({}, base, {
-      background: 'rgba(43, 107, 120, 0.08)',
+      background: 'rgba(39, 73, 140, 0.08)',
       border: 'none',
     });
   }
@@ -48,14 +48,14 @@
     fontWeight: '300',
     fontStyle: 'italic',
     letterSpacing: '-0.01em',
-    color: '#181510',
+    color: '#1b1a18',
     margin: '0 0 0.75rem',
   };
 
   var bodyStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.9375rem',
-    color: '#999690',
+    color: '#8a8781',
     lineHeight: '1.6',
     maxWidth: '32rem',
     margin: '0 auto 1.5rem',
@@ -76,12 +76,12 @@
     if (style === 'subtle') {
       return Object.assign({}, base, {
         background: 'transparent',
-        color: '#2b6b78',
-        border: '1px solid #2b6b78',
+        color: '#27498c',
+        border: '1px solid #27498c',
       });
     }
     return Object.assign({}, base, {
-      background: '#2b6b78',
+      background: '#27498c',
       color: '#fff',
       border: 'none',
     });

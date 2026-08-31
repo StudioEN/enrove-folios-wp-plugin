@@ -62,9 +62,9 @@
     gap: '0.75rem',
     margin: '1rem 0',
     padding: '1.25rem 1.5rem',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '0.5rem',
-    background: '#fafaf8',
+    background: '#f7f7f5',
   };
 
   var headerRowStyle = {
@@ -77,7 +77,7 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.8125rem',
     fontWeight: '600',
-    color: '#181510',
+    color: '#1b1a18',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     flex: '1',
@@ -88,11 +88,11 @@
     width: '100%',
     boxSizing: 'border-box',
     padding: '0.4rem 0.6rem',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.75rem',
-    color: '#181510',
+    color: '#1b1a18',
     background: '#ffffff',
   };
 
@@ -106,14 +106,14 @@
     display: 'inline-block',
     padding: '0.15rem 0.55rem',
     borderRadius: '999px',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.625rem',
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    color: '#2b6b78',
-    background: 'rgba(43, 107, 120, 0.08)',
+    color: '#855c22',
+    background: 'rgba(133, 92, 34, 0.1)',
   };
 
   var titleStyle = {
@@ -123,7 +123,7 @@
     fontStyle: 'italic',
     lineHeight: '1.25',
     letterSpacing: '-0.01em',
-    color: '#181510',
+    color: '#1b1a18',
     margin: '0',
   };
 
@@ -131,7 +131,7 @@
     display: 'grid',
     gap: '1.25rem',
     padding: '1rem 0 0',
-    borderTop: '1px solid #d4d2cb',
+    borderTop: '1px solid #d6d5d0',
   };
 
   var statItemStyle = {
@@ -148,15 +148,15 @@
     fontStyle: 'italic',
     lineHeight: '1.1',
     letterSpacing: '-0.02em',
-    color: '#181510',
+    color: '#1b1a18',
     textAlign: 'center',
   };
 
   var statLabelStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.625rem',
+    fontSize: '0.75rem',
     fontWeight: '500',
-    color: '#999690',
+    color: '#8a8781',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     textAlign: 'center',
@@ -185,8 +185,8 @@
     justifyContent: 'center',
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.75rem',
-    color: '#999690',
-    background: '#efede8',
+    color: '#8a8781',
+    background: '#e3e3e0',
   };
 
   var rectOverlayStyle = {
@@ -260,7 +260,7 @@
       height: height,
       borderRadius: borderRadius,
       overflow: 'hidden',
-      border: '1px solid #d4d2cb',
+      border: '1px solid #d6d5d0',
       cursor: 'pointer',
       flexShrink: '0',
     };

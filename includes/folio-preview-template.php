@@ -15,7 +15,7 @@ $theme = Themes_Manager::create_theme_for_current_request();
     // Resolve theme accent color.
     $_pw_theme_id = (string) get_post_meta($password_post->ID, 'theme_id', true);
     $_pw_accent_map = array(
-      'groove-proposal'   => array('#2b6b78', '#1f545f'),
+      'groove-proposal'   => array('#27498c', '#1a4173'),
       'groove-magazine'   => array('#2563EB', '#1d4ed8'),
       'groove-newsletter' => array('#6f3115', '#5a2710'),
       'groove-ebook'      => array('#1D35B4', '#162a90'),
@@ -34,7 +34,7 @@ $theme = Themes_Manager::create_theme_for_current_request();
 
     // Resolve theme background color.
     $_pw_bg_map = array(
-      'groove-proposal'   => '#f2f1ed',
+      'groove-proposal'   => '#ededeb',
       'groove-magazine'   => '#FAFAFA',
       'groove-newsletter' => '#eee7db',
       'groove-ebook'      => '#1D35B4',

@@ -15,9 +15,9 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
   padding: 1.75rem 1.5rem;
-  border: 1px solid #d4d2cb;
+  border: 1px solid #d6d5d0;
   border-radius: 0.5rem;
-  background: #fafaf8;
+  background: #f7f7f5;
 }
 
 /* Adjust columns for 2 or 4 items via JS class would be complex,
@@ -47,7 +47,7 @@
   font-style: italic !important;
   line-height: 1.1 !important;
   letter-spacing: -0.02em !important;
-  color: #181510 !important;
+  color: #1b1a18 !important;
   text-align: center !important;
 }
 
@@ -57,7 +57,7 @@
   font-family: 'Inter', -apple-system, sans-serif !important;
   font-size: 0.6875rem !important;
   font-weight: 500 !important;
-  color: #999690 !important;
+  color: #8a8781 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
   line-height: 1.4 !important;

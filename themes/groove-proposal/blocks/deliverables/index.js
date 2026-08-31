@@ -34,7 +34,7 @@
     fontSize: '1.125rem',
     fontWeight: '400',
     fontStyle: 'normal',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.35',
     margin: '0 0 0.75rem',
   };
@@ -56,7 +56,7 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.8125rem',
     fontWeight: '700',
-    color: '#2b6b78',
+    color: '#27498c',
     lineHeight: '1.55',
   };
 
@@ -64,7 +64,7 @@
     flex: '1',
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.875rem',
-    color: '#4f483e',
+    color: '#4a4844',
     lineHeight: '1.55',
   };
 

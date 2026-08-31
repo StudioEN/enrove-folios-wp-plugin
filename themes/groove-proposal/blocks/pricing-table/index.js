@@ -85,7 +85,7 @@
 
   var wrapStyle = {
     margin: '1rem 0',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
     overflow: 'hidden',
     background: '#fff',
@@ -95,14 +95,14 @@
     display: 'flex',
     justifyContent: 'space-between',
     padding: '0.6rem 1rem',
-    background: '#f0efeb',
+    background: '#ededeb',
   };
 
   var colLabelStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.5625rem',
+    fontSize: '0.625rem',
     fontWeight: '600',
-    color: '#6b6860',
+    color: '#666259',
     textTransform: 'uppercase',
     letterSpacing: '0.09em',
   };
@@ -113,12 +113,12 @@
     alignItems: 'baseline',
     gap: '1.5rem',
     padding: '0.875rem 1rem',
-    borderTop: '1px solid #d4d2cb',
+    borderTop: '1px solid #d6d5d0',
     cursor: 'pointer',
     transition: 'background 150ms ease, box-shadow 150ms ease',
   };
 
-  var ACTIVE_BG = '#f5f4f0';
+  var ACTIVE_BG = '#ededeb';
 
   var itemStyle = {
     display: 'flex',
@@ -132,14 +132,14 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.875rem',
     fontWeight: '500',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.35',
   };
 
   var descStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.75rem',
-    color: '#999690',
+    color: '#8a8781',
     lineHeight: '1.45',
   };
 
@@ -154,7 +154,7 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.875rem',
     fontWeight: '500',
-    color: '#181510',
+    color: '#1b1a18',
     whiteSpace: 'nowrap',
     width: '6rem',
     textAlign: 'right',
@@ -167,16 +167,16 @@
   };
 
   var priceInputFocusStyle = Object.assign({}, priceInputStyle, {
-    borderColor: '#d4d2cb',
-    background: '#fafaf8',
+    borderColor: '#d6d5d0',
+    background: '#f7f7f5',
     cursor: 'text',
   });
 
   var optionalBtnStyle = {
     fontSize: '0.625rem',
-    color: '#999690',
+    color: '#8a8781',
     background: 'none',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
     padding: '0.1rem 0.35rem',
     cursor: 'pointer',
@@ -189,15 +189,15 @@
     justifyContent: 'space-between',
     alignItems: 'baseline',
     padding: '0.875rem 1rem',
-    borderTop: '2px solid #181510',
-    background: '#f0efeb',
+    borderTop: '2px solid #1b1a18',
+    background: '#ededeb',
   };
 
   var totalLabelStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.75rem',
     fontWeight: '600',
-    color: '#181510',
+    color: '#1b1a18',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
   };
@@ -207,7 +207,7 @@
     fontSize: '1.25rem',
     fontWeight: '400',
     fontStyle: 'italic',
-    color: '#181510',
+    color: '#1b1a18',
     letterSpacing: '-0.01em',
   };
 
@@ -292,7 +292,7 @@
     }
     if (isActive) {
       currentRowStyle.background = ACTIVE_BG;
-      currentRowStyle.boxShadow = 'inset 3px 0 0 #2b6b78';
+      currentRowStyle.boxShadow = 'inset 3px 0 0 #27498c';
     }
 
     return el('div', {
@@ -327,7 +327,7 @@
         }),
         el('button', {
           type: 'button',
-          style: Object.assign({}, optionalBtnStyle, row.optional ? { color: '#2b6b78', borderColor: '#2b6b78' } : {}),
+          style: Object.assign({}, optionalBtnStyle, row.optional ? { color: '#27498c', borderColor: '#27498c' } : {}),
           onClick: function (e) {
             e.stopPropagation();
             update('optional', !row.optional);

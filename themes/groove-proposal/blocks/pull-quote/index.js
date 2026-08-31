@@ -15,10 +15,10 @@
   var figureStyle = {
     margin: '1rem 0',
     padding: '1.25rem 1.5rem',
-    border: '1px solid #d4d2cb',
-    borderLeft: '3px solid #2b6b78',
+    border: '1px solid #d6d5d0',
+    borderLeft: '3px solid #27498c',
     borderRadius: '0 0.5rem 0.5rem 0',
-    background: '#fafaf8',
+    background: '#f7f7f5',
   };
 
   var quoteStyle = {
@@ -27,7 +27,7 @@
     fontWeight: '300',
     fontStyle: 'italic',
     lineHeight: '1.55',
-    color: '#181510',
+    color: '#1b1a18',
     margin: '0 0 0.75rem',
     padding: '0',
     border: 'none',
@@ -44,7 +44,7 @@
     fontSize: '0.8125rem',
     fontWeight: '500',
     fontStyle: 'normal',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.3',
   };
 
@@ -53,7 +53,7 @@
     fontSize: '0.75rem',
     fontWeight: '400',
     fontStyle: 'normal',
-    color: '#999690',
+    color: '#8a8781',
     lineHeight: '1.3',
   };
 

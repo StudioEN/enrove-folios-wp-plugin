@@ -28,9 +28,9 @@
     display: 'grid',
     gap: '2rem',
     padding: '1.75rem 1.5rem',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '0.5rem',
-    background: '#fafaf8',
+    background: '#f7f7f5',
   };
 
   var itemStyle = {
@@ -47,15 +47,15 @@
     fontStyle: 'italic',
     lineHeight: '1.1',
     letterSpacing: '-0.02em',
-    color: '#181510',
+    color: '#1b1a18',
     textAlign: 'center',
   };
 
   var labelStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.6875rem',
+    fontSize: '0.75rem',
     fontWeight: '500',
-    color: '#999690',
+    color: '#8a8781',
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
     lineHeight: '1.4',

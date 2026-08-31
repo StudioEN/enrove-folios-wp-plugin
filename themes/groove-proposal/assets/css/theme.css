@@ -13,27 +13,34 @@
   --gp-font-display: var(--g-folio-header-font, 'Fraunces', Georgia, 'Times New Roman', serif);
   --gp-font-sans: var(--g-folio-body-font, 'Inter', system-ui, -apple-system, sans-serif);
 
-  /* Surface — cool slate, not the warm oat/cream neutral common in AI-generated palettes */
-  --gp-bg: #eef0f1;
-  --gp-surface: #f8f9fa;
-  --gp-surface-muted: #e6e9ea;
-  --gp-border: rgba(15, 23, 26, 0.1);
-  --gp-border-strong: rgba(15, 23, 26, 0.18);
+  /* Surface — near-neutral paper with a whisper of warmth (not oat/cream, not blue-grey) */
+  --gp-bg: #ededeb;
+  --gp-surface: #f7f7f5;
+  --gp-surface-muted: #e3e3e0;
+  --gp-border: rgba(27, 26, 24, 0.12);
+  --gp-border-strong: rgba(27, 26, 24, 0.2);
 
-  /* Text — cool ink, not warm brown-black */
-  --gp-text: #10181b;
-  --gp-text-muted: #45525a;
-  --gp-text-subtle: #586669;
+  /* Text — neutral ink, a shade warm */
+  --gp-text: #1b1a18;
+  --gp-text-muted: #4a4844;
+  --gp-text-subtle: #666259;
 
-  /* Accent — petrol/teal (~190°), the neutrals above are drawn from the same cool family */
-  --gp-accent: #2b6b78;
-  --gp-accent-hover: #1f545f;
-  --gp-accent-soft: rgba(43, 107, 120, 0.08);
-  --gp-accent-mid: rgba(43, 107, 120, 0.22);
+  /* Accent — indigo blue. System colour: links, actions, navigation, active state. */
+  --gp-accent: #27498c;
+  --gp-accent-hover: #1a4173;
+  --gp-accent-soft: rgba(39, 73, 140, 0.08);
+  --gp-accent-mid: rgba(39, 73, 140, 0.22);
+  --gp-on-accent: #ffffff;
+
+  /* Warm secondary — bronze, roughly complementary to the accent. Used sparingly for
+     the human/evidence moments (quotes, stat rules, tags) so the page isn't all cool. */
+  --gp-warm: #855c22;
+  --gp-warm-soft: rgba(133, 92, 34, 0.1);
+  --gp-warm-mid: rgba(133, 92, 34, 0.28);
 
   /* Misc */
   --gp-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.06);
-  --gp-overlay: rgba(6, 9, 10, 0.52);
+  --gp-overlay: rgba(20, 18, 15, 0.52);
   --gp-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Layout */
@@ -43,20 +50,25 @@
 /* ─── Dark Mode ─── */
 
 :root.gp-theme-dark {
-  --gp-bg: #0b0f10;
-  --gp-surface: #14191a;
-  --gp-surface-muted: #1b2122;
-  --gp-border: rgba(223, 232, 234, 0.1);
-  --gp-border-strong: rgba(223, 232, 234, 0.18);
+  --gp-bg: #181714;
+  --gp-surface: #201f1b;
+  --gp-surface-muted: #2a2823;
+  --gp-border: rgba(235, 233, 228, 0.1);
+  --gp-border-strong: rgba(235, 233, 228, 0.18);
 
-  --gp-text: #e3ebec;
-  --gp-text-muted: #b7c3c5;
-  --gp-text-subtle: #8b9799;
+  --gp-text: #ebe9e4;
+  --gp-text-muted: #bab6ae;
+  --gp-text-subtle: #9a958c;
 
-  --gp-accent: #7ec0cc;
-  --gp-accent-hover: #9ad0d9;
-  --gp-accent-soft: rgba(126, 192, 204, 0.14);
-  --gp-accent-mid: rgba(126, 192, 204, 0.30);
+  --gp-accent: #8fadde;
+  --gp-accent-hover: #aac2e8;
+  --gp-accent-soft: rgba(143, 173, 222, 0.14);
+  --gp-accent-mid: rgba(143, 173, 222, 0.30);
+  --gp-on-accent: #181714;
+
+  --gp-warm: #d9a961;
+  --gp-warm-soft: rgba(217, 169, 97, 0.14);
+  --gp-warm-mid: rgba(217, 169, 97, 0.30);
 
   --gp-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
   --gp-overlay: rgba(0, 0, 0, 0.68);
@@ -64,20 +76,25 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not(.gp-theme-light):not(.gp-theme-dark) {
-    --gp-bg: #0b0f10;
-    --gp-surface: #14191a;
-    --gp-surface-muted: #1b2122;
-    --gp-border: rgba(223, 232, 234, 0.1);
-    --gp-border-strong: rgba(223, 232, 234, 0.18);
+    --gp-bg: #181714;
+    --gp-surface: #201f1b;
+    --gp-surface-muted: #2a2823;
+    --gp-border: rgba(235, 233, 228, 0.1);
+    --gp-border-strong: rgba(235, 233, 228, 0.18);
 
-    --gp-text: #e3ebec;
-    --gp-text-muted: #b7c3c5;
-    --gp-text-subtle: #8b9799;
+    --gp-text: #ebe9e4;
+    --gp-text-muted: #bab6ae;
+    --gp-text-subtle: #9a958c;
 
-    --gp-accent: #7ec0cc;
-    --gp-accent-hover: #9ad0d9;
-    --gp-accent-soft: rgba(126, 192, 204, 0.14);
-    --gp-accent-mid: rgba(126, 192, 204, 0.30);
+    --gp-accent: #8fadde;
+    --gp-accent-hover: #aac2e8;
+    --gp-accent-soft: rgba(143, 173, 222, 0.14);
+    --gp-accent-mid: rgba(143, 173, 222, 0.30);
+    --gp-on-accent: #181714;
+
+    --gp-warm: #d9a961;
+    --gp-warm-soft: rgba(217, 169, 97, 0.14);
+    --gp-warm-mid: rgba(217, 169, 97, 0.30);
 
     --gp-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
     --gp-overlay: rgba(0, 0, 0, 0.68);
@@ -1205,7 +1222,7 @@
 .gp-page__content .wp-block-quote,
 .gp-page__content .wp-block-pullquote {
   margin: 1.75rem 0;
-  border-left: 2px solid var(--gp-accent);
+  border-left: 2px solid var(--gp-warm);
   padding: 0.05rem 0 0.05rem 1.25rem;
   color: var(--gp-text-muted);
   font-size: 1.0625rem;
@@ -1329,7 +1346,7 @@
   font-size: 4rem;
   line-height: 1;
   letter-spacing: -0.02em;
-  color: var(--gp-border-strong);
+  color: var(--gp-warm-mid);
 }
 
 .gp-page__locator-role {
@@ -1496,8 +1513,8 @@ a.gp-page__footer-arrow:hover::after {
   gap: 1.5rem;
   margin: 2rem 0;
   padding: 1.5rem 0;
-  border-top: 1px solid var(--gp-border);
-  border-bottom: 1px solid var(--gp-border);
+  border-top: 1px solid var(--gp-warm-mid);
+  border-bottom: 1px solid var(--gp-warm-mid);
 }
 
 .gp-metrics__item {
@@ -1711,7 +1728,7 @@ a.gp-page__footer-arrow:hover::after {
   margin: 2.5rem 0;
   padding: 0;
   border: none;
-  border-left: 2px solid var(--gp-accent);
+  border-left: 2px solid var(--gp-warm);
   padding-left: 1.5rem;
 }
 
@@ -1799,7 +1816,7 @@ a.gp-page__footer-arrow:hover::after {
   align-items: center;
   justify-content: center;
   background: var(--gp-accent);
-  color: #fff;
+  color: var(--gp-on-accent);
   font-size: 1.125rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -1910,7 +1927,7 @@ a.gp-page__footer-arrow:hover::after {
   align-items: center;
   justify-content: center;
   background: var(--gp-accent);
-  color: #fff;
+  color: var(--gp-on-accent);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -2046,11 +2063,11 @@ a.gp-page__footer-arrow:hover::after {
 }
 
 .gp-callout-box--important {
-  border-left-color: #b8860b;
+  border-left-color: var(--gp-warm);
 }
 
 .gp-callout-box--important .gp-callout-box__label {
-  color: #b8860b;
+  color: var(--gp-warm);
 }
 
 .gp-callout-box--warning {
@@ -2071,11 +2088,11 @@ a.gp-page__footer-arrow:hover::after {
 }
 
 :root.gp-theme-dark .gp-callout-box--important {
-  border-left-color: #e6ac00;
+  border-left-color: var(--gp-warm);
 }
 
 :root.gp-theme-dark .gp-callout-box--important .gp-callout-box__label {
-  color: #e6ac00;
+  color: var(--gp-warm);
 }
 
 :root.gp-theme-dark .gp-callout-box--warning {
@@ -2138,7 +2155,7 @@ a.gp-page__footer-arrow:hover::after {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #fff;
+  color: var(--gp-on-accent);
   background: var(--gp-accent);
   padding: 0.2rem 0.5rem;
   border-radius: 2px;
@@ -2245,8 +2262,8 @@ a.gp-page__footer-arrow:hover::after {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--gp-accent);
-  background: var(--gp-accent-soft);
+  color: var(--gp-warm);
+  background: var(--gp-warm-soft);
 }
 
 .gp-page__content .gp-case-study__title {
@@ -2280,8 +2297,8 @@ a.gp-page__footer-arrow:hover::after {
   gap: 1.5rem;
   margin-bottom: 1.75rem;
   padding: 1.25rem 0;
-  border-top: 1px solid var(--gp-border);
-  border-bottom: 1px solid var(--gp-border);
+  border-top: 1px solid var(--gp-warm-mid);
+  border-bottom: 1px solid var(--gp-warm-mid);
 }
 
 .gp-case-study__stat {
@@ -2754,7 +2771,7 @@ a.gp-page__footer-arrow:hover::after {
   padding: 0.75rem 1.75rem;
   border-radius: 0.25rem;
   background: var(--gp-accent);
-  color: #fff;
+  color: var(--gp-on-accent);
   font-family: var(--gp-font-sans);
   font-size: 0.8125rem;
   font-weight: 600;

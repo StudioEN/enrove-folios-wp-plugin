@@ -40,10 +40,10 @@
   };
 
   var itemStyle = {
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '0.375rem',
     padding: '1rem 1.25rem',
-    background: '#fafaf8',
+    background: '#f7f7f5',
   };
 
   var questionRowStyle = {
@@ -57,7 +57,7 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.9375rem',
     fontWeight: '600',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.4',
     flex: '1',
   };
@@ -66,18 +66,18 @@
     flexShrink: '0',
     fontSize: '1.125rem',
     lineHeight: '1',
-    color: '#999690',
+    color: '#8a8781',
     marginTop: '0.125rem',
   };
 
   var answerStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.8125rem',
-    color: '#999690',
+    color: '#8a8781',
     lineHeight: '1.65',
     marginTop: '0.5rem',
     paddingTop: '0.5rem',
-    borderTop: '1px solid #d4d2cb',
+    borderTop: '1px solid #d6d5d0',
   };
 
   var BLOCK_ICON = el('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: 24, height: 24 },

@@ -43,10 +43,10 @@
     flexDirection: 'column',
     gap: '0',
     margin: '1rem 0',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
     overflow: 'hidden',
-    background: '#fbfaf7',
+    background: '#f7f7f5',
   };
 
   var listCardStyle = {
@@ -55,7 +55,7 @@
     alignItems: 'flex-start',
     gap: '1rem',
     padding: '1rem 1.25rem',
-    borderTop: '1px solid #d4d2cb',
+    borderTop: '1px solid #d6d5d0',
     cursor: 'pointer',
     transition: 'background 150ms ease, box-shadow 150ms ease',
   };
@@ -88,9 +88,9 @@
     alignItems: 'center',
     textAlign: 'center',
     padding: '1.5rem 1rem',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
-    background: '#fbfaf7',
+    background: '#f7f7f5',
     cursor: 'pointer',
     transition: 'background 150ms ease, box-shadow 150ms ease',
   };
@@ -99,7 +99,7 @@
   var gridInitialsFontSize = '1.125rem';
 
   // -- Shared --
-  var ACTIVE_BG = '#f5f4f0';
+  var ACTIVE_BG = '#ededeb';
 
   var avatarImgStyle = {
     width: '100%',
@@ -114,7 +114,7 @@
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#2b6b78',
+    background: '#27498c',
     color: '#ffffff',
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontWeight: '600',
@@ -130,7 +130,7 @@
     justifyContent: 'center',
     background: 'rgba(0,0,0,0.4)',
     color: '#fff',
-    fontSize: '0.5rem',
+    fontSize: '0.625rem',
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
@@ -147,16 +147,16 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.875rem',
     fontWeight: '500',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.35',
     width: '100%',
   };
 
   var roleStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.5625rem',
+    fontSize: '0.75rem',
     fontWeight: '600',
-    color: '#6b6860',
+    color: '#666259',
     textTransform: 'uppercase',
     letterSpacing: '0.09em',
     lineHeight: '1.3',
@@ -167,7 +167,7 @@
   var bioStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.75rem',
-    color: '#746c62',
+    color: '#666259',
     lineHeight: '1.55',
     marginTop: '0.5rem',
     width: '100%',
@@ -262,13 +262,13 @@
       }
       if (isActive) {
         currentCardStyle.background = ACTIVE_BG;
-        currentCardStyle.boxShadow = 'inset 3px 0 0 #2b6b78';
+        currentCardStyle.boxShadow = 'inset 3px 0 0 #27498c';
       }
     } else {
       currentCardStyle = Object.assign({}, gridCardStyle);
       if (isActive) {
         currentCardStyle.background = ACTIVE_BG;
-        currentCardStyle.boxShadow = 'inset 0 3px 0 #2b6b78';
+        currentCardStyle.boxShadow = 'inset 0 3px 0 #27498c';
       }
     }
 

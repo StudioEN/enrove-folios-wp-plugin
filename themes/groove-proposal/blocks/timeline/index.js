@@ -30,9 +30,9 @@
     flexDirection: 'column',
     margin: '1rem 0',
     padding: '1.5rem',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '0.5rem',
-    background: '#fafaf8',
+    background: '#f7f7f5',
   };
 
   var phaseStyle = {
@@ -52,7 +52,7 @@
     fontSize: '0.8125rem',
     fontWeight: '400',
     fontStyle: 'italic',
-    color: '#999690',
+    color: '#8a8781',
     lineHeight: '1',
     paddingTop: '0.15rem',
   };
@@ -60,7 +60,7 @@
   var lineStyle = {
     flex: '1',
     width: '1px',
-    background: '#b5b2ab',
+    background: '#b3b0a9',
     minHeight: '1rem',
     marginTop: '0.5rem',
   };
@@ -76,9 +76,9 @@
   var dateStyle = {
     display: 'block',
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.5625rem',
+    fontSize: '0.75rem',
     fontWeight: '600',
-    color: '#999690',
+    color: '#8a8781',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     marginBottom: '0.15rem',
@@ -88,7 +88,7 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.9375rem',
     fontWeight: '600',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.35',
     margin: '0 0 0.35rem',
   };
@@ -96,7 +96,7 @@
   var descStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.8125rem',
-    color: '#6b6860',
+    color: '#666259',
     lineHeight: '1.6',
     margin: '0',
   };

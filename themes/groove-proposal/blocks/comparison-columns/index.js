@@ -55,12 +55,12 @@
 
   // ── Inline styles ──────────────────────────────────────────────────────────
 
-  var ACCENT = '#2b6b78';
-  var ACTIVE_BG = '#f5f4f0';
+  var ACCENT = '#27498c';
+  var ACTIVE_BG = '#ededeb';
 
   var tableStyle = {
     margin: '2.5rem 0 2rem',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
     overflow: 'visible',
     background: 'transparent',
@@ -68,15 +68,15 @@
 
   var headerRowStyle = {
     display: 'grid',
-    borderBottom: '1px solid #d4d2cb',
+    borderBottom: '1px solid #d6d5d0',
   };
 
   var headerCellStyle = {
     padding: '1rem 1.25rem',
-    borderLeft: '1px solid #d4d2cb',
+    borderLeft: '1px solid #d6d5d0',
     textAlign: 'center',
     position: 'relative',
-    background: '#efede8',
+    background: '#e3e3e0',
   };
 
   var headerCellFirstStyle = {
@@ -84,14 +84,14 @@
     borderLeft: 'none',
     textAlign: 'center',
     position: 'relative',
-    background: '#efede8',
+    background: '#e3e3e0',
   };
 
   var nameStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.9375rem',
     fontWeight: '600',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.35',
     width: '100%',
     textAlign: 'center',
@@ -99,9 +99,9 @@
 
   var subtitleStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.6875rem',
+    fontSize: '0.75rem',
     fontWeight: '400',
-    color: '#746c62',
+    color: '#666259',
     lineHeight: '1.4',
     marginTop: '0.2rem',
     width: '100%',
@@ -114,7 +114,7 @@
     left: '50%',
     transform: 'translateX(-50%)',
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.5rem',
+    fontSize: '0.625rem',
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: '0.1em',
@@ -129,7 +129,7 @@
 
   var featureRowStyle = {
     display: 'grid',
-    borderTop: '1px solid #d4d2cb',
+    borderTop: '1px solid #d6d5d0',
   };
 
   var featureRowFirstStyle = {
@@ -139,7 +139,7 @@
 
   var featureCellStyle = {
     padding: '0.6rem 1.25rem',
-    borderLeft: '1px solid #d4d2cb',
+    borderLeft: '1px solid #d6d5d0',
   };
 
   var featureCellFirstStyle = {
@@ -150,18 +150,18 @@
   var featureTextStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.8125rem',
-    color: '#4f483e',
+    color: '#4a4844',
     lineHeight: '1.55',
     width: '100%',
   };
 
   var recommendedHeaderStyle = {
-    background: '#fbfaf7',
+    background: '#f7f7f5',
     boxShadow: 'inset 0 2px 0 ' + ACCENT,
   };
 
   var recommendedCellStyle = {
-    background: '#fbfaf7',
+    background: '#f7f7f5',
   };
 
   var BLOCK_ICON = el('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 24 24', width: 24, height: 24 },

@@ -38,14 +38,14 @@
   var cardStyle = {
     margin: '0',
     padding: '1.125rem 1.25rem',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
-    background: '#fafaf8',
+    background: '#f7f7f5',
     cursor: 'pointer',
     transition: 'background 150ms ease, box-shadow 150ms ease',
   };
 
-  var ACTIVE_BG = '#f5f4f0';
+  var ACTIVE_BG = '#ededeb';
 
   var textStyle = {
     margin: '0 0 0.625rem',
@@ -56,7 +56,7 @@
     fontWeight: '300',
     fontStyle: 'italic',
     lineHeight: '1.5',
-    color: '#181510',
+    color: '#1b1a18',
   };
 
   var citeStyle = {
@@ -70,16 +70,16 @@
     fontSize: '0.75rem',
     fontWeight: '500',
     fontStyle: 'normal',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.3',
   };
 
   var roleStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.6875rem',
+    fontSize: '0.75rem',
     fontWeight: '400',
     fontStyle: 'normal',
-    color: '#999690',
+    color: '#8a8781',
     lineHeight: '1.3',
   };
 
@@ -110,7 +110,7 @@
     var currentCardStyle = Object.assign({}, cardStyle);
     if (isActive) {
       currentCardStyle.background = ACTIVE_BG;
-      currentCardStyle.boxShadow = 'inset 0 3px 0 #2b6b78';
+      currentCardStyle.boxShadow = 'inset 0 3px 0 #27498c';
     }
 
     return el('figure', {

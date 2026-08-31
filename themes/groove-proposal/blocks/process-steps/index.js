@@ -33,7 +33,7 @@
 
   // ── Shared inline styles ───────────────────────────────────────────────
 
-  var ACTIVE_BG = '#f5f4f0';
+  var ACTIVE_BG = '#ededeb';
 
   var badgeStyle = {
     width: '40px',
@@ -42,7 +42,7 @@
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#2b6b78',
+    background: '#27498c',
     color: '#ffffff',
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.75rem',
@@ -56,7 +56,7 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.9375rem',
     fontWeight: '600',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.35',
     width: '100%',
   };
@@ -64,7 +64,7 @@
   var descStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.8125rem',
-    color: '#746c62',
+    color: '#666259',
     lineHeight: '1.6',
     marginTop: '0.25rem',
     width: '100%',
@@ -102,7 +102,7 @@
   var hConnectorStyle = {
     flex: '1',
     height: '1px',
-    background: '#d4d2cb',
+    background: '#d6d5d0',
   };
 
   var hConnectorInvisibleStyle = {
@@ -125,9 +125,9 @@
     gap: '0',
     margin: '1rem 0',
     padding: '1.5rem',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
-    background: '#fbfaf7',
+    background: '#f7f7f5',
   };
 
   var vStepStyle = {
@@ -147,7 +147,7 @@
   var vConnectorStyle = {
     flex: '1',
     width: '1px',
-    background: '#d4d2cb',
+    background: '#d6d5d0',
     minHeight: '1rem',
     marginTop: '0.5rem',
   };

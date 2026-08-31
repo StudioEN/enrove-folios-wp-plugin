@@ -19,9 +19,9 @@
   var STYLES = ['note', 'tip', 'important', 'warning'];
 
   var STYLE_META = {
-    note:      { label: 'Note',      color: '#2b6b78', icon: 'info-outline' },
+    note:      { label: 'Note',      color: '#27498c', icon: 'info-outline' },
     tip:       { label: 'Tip',       color: '#3a7d44', icon: 'lightbulb' },
-    important: { label: 'Important', color: '#b8860b', icon: 'star-filled' },
+    important: { label: 'Important', color: '#855c22', icon: 'star-filled' },
     warning:   { label: 'Warning',   color: '#c0392b', icon: 'warning' },
   };
 
@@ -30,10 +30,10 @@
   function wrapStyle(color) {
     return {
       margin: '2rem 0',
-      border: '1px solid #d4d2cb',
+      border: '1px solid #d6d5d0',
       borderLeft: '3px solid ' + color,
       borderRadius: '3px',
-      background: '#fbfaf7',
+      background: '#f7f7f5',
       padding: '1rem 1.25rem',
     };
   }
@@ -48,7 +48,7 @@
 
   var labelTextStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
-    fontSize: '0.5625rem',
+    fontSize: '0.625rem',
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: '0.09em',
@@ -58,7 +58,7 @@
   };
 
   var labelChevronStyle = {
-    fontSize: '0.5rem',
+    fontSize: '0.625rem',
     lineHeight: '1',
     cursor: 'pointer',
     userSelect: 'none',
@@ -71,7 +71,7 @@
     left: '0',
     marginTop: '0.35rem',
     background: '#fff',
-    border: '1px solid #d4d2cb',
+    border: '1px solid #d6d5d0',
     borderRadius: '3px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
     zIndex: '10',
@@ -106,7 +106,7 @@
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.9375rem',
     fontWeight: '600',
-    color: '#181510',
+    color: '#1b1a18',
     lineHeight: '1.35',
     marginBottom: '0.35rem',
   };
@@ -114,7 +114,7 @@
   var bodyStyle = {
     fontFamily: "'Inter', -apple-system, sans-serif",
     fontSize: '0.8125rem',
-    color: '#4f483e',
+    color: '#4a4844',
     lineHeight: '1.65',
   };
 
@@ -166,15 +166,15 @@
           return el('button', {
             key: key,
             style: Object.assign({}, dropdownItemStyle, {
-              background: isActive ? '#f5f4f0' : 'transparent',
+              background: isActive ? '#ededeb' : 'transparent',
               fontWeight: isActive ? '600' : '500',
-              color: '#181510',
+              color: '#1b1a18',
             }),
             onMouseEnter: function (e) {
-              if (!isActive) e.currentTarget.style.background = '#fafaf8';
+              if (!isActive) e.currentTarget.style.background = '#f7f7f5';
             },
             onMouseLeave: function (e) {
-              e.currentTarget.style.background = isActive ? '#f5f4f0' : 'transparent';
+              e.currentTarget.style.background = isActive ? '#ededeb' : 'transparent';
             },
             onClick: function () {
               onChange(key);
