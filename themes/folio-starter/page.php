@@ -12,6 +12,23 @@ class Page extends Base_Theme
 {
   public $folio_id;
   public $folio;
+  public $catalog_entries;
+
+  public function ensure_script()
+  {
+    parent::ensure_script();
+
+    $js_path = $this->get_theme_assets_path() . 'js/folio-starter.js';
+    $version = file_exists($js_path) ? filemtime($js_path) : GROOVE_VERSION;
+
+    wp_enqueue_script(
+      'folio-starter-theme',
+      $this->get_theme_assets_url() . 'js/folio-starter.js',
+      [],
+      $version,
+      true
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -45,10 +62,31 @@ class Page extends Base_Theme
     $this->get_theme_data();
   }
 
-  function get_html($html)
+  function load_fragment($html)
   {
     $doc = new \DOMDocument();
-    @$doc->loadHTML($html); // suppress charset warnings
+    $previous = libxml_use_internal_errors(true);
+    // The XML declaration is the charset hint; without it libxml assumes
+    // ISO-8859-1 and "Café" round-trips as "CafÃ©".
+    $doc->loadHTML(
+      '<?xml encoding="utf-8" ?>' . $html,
+      LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+    );
+    libxml_clear_errors();
+    libxml_use_internal_errors($previous);
+
+    foreach (iterator_to_array($doc->childNodes) as $node) {
+      if ($node->nodeType === XML_PI_NODE) {
+        $doc->removeChild($node);
+      }
+    }
+
+    return $doc;
+  }
+
+  function get_html($html)
+  {
+    $doc = $this->load_fragment($html);
 
     // "On this page" links are intended for section headings only.
     $element_names = ['h2'];
@@ -80,6 +118,22 @@ class Page extends Base_Theme
     return trim(preg_replace('/_{2,}/', '-', $dst), '-');
   }
 
+  function inject_heading_anchor($html, $anchor)
+  {
+    $doc = $this->load_fragment($html);
+
+    $element = $doc->getElementsByTagName('h2')->item(0);
+    if (!$element) {
+      return $html;
+    }
+
+    if (!$element->getAttribute('id')) {
+      $element->setAttribute('id', $anchor);
+    }
+
+    return $doc->saveHTML();
+  }
+
   function get_html_id($element)
   {
     $id = $element->getAttribute('id');
@@ -87,24 +141,42 @@ class Page extends Base_Theme
     return $id ? $id : $this->to_anchor_name($textContent);
   }
 
+  /**
+   * The section headings this page contributes to "On this page".
+   * Empty when the page has no h2s — the rail and its toggle are hidden then.
+   */
+  function get_catalog_entries()
+  {
+    if (isset($this->catalog_entries)) {
+      return $this->catalog_entries;
+    }
+
+    $entries = array();
+
+    foreach (parse_blocks((string) $this->content) as $block) {
+      if ($block['blockName'] !== 'core/heading') {
+        continue;
+      }
+
+      $html = $this->get_html($block['innerContent'][0]);
+      if (!$html || $html[0] === '') {
+        continue;
+      }
+
+      $entries[] = $html;
+    }
+
+    $this->catalog_entries = $entries;
+
+    return $entries;
+  }
+
   function display_catalogs()
   {
-    $blocks = parse_blocks($this->content);
-
     echo '<div class="g-folio__theme-page-catalogs-content">';
 
-    foreach ($blocks as $block) {
-      if ($block['blockName'] === 'core/heading') {
-        $title = $block['innerContent'][0];
-
-        $html = $this->get_html($title);
-        if (!$html) {
-          continue;
-        }
-        $anchor = $this->to_anchor_name($html[1]);
-
-        echo '<div class="g-folio__theme-page-catalog"><a href="' . ($anchor ? ('#' . $anchor) : '') . '">' . esc_html($html[1]) . '</a></div>';
-      }
+    foreach ($this->get_catalog_entries() as $entry) {
+      echo '<div class="g-folio__theme-page-catalog"><a href="' . esc_attr('#' . $entry[0]) . '">' . esc_html($entry[1]) . '</a></div>';
     }
 
     echo '</div>';
@@ -121,12 +193,10 @@ class Page extends Base_Theme
 
     foreach ($blocks as $block) {
       if ($block['blockName'] === 'core/heading') {
-        $title = $block['innerContent'][0];
-
-        $html = $this->get_html($title);
+        $html = $this->get_html($block['innerContent'][0]);
         if ($html) {
-          $anchor = $this->to_anchor_name($html[1]);
-          $block['innerContent'][0] = '<' . $html[2] . ' id="' . $anchor . '">' . $html[1] . '</' . $html[2] . '>';
+          // $html[0] is the author's own id when the heading has one.
+          $block['innerContent'][0] = $this->inject_heading_anchor($block['innerContent'][0], $html[0]);
         }
       }
 
@@ -184,7 +254,8 @@ class Page extends Base_Theme
     ?>
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
-        <button class="g-folio__theme-page-nav-button" aria-label="Open navigation">
+        <button type="button" class="g-folio__theme-page-nav-button" aria-label="<?= esc_attr__('Open navigation', 'groove') ?>"
+          aria-expanded="false">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -194,48 +265,44 @@ class Page extends Base_Theme
         <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
             <?= esc_html(isset($this->folio->post_title) ? $this->folio->post_title : '') ?> |
           </span>
-          <?= esc_html($this->page->post_title ?? 'Page') ?>
+          <?= esc_html($this->page->post_title ?? __('Page', 'groove')) ?>
         </div>
       </div>
 
-      <div class="g-folio__theme-page-nav-bar-toggle">
-      </div>
 
     </div>
-    <?php $this->display_mobile_nav() ?>
     <?php
   }
 
-  function display_mobile_nav()
+  /**
+   * Small-screen "On this page". Sits with the content rather than in the
+   * navbar, so it does not compete with the folio nav. Native <details>, so
+   * it needs no JS and is keyboard-operable for free.
+   */
+  function display_contents()
   {
+    $entries = $this->get_catalog_entries();
+    if (!$entries) {
+      return;
+    }
+
     $on_this_page_label = Utils::get_folio_on_this_page_label((int) $this->folio_id);
-    $blocks = parse_blocks($this->content);
     ?>
-    <nav class="g-folio__theme-page-mobile-nav">
-      <div class="g-folio__theme-page-mobile-nav-content">
-        <div class="g-folio__theme-page-mobile-nav-label"><?= esc_html($on_this_page_label) ?></div>
-        <div class="g-folio__theme-page-mobile-navs">
-          <?php
-          foreach ($blocks as $block) {
-            if ($block['blockName'] === 'core/heading') {
-              $title = $block['innerContent'][0];
-              $html = $this->get_html($title);
-              if (!$html) {
-                continue;
-              }
-              $anchor = $this->to_anchor_name($html[1]);
-              ?>
-              <a class="g-folio__theme-page-mobile-nav-item-link" href="<?= '#' . $anchor ?>">
-                <div class="g-folio__theme-page-mobile-nav-item"><?= esc_html($html[1]) ?></div>
-              </a>
-              <?php
-            }
-          }
-          ?>
-        </div>
-        <div class="g-folio__theme-page-mobile-nav-back">↑ Back to top</div>
+    <details class="g-folio__theme-page-contents">
+      <summary class="g-folio__theme-page-contents-summary">
+        <span class="g-folio__theme-page-contents-label"><?= esc_html($on_this_page_label) ?></span>
+        <svg class="g-folio__theme-page-contents-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </summary>
+      <div class="g-folio__theme-page-contents-list">
+        <?php foreach ($entries as $entry): ?>
+          <a class="g-folio__theme-page-contents-link" href="<?= esc_attr('#' . $entry[0]) ?>">
+            <?= esc_html($entry[1]) ?>
+          </a>
+        <?php endforeach; ?>
       </div>
-    </nav>
+    </details>
     <?php
   }
 
@@ -257,9 +324,14 @@ class Page extends Base_Theme
       $folio_url = Utils::get_folio_permalink_by_id($folio->ID);
     }
     ?>
-    <nav class="g-folio__theme-page-nav">
+    <nav class="g-folio__theme-page-nav" aria-label="<?= esc_attr__('Folio contents', 'groove') ?>">
       <div class="g-folio__theme-page-nav-content">
-        <button class="g-folio__theme-page-nav-close"></button>
+        <button type="button" class="g-folio__theme-page-nav-close" aria-label="<?= esc_attr__('Close navigation', 'groove') ?>">
+          <svg class="g-folio__theme-close-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+          </svg>
+        </button>
         <h3 class="g-folio__theme-page-nav-name">
           <?php if (!empty($folio_url)): ?>
             <a href="<?= esc_url($folio_url) ?>">
@@ -269,13 +341,13 @@ class Page extends Base_Theme
             <?= esc_html($folio_title) ?>
           <?php endif; ?>
         </h3>
-        <label class="g-folio__theme-page-nav-label">CONTENTS</label>
+        <p class="g-folio__theme-page-nav-label"><?= esc_html__('Contents', 'groove') ?></p>
         <div class="g-folio__theme-page-navs">
           <?php
           $index = 1;
           foreach ($this->pages as $page) {
             ?>
-            <a class="g-folio__theme-page-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID) ?>">
+            <a class="g-folio__theme-page-nav-item-link" href="<?= esc_url(Utils::get_folio_permalink_by_id($page->ID)) ?>">
               <div class="g-folio__theme-page-nav-item">
                 <i class="g-folio__theme-page-nav-item-order"><?= $index ?></i>
                 <?= esc_html($page->post_title) ?>
@@ -301,23 +373,27 @@ class Page extends Base_Theme
         <?php
         if ($prev_page) {
           ?>
-          <i class="g-folio__theme-page-arrow"></i>
-          <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID) ?>">
+          <svg class="g-folio__theme-page-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <polyline points="9 6 15 12 9 18"></polyline>
+          </svg>
+          <a href="<?= esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)) ?>">
             <?= esc_html($prev_page->post_title) ?></a>
           <?php
         }
         ?>
       </div>
 
-      <div class="g-folio__theme-page-powerby">Powered by Groove Folios</div>
+      <div class="g-folio__theme-page-powerby"><?= esc_html__('Powered by Groove Folios', 'groove') ?></div>
 
       <div class="g-folio__theme-page-next">
         <?php
         if ($next_page) {
           ?>
-          <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID) ?>">
+          <a href="<?= esc_url(Utils::get_folio_permalink_by_id($next_page->ID)) ?>">
             <?= esc_html($next_page->post_title) ?></a>
-          <i class="g-folio__theme-page-arrow"></i>
+          <svg class="g-folio__theme-page-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <polyline points="9 6 15 12 9 18"></polyline>
+          </svg>
           <?php
         }
         ?>
@@ -341,17 +417,20 @@ class Page extends Base_Theme
           <div class="g-folio__theme-page-center">
             <div class="g-folio__theme-page-container">
               <h1 class="g-folio__theme-page-title"><?= esc_html($this->title) ?></h1>
+              <?php $this->display_contents() ?>
               <div class="g-folio__theme-page-content">
                 <?= $this->get_content() ?>
               </div>
               <?php $this->display_footer() ?>
             </div>
-            <div class="g-folio__theme-page-sidebar">
-              <div class="g-folio__theme-page-catalogs">
-                <label class="g-folio__theme-page-catalogs-label"><?= esc_html($on_this_page_label) ?></label>
-                <?php $this->display_catalogs(); ?>
+            <?php if ($this->get_catalog_entries()): ?>
+              <div class="g-folio__theme-page-sidebar">
+                <div class="g-folio__theme-page-catalogs">
+                  <p class="g-folio__theme-page-catalogs-label"><?= esc_html($on_this_page_label) ?></p>
+                  <?php $this->display_catalogs(); ?>
+                </div>
               </div>
-            </div>
+            <?php endif; ?>
           </div>
         </div>
       </main>
