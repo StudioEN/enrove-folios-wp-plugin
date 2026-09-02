@@ -68,6 +68,14 @@ class Add_New extends Page
         $default_status = 'draft';
       }
 
+      // Seeded folios are scaffolding, not finished work. Even when the default
+      // folio status is `publish`, starting from sample content forces a draft
+      // so placeholder copy and stand-in imagery never go live by accident.
+      // Applies to the folio and, via create_sample_pages(), to its pages.
+      if ($seed_sample_content) {
+        $default_status = 'draft';
+      }
+
       $title = (string) get_option('groove_default_folio_title', '');
       if ($title === '') {
         $title = esc_html__('A new folio', 'groove');
