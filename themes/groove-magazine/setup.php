@@ -1,6 +1,7 @@
 <?php
 return [
     'name' => 'Groove Magazine',
+    'default_title' => 'A new issue',
     'thumbnail' => 'theme-thumb.png',
     'cover' => 'theme-cover.jpg',
     'logo' => 'theme-g-logo.png',

@@ -76,9 +76,12 @@ class Add_New extends Page
         $default_status = 'draft';
       }
 
-      $title = (string) get_option('groove_default_folio_title', '');
+      // An explicit default folio title always wins. Left blank, the title comes
+      // from the theme being created, so a magazine starts as "A new issue" and
+      // a proposal as "A new proposal" rather than everything sharing one name.
+      $title = trim((string) get_option('groove_default_folio_title', ''));
       if ($title === '') {
-        $title = esc_html__('A new folio', 'groove');
+        $title = \Groove\Themes\Themes_Manager::get_default_folio_title($theme_id);
       }
 
       $fields = array(

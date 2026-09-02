@@ -1,6 +1,7 @@
 <?php
 return [
     'name' => 'Folio Starter',
+    'default_title' => 'A new folio',
     'thumbnail' => 'theme-thumb.png',
     'cover' => 'theme-cover.jpg',
     'logo' => 'theme-g-logo.png',

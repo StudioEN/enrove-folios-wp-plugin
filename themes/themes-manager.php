@@ -214,6 +214,34 @@ class Themes_Manager extends Assets
     }
 
     /**
+     * Title a new folio should take for a given theme.
+     *
+     * Only consulted when the site has not set an explicit default folio title;
+     * an explicit setting always wins. Unknown or silent themes fall back to the
+     * generic title so this never returns an empty string.
+     *
+     * @param string $theme_id
+     * @return string
+     */
+    public static function get_default_folio_title(string $theme_id): string
+    {
+        $fallback = __('A new folio', 'groove');
+
+        if ($theme_id === '' || !isset(self::$registry[$theme_id]['cover_class'])) {
+            return $fallback;
+        }
+
+        $cover_class = self::$registry[$theme_id]['cover_class'];
+        if (!is_subclass_of($cover_class, Base_Theme::class)) {
+            return $fallback;
+        }
+
+        $title = trim((string) $cover_class::get_default_folio_title());
+
+        return $title === '' ? $fallback : $title;
+    }
+
+    /**
      * Absolute path of a curated Pexels placeholder, by manifest slug.
      *
      * @param string $slug

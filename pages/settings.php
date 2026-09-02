@@ -56,14 +56,20 @@ class Settings extends Page
     }, Overview::MENU_PRIORITY + 20);
   }
 
+  /**
+   * The site's explicit default folio title, if it has one.
+   *
+   * An empty string is a real setting, not a missing one: it means new folios
+   * take their title from the theme they are created with. Callers must not
+   * substitute a literal title here, or that choice becomes unexpressible.
+   *
+   * @return string
+   */
   private function get_default_folio_title()
   {
     $title = get_option('groove_default_folio_title', '');
-    if (!is_string($title) || $title === '') {
-      return __('A new folio', 'groove');
-    }
 
-    return $title;
+    return is_string($title) ? trim($title) : '';
   }
 
   private function get_default_folio_status()
@@ -237,11 +243,10 @@ class Settings extends Page
       }
       update_option('groove_default_folio_status', $default_status);
 
+      // Blank is stored as blank: it is how the user asks for theme-derived
+      // titles. Backfilling a literal here would pin every folio to one name.
       $default_title = isset($_POST['default_folio_title']) ? sanitize_text_field(wp_unslash($_POST['default_folio_title'])) : '';
-      if ($default_title === '') {
-        $default_title = __('A new folio', 'groove');
-      }
-      update_option('groove_default_folio_title', $default_title);
+      update_option('groove_default_folio_title', trim($default_title));
 
       delete_option('groove_default_allow_pdf_download');
       $base_slug = isset($_POST['folio_base_slug']) ? $this->sanitize_base_slug(wp_unslash($_POST['folio_base_slug'])) : 'folio';
@@ -344,6 +349,7 @@ class Settings extends Page
     $default_theme_id = $this->get_default_theme_id();
     $default_status = $this->get_default_folio_status();
     $default_title = $this->get_default_folio_title();
+    $default_theme_title = Themes_Manager::get_default_folio_title($default_theme_id);
     ?>
 <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4">
   <?php wp_nonce_field('groove_save_settings', 'groove_nonce'); ?>
@@ -363,7 +369,8 @@ class Settings extends Page
         </label>
         <select id="groove-default-theme-id" name="default_theme_id" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
           <?php foreach ($themes as $theme_id => $theme): ?>
-          <option value="<?php echo esc_attr($theme_id); ?>" <?php selected($default_theme_id, $theme_id); ?>>
+          <option value="<?php echo esc_attr($theme_id); ?>" <?php selected($default_theme_id, $theme_id); ?>
+            data-default-title="<?php echo esc_attr(Themes_Manager::get_default_folio_title($theme_id)); ?>">
             <?php echo esc_html($theme['name']); ?>
           </option>
           <?php endforeach; ?>
@@ -391,8 +398,28 @@ class Settings extends Page
         name="default_folio_title"
         value="<?php echo esc_attr($default_title); ?>"
         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        placeholder="<?php esc_attr_e('A new folio', 'groove'); ?>" />
+        placeholder="<?php echo esc_attr($default_theme_title); ?>" />
+      <p class="mt-2 mb-0 text-sm text-gray-600">
+        <?php esc_html_e('Leave blank to name each folio after the theme it is created with. Anything you type here is used for every folio instead.', 'groove'); ?>
+      </p>
     </div>
+
+    <script>
+      // Keep the placeholder honest: it previews the title a folio would get
+      // from the currently selected default theme, so an empty field is not a
+      // mystery. Purely cosmetic — the value is resolved server side on create.
+      (function () {
+        var themes = document.getElementById('groove-default-theme-id');
+        var title = document.getElementById('groove-default-folio-title');
+        if (!themes || !title) {
+          return;
+        }
+        themes.addEventListener('change', function () {
+          var option = themes.options[themes.selectedIndex];
+          title.placeholder = (option && option.getAttribute('data-default-title')) || title.placeholder;
+        });
+      })();
+    </script>
 
     <div>
       <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'groove'); ?></button>

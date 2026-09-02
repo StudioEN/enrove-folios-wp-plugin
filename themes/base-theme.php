@@ -324,6 +324,20 @@ abstract class Base_Theme extends Assets
   }
 
   /**
+   * Title a new folio takes when the site has no explicit default of its own.
+   *
+   * Lets each theme name its output in its own terms — an issue, a proposal, an
+   * eBook — instead of every folio starting life as "A new folio". Themes that
+   * omit the key fall back to that generic title in Themes_Manager.
+   *
+   * @return string  Empty when the theme states no preference.
+   */
+  public static function get_default_folio_title(): string
+  {
+    return static::get_setup_data()['default_title'] ?? '';
+  }
+
+  /**
    * Theme author.
    *
    * @return string
@@ -397,6 +411,7 @@ abstract class Base_Theme extends Assets
       'cover_url' => $theme_assets_url . 'images/' . static::get_cover_filename(),
       'logo_url' => $theme_assets_url . 'images/' . static::get_logo_filename(),
       'description' => static::get_description(),
+      'default_title' => static::get_default_folio_title(),
       'author' => static::get_author(),
       'last_updated' => static::get_last_updated(),
     ];

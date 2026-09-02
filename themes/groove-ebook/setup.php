@@ -1,6 +1,7 @@
 <?php
 return [
     'name' => 'Groove eBook',
+    'default_title' => 'A new eBook',
     'thumbnail' => 'theme-thumb.png',
     'cover' => 'theme-cover.jpg',
     'logo' => 'theme-g-logo.png',
