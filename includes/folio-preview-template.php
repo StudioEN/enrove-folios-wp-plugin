@@ -99,20 +99,85 @@ $theme = Themes_Manager::create_theme_for_current_request();
   endif; // $password_post
 ?>
 <?php
-status_header(404);
+// Work out *why* there is no theme. "Theme not found" was reported for every
+// failure here, including the common one: an unpublished folio opened without a
+// session that may see it. The theme is fine in that case, so the message sent
+// people looking for a broken theme instead of an unpublished folio.
+$_gv_post = null;
+$_gv_id = \Groove\Utils\Utils::get_groove_post_id();
+if ($_gv_id) {
+  $_gv_post = get_post($_gv_id);
+}
+
+if (!$_gv_post || !\Groove\Utils\Utils::is_groove_post($_gv_post)) {
+  // Nothing here at all: a bad link, or the folio was deleted.
+  $_gv_status = 404;
+  $_gv_title = __('Folio not found', 'groove');
+  $_gv_message = __('This folio no longer exists, or the link is wrong.', 'groove');
+}
+elseif (!\Groove\Utils\Utils::can_current_request_view_post($_gv_post)) {
+  // It exists but this visitor may not see it — in practice, a draft folio.
+  // 404 rather than 403 so an unpublished folio's existence stays private.
+  $_gv_status = 404;
+  $_gv_title = __('Not published yet', 'groove');
+  $_gv_message = is_user_logged_in()
+    ? __('This folio is not published yet, and your account cannot preview it.', 'groove')
+    : __('This folio is not published yet. Sign in to preview it, or publish it to share the link.', 'groove');
+}
+else {
+  // Genuinely no usable theme: the folio has no theme_id, or names one that is
+  // not registered on this site.
+  $_gv_status = 404;
+  $_gv_title = __('Theme not found', 'groove');
+  $_gv_message = __('This folio points at a theme that is not installed.', 'groove');
+}
+
+status_header($_gv_status);
 nocache_headers();
 ?>
 <!DOCTYPE html>
-<html>
+<html <?php language_attributes(); ?>>
 
 <head>
-  <title>Theme not found</title>
+  <meta charset="<?php bloginfo('charset'); ?>" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><?php echo esc_html($_gv_title); ?></title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f1;
+      color: #1d2327;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .groove-notice {
+      max-width: 26rem;
+      padding: 2rem;
+      text-align: center;
+    }
+    .groove-notice h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+    .groove-notice p {
+      margin: 0;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: #50575e;
+    }
+  </style>
 </head>
 
 <body>
-  <h1>
-    <?php echo esc_html__('Theme not found.', 'groove'); ?>
-  </h1>
+  <div class="groove-notice">
+    <h1><?php echo esc_html($_gv_title); ?></h1>
+    <p><?php echo esc_html($_gv_message); ?></p>
+  </div>
 </body>
 
 </html>
