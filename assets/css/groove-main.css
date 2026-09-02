@@ -32,12 +32,11 @@
   --g-gray-90: #2c3338;
   --g-gray-100: #1d2327;
 
-  /* Blue — core admin link / primary-button blue */
+  /* Blue — pale tints for informational surfaces, and text to sit on them.
+     Anything interactive uses --g-accent instead, so it follows the admin
+     colour scheme. Do not reintroduce a mid-blue here. */
   --g-blue-0: #f0f6fc;
   --g-blue-5: #c5d9ed;
-  --g-blue-50: #2271b1;
-  --g-blue-50-rgb: 34, 113, 177;
-  --g-blue-60: #135e96;
   --g-blue-70: #0a4b78;
 
   /* Red */
@@ -1697,23 +1696,23 @@ body.groove .g-all-folios__collection-pill[data-tooltip]:focus::after {
 
 body.groove .g-all-folios__collection-pill:hover,
 body.groove .g-all-folios__collection-pill:focus {
-  border-color: var(--g-blue-50);
-  color: var(--g-blue-60);
-  box-shadow: 0 0 0 1px rgba(var(--g-blue-50-rgb), 0.15);
+  border-color: var(--g-accent);
+  color: var(--g-accent-hover);
+  box-shadow: 0 0 0 1px rgba(var(--g-accent-rgb), 0.15);
   outline: none;
 }
 
 body.groove .g-all-folios__collection-pill.is-active {
-  border-color: var(--g-blue-50);
-  background: var(--g-blue-50);
+  border-color: var(--g-accent);
+  background: var(--g-accent);
   color: #fff;
   box-shadow: none;
 }
 
 body.groove .g-all-folios__collection-pill.is-active:hover,
 body.groove .g-all-folios__collection-pill.is-active:focus {
-  border-color: var(--g-blue-60);
-  background: var(--g-blue-60);
+  border-color: var(--g-accent-hover);
+  background: var(--g-accent-hover);
   color: #fff;
 }
 
