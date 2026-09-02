@@ -44,6 +44,31 @@ class All_Folios extends Page
 		}, Overview::MENU_PRIORITY + 20);
 
 		add_action('admin_init', array($this, 'handle_duplicate_action'));
+		add_action('admin_init', array($this, 'handle_bulk_action'));
+	}
+
+	/**
+	 * Run bulk actions before any output is sent.
+	 *
+	 * process_bulk_action() ends in wp_safe_redirect(), so it has to run on
+	 * admin_init. Calling it from display_content() is too late: WordPress has
+	 * already emitted the admin header by then, so the redirect cannot set its
+	 * headers and PHP warns about output having started. Mirrors the timing of
+	 * handle_duplicate_action() below.
+	 */
+	public function handle_bulk_action()
+	{
+		if (!isset($_GET['page']) || $_GET['page'] !== static::PAGE_ID) {
+			return;
+		}
+
+		$this->process_bulk_action(
+			$this->get_current_status(),
+			$this->get_search_term(),
+			$this->get_current_orderby(),
+			$this->get_current_order(),
+			$this->get_current_paged()
+		);
 	}
 
 	public function handle_duplicate_action()
@@ -949,7 +974,6 @@ class All_Folios extends Page
 		$paged = $this->get_current_paged();
 		$orderby = $this->get_current_orderby();
 		$order = $this->get_current_order();
-		$this->process_bulk_action($status, $search, $orderby, $order, $paged);
 		$status_counts = $this->get_status_counts();
 		$bulk_actions = $this->get_available_bulk_actions($status);
 		$results = $this->get_folios_results($status, $search, $paged, $orderby, $order);
