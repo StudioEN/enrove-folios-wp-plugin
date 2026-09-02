@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Pexels integration for theme covers and sample-content placeholder imagery. Images are curated once at build time and committed as local assets — the plugin makes no Pexels API calls when rendering folios or loading admin screens.
+- `bin/curate-pexels.php` CLI script to download the curated image set. Bootstraps WordPress on its own (`--wp=` to point at a specific install) and supports `--slots=`, `--theme=`, `--covers-only`, `--placeholders-only`, `--force`, `--dry-run`, and `--help`. Re-runnable and idempotent; exits non-zero if any slot fails.
+- Settings → Imagery tab: store the Pexels API key (option `groove_pexels_api_key`, autoload off), remove it, and run an explicit on-demand connection test. The stored key is never rendered back into the page — only its source and a masked value are shown.
+- Key resolution order: `GROOVE_PEXELS_API_KEY` in `wp-config.php`, then the `PEXELS_API_KEY` environment variable, then a gitignored `.pexels-key` file, then the WordPress option. When the constant is defined the settings field is disabled and a notice explains why.
+- Image credits panel in Settings → Imagery listing each curated photo's photographer and Pexels links, plus the "Photos provided by Pexels" link required by the Pexels licence.
+
 ## [0.2.0] - 2026-03-28
 
 ### Added

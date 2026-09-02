@@ -108,6 +108,196 @@ class Themes_Manager extends Assets
         return $themes;
     }
 
+    // ── Sample content ─────────────────────────────────────────────────────
+
+    /**
+     * Normalised sample-content definition for a registered theme.
+     *
+     * A theme opts in by shipping themes/<slug>/sample-content.php (built-in) or
+     * <groove-themes>/<slug>/sample-content.php (installed package). The file
+     * returns an array; anything missing or malformed is treated as "no sample
+     * content" rather than an error, so a half-finished theme cannot break the
+     * Add New screen.
+     *
+     * Returned shape:
+     *   [
+     *     'label'       => string,  Checkbox label on the Add New screen.
+     *     'description' => string,  Helper copy beneath the checkbox.
+     *     'subtitle'    => string,  Written to the folio's `subtitle` meta.
+     *     'folio_meta'  => array,   Extra folio meta, key => scalar.
+     *     'pages'       => array,   [ ['title','content','feature_image'], … ]
+     *   ]
+     *
+     * @param string $theme_id
+     * @return array|null  Null when the theme ships no sample content.
+     */
+    public static function get_sample_content(string $theme_id): ?array
+    {
+        static $cache = [];
+
+        if ($theme_id === '' || !isset(self::$registry[$theme_id]['cover_class'])) {
+            return null;
+        }
+
+        if (array_key_exists($theme_id, $cache)) {
+            return $cache[$theme_id];
+        }
+
+        $cache[$theme_id] = null;
+
+        $cover_class = self::$registry[$theme_id]['cover_class'];
+        if (!is_subclass_of($cover_class, Base_Theme::class)) {
+            return null;
+        }
+
+        $definition = $cover_class::get_sample_content_data();
+        if (!is_array($definition) || empty($definition['pages']) || !is_array($definition['pages'])) {
+            return null;
+        }
+
+        $pages = [];
+        foreach ($definition['pages'] as $page) {
+            if (!is_array($page)) {
+                continue;
+            }
+            $title = isset($page['title']) ? trim((string) $page['title']) : '';
+            if ($title === '') {
+                continue;
+            }
+            $pages[] = [
+                'title' => $title,
+                'content' => isset($page['content']) ? (string) $page['content'] : '',
+                // Optional pool slug used for the page's featured image.
+                'feature_image' => isset($page['feature_image']) ? sanitize_key((string) $page['feature_image']) : '',
+            ];
+        }
+
+        if (empty($pages)) {
+            return null;
+        }
+
+        $folio_meta = [];
+        if (!empty($definition['folio_meta']) && is_array($definition['folio_meta'])) {
+            foreach ($definition['folio_meta'] as $meta_key => $meta_value) {
+                if (!is_string($meta_key) || $meta_key === '' || !is_scalar($meta_value)) {
+                    continue;
+                }
+                $folio_meta[$meta_key] = $meta_value;
+            }
+        }
+
+        $label = isset($definition['label']) ? trim((string) $definition['label']) : '';
+        if ($label === '') {
+            $label = __('Create with sample content', 'groove');
+        }
+
+        $cache[$theme_id] = [
+            'label' => $label,
+            'description' => isset($definition['description']) ? trim((string) $definition['description']) : '',
+            'subtitle' => isset($definition['subtitle']) ? trim((string) $definition['subtitle']) : '',
+            'folio_meta' => $folio_meta,
+            'pages' => $pages,
+        ];
+
+        return $cache[$theme_id];
+    }
+
+    /**
+     * Whether a theme offers seedable sample content.
+     *
+     * @param string $theme_id
+     * @return bool
+     */
+    public static function has_sample_content(string $theme_id): bool
+    {
+        return static::get_sample_content($theme_id) !== null;
+    }
+
+    /**
+     * Absolute path of a curated Pexels placeholder, by manifest slug.
+     *
+     * @param string $slug
+     * @return string  Empty when the slug is not a usable filename.
+     */
+    public static function sample_image_path(string $slug): string
+    {
+        $slug = sanitize_key($slug);
+        return $slug === '' ? '' : GROOVE_PATH . 'assets/images/pexels/' . $slug . '.jpg';
+    }
+
+    /**
+     * Public URL of a curated Pexels placeholder, by manifest slug.
+     *
+     * The file is downloaded by the curation script and may not exist yet. The
+     * URL is emitted regardless: sample content is stored once, at seed time, so
+     * a URL that resolves later means running the curator fills in imagery for
+     * folios that were already created. A missing file is a broken <img>, never
+     * a fatal.
+     *
+     * @param string $slug
+     * @return string
+     */
+    public static function sample_image_url(string $slug): string
+    {
+        $slug = sanitize_key($slug);
+        return $slug === '' ? '' : esc_url_raw(GROOVE_URL . 'assets/images/pexels/' . $slug . '.jpg');
+    }
+
+    /**
+     * Photographer credit for a placeholder slug, ready for a block caption.
+     *
+     * Degrades to an empty string whenever the Pexels manifest is absent (the
+     * class is only present once the integration ships, and credits.json only
+     * once the curator has run). Callers MUST omit the caption element entirely
+     * on an empty return rather than emit "Photo by  on Pexels".
+     *
+     * @param string $slug
+     * @return string  Caption HTML, or ''.
+     */
+    public static function sample_image_credit(string $slug): string
+    {
+        $slug = sanitize_key($slug);
+        if ($slug === '' || !class_exists('\Groove\Pexels\Credits')) {
+            return '';
+        }
+
+        $credit = trim((string) \Groove\Pexels\Credits::render($slug, 'caption'));
+
+        // The credit is stored in post_content, so run it through the same
+        // filter WordPress applies to post bodies.
+        return $credit === '' ? '' : wp_kses_post($credit);
+    }
+
+    /**
+     * A core/image <figcaption> carrying the photographer credit, or ''.
+     *
+     * Credits::render($slug, 'caption') already returns a <figcaption>, so its
+     * opening tag is rewritten to the class core/image serialises rather than
+     * nested inside a second one — a stray class on that element makes the
+     * editor flag seeded blocks as containing unexpected content.
+     *
+     * @param string $slug
+     * @return string
+     */
+    public static function sample_image_caption(string $slug): string
+    {
+        $credit = static::sample_image_credit($slug);
+        if ($credit === '') {
+            return '';
+        }
+
+        if (stripos($credit, '<figcaption') === 0) {
+            return (string) preg_replace(
+                '#^<figcaption\b[^>]*>#i',
+                '<figcaption class="wp-block-image__caption">',
+                $credit,
+                1
+            );
+        }
+
+        return '<figcaption class="wp-block-image__caption">' . $credit . '</figcaption>';
+    }
+
     // ── Theme factories ────────────────────────────────────────────────────
 
     /**

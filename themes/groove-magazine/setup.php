@@ -2,7 +2,7 @@
 return [
     'name' => 'Groove Magazine',
     'thumbnail' => 'theme-thumb.png',
-    'cover' => 'theme-cover.png',
+    'cover' => 'theme-cover.jpg',
     'logo' => 'theme-g-logo.png',
     'description' => 'A bold editorial theme with adaptive colorways driven by each story\'s feature image. Designed for weekly digital publications.',
     'author' => 'StudioEN',

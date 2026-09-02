@@ -2,7 +2,7 @@
 return [
   'name' => 'Groove Proposal',
   'thumbnail' => 'theme-thumb.png',
-  'cover' => 'theme-cover.png',
+  'cover' => 'theme-cover.jpg',
   'logo' => 'theme-g-logo.png',
   'description' => 'A calm, structured proposal theme for consultancies and digital agencies.',
   'author' => 'StudioEN',

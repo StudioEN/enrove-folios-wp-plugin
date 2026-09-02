@@ -255,6 +255,7 @@ abstract class Base_Theme extends Assets
   protected static $setup_data = [];
   protected static $theme_folder_paths = [];
   protected static $theme_folder_urls = [];
+  protected static $sample_content_data = [];
 
   public static function get_setup_data(): array
   {
@@ -340,6 +341,31 @@ abstract class Base_Theme extends Assets
   public static function get_last_updated(): string
   {
     return static::get_setup_data()['last_updated'] ?? '';
+  }
+
+  /**
+   * Raw sample-content definition for this theme, if it ships one.
+   *
+   * A theme opts in by placing sample-content.php next to cover.php; the file
+   * returns an array of label/description/subtitle/folio_meta/pages. Themes
+   * without the file simply return null and the "Add New" seed toggle is not
+   * offered for them.
+   *
+   * Consumers should prefer Themes_Manager::get_sample_content(), which
+   * normalises the shape. This accessor deliberately returns the file verbatim.
+   *
+   * @return array|null
+   */
+  public static function get_sample_content_data(): ?array
+  {
+    $class = static::class;
+    if (!array_key_exists($class, self::$sample_content_data)) {
+      $file = static::get_theme_folder_path() . 'sample-content.php';
+      $data = is_readable($file) ? include $file : null;
+      self::$sample_content_data[$class] = is_array($data) ? $data : null;
+    }
+
+    return self::$sample_content_data[$class];
   }
 
   /**

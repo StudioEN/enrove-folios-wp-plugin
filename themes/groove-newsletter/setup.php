@@ -2,7 +2,7 @@
 return [
     'name' => 'Groove Newsletter',
     'thumbnail' => 'theme-thumb.png',
-    'cover' => 'theme-cover.png',
+    'cover' => 'theme-cover.jpg',
     'logo' => 'theme-g-logo.png',
     'description' => 'A modern editorial newsletter with accessible preset color systems and responsive reading layouts.',
     'author' => 'StudioEN',

@@ -58,9 +58,10 @@ class Add_New extends Page
       if (empty($theme_id) || !isset($themes[$theme_id])) {
         wp_die(esc_html__('Invalid theme selection.', 'groove'));
       }
-      $seed_proposal_sample = $theme_id === 'groove-proposal'
-        && isset($_POST['seed_proposal_sample'])
-        && (string) wp_unslash($_POST['seed_proposal_sample']) === '1';
+      // Any theme shipping a sample-content.php can be seeded. The definition
+      // is null for themes that ship none, which also disables the request.
+      $sample_content = \Groove\Themes\Themes_Manager::get_sample_content($theme_id);
+      $seed_sample_content = $sample_content !== null && $this->is_sample_seed_requested();
 
       $default_status = (string) get_option('groove_default_folio_status', 'draft');
       if (!in_array($default_status, ['draft', 'publish'], true)) {
@@ -92,25 +93,20 @@ class Add_New extends Page
         $fields['meta_input']['proposal_color_scheme'] = 'default';
       }
 
-      if ($seed_proposal_sample) {
-        $fields['meta_input']['subtitle'] = __('Strategic proposal overview', 'groove');
-        $fields['meta_input']['proposal_version'] = 'v0.1';
-        $fields['meta_input']['proposal_status'] = __('Draft', 'groove');
-        $fields['meta_input']['proposal_prepared_for'] = __('Client Name', 'groove');
-        $fields['meta_input']['proposal_client_name'] = __('Client Name', 'groove');
-        $fields['meta_input']['proposal_prepared_by'] = __('Your Agency Name', 'groove');
-        $fields['meta_input']['proposal_contact_name'] = __('Engagement Lead', 'groove');
-        $fields['meta_input']['proposal_contact_role'] = __('Principal Consultant', 'groove');
-        $fields['meta_input']['proposal_contact_email'] = 'hello@example.com';
-        $fields['meta_input']['proposal_contact_phone'] = '+1 (555) 010-2020';
-        $fields['meta_input']['proposal_date'] = wp_date('Y-m-d');
+      if ($seed_sample_content) {
+        if ($sample_content['subtitle'] !== '') {
+          $fields['meta_input']['subtitle'] = $sample_content['subtitle'];
+        }
+        foreach ($sample_content['folio_meta'] as $meta_key => $meta_value) {
+          $fields['meta_input'][$meta_key] = $meta_value;
+        }
       }
 
       $folio_id = wp_insert_post($fields);
 
       if (!is_wp_error($folio_id)) {
-        if ($seed_proposal_sample) {
-          $this->create_proposal_sample_pages((int) $folio_id, $default_status);
+        if ($seed_sample_content) {
+          $this->create_sample_pages((int) $folio_id, $default_status, $sample_content['pages']);
         }
 
         \Groove\Analytics::track('folio_created', [
@@ -162,7 +158,17 @@ class Add_New extends Page
     }
 
     $theme_count = count($themes);
-    $show_sample_toggle = $first_theme_id === 'groove-proposal';
+
+    // One toggle per theme that ships sample-content.php. Only the toggle for
+    // the selected theme is visible; groove-main.js swaps them on selection via
+    // data-add-new-theme-target and re-enables the fields it un-hides.
+    $sample_definitions = array();
+    foreach (array_keys($themes) as $theme_id) {
+      $definition = \Groove\Themes\Themes_Manager::get_sample_content((string) $theme_id);
+      if ($definition !== null) {
+        $sample_definitions[(string) $theme_id] = $definition;
+      }
+    }
 ?>
 <p class="g-folio__themes-desc">
   <?php
@@ -213,18 +219,28 @@ class Add_New extends Page
 ?>
   </div>
   <input type="hidden" id="g-add-new-theme-id" name="themeId" value="<?php echo esc_attr($first_theme_id)?>" />
-  <div class="<?php echo $show_sample_toggle ? '' : 'hidden'; ?> my-5" data-add-new-theme-target="groove-proposal"
-    data-disable-hidden-fields="1">
-    <label for="seed_proposal_sample" class="inline-flex items-center text-sm text-gray-800">
-      <input type="hidden" name="seed_proposal_sample" value="0" />
-      <input type="checkbox" id="seed_proposal_sample" name="seed_proposal_sample" value="1"
-        class="mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-      <?php echo esc_html__('Create with sample proposal content', 'groove'); ?>
+  <?php foreach ($sample_definitions as $sample_theme_id => $sample) :
+    $is_selected_theme = ($sample_theme_id === $first_theme_id);
+    // Fields in a hidden section start disabled so a no-JS submit cannot seed
+    // the wrong theme's content; groove-main.js re-enables the visible one.
+    $field_disabled = $is_selected_theme ? '' : ' disabled="disabled"';
+    $field_id = 'seed_sample_content_' . sanitize_key($sample_theme_id);
+    ?>
+  <div class="<?php echo $is_selected_theme ? '' : 'hidden'; ?> my-5"
+    data-add-new-theme-target="<?php echo esc_attr($sample_theme_id); ?>" data-disable-hidden-fields="1">
+    <label for="<?php echo esc_attr($field_id); ?>" class="inline-flex items-center text-sm text-gray-800">
+      <input type="hidden" name="seed_sample_content" value="0"<?php echo $field_disabled; ?> />
+      <input type="checkbox" id="<?php echo esc_attr($field_id); ?>" name="seed_sample_content" value="1"
+        class="mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"<?php echo $field_disabled; ?> />
+      <?php echo esc_html($sample['label']); ?>
     </label>
+    <?php if ($sample['description'] !== '') : ?>
     <p class="m-0 mt-2 text-xs text-gray-500">
-      <?php echo esc_html__('Seeds cover details and five sample pages that showcase every proposal content block.', 'groove'); ?>
+      <?php echo esc_html($sample['description']); ?>
     </p>
+    <?php endif; ?>
   </div>
+  <?php endforeach; ?>
   <div class="g-folio__theme-button">
     <button type="submit" class="button button-primary">
       <?php echo esc_html__('Continue', 'groove'); ?>
@@ -234,13 +250,42 @@ class Add_New extends Page
 <?php
   }
 
-  private function create_proposal_sample_pages(int $folio_id, string $status): void
+  /**
+   * Whether the submitted form asked for sample content.
+   *
+   * `seed_sample_content` is the current field; `seed_proposal_sample` is the
+   * field this flow used while only groove-proposal could be seeded, and is
+   * still accepted so a form submitted from a cached page keeps working.
+   *
+   * @return bool
+   */
+  private function is_sample_seed_requested(): bool
+  {
+    foreach (array('seed_sample_content', 'seed_proposal_sample') as $field) {
+      if (!isset($_POST[$field])) {
+        continue;
+      }
+      // The paired hidden input means '0' arrives when the box is unticked.
+      if ((string) wp_unslash($_POST[$field]) === '1') {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Create the folio pages defined by a theme's sample-content.php.
+   *
+   * @param string $status  Post status inherited from the new folio.
+   * @param array  $pages   Normalised pages from Themes_Manager::get_sample_content().
+   */
+  private function create_sample_pages(int $folio_id, string $status, array $pages): void
   {
     $status = in_array($status, array('draft', 'publish', 'private', 'pending'), true) ? $status : 'draft';
-    $pages = $this->get_proposal_sample_pages();
 
     foreach ($pages as $index => $page) {
-      wp_insert_post(array(
+      $page_id = wp_insert_post(array(
         'post_type' => 'groove_folio_page',
         'post_status' => $status,
         'post_title' => $page['title'],
@@ -250,137 +295,106 @@ class Add_New extends Page
           'folio_id' => $folio_id,
         ),
       ));
+
+      if (is_wp_error($page_id) || !$page_id || empty($page['feature_image'])) {
+        continue;
+      }
+
+      // Themes that build a hero from the featured image (magazine, newsletter)
+      // ask for one by slug. Silently skipped when the placeholder pool has not
+      // been curated yet — the page still gets its body content.
+      $attachment_id = $this->get_sample_image_attachment_id((string) $page['feature_image']);
+      if ($attachment_id > 0) {
+        set_post_thumbnail((int) $page_id, $attachment_id);
+      }
     }
   }
 
-  private function get_proposal_sample_pages(): array
+  /**
+   * Attachment ID for a curated placeholder slug, importing it once if needed.
+   *
+   * The placeholder pool lives on disk rather than in the media library, so the
+   * first seed that wants one copies it into uploads and tags the attachment
+   * with `_groove_pexels_slug` so later seeds reuse it instead of duplicating.
+   *
+   * @param string $slug  Manifest slug, e.g. 'ph-cityscape'.
+   * @return int          0 when the file has not been curated or the import failed.
+   */
+  private function get_sample_image_attachment_id(string $slug): int
   {
-    $acme_logo_url      = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/acme.svg';
-    $nordlight_logo_url = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/nordlight.svg';
-    $vale_logo_url      = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/vale.svg';
-    $zhou_logo_url      = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/zhou-studio.svg';
+    static $resolved = array();
 
-    return array(
-      array(
-        'title' => __('Executive Summary', 'groove'),
-        'content' => (string) <<<HTML
-<!-- wp:heading {"level":2} -->
-<h2>Context</h2>
-<!-- /wp:heading -->
-<!-- wp:paragraph -->
-<p>Your team is preparing to scale delivery while improving positioning in a more competitive market. This proposal outlines a focused engagement to align strategy, service narrative, and execution priorities in one practical roadmap.</p>
-<!-- /wp:paragraph -->
-<!-- wp:paragraph -->
-<p>We've partnered with organizations facing a similar inflection point, from early-stage teams to established players resetting their story for a new market.</p>
-<!-- /wp:paragraph -->
-<!-- wp:groove-proposal/logo-strip {"logos":[{"url":"{$acme_logo_url}","name":"Acme Inc.","link":""},{"url":"{$nordlight_logo_url}","name":"Nordlight Group","link":""},{"url":"{$vale_logo_url}","name":"Vale & Co.","link":""},{"url":"{$zhou_logo_url}","name":"Zhou Studio","link":""}]} /-->
-<!-- wp:heading {"level":2} -->
-<h2>Engagement goals</h2>
-<!-- /wp:heading -->
-<!-- wp:paragraph -->
-<p>We will clarify your growth priorities, refine your offer architecture, and define operating rhythms that support consistent delivery. The objective is measurable progress in pipeline quality, decision speed, and account confidence.</p>
-<!-- /wp:paragraph -->
-<!-- wp:heading {"level":2} -->
-<h2>Expected outcomes</h2>
-<!-- /wp:heading -->
-<!-- wp:list -->
-<ul><li>Sharper positioning and value communication.</li><li>Prioritized delivery plan with ownership.</li><li>Clear implementation milestones for the next 90 days.</li></ul>
-<!-- /wp:list -->
-<!-- wp:groove-proposal/key-metrics /-->
-HTML,
-      ),
-      array(
-        'title' => __('Scope and Approach', 'groove'),
-        'content' => (string) <<<HTML
-<!-- wp:heading {"level":2} -->
-<h2>Workstreams</h2>
-<!-- /wp:heading -->
-<!-- wp:list -->
-<ul><li>Discovery interviews and signal analysis.</li><li>Offer and messaging calibration.</li><li>Delivery model refinement with role clarity.</li></ul>
-<!-- /wp:list -->
-<!-- wp:groove-proposal/process-steps /-->
-<!-- wp:heading {"level":2} -->
-<h2>Collaboration model</h2>
-<!-- /wp:heading -->
-<!-- wp:paragraph -->
-<p>We run weekly working sessions with concise decision memos and a shared action board. Stakeholders receive asynchronous updates between sessions to reduce meeting overhead while preserving momentum.</p>
-<!-- /wp:paragraph -->
-<!-- wp:groove-proposal/team-grid /-->
-<!-- wp:heading {"level":2} -->
-<h2>Deliverables</h2>
-<!-- /wp:heading -->
-<!-- wp:groove-proposal/deliverables /-->
-<!-- wp:groove-proposal/callout-box {"title":"A note on scope","body":"This proposal assumes access to existing brand assets and a single point of contact on your side. If either isn't available yet, we'll adjust the Phase 1 timeline together.","style":"important"} /-->
-HTML,
-      ),
-      array(
-        'title' => __('Case Studies', 'groove'),
-        'content' => (string) <<<HTML
-<!-- wp:paragraph -->
-<p>The clearest way to evaluate a partner is to see how they've handled a comparable challenge. Here's a recent engagement with a client in a similar position.</p>
-<!-- /wp:paragraph -->
-<!-- wp:groove-proposal/case-study {"clientName":"Nordlight Group","clientLogo":"{$nordlight_logo_url}","projectTitle":"Repositioning Nordlight for a category shift","tagsText":"Brand, Positioning, Web","stats":[{"value":"3.2x","label":"Qualified pipeline growth"},{"value":"6 weeks","label":"Kickoff to launch"}],"layout":"spotlight"} -->
-<!-- wp:heading {"level":3} -->
-<h3>The Challenge</h3>
-<!-- /wp:heading -->
-<!-- wp:paragraph -->
-<p>Nordlight had outgrown the positioning that took them to their first major revenue milestone. Every proposal was competing on price because prospects couldn't tell them apart from larger, better-funded competitors.</p>
-<!-- /wp:paragraph -->
-<!-- wp:heading {"level":3} -->
-<h3>Our Approach</h3>
-<!-- /wp:heading -->
-<!-- wp:paragraph -->
-<p>We ran structured interviews with their best and lost accounts, mapped where Nordlight actually won, and rebuilt the narrative and site around that evidence rather than aspiration.</p>
-<!-- /wp:paragraph -->
-<!-- wp:heading {"level":3} -->
-<h3>The Results</h3>
-<!-- /wp:heading -->
-<!-- wp:paragraph -->
-<p>Within two quarters of launch, the new positioning was showing up directly in sales conversations and win rates.</p>
-<!-- /wp:paragraph -->
-<!-- wp:groove-proposal/key-metrics {"items":[{"value":"41%","label":"Shorter sales cycle"},{"value":"9","label":"New logos in Q1"}]} /-->
-<!-- /wp:groove-proposal/case-study -->
-<!-- wp:groove-proposal/testimonial-grid /-->
-<!-- wp:groove-proposal/pull-quote /-->
-HTML,
-      ),
-      array(
-        'title' => __('Timeline and Investment', 'groove'),
-        'content' => (string) <<<HTML
-<!-- wp:heading {"level":2} -->
-<h2>Timeline</h2>
-<!-- /wp:heading -->
-<!-- wp:paragraph -->
-<p>The engagement is planned over twelve weeks, structured in four phases with a decision checkpoint at the end of each one.</p>
-<!-- /wp:paragraph -->
-<!-- wp:groove-proposal/timeline /-->
-<!-- wp:heading {"level":2} -->
-<h2>Investment</h2>
-<!-- /wp:heading -->
-<!-- wp:paragraph -->
-<p>Project investment is structured as a fixed engagement fee with a staged payment schedule tied to phase completion. Optional follow-on support can be added as a monthly advisory retainer.</p>
-<!-- /wp:paragraph -->
-<!-- wp:groove-proposal/pricing-table /-->
-<!-- wp:heading {"level":2} -->
-<h2>Package options</h2>
-<!-- /wp:heading -->
-<!-- wp:paragraph -->
-<p>If a broader or lighter-touch engagement suits your team better, here's how the tiers compare.</p>
-<!-- /wp:paragraph -->
-<!-- wp:groove-proposal/comparison-columns /-->
-HTML,
-      ),
-      array(
-        'title' => __('Next Steps', 'groove'),
-        'content' => (string) <<<HTML
-<!-- wp:paragraph -->
-<p>Here's what happens once you're ready to move forward, along with answers to the questions we hear most often at this stage.</p>
-<!-- /wp:paragraph -->
-<!-- wp:groove-proposal/faq /-->
-<!-- wp:groove-proposal/cta /-->
-HTML,
-      ),
+    $slug = sanitize_key($slug);
+    if ($slug === '') {
+      return 0;
+    }
+    if (isset($resolved[$slug])) {
+      return $resolved[$slug];
+    }
+
+    $resolved[$slug] = 0;
+
+    $source = \Groove\Themes\Themes_Manager::sample_image_path($slug);
+    if ($source === '' || !is_readable($source)) {
+      return 0; // Curation has not run — the page simply has no featured image.
+    }
+
+    $existing = get_posts(array(
+      'post_type' => 'attachment',
+      'post_status' => 'inherit',
+      'posts_per_page' => 1,
+      'fields' => 'ids',
+      'no_found_rows' => true,
+      'meta_key' => '_groove_pexels_slug',
+      'meta_value' => $slug,
+    ));
+    if (!empty($existing)) {
+      $resolved[$slug] = (int) $existing[0];
+      return $resolved[$slug];
+    }
+
+    $contents = file_get_contents($source);
+    if ($contents === false) {
+      return 0;
+    }
+
+    $upload = wp_upload_bits('groove-' . $slug . '.jpg', null, $contents);
+    if (!is_array($upload) || !empty($upload['error']) || empty($upload['file'])) {
+      return 0;
+    }
+
+    $attachment_id = wp_insert_attachment(array(
+      'post_mime_type' => 'image/jpeg',
+      'post_title' => $slug,
+      'post_content' => '',
+      'post_status' => 'inherit',
+    ), $upload['file']);
+
+    if (is_wp_error($attachment_id) || !$attachment_id) {
+      return 0;
+    }
+
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+    wp_update_attachment_metadata(
+      (int) $attachment_id,
+      wp_generate_attachment_metadata((int) $attachment_id, $upload['file'])
     );
+
+    update_post_meta((int) $attachment_id, '_groove_pexels_slug', $slug);
+
+    // Alt text comes from the Pexels manifest when it exists; never fatal when
+    // the integration or credits.json is absent.
+    if (class_exists('\Groove\Pexels\Credits')) {
+      $credit = \Groove\Pexels\Credits::get($slug);
+      $alt = is_array($credit) && !empty($credit['alt']) ? sanitize_text_field((string) $credit['alt']) : '';
+      if ($alt !== '') {
+        update_post_meta((int) $attachment_id, '_wp_attachment_image_alt', $alt);
+      }
+    }
+
+    $resolved[$slug] = (int) $attachment_id;
+
+    return $resolved[$slug];
   }
 
   public function display_content()

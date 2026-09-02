@@ -33,6 +33,9 @@ class Settings extends Page
       'routing' => [
         'label' => esc_html__('Routing', 'groove'),
       ],
+      'imagery' => [
+        'label' => esc_html__('Imagery', 'groove'),
+      ],
       'privacy' => [
         'label' => esc_html__('Privacy', 'groove'),
       ]
@@ -44,6 +47,9 @@ class Settings extends Page
     $this->add_post_action('save_groove_settings', 'handle_save');
     $this->add_post_action('save_groove_collection_tag', 'handle_collection_tag_save');
     $this->add_post_action('delete_groove_collection_tag', 'handle_collection_tag_delete');
+    $this->add_post_action('save_groove_pexels_key', 'handle_pexels_key_save');
+    $this->add_post_action('delete_groove_pexels_key', 'handle_pexels_key_delete');
+    $this->add_post_action('test_groove_pexels_connection', 'handle_pexels_connection_test');
 
     add_action('groove/menu/register', function (Menu_Manager $menu) {
       $menu->register(static::PAGE_ID, new Settings_Menu_Item($this));
@@ -145,6 +151,61 @@ class Settings extends Page
   {
     wp_safe_redirect($this->get_settings_tab_url('collections', $args));
     exit;
+  }
+
+  private function redirect_to_imagery_tab($args = array())
+  {
+    wp_safe_redirect($this->get_settings_tab_url('imagery', $args));
+    exit;
+  }
+
+  /**
+   * The Pexels helpers live in pexels/ and are autoloaded on demand.
+   * Guard on them so the settings screen still renders if they are absent.
+   */
+  private function pexels_is_available()
+  {
+    return class_exists('\\Groove\\Pexels\\Key') && class_exists('\\Groove\\Pexels\\Client');
+  }
+
+  private function get_pexels_key_source_label($source)
+  {
+    switch ($source) {
+      case 'constant':
+        return __('GROOVE_PEXELS_API_KEY in wp-config.php', 'groove');
+      case 'env':
+        return __('PEXELS_API_KEY environment variable', 'groove');
+      case 'file':
+        return __('.pexels-key file in the plugin folder', 'groove');
+      case 'option':
+        return __('This settings field', 'groove');
+    }
+
+    return __('Not configured', 'groove');
+  }
+
+  /**
+   * Stash a one-shot notice for the current user (avoids putting API results in the URL).
+   */
+  private function set_pexels_notice($status, $text)
+  {
+    set_transient('groove_pexels_notice_' . get_current_user_id(), array(
+      'status' => $status,
+      'text' => $text,
+    ), MINUTE_IN_SECONDS);
+  }
+
+  private function take_pexels_notice()
+  {
+    $key = 'groove_pexels_notice_' . get_current_user_id();
+    $notice = get_transient($key);
+    if (!is_array($notice) || empty($notice['text'])) {
+      return null;
+    }
+
+    delete_transient($key);
+
+    return $notice;
   }
 
   /**
@@ -492,6 +553,306 @@ class Settings extends Page
 <?php
   }
 
+  /**
+   * Save the Pexels API key. An empty submission leaves the stored key alone.
+   */
+  public function handle_pexels_key_save()
+  {
+    check_admin_referer('groove_save_pexels_key', 'groove_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove'));
+    }
+
+    if ($this->pexels_is_available() && \Groove\Pexels\Key::is_locked_by_constant()) {
+      $this->set_pexels_notice('warning', __('GROOVE_PEXELS_API_KEY is defined in wp-config.php, so the stored key was not changed.', 'groove'));
+      $this->redirect_to_imagery_tab();
+    }
+
+    $submitted = isset($_POST['pexels_api_key']) ? sanitize_text_field(wp_unslash($_POST['pexels_api_key'])) : '';
+
+    if ($submitted === '') {
+      $this->set_pexels_notice('info', __('No key entered — the stored key was left unchanged.', 'groove'));
+      $this->redirect_to_imagery_tab();
+    }
+
+    // update_option() cannot change the autoload flag of an existing option,
+    // so delete first and re-add with autoload explicitly off.
+    delete_option('groove_pexels_api_key');
+    add_option('groove_pexels_api_key', $submitted, '', 'no');
+
+    $this->set_pexels_notice('success', __('Pexels API key saved.', 'groove'));
+    $this->redirect_to_imagery_tab();
+  }
+
+  /**
+   * Clear the stored Pexels API key.
+   */
+  public function handle_pexels_key_delete()
+  {
+    check_admin_referer('groove_delete_pexels_key', 'groove_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove'));
+    }
+
+    delete_option('groove_pexels_api_key');
+
+    $this->set_pexels_notice('success', __('Stored Pexels API key removed.', 'groove'));
+    $this->redirect_to_imagery_tab();
+  }
+
+  /**
+   * Probe the Pexels API. Only ever runs from an explicit button press —
+   * never on a page load.
+   */
+  public function handle_pexels_connection_test()
+  {
+    check_admin_referer('groove_test_pexels_connection', 'groove_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove'));
+    }
+
+    if (!$this->pexels_is_available()) {
+      $this->set_pexels_notice('error', __('The Pexels client is unavailable.', 'groove'));
+      $this->redirect_to_imagery_tab();
+    }
+
+    $client = new \Groove\Pexels\Client();
+
+    if (!$client->has_key()) {
+      $this->set_pexels_notice('error', __('No Pexels API key is configured.', 'groove'));
+      $this->redirect_to_imagery_tab();
+    }
+
+    $result = $client->verify();
+
+    if (is_wp_error($result)) {
+      $this->set_pexels_notice('error', sprintf(
+        /* translators: %s: error message returned by the Pexels API. */
+        __('Pexels rejected the request: %s', 'groove'),
+        $result->get_error_message()
+      ));
+      $this->redirect_to_imagery_tab();
+    }
+
+    $remaining = is_array($result) && isset($result['remaining']) ? (int) $result['remaining'] : 0;
+    $limit = is_array($result) && isset($result['limit']) ? (int) $result['limit'] : 0;
+
+    $this->set_pexels_notice('success', sprintf(
+      /* translators: 1: remaining requests, 2: hourly request limit. */
+      __('Connected to Pexels. %1$s of %2$s requests remaining this hour.', 'groove'),
+      number_format_i18n($remaining),
+      number_format_i18n($limit)
+    ));
+    $this->redirect_to_imagery_tab();
+  }
+
+  public function display_imagery_fields()
+  {
+    $available = $this->pexels_is_available();
+    $locked = $available ? \Groove\Pexels\Key::is_locked_by_constant() : false;
+    $source = $available ? \Groove\Pexels\Key::source() : '';
+    $masked = $available ? \Groove\Pexels\Key::masked() : '';
+    $has_key = $source !== '';
+    $has_option_key = get_option('groove_pexels_api_key', '') !== '';
+    $notice = $this->take_pexels_notice();
+
+    $credits = array();
+    $credits_exist = false;
+    if (class_exists('\Groove\Pexels\Credits')) {
+      $credits_exist = file_exists(\Groove\Pexels\Credits::path());
+      $credits = \Groove\Pexels\Credits::all();
+    }
+    ?>
+<div class="space-y-4">
+  <?php if ($notice): ?>
+  <div class="notice notice-<?php echo esc_attr($notice['status']); ?>">
+    <p><?php echo esc_html($notice['text']); ?></p>
+  </div>
+  <?php endif; ?>
+
+  <?php if (!$available): ?>
+  <div class="notice notice-warning">
+    <p><?php esc_html_e('The Pexels helper classes are not installed in this copy of the plugin.', 'groove'); ?></p>
+  </div>
+  <?php endif; ?>
+
+  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
+    <div>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Pexels API Key', 'groove'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600">
+        <?php esc_html_e('Used only when curating imagery from the command line. Folios never call the Pexels API when they are viewed or edited.', 'groove'); ?>
+      </p>
+    </div>
+
+    <?php if ($locked): ?>
+    <div class="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      <p class="m-0">
+        <?php
+        printf(
+          /* translators: %s: the wp-config.php constant name. */
+          esc_html__('%s is defined in wp-config.php and takes precedence. The field below is disabled.', 'groove'),
+          '<code>GROOVE_PEXELS_API_KEY</code>'
+        );
+        ?>
+      </p>
+    </div>
+    <?php endif; ?>
+
+    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4" autocomplete="off">
+      <?php wp_nonce_field('groove_save_pexels_key', 'groove_nonce'); ?>
+      <input type="hidden" name="action" value="save_groove_pexels_key" />
+
+      <div>
+        <label for="groove-pexels-api-key" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+          <?php esc_html_e('API Key', 'groove'); ?>
+        </label>
+        <input
+          id="groove-pexels-api-key"
+          type="password"
+          name="pexels_api_key"
+          value=""
+          autocomplete="new-password"
+          spellcheck="false"
+          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-400"
+          placeholder="<?php echo esc_attr($masked !== '' ? $masked : __('Paste your Pexels API key', 'groove')); ?>"
+          <?php disabled($locked, true); ?> />
+        <p class="mt-1 mb-0 text-xs text-gray-400">
+          <?php esc_html_e('The stored key is never displayed. Leave this empty to keep the current key.', 'groove'); ?>
+        </p>
+      </div>
+
+      <div>
+        <button type="submit" class="button button-primary" <?php disabled($locked, true); ?>><?php esc_html_e('Save Key', 'groove'); ?></button>
+      </div>
+    </form>
+
+    <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700 space-y-1">
+      <p class="m-0">
+        <strong><?php esc_html_e('Key source:', 'groove'); ?></strong>
+        <?php echo esc_html($this->get_pexels_key_source_label($source)); ?>
+        <?php if ($masked !== ''): ?>
+        <code><?php echo esc_html($masked); ?></code>
+        <?php endif; ?>
+      </p>
+      <p class="m-0 text-xs text-gray-500">
+        <?php esc_html_e('Checked in order: wp-config.php constant, PEXELS_API_KEY environment variable, .pexels-key file, then this setting.', 'groove'); ?>
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+        <?php wp_nonce_field('groove_test_pexels_connection', 'groove_nonce'); ?>
+        <input type="hidden" name="action" value="test_groove_pexels_connection" />
+        <button type="submit" class="button button-secondary" <?php disabled(!$available || !$has_key, true); ?>>
+          <?php esc_html_e('Test Connection', 'groove'); ?>
+        </button>
+      </form>
+
+      <?php if ($has_option_key): ?>
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" onsubmit="return window.confirm('<?php echo esc_js(__('Remove the stored Pexels API key?', 'groove')); ?>');">
+        <?php wp_nonce_field('groove_delete_pexels_key', 'groove_nonce'); ?>
+        <input type="hidden" name="action" value="delete_groove_pexels_key" />
+        <button type="submit" class="button-link delete"><?php esc_html_e('Remove Key', 'groove'); ?></button>
+      </form>
+      <?php endif; ?>
+    </div>
+
+    <p class="m-0 text-xs text-gray-500">
+      <?php esc_html_e('Testing the connection is the only action on this screen that contacts Pexels, and it only happens when you press the button.', 'groove'); ?>
+    </p>
+  </section>
+
+  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
+    <div>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Curating Imagery', 'groove'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600">
+        <?php esc_html_e('Theme covers and sample-content placeholders are downloaded once from the command line and committed with the plugin.', 'groove'); ?>
+      </p>
+    </div>
+    <pre class="m-0 overflow-x-auto rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-800">php bin/curate-pexels.php --help</pre>
+  </section>
+
+  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
+    <div>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Image Credits', 'groove'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600">
+        <?php esc_html_e('The Pexels licence requires a visible link to Pexels and credit to each photographer.', 'groove'); ?>
+      </p>
+    </div>
+
+    <p class="m-0 text-sm">
+      <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" class="font-semibold text-indigo-600 hover:text-indigo-500">
+        <?php esc_html_e('Photos provided by Pexels', 'groove'); ?>
+      </a>
+    </p>
+
+    <?php if (empty($credits)): ?>
+    <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700">
+      <p class="m-0"><?php esc_html_e('No imagery has been curated yet, so there is nothing to credit.', 'groove'); ?></p>
+      <p class="mt-2 mb-0">
+        <?php esc_html_e('Run the curation script to download imagery and build the credits file:', 'groove'); ?>
+        <code>php bin/curate-pexels.php</code>
+      </p>
+      <?php if ($credits_exist): ?>
+      <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('A credits file exists but contains no entries.', 'groove'); ?></p>
+      <?php endif; ?>
+    </div>
+    <?php else: ?>
+    <table class="widefat striped">
+      <thead>
+        <tr>
+          <th><?php esc_html_e('Slot', 'groove'); ?></th>
+          <th><?php esc_html_e('Photographer', 'groove'); ?></th>
+          <th><?php esc_html_e('Photo', 'groove'); ?></th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($credits as $slug => $credit): ?>
+          <?php
+          if (!is_array($credit)) {
+            continue;
+          }
+          $credit_slug = isset($credit['slug']) ? (string) $credit['slug'] : (string) $slug;
+          $photographer = isset($credit['photographer']) ? (string) $credit['photographer'] : '';
+          $photographer_url = isset($credit['photographer_url']) ? (string) $credit['photographer_url'] : '';
+          $photo_url = isset($credit['pexels_url']) ? (string) $credit['pexels_url'] : '';
+          $photo_id = isset($credit['pexels_id']) ? (string) $credit['pexels_id'] : '';
+          ?>
+          <tr>
+            <td><code><?php echo esc_html($credit_slug); ?></code></td>
+            <td>
+              <?php if ($photographer !== '' && $photographer_url !== ''): ?>
+                <a href="<?php echo esc_url($photographer_url); ?>" target="_blank" rel="noopener noreferrer">
+                  <?php echo esc_html($photographer); ?>
+                </a>
+              <?php elseif ($photographer !== ''): ?>
+                <?php echo esc_html($photographer); ?>
+              <?php else: ?>
+                <span class="text-gray-400">&mdash;</span>
+              <?php endif; ?>
+            </td>
+            <td>
+              <?php if ($photo_url !== ''): ?>
+                <a href="<?php echo esc_url($photo_url); ?>" target="_blank" rel="noopener noreferrer">
+                  <?php echo esc_html($photo_id !== '' ? '#' . $photo_id : __('View on Pexels', 'groove')); ?>
+                </a>
+              <?php else: ?>
+                <span class="text-gray-400">&mdash;</span>
+              <?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+    <?php endif; ?>
+  </section>
+</div>
+<?php
+  }
+
   public function display_privacy_fields()
   {
     ?>
@@ -562,6 +923,15 @@ class Settings extends Page
 <?php
   }
 
+  public function display_tab_imagery()
+  {
+    ?>
+<div>
+  <?php $this->display_imagery_fields(); ?>
+</div>
+<?php
+  }
+
   public function display_tab_privacy()
   {
     ?>
@@ -607,6 +977,8 @@ class Settings extends Page
     <?php $this->display_tab_collections(); ?>
   <?php elseif ('routing' === $tab_key): ?>
     <?php $this->display_tab_routing(); ?>
+  <?php elseif ('imagery' === $tab_key): ?>
+    <?php $this->display_tab_imagery(); ?>
   <?php elseif ('privacy' === $tab_key): ?>
     <?php $this->display_tab_privacy(); ?>
   <?php else: ?>
