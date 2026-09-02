@@ -133,3 +133,11 @@ build
 ############################
 
 .pexels-key
+
+############################
+# Claude Code
+############################
+
+# Local agent state: settings, skills and throwaway agent worktrees. The
+# worktrees are full copies of the repo, so keep them out of `git add -A`.
+.claude/
