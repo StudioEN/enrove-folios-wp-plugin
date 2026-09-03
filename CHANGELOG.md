@@ -8,6 +8,24 @@
 - Settings → Imagery tab: store the Pexels API key (option `groove_pexels_api_key`, autoload off), remove it, and run an explicit on-demand connection test. The stored key is never rendered back into the page — only its source and a masked value are shown.
 - Key resolution order: `GROOVE_PEXELS_API_KEY` in `wp-config.php`, then the `PEXELS_API_KEY` environment variable, then a gitignored `.pexels-key` file, then the WordPress option. When the constant is defined the settings field is disabled and a notice explains why.
 - Image credits panel in Settings → Imagery listing each curated photo's photographer and Pexels links, plus the "Photos provided by Pexels" link required by the Pexels licence.
+- Sample content for every theme. Each theme ships a `sample-content.php` the Add New screen can seed from, drawing on the shared pool of placeholder photography; previously only Groove Proposal could be seeded at all.
+- Themes declare their own `default_title`, so a new folio is named after the theme it was created with — "A new issue" for Magazine, "A new proposal" for Proposal. Themes that say nothing fall back to the generic title, so a third-party theme cannot break this.
+- Feedback submissions are stored locally in a private `groove_feedback` post type before delivery is attempted, so a message is never lost to a network failure or a silently discarded event. Undelivered submissions are retried hourly via WP-Cron, up to 5 attempts. The store is deliberately invisible in the admin — it is a safety net, not an inbox.
+
+### Changed
+- The Support page is now **Feedback** (`admin.php?page=groove-feedback`). Submissions are sent to StudioEN as a `feedback_submitted` PostHog event and forwarded to Slack by a PostHog destination, instead of being emailed to the site's own `admin_email` — where they never reached us.
+- The feedback form adds a Type field (broken / question / idea / other), prefills the sender's email from their WordPress account, and keeps an undelivered message in a transient so a failed send doesn't lose what was typed.
+- Feedback is sent regardless of the Settings → Privacy analytics opt-in — pressing Send is the consent — and the form and privacy tab both say so. Passive analytics stays anonymous and opt-in.
+- Analytics now POSTs to PostHog's current `/i/v0/e/` capture endpoint, and passive events set `$process_person_profile: false` so anonymous telemetry no longer creates a person profile per site.
+- Theme covers moved from PNG to the curated JPEGs, retiring 24MB of source art that included three byte-identical copies of the same 7.7MB placeholder.
+- Seeded folios are always created as drafts, whatever the site's default folio status. Sample copy and stand-in photography used to go live the moment a folio was created; the draft status flows through to the seeded pages, and the analytics event reports what was actually created rather than what was intended.
+- The default folio title setting can be left blank, which means "let the theme decide"; the Settings field previews what the currently selected theme would produce. An explicit setting still wins everywhere.
+- A folio that cannot be shown says which of the three things went wrong — the folio is missing, it is not viewable yet (a draft opened without a session allowed to see it), or its theme is genuinely unregistered — instead of always reporting "Theme not found." and sending people hunting for a broken theme. All three still return 404, so an unpublished folio does not confirm its own existence.
+- The collection filter pills follow the admin colour scheme accent like the rest of the plugin chrome, instead of a fixed legacy blue.
+
+### Fixed
+- Folio bulk actions run on `admin_init`, before WordPress emits the admin header. They were called from `display_content()`, by which point the header was already sent: PHP warned, the redirect silently did nothing, and the action stayed in the URL so a refresh re-submitted it.
+- Groove's accent tokens resolve on `<body>`, where WordPress publishes the admin colour scheme (`body.admin-color-*`), instead of `:root`, where several block-package stylesheets still leave a legacy `#007cba` behind. A `var()` is substituted where the property is declared, so the plugin's highlights — filter pills, theme cards — froze that stale blue and rendered a different colour from core's own primary buttons on the same screen.
 
 ## [0.2.0] - 2026-03-28
 

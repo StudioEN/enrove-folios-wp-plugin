@@ -52,6 +52,10 @@ if (!version_compare(PHP_VERSION, '7.0', '>=')) {
 
 	register_deactivation_hook(__FILE__, function () {
 		\Groove\Analytics::track('plugin_deactivated');
+
+		// Stop retrying undelivered feedback. The stored submissions stay put,
+		// and the schedule is recreated if the plugin is reactivated.
+		wp_clear_scheduled_hook(\Groove\Pages\Feedback::RETRY_HOOK);
 	});
 }
 

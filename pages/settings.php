@@ -915,6 +915,10 @@ class Settings extends Page
       </span>
     </label>
 
+    <p class="m-0 text-xs text-gray-500">
+      <?php esc_html_e('This setting covers passive analytics only. Messages you send from the Feedback page are delivered to StudioEN whether or not this is enabled — they include the email address and message you type, plus your site URL and plugin version.', 'groove'); ?>
+    </p>
+
     <div>
       <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'groove'); ?></button>
     </div>

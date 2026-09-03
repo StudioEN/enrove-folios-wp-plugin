@@ -3,14 +3,14 @@ namespace Groove\Menu;
 
 use Groove\Menu\Menu_Item_Page;
 use Groove\Pages\Overview;
-use Groove\Pages\Support;
+use Groove\Pages\Feedback;
 
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-class Support_Menu_Item extends Menu_Item_Page {
+class Feedback_Menu_Item extends Menu_Item_Page {
 	public function is_visible() {
 		return true;
 	}
@@ -20,7 +20,7 @@ class Support_Menu_Item extends Menu_Item_Page {
 	}
 
 	public function get_label() {
-		return esc_html__( 'Support', 'groove' );
+		return esc_html__( 'Feedback', 'groove' );
 	}
 
 	public function get_page_title() {

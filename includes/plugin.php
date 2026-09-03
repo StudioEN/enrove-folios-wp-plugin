@@ -8,7 +8,7 @@ use Groove\Pages\Overview;
 use Groove\Pages\All_Folios;
 use Groove\Pages\Folio;
 use Groove\Pages\Add_New;
-use Groove\Pages\Support;
+use Groove\Pages\Feedback;
 use Groove\Pages\Settings;
 use Groove\Pages\Themes;
 use Groove\Menu\Menu_Manager;
@@ -34,7 +34,7 @@ class Plugin
 	public static $instance = null;
 
 	public $overview;
-	public $support;
+	public $feedback;
 	public $settings;
 	public $add_new;
 	public $all_folios;
@@ -112,7 +112,7 @@ class Plugin
 		$this->overview = new Overview();
 		$this->all_folios = new All_Folios();
 		$this->add_new = new Add_New();
-		$this->support = new Support();
+		$this->feedback = new Feedback();
 		$this->settings = new Settings();
 		$this->themes = new Themes();
 
