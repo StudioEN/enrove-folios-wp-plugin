@@ -6,10 +6,16 @@
  * Iteration order is the order below; the slug is repeated inside each slot so
  * a subset can be passed to Curator::run() as either a map or a plain list.
  *
+ * Two kinds of slot live here. The theme covers and the shared `ph-*` pool are
+ * written out longhand below. The per-set placeholders are generated at the end
+ * of the file from pexels/sets.php — add a role there, not a slot here.
+ *
  * Slot shape:
  *   slug           string  Frozen identifier. Sample content references these.
  *   kind           string  'cover' (a theme cover) or 'placeholder' (shared pool).
  *   theme          string  Theme slug for covers; '' for placeholders.
+ *   set            string  Imagery set slug, on generated set slots only.
+ *   role           string  Role within that set, on generated set slots only.
  *   path           string  Destination, relative to the plugin root.
  *   query          string  Pexels search terms.
  *   fallback_query string  Used only when `query` returns nothing.
@@ -31,7 +37,7 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-return [
+$slots = [
 
   // ── Theme covers ─────────────────────────────────────────────────────────
   // themes/<theme>/assets/images/theme-cover.jpg — landscape, large2x.
@@ -307,3 +313,43 @@ return [
   ],
 
 ];
+
+// ── Per-set placeholder slots ──────────────────────────────────────────────
+// Generated from pexels/sets.php. Each set contributes one slot per role it
+// declares, so adding a role there is the only edit needed to curate a new
+// image. Slugs are `<set>-<role>` and files land flat beside the shared pool,
+// which keeps slug and filename the same string for every slug-keyed helper.
+//
+// The shared `ph-*` pool above is deliberately kept. Folios seeded before sets
+// existed have those URLs written into post_content, so removing the files
+// would break imagery in content that is already saved.
+
+$sets = require __DIR__ . '/sets.php';
+
+foreach ($sets as $set_slug => $set) {
+  if (empty($set['roles']) || !is_array($set['roles'])) {
+    continue;
+  }
+
+  foreach ($set['roles'] as $role => $role_def) {
+    $slug = $set_slug . '-' . $role;
+
+    $slots[$slug] = [
+      'slug'           => $slug,
+      'kind'           => 'placeholder',
+      'theme'          => '',
+      'set'            => $set_slug,
+      'role'           => $role,
+      'path'           => 'assets/images/pexels/' . $slug . '.jpg',
+      'query'          => isset($role_def['query']) ? (string) $role_def['query'] : '',
+      'fallback_query' => isset($role_def['fallback_query']) ? (string) $role_def['fallback_query'] : '',
+      'orientation'    => isset($role_def['orientation']) ? (string) $role_def['orientation'] : 'landscape',
+      'src_size'       => isset($role_def['src_size']) ? (string) $role_def['src_size'] : 'large',
+      'color'          => isset($role_def['color']) ? (string) $role_def['color'] : '',
+      'ratio'          => isset($role_def['ratio']) ? (array) $role_def['ratio'] : [1.2, 2.2],
+      'note'           => isset($role_def['note']) ? (string) $role_def['note'] : '',
+    ];
+  }
+}
+
+return $slots;

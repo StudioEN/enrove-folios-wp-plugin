@@ -23,18 +23,23 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-$img_workspace   = Themes_Manager::sample_image_url('ph-workspace');
-$img_architect   = Themes_Manager::sample_image_url('ph-architecture');
-$img_detail      = Themes_Manager::sample_image_url('ph-detail-object');
-$img_studio      = Themes_Manager::sample_image_url('ph-studio');
-$img_texture     = Themes_Manager::sample_image_url('ph-texture-paper');
-$img_portrait_a  = Themes_Manager::sample_image_url('ph-portrait-a');
+// Placeholder imagery is asked for by role, not by filename. `image_set` in
+// this theme's setup.php decides which photographic register those roles
+// resolve to, so two themes can seed the same layout with different pictures.
+$theme = 'folio-starter';
 
-$cap_workspace   = Themes_Manager::sample_image_caption('ph-workspace');
-$cap_architect   = Themes_Manager::sample_image_caption('ph-architecture');
-$cap_detail      = Themes_Manager::sample_image_caption('ph-detail-object');
-$cap_studio      = Themes_Manager::sample_image_caption('ph-studio');
-$cap_texture     = Themes_Manager::sample_image_caption('ph-texture-paper');
+$img_hero       = Themes_Manager::theme_image_url($theme, 'hero');
+$img_scene      = Themes_Manager::theme_image_url($theme, 'scene');
+$img_detail     = Themes_Manager::theme_image_url($theme, 'detail');
+$img_process    = Themes_Manager::theme_image_url($theme, 'process');
+$img_texture    = Themes_Manager::theme_image_url($theme, 'texture');
+$img_portrait_a = Themes_Manager::theme_image_url($theme, 'portrait-a');
+
+$cap_hero    = Themes_Manager::theme_image_caption($theme, 'hero');
+$cap_scene   = Themes_Manager::theme_image_caption($theme, 'scene');
+$cap_detail  = Themes_Manager::theme_image_caption($theme, 'detail');
+$cap_process = Themes_Manager::theme_image_caption($theme, 'process');
+$cap_texture = Themes_Manager::theme_image_caption($theme, 'texture');
 
 return array(
   'label'       => __('Create with sample portfolio content', 'groove'),
@@ -49,7 +54,7 @@ return array(
 <p class="has-drop-cap">This folio collects four years of work made mostly in quiet: identity systems, publications, and the occasional building sign. It is not a complete record. It is the part I would want to talk about if we sat down together.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_workspace}" alt="A working desk with layout proofs, a scale rule and a cold cup of coffee"/>{$cap_workspace}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_hero}" alt="A working desk with layout proofs, a scale rule and a cold cup of coffee"/>{$cap_hero}</figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>What I do</h2>
@@ -87,7 +92,7 @@ HTML,
 <h2>Ravensgate Civic Archive</h2>
 <!-- /wp:heading -->
 <!-- wp:media-text {"mediaType":"image","mediaWidth":48} -->
-<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:48% auto"><figure class="wp-block-media-text__media"><img src="{$img_architect}" alt="Concrete stair and handrail casting a long diagonal shadow"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
+<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:48% auto"><figure class="wp-block-media-text__media"><img src="{$img_scene}" alt="Concrete stair and handrail casting a long diagonal shadow"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
 <p>A hundred and forty years of planning records, most of them handwritten, needed a reading interface that did not feel like a database. We built the whole thing around a single wide measure and a strict four-step type scale, then spent the remaining time on the index.</p>
 <!-- /wp:paragraph -->
 <!-- wp:paragraph -->
@@ -110,7 +115,7 @@ HTML,
 <p>A studio that had been trading on word of mouth for eleven years and wanted to keep it that way while selling online. We wrote the labels before we designed anything, which turned out to be the whole project.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_studio}" alt="Hands at a workbench, tools and unfinished pieces laid out in rows"/>{$cap_studio}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_process}" alt="Hands at a workbench, tools and unfinished pieces laid out in rows"/>{$cap_process}</figure>
 <!-- /wp:image -->
 HTML,
     ),

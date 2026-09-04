@@ -25,21 +25,26 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-$img_cityscape  = Themes_Manager::sample_image_url('ph-cityscape');
-$img_landscape  = Themes_Manager::sample_image_url('ph-landscape-wide');
-$img_studio     = Themes_Manager::sample_image_url('ph-studio');
-$img_detail     = Themes_Manager::sample_image_url('ph-detail-object');
-$img_architect  = Themes_Manager::sample_image_url('ph-architecture');
-$img_portrait_a = Themes_Manager::sample_image_url('ph-portrait-a');
-$img_portrait_b = Themes_Manager::sample_image_url('ph-portrait-b');
-$img_portrait_c = Themes_Manager::sample_image_url('ph-portrait-c');
-$img_portrait_d = Themes_Manager::sample_image_url('ph-portrait-d');
+// Placeholder imagery is asked for by role, not by filename. `image_set` in
+// this theme's setup.php decides which photographic register those roles
+// resolve to, so two themes can seed the same layout with different pictures.
+$theme = 'groove-magazine';
 
-$cap_cityscape  = Themes_Manager::sample_image_caption('ph-cityscape');
-$cap_landscape  = Themes_Manager::sample_image_caption('ph-landscape-wide');
-$cap_studio     = Themes_Manager::sample_image_caption('ph-studio');
-$cap_detail     = Themes_Manager::sample_image_caption('ph-detail-object');
-$cap_architect  = Themes_Manager::sample_image_caption('ph-architecture');
+$img_hero       = Themes_Manager::theme_image_url($theme, 'hero');
+$img_wide       = Themes_Manager::theme_image_url($theme, 'wide');
+$img_process    = Themes_Manager::theme_image_url($theme, 'process');
+$img_detail     = Themes_Manager::theme_image_url($theme, 'detail');
+$img_scene      = Themes_Manager::theme_image_url($theme, 'scene');
+$img_portrait_a = Themes_Manager::theme_image_url($theme, 'portrait-a');
+$img_portrait_b = Themes_Manager::theme_image_url($theme, 'portrait-b');
+$img_portrait_c = Themes_Manager::theme_image_url($theme, 'portrait-c');
+$img_portrait_d = Themes_Manager::theme_image_url($theme, 'portrait-d');
+
+$cap_hero    = Themes_Manager::theme_image_caption($theme, 'hero');
+$cap_wide    = Themes_Manager::theme_image_caption($theme, 'wide');
+$cap_process = Themes_Manager::theme_image_caption($theme, 'process');
+$cap_detail  = Themes_Manager::theme_image_caption($theme, 'detail');
+$cap_scene   = Themes_Manager::theme_image_caption($theme, 'scene');
 
 return array(
   'label'       => __('Create with sample magazine content', 'groove'),
@@ -49,7 +54,7 @@ return array(
   'pages'       => array(
     array(
       'title' => __('The Quiet Cities', 'groove'),
-      'feature_image' => 'ph-cityscape',
+      'feature_image' => Themes_Manager::sample_image_slug($theme, 'hero'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">Three years ago the city of Almerin removed forty per cent of its street signage. Not the road names — those stayed — but the instructions: the arrows, the warnings, the little rectangles telling you what you were not allowed to do. Traffic incidents fell by a fifth in the first year and have not risen since.</p>
@@ -64,7 +69,7 @@ return array(
 <p>What the drivers describe, when you ask them, is a kind of alertness. With nothing telling them what to expect, they look. They make eye contact at junctions. They slow at the top of a hill because they cannot see over it and nobody has promised them that it is safe.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_architect}" alt="An empty city junction at dusk with no signage or road markings"/>{$cap_architect}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_scene}" alt="An empty city junction at dusk with no signage or road markings"/>{$cap_scene}</figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>What the data actually shows</h2>
@@ -82,13 +87,13 @@ return array(
 <p>Four other cities have since run versions of the same programme, with results ranging from a modest improvement to none at all. The variable that seems to matter most is not the signage. It is whether the streets were narrow enough, before the removal, that a driver had to look anyway.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_cityscape}" alt="A wide view over rooftops towards a low horizon"/>{$cap_cityscape}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_hero}" alt="A wide view over rooftops towards a low horizon"/>{$cap_hero}</figure>
 <!-- /wp:image -->
 HTML,
     ),
     array(
       'title' => __('Studio Visit: Making Slowly', 'groove'),
-      'feature_image' => 'ph-studio',
+      'feature_image' => Themes_Manager::sample_image_slug($theme, 'process'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">The workshop is above a tyre fitter and smells faintly of both trades. Ilse Marchetti has worked here for nineteen years and produces, by her own count, somewhere between eleven and fourteen finished pieces annually. She is not interested in producing more.</p>
@@ -97,7 +102,7 @@ HTML,
 <h2>The bench</h2>
 <!-- /wp:heading -->
 <!-- wp:media-text {"mediaType":"image","mediaWidth":50} -->
-<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:50% auto"><figure class="wp-block-media-text__media"><img src="{$img_studio}" alt="Ilse Marchetti's workbench with tools arranged along the back edge"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
+<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:50% auto"><figure class="wp-block-media-text__media"><img src="{$img_process}" alt="Ilse Marchetti's workbench with tools arranged along the back edge"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
 <p>Everything on the bench is within one arm's reach and has been in the same position for a decade. She has never drawn a plan of it. When she moved buildings in 2011 she photographed the bench, rebuilt it exactly, and threw the photograph away.</p>
 <!-- /wp:paragraph -->
 <!-- wp:paragraph -->
@@ -128,13 +133,13 @@ HTML,
     ),
     array(
       'title' => __('Field Notes from the Edge of the Map', 'groove'),
-      'feature_image' => 'ph-landscape-wide',
+      'feature_image' => Themes_Manager::sample_image_slug($theme, 'wide'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">A photo essay, made over eleven days walking the boundary of a national survey area that has not been formally resurveyed since 1974. The line exists on paper. On the ground it runs through a caravan park, a reservoir and, for about four hundred metres, somebody's kitchen.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_landscape}" alt="A wide, low-contrast landscape with the survey line running out of frame"/>{$cap_landscape}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_wide}" alt="A wide, low-contrast landscape with the survey line running out of frame"/>{$cap_wide}</figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>Day three</h2>
@@ -150,10 +155,10 @@ HTML,
 <!-- /wp:paragraph -->
 <!-- wp:gallery {"columns":2,"linkTo":"none"} -->
 <figure class="wp-block-gallery has-nested-images columns-2 is-cropped"><!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_cityscape}" alt="The survey line entering the outskirts of a town"/></figure>
+<figure class="wp-block-image size-large"><img src="{$img_hero}" alt="The survey line entering the outskirts of a town"/></figure>
 <!-- /wp:image -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_architect}" alt="A boundary post absorbed into a later wall"/></figure>
+<figure class="wp-block-image size-large"><img src="{$img_scene}" alt="A boundary post absorbed into a later wall"/></figure>
 <!-- /wp:image --></figure>
 <!-- /wp:gallery -->
 <!-- wp:heading {"level":2} -->
@@ -166,7 +171,7 @@ HTML,
     ),
     array(
       'title' => __('Contributors', 'groove'),
-      'feature_image' => 'ph-team-meeting',
+      'feature_image' => Themes_Manager::sample_image_slug($theme, 'people'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>Four people made this issue. Two of them have met.</p>

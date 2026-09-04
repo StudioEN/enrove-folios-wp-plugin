@@ -10,7 +10,8 @@
  *
  * Options:
  *   --slots=a,b,c        Only curate these slot slugs (default: every slot).
- *   --theme=<slug>       Only curate the cover + placeholders for one theme.
+ *   --theme=<slug>       Only curate the cover + imagery set for one theme.
+ *   --set=<slug>         Only curate one imagery set (see pexels/sets.php).
  *   --covers-only        Only curate theme cover slots.
  *   --placeholders-only  Only curate shared placeholder slots.
  *   --force              Re-download slots whose file already exists.
@@ -88,7 +89,8 @@ if (!function_exists('groove_pexels_cli_out')) {
       '',
       'Options:',
       '  --slots=a,b,c        Only curate these slot slugs (comma separated).',
-      '  --theme=<slug>       Only curate slots belonging to one theme.',
+      '  --theme=<slug>       Only curate the cover + imagery set for one theme.',
+      '  --set=<slug>         Only curate one imagery set (see pexels/sets.php).',
       '  --covers-only        Only curate theme cover slots.',
       '  --placeholders-only  Only curate shared placeholder slots.',
       '  --force              Re-download slots whose file already exists.',
@@ -107,6 +109,28 @@ if (!function_exists('groove_pexels_cli_out')) {
   }
 
   /**
+   * The imagery set a bundled theme seeds from, read straight from its setup.
+   *
+   * Deliberately reads the file rather than asking Themes_Manager: the curator
+   * runs before the theme registry is necessarily warm, and a plain array
+   * return costs nothing to require.
+   *
+   * @param string $theme Theme slug.
+   * @return string Set slug, or '' when the theme declares none.
+   */
+  function groove_pexels_cli_theme_set($theme)
+  {
+    $setup = GROOVE_PEXELS_CLI_PLUGIN_DIR . '/themes/' . $theme . '/setup.php';
+    if (!is_readable($setup)) {
+      return '';
+    }
+
+    $data = require $setup;
+
+    return is_array($data) && !empty($data['image_set']) ? (string) $data['image_set'] : '';
+  }
+
+  /**
    * Parse argv into an options array.
    *
    * @param array $argv Raw arguments.
@@ -117,6 +141,7 @@ if (!function_exists('groove_pexels_cli_out')) {
     $opts = array(
       'slots' => array(),
       'theme' => '',
+      'set' => '',
       'covers_only' => false,
       'placeholders_only' => false,
       'force' => false,
@@ -157,6 +182,9 @@ if (!function_exists('groove_pexels_cli_out')) {
           break;
         case 'theme':
           $opts['theme'] = trim($value);
+          break;
+        case 'set':
+          $opts['set'] = trim($value);
           break;
         case 'covers-only':
         case 'covers':
@@ -556,16 +584,36 @@ if ($groove_opts['theme'] !== '') {
     exit(1);
   }
 
-  // A theme run means its cover plus the shared placeholder pool it draws on.
+  // A theme run means its cover plus the imagery set it seeds from. A theme
+  // that declares no set predates sets.php, so it still gets the whole shared
+  // pool — that is the only imagery it can possibly reference.
   if (!$groove_opts['covers_only']) {
+    $groove_theme_set = groove_pexels_cli_theme_set($groove_theme);
+
     foreach ($groove_selected as $groove_slug => $groove_slot) {
-      if ($groove_slot['kind'] !== 'cover') {
+      if ($groove_slot['kind'] === 'cover') {
+        continue;
+      }
+      $groove_slot_set = isset($groove_slot['set']) ? (string) $groove_slot['set'] : '';
+      if ($groove_theme_set === '' ? $groove_slot_set === '' : $groove_slot_set === $groove_theme_set) {
         $groove_theme_slots[$groove_slug] = $groove_slot;
       }
     }
   }
 
   $groove_selected = $groove_theme_slots;
+}
+
+if ($groove_opts['set'] !== '') {
+  $groove_set = $groove_opts['set'];
+  $groove_selected = array_filter($groove_selected, function ($slot) use ($groove_set) {
+    return isset($slot['set']) && $slot['set'] === $groove_set;
+  });
+
+  if (empty($groove_selected)) {
+    groove_pexels_cli_err('No slots found for set "' . $groove_set . '".');
+    exit(1);
+  }
 }
 
 if (!empty($groove_opts['slots'])) {

@@ -4,6 +4,7 @@ return [
   'default_title' => 'A new proposal',
   'thumbnail' => 'theme-thumb.png',
   'cover' => 'theme-cover.jpg',
+  'image_set' => 'studio',
   'logo' => 'theme-g-logo.png',
   'description' => 'A calm, structured proposal theme for consultancies and digital agencies.',
   'author' => 'StudioEN',

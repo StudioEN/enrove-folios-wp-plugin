@@ -4,6 +4,7 @@ return [
     'default_title' => 'A new issue',
     'thumbnail' => 'theme-thumb.png',
     'cover' => 'theme-cover.jpg',
+    'image_set' => 'daylight',
     'logo' => 'theme-g-logo.png',
     'description' => 'A modern editorial newsletter with accessible preset color systems and responsive reading layouts.',
     'author' => 'StudioEN',

@@ -22,15 +22,20 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-$img_reading  = Themes_Manager::sample_image_url('ph-reading');
-$img_texture  = Themes_Manager::sample_image_url('ph-texture-paper');
-$img_studio   = Themes_Manager::sample_image_url('ph-studio');
-$img_muted    = Themes_Manager::sample_image_url('ph-texture-muted');
+// Placeholder imagery is asked for by role, not by filename. `image_set` in
+// this theme's setup.php decides which photographic register those roles
+// resolve to, so two themes can seed the same layout with different pictures.
+$theme = 'groove-ebook';
 
-$cap_reading  = Themes_Manager::sample_image_caption('ph-reading');
-$cap_texture  = Themes_Manager::sample_image_caption('ph-texture-paper');
-$cap_studio   = Themes_Manager::sample_image_caption('ph-studio');
-$cap_muted    = Themes_Manager::sample_image_caption('ph-texture-muted');
+$img_hero     = Themes_Manager::theme_image_url($theme, 'hero');
+$img_texture  = Themes_Manager::theme_image_url($theme, 'texture');
+$img_process  = Themes_Manager::theme_image_url($theme, 'process');
+$img_backdrop = Themes_Manager::theme_image_url($theme, 'backdrop');
+
+$cap_hero     = Themes_Manager::theme_image_caption($theme, 'hero');
+$cap_texture  = Themes_Manager::theme_image_caption($theme, 'texture');
+$cap_process  = Themes_Manager::theme_image_caption($theme, 'process');
+$cap_backdrop = Themes_Manager::theme_image_caption($theme, 'backdrop');
 
 return array(
   'label'       => __('Create with sample eBook content', 'groove'),
@@ -51,7 +56,7 @@ return array(
 <p>Each chapter stands on its own and can be read in about fifteen minutes. They are ordered by argument rather than chronology, so beginning in the middle costs you very little. Where I quote someone, the full source is in the colophon at the back.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_reading}" alt="An open book resting face down beside a window"/>{$cap_reading}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_hero}" alt="An open book resting face down beside a window"/>{$cap_hero}</figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>A warning</h2>
@@ -92,7 +97,7 @@ HTML,
 <p>Consider what happens when we optimise a workshop. The offcuts go, the false starts go, the practice pieces go. Each of those is waste by any reasonable measure, and each of them was the only place a beginner could be wrong without consequence. We did not remove the learning deliberately. We removed the conditions and the learning left with them.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_studio}" alt="A workbench mid-project, offcuts and practice pieces pushed to one side"/>{$cap_studio}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_process}" alt="A workbench mid-project, offcuts and practice pieces pushed to one side"/>{$cap_process}</figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>What this costs</h2>
@@ -179,7 +184,7 @@ HTML,
 <p>To everyone who read a draft and said the structure was wrong, particularly the two who were right. To the bindery that let me stand in the corner for a week. And to the reader who gets this far — the argument only works if somebody finishes it.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_muted}" alt="A soft, near-monochrome surface used as a closing plate"/>{$cap_muted}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_backdrop}" alt="A soft, near-monochrome surface used as a closing plate"/>{$cap_backdrop}</figure>
 <!-- /wp:image -->
 <!-- wp:separator -->
 <hr class="wp-block-separator has-alpha-channel-opacity"/>

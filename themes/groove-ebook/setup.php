@@ -4,6 +4,7 @@ return [
     'default_title' => 'A new eBook',
     'thumbnail' => 'theme-thumb.png',
     'cover' => 'theme-cover.jpg',
+    'image_set' => 'paper',
     'logo' => 'theme-g-logo.png',
     'description' => 'A structured, elegant theme for eBook-like content presentation.',
     'author' => 'StudioEN',

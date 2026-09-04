@@ -338,6 +338,20 @@ abstract class Base_Theme extends Assets
   }
 
   /**
+   * Imagery set this theme seeds placeholder content from.
+   *
+   * A set is a photographic register defined in pexels/sets.php, not a folder
+   * of images owned by this theme — several themes may name the same one when
+   * the look already fits. Blank means the theme falls back to the shared pool.
+   *
+   * @return string
+   */
+  public static function get_image_set(): string
+  {
+    return static::get_setup_data()['image_set'] ?? '';
+  }
+
+  /**
    * Theme author.
    *
    * @return string
@@ -412,6 +426,7 @@ abstract class Base_Theme extends Assets
       'logo_url' => $theme_assets_url . 'images/' . static::get_logo_filename(),
       'description' => static::get_description(),
       'default_title' => static::get_default_folio_title(),
+      'image_set' => static::get_image_set(),
       'author' => static::get_author(),
       'last_updated' => static::get_last_updated(),
     ];

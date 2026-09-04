@@ -25,17 +25,22 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-$img_workspace  = Themes_Manager::sample_image_url('ph-workspace');
-$img_reading    = Themes_Manager::sample_image_url('ph-reading');
-$img_meeting    = Themes_Manager::sample_image_url('ph-team-meeting');
-$img_muted      = Themes_Manager::sample_image_url('ph-texture-muted');
-$img_portrait_a = Themes_Manager::sample_image_url('ph-portrait-a');
-$img_portrait_b = Themes_Manager::sample_image_url('ph-portrait-b');
-$img_portrait_c = Themes_Manager::sample_image_url('ph-portrait-c');
+// Placeholder imagery is asked for by role, not by filename. `image_set` in
+// this theme's setup.php decides which photographic register those roles
+// resolve to, so two themes can seed the same layout with different pictures.
+$theme = 'groove-newsletter';
 
-$cap_workspace  = Themes_Manager::sample_image_caption('ph-workspace');
-$cap_reading    = Themes_Manager::sample_image_caption('ph-reading');
-$cap_muted      = Themes_Manager::sample_image_caption('ph-texture-muted');
+$img_hero       = Themes_Manager::theme_image_url($theme, 'hero');
+$img_scene      = Themes_Manager::theme_image_url($theme, 'scene');
+$img_people     = Themes_Manager::theme_image_url($theme, 'people');
+$img_backdrop   = Themes_Manager::theme_image_url($theme, 'backdrop');
+$img_portrait_a = Themes_Manager::theme_image_url($theme, 'portrait-a');
+$img_portrait_b = Themes_Manager::theme_image_url($theme, 'portrait-b');
+$img_portrait_c = Themes_Manager::theme_image_url($theme, 'portrait-c');
+
+$cap_hero     = Themes_Manager::theme_image_caption($theme, 'hero');
+$cap_scene    = Themes_Manager::theme_image_caption($theme, 'scene');
+$cap_backdrop = Themes_Manager::theme_image_caption($theme, 'backdrop');
 
 return array(
   'label'       => __('Create with sample newsletter content', 'groove'),
@@ -47,7 +52,7 @@ return array(
   'pages'       => array(
     array(
       'title' => __('What We Shipped', 'groove'),
-      'feature_image' => 'ph-workspace',
+      'feature_image' => Themes_Manager::sample_image_slug($theme, 'hero'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>A short issue this fortnight. One large thing landed, two small ones, and we finally deleted something.</p>
@@ -62,7 +67,7 @@ return array(
 <p>Existing manual exports are untouched. If you want one on a schedule, open it and pick a cadence — everything else carries over.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_workspace}" alt="A desk with two screens showing an export running"/>{$cap_workspace}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_hero}" alt="A desk with two screens showing an export running"/>{$cap_hero}</figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>Smaller changes</h2>
@@ -86,7 +91,7 @@ HTML,
     ),
     array(
       'title' => __('Three Things Worth Reading', 'groove'),
-      'feature_image' => 'ph-reading',
+      'feature_image' => Themes_Manager::sample_image_slug($theme, 'scene'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>What the team passed around this fortnight, with a line on why each one stuck.</p>
@@ -115,13 +120,13 @@ HTML,
 <p>A claim that estimation is not merely inaccurate but actively harmful, because the act of producing a number commits people to defending it. Two of us found it obviously correct and two found it obviously wrong, which is usually a sign that something is worth reading.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_reading}" alt="A stack of printed articles with margin notes"/>{$cap_reading}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_scene}" alt="A stack of printed articles with margin notes"/>{$cap_scene}</figure>
 <!-- /wp:image -->
 HTML,
     ),
     array(
       'title' => __('Team Notes', 'groove'),
-      'feature_image' => 'ph-team-meeting',
+      'feature_image' => Themes_Manager::sample_image_slug($theme, 'people'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>Three changes to how we work, one of which will affect you.</p>
@@ -133,7 +138,7 @@ HTML,
 <p>From the first of next month, live support runs 09:00–17:00 in two timezones rather than one, which closes the gap that has been swallowing Asia-Pacific tickets overnight. Response times outside those hours stay as they are: one working day, and we have hit that ninety-six per cent of the time this year.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_meeting}" alt="Four people around a table reviewing a printed schedule"/></figure>
+<figure class="wp-block-image size-large"><img src="{$img_people}" alt="Four people around a table reviewing a printed schedule"/></figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>Two people joined</h2>
@@ -168,7 +173,7 @@ HTML,
     ),
     array(
       'title' => __('What Comes Next', 'groove'),
-      'feature_image' => 'ph-texture-muted',
+      'feature_image' => Themes_Manager::sample_image_slug($theme, 'backdrop'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>The next two months, stated plainly enough that you can hold us to it.</p>
@@ -198,7 +203,7 @@ HTML,
 <p>Mobile apps, this year or next. The site works on a phone and we would rather it worked well than have a second thing to keep in step with the first.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_muted}" alt="A soft, low-contrast surface closing the issue"/>{$cap_muted}</figure>
+<figure class="wp-block-image size-large"><img src="{$img_backdrop}" alt="A soft, low-contrast surface closing the issue"/>{$cap_backdrop}</figure>
 <!-- /wp:image -->
 <!-- wp:separator -->
 <hr class="wp-block-separator has-alpha-channel-opacity"/>

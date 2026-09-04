@@ -241,6 +241,123 @@ class Themes_Manager extends Assets
         return $title === '' ? $fallback : $title;
     }
 
+    // ── Imagery sets ───────────────────────────────────────────────────────
+
+    /**
+     * The imagery set a theme seeds placeholder content from.
+     *
+     * @param string $theme_id
+     * @return string  Set slug, or '' when the theme declares none.
+     */
+    public static function get_image_set(string $theme_id): string
+    {
+        if ($theme_id === '' || !isset(self::$registry[$theme_id]['cover_class'])) {
+            return '';
+        }
+
+        $cover_class = self::$registry[$theme_id]['cover_class'];
+        if (!is_subclass_of($cover_class, Base_Theme::class)) {
+            return '';
+        }
+
+        return sanitize_key((string) $cover_class::get_image_set());
+    }
+
+    /**
+     * The imagery set definitions, loaded once.
+     *
+     * @return array  Set slug => definition. Empty when the file is absent.
+     */
+    protected static function image_sets(): array
+    {
+        static $sets = null;
+
+        if ($sets === null) {
+            $file = GROOVE_PATH . 'pexels/sets.php';
+            $sets = is_readable($file) ? (array) require $file : [];
+        }
+
+        return $sets;
+    }
+
+    /**
+     * Resolve a (theme, role) pair to a curated placeholder slug.
+     *
+     * Sample content asks for the job an image does — the opener, the texture,
+     * the third face in a contributor grid — and the theme's set decides what
+     * that looks like, so seeding a magazine and seeding an eBook no longer
+     * produce the same photographs.
+     *
+     * Resolution prefers the set's own image, then the shared-pool slug the
+     * role replaced, then the set's image again even though it is missing:
+     *
+     *   1. The set file exists            → use it. The normal case.
+     *   2. It does not, but the legacy    → use the legacy one. Covers an
+     *      shared-pool file does            install curated before sets existed,
+     *                                       where the alternative is a broken
+     *                                       image for content that used to work.
+     *   3. Neither exists                 → return the set slug anyway, so a
+     *                                       later curation run fills in imagery
+     *                                       for folios already created.
+     *
+     * @param string $theme_id
+     * @param string $role     Role slug declared by the theme's set.
+     * @return string  Slug, or '' when the theme or role is unknown.
+     */
+    public static function sample_image_slug(string $theme_id, string $role): string
+    {
+        $role = sanitize_key($role);
+        $set = static::get_image_set($theme_id);
+
+        if ($set === '' || $role === '') {
+            return '';
+        }
+
+        $sets = static::image_sets();
+        if (!isset($sets[$set]['roles'][$role])) {
+            return '';
+        }
+
+        $slug = $set . '-' . $role;
+        if (is_readable(static::sample_image_path($slug))) {
+            return $slug;
+        }
+
+        $legacy = isset($sets[$set]['roles'][$role]['legacy'])
+            ? sanitize_key((string) $sets[$set]['roles'][$role]['legacy'])
+            : '';
+
+        if ($legacy !== '' && is_readable(static::sample_image_path($legacy))) {
+            return $legacy;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Public URL of the image a theme uses for a role.
+     *
+     * @param string $theme_id
+     * @param string $role
+     * @return string
+     */
+    public static function theme_image_url(string $theme_id, string $role): string
+    {
+        return static::sample_image_url(static::sample_image_slug($theme_id, $role));
+    }
+
+    /**
+     * A core/image <figcaption> crediting the image a theme uses for a role.
+     *
+     * @param string $theme_id
+     * @param string $role
+     * @return string  Caption HTML, or ''.
+     */
+    public static function theme_image_caption(string $theme_id, string $role): string
+    {
+        return static::sample_image_caption(static::sample_image_slug($theme_id, $role));
+    }
+
     /**
      * Absolute path of a curated Pexels placeholder, by manifest slug.
      *

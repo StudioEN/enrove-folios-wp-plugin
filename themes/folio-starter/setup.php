@@ -4,6 +4,7 @@ return [
     'default_title' => 'A new folio',
     'thumbnail' => 'theme-thumb.png',
     'cover' => 'theme-cover.jpg',
+    'image_set' => 'studio',
     'logo' => 'theme-g-logo.png',
     'description' => 'A clean, typography-led default theme for Groove Folios.',
     'author' => 'StudioEN',
