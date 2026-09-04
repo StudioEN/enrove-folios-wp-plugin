@@ -275,17 +275,29 @@
       $notice = isset($_GET['groove_notice']) ? sanitize_key(wp_unslash($_GET['groove_notice'])) : '';
       $notice_value = isset($_GET['groove_value']) ? sanitize_key(wp_unslash($_GET['groove_value'])) : '';
 
-      $error_message = esc_html__('We could not save your message. Your text is still here — please try again.', 'groove');
+      $error_message = __('We could not save your message. Your text is still here — please try again.', 'groove');
       if ($notice === 'error') {
         if ($notice_value === 'invalid_email') {
-          $error_message = esc_html__('Please enter a valid email address.', 'groove');
+          $error_message = __('Please enter a valid email address.', 'groove');
         } else if ($notice_value === 'missing_message') {
-          $error_message = esc_html__('Message is required.', 'groove');
+          $error_message = __('Message is required.', 'groove');
         }
       }
 
-      $success_message = esc_html__('Thanks — your feedback is on its way to us.', 'groove');
-      $warning_message = esc_html__('Saved, but we could not reach us just now. Your message is stored on this site and will be retried automatically — nothing is lost.', 'groove');
+      $success_message = __('Thanks — your feedback is on its way to us.', 'groove');
+      $warning_message = __('Saved, but we could not reach us just now. Your message is stored on this site and will be retried automatically — nothing is lost.', 'groove');
+
+      // The form below is what the operator is looking at; the outcome of the
+      // last send is reported over it rather than wedged above the fields. The
+      // warning runs long, so it holds a little longer before it fades.
+      $consumed = array('groove_notice', 'groove_value');
+      if ('success' === $notice) {
+        \Groove\Toast::success($success_message, $consumed);
+      } elseif ('warning' === $notice) {
+        \Groove\Toast::warning($warning_message, $consumed, 9000);
+      } elseif ('error' === $notice) {
+        \Groove\Toast::error($error_message, $consumed);
+      }
 
       $draft = $this->get_draft();
       $current_user = wp_get_current_user();
@@ -294,19 +306,6 @@
       <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4">
         <?php wp_nonce_field('groove_send_feedback', 'groove_nonce'); ?>
         <input type="hidden" name="action" value="groove_send_feedback" />
-        <?php if ('success' === $notice): ?>
-          <div class="notice notice-success inline">
-            <p><?php echo esc_html($success_message); ?></p>
-          </div>
-        <?php elseif ('warning' === $notice): ?>
-          <div class="notice notice-warning inline">
-            <p><?php echo esc_html($warning_message); ?></p>
-          </div>
-        <?php elseif ('error' === $notice): ?>
-          <div class="notice notice-error inline">
-            <p><?php echo esc_html($error_message); ?></p>
-          </div>
-        <?php endif; ?>
         <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
           <div>
             <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Send Us Feedback', 'groove'); ?></h3>

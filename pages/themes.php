@@ -125,7 +125,7 @@ class Themes extends Page
 		?>
 		<div class="g-themes-page">
 
-			<?php $this->display_notice($notice_type, $notice_value); ?>
+			<?php $this->queue_notice_toast($notice_type, $notice_value); ?>
 
 			<div class="g-themes-summary-grid">
 				<div class="g-themes-summary-card">
@@ -311,8 +311,8 @@ class Themes extends Page
 						dt.items.add(file);
 						input.files = dt.files;
 						setFile(file);
-					} else {
-						alert('Please drop a .zip file.');
+					} else if (window.grooveShowToast) {
+						window.grooveShowToast('Themes are installed from a .zip file.', 'error');
 					}
 				});
 			})();
@@ -324,38 +324,45 @@ class Themes extends Page
 	// Helpers
 	// -----------------------------------------------------------------------
 
-	private function display_notice($type, $value)
+	/**
+	 * Report an install or removal as a toast.
+	 *
+	 * The theme grid is the point of this screen, so the outcome of the last
+	 * upload is reported over it rather than pushing every card down the page.
+	 *
+	 * @param string $type  Notice key from the redirect.
+	 * @param string $value Theme name, or an error string.
+	 */
+	private function queue_notice_toast($type, $value)
 	{
 		if (empty($type)) {
 			return;
 		}
 
+		$consumed = array('groove_notice', 'groove_value');
+
 		switch ($type) {
 			case 'success':
-				$message = sprintf(
-					/* translators: %s: theme name */
-					esc_html__('"%s" installed successfully.', 'groove'),
-					esc_html($value)
+				\Groove\Toast::success(
+					sprintf(
+						/* translators: %s: theme name */
+						__('"%s" installed successfully.', 'groove'),
+						$value
+					),
+					$consumed
 				);
-				$class = 'g-themes-notice--success';
 				break;
 			case 'uninstalled':
-				$message = esc_html__('Theme removed successfully.', 'groove');
-				$class = 'g-themes-notice--success';
+				\Groove\Toast::info(__('Theme removed successfully.', 'groove'), $consumed);
 				break;
 			case 'error':
 			default:
-				$message = !empty($value)
-					? esc_html($value)
-					: esc_html__('An unknown error occurred.', 'groove');
-				$class = 'g-themes-notice--error';
+				\Groove\Toast::error(
+					!empty($value) ? $value : __('An unknown error occurred.', 'groove'),
+					$consumed
+				);
 				break;
 		}
-		?>
-		<div class="g-themes-notice <?php echo esc_attr($class); ?>">
-			<?php echo $message; // Already escaped above. ?>
-		</div>
-		<?php
 	}
 
 	private function redirect_with_notice($type, $value)

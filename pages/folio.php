@@ -1727,7 +1727,13 @@ class Folio extends Page
     exit;
   }
 
-  private function display_pages_tab_bulk_notice()
+  /**
+   * Report the outcome of a Pages tab bulk action as a toast.
+   *
+   * Matches All Folios: the page list stays put and the count is reported over
+   * it. Removals report as info rather than success.
+   */
+  private function queue_pages_tab_bulk_toast()
   {
     if (!isset($_GET['bulk_action']) || !isset($_GET['bulk_count'])) {
       return;
@@ -1740,38 +1746,39 @@ class Folio extends Page
     }
 
     $message = '';
+    $type = \Groove\Toast::SUCCESS;
+
     switch ($action) {
       case 'trash':
         $message = sprintf(
           /* translators: %s: number of pages moved to trash */
-          esc_html(_n('%s page moved to Trash.', '%s pages moved to Trash.', $count, 'groove')),
-          esc_html(number_format_i18n($count))
+          _n('%s page moved to Trash.', '%s pages moved to Trash.', $count, 'groove'),
+          number_format_i18n($count)
         );
+        $type = \Groove\Toast::INFO;
         break;
       case 'untrash':
         $message = sprintf(
           /* translators: %s: number of pages restored */
-          esc_html(_n('%s page restored.', '%s pages restored.', $count, 'groove')),
-          esc_html(number_format_i18n($count))
+          _n('%s page restored.', '%s pages restored.', $count, 'groove'),
+          number_format_i18n($count)
         );
         break;
       case 'delete':
         $message = sprintf(
           /* translators: %s: number of pages deleted */
-          esc_html(_n('%s page deleted permanently.', '%s pages deleted permanently.', $count, 'groove')),
-          esc_html(number_format_i18n($count))
+          _n('%s page deleted permanently.', '%s pages deleted permanently.', $count, 'groove'),
+          number_format_i18n($count)
         );
+        $type = \Groove\Toast::INFO;
         break;
     }
 
     if ($message === '') {
       return;
     }
-    ?>
-    <div class="notice notice-success is-dismissible">
-      <p><?php echo esc_html($message); ?></p>
-    </div>
-    <?php
+
+    \Groove\Toast::add($message, $type, array('bulk_action', 'bulk_count'));
   }
 
   private function get_pages_tab_last_modified_by($post_id)
@@ -1806,7 +1813,7 @@ class Folio extends Page
     $total_pages = (int) $results['total_pages'];
     $quick_edit_table = new Folio_Page_List_Table($this, static::POST_TYPE);
     ?>
-    <?php $this->display_pages_tab_bulk_notice(); ?>
+    <?php $this->queue_pages_tab_bulk_toast(); ?>
     <form id="pages-filter" method="get">
       <input type="hidden" name="page" value="<?php echo esc_attr(static::PAGE_ID); ?>" />
       <input type="hidden" name="tab_key" value="pages" />

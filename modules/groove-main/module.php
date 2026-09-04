@@ -94,7 +94,13 @@ class Module extends BaseModule
 		$groove_css_path = plugin_dir_path(dirname(__DIR__)) . 'assets/css/groove-main.css';
 		$groove_css_version = file_exists($groove_css_path) ? (string) filemtime($groove_css_path) : GROOVE_VERSION;
 		wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], $groove_css_version);
-		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery'], GROOVE_VERSION, true);
+		// Loaded ahead of groove-main so window.grooveShowToast is defined before
+		// anything on the page reaches for it. Toggletips come first of all:
+		// the toast drain opens one for any outcome that names an anchor.
+		wp_enqueue_script('groove-toggletip', $this->get_js_assets_url('groove-toggletip'), [], GROOVE_VERSION, true);
+		wp_enqueue_script('groove-toast', $this->get_js_assets_url('groove-toast'), ['groove-toggletip'], GROOVE_VERSION, true);
+		wp_enqueue_script('groove-form-state', $this->get_js_assets_url('groove-form-state'), ['groove-toggletip'], GROOVE_VERSION, true);
+		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery', 'groove-toast'], GROOVE_VERSION, true);
 		wp_enqueue_script('groove-inline-edit', $this->get_js_assets_url('groove-inline-edit'), ['jquery'], GROOVE_VERSION, true);
 
 		if ($this->is_in_block_editor_page()) {
@@ -205,6 +211,53 @@ class Module extends BaseModule
 		);
 	}
 
+	/**
+	 * Folios' own admin page slugs, as registered with add_menu_page().
+	 */
+	private function get_groove_page_slugs()
+	{
+		return array(
+			'groove-overview',
+			'groove-all-folios',
+			'groove-folio',
+			'groove-add-new',
+			'groove-themes',
+			'groove-settings',
+			'groove-feedback',
+		);
+	}
+
+	/**
+	 * Folios' own post types — list tables and the block editor.
+	 */
+	private function get_groove_post_types()
+	{
+		return array('groove_folio', 'groove_folio_page');
+	}
+
+	/**
+	 * Is this one of Folios' own screens?
+	 *
+	 * Matched on the exact menu slug and post type rather than by looking for
+	 * "groove" anywhere in the screen id. Any plugin whose menu slug starts
+	 * with "groove" inherits that substring in every one of its screen ids —
+	 * Groove Creative's pages are toplevel_page_groove-creative and
+	 * groove-creative_page_gc-*, all of which matched — and Folios would then
+	 * load its whole stylesheet and script bundle over another plugin's admin
+	 * pages.
+	 */
+	private function is_groove_screen($current_screen)
+	{
+		if (in_array($current_screen->post_type ?? '', $this->get_groove_post_types(), true)) {
+			return true;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
+		$page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+
+		return $page !== '' && in_array($page, $this->get_groove_page_slugs(), true);
+	}
+
 	private function is_top_bar_active()
 	{
 		$current_screen = get_current_screen();
@@ -213,8 +266,7 @@ class Module extends BaseModule
 			return false;
 		}
 
-
-		$is_groove_page = (strpos($current_screen->id ?? '', 'groove') !== false);
+		$is_groove_page = $this->is_groove_screen($current_screen);
 
 		return apply_filters(
 			'groove/top-bar-tabs/is-active',

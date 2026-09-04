@@ -97,16 +97,6 @@ class Settings extends Page
     return (string) array_key_first($themes);
   }
 
-  private function sanitize_base_slug($raw_slug)
-  {
-    $slug = sanitize_title($raw_slug);
-    if ($slug === '') {
-      return 'folio';
-    }
-
-    return $slug;
-  }
-
   private function get_settings_tab_url($tab, $args = array())
   {
     return add_query_arg(
@@ -153,16 +143,20 @@ class Settings extends Page
     return $term;
   }
 
+  private function redirect_to_settings_tab($tab, $args = array())
+  {
+    wp_safe_redirect($this->get_settings_tab_url($tab, $args));
+    exit;
+  }
+
   private function redirect_to_collections_tab($args = array())
   {
-    wp_safe_redirect($this->get_settings_tab_url('collections', $args));
-    exit;
+    $this->redirect_to_settings_tab('collections', $args);
   }
 
   private function redirect_to_imagery_tab($args = array())
   {
-    wp_safe_redirect($this->get_settings_tab_url('imagery', $args));
-    exit;
+    $this->redirect_to_settings_tab('imagery', $args);
   }
 
   /**
@@ -192,12 +186,22 @@ class Settings extends Page
 
   /**
    * Stash a one-shot notice for the current user (avoids putting API results in the URL).
+   *
+   * A failure carries the next step and the button it belongs to as well, so
+   * the imagery tab can pin the explanation where the operator just pressed.
+   *
+   * @param string $status success|error|warning|info.
+   * @param string $text   What happened.
+   * @param string $hint   What to do about it. Failures only.
+   * @param string $anchor CSS selector for the control to point at.
    */
-  private function set_pexels_notice($status, $text)
+  private function set_pexels_notice($status, $text, $hint = '', $anchor = '')
   {
     set_transient('groove_pexels_notice_' . get_current_user_id(), array(
       'status' => $status,
       'text' => $text,
+      'hint' => $hint,
+      'anchor' => $anchor,
     ), MINUTE_IN_SECONDS);
   }
 
@@ -227,6 +231,10 @@ class Settings extends Page
 
     $tab = isset($_POST['tab_key']) ? sanitize_key(wp_unslash($_POST['tab_key'])) : 'general';
 
+    // Each tab writes only its own options. Every tab used to fall through to
+    // one of two branches, so saving General reset the routing slug to "folio"
+    // and saving Routing turned usage analytics off — a tab quietly undoing a
+    // setting the operator had made on another one.
     if ('general' === $tab) {
       $themes = Themes_Manager::get_all_themes();
       $default_theme = isset($_POST['default_theme_id']) ? sanitize_key(wp_unslash($_POST['default_theme_id'])) : '';
@@ -249,21 +257,32 @@ class Settings extends Page
       update_option('groove_default_folio_title', trim($default_title));
 
       delete_option('groove_default_allow_pdf_download');
-      $base_slug = isset($_POST['folio_base_slug']) ? $this->sanitize_base_slug(wp_unslash($_POST['folio_base_slug'])) : 'folio';
+    } elseif ('routing' === $tab) {
+      $raw_slug = isset($_POST['folio_base_slug']) ? trim((string) wp_unslash($_POST['folio_base_slug'])) : '';
+
+      // Reported rather than corrected. Silently substituting "folio" would
+      // send every published folio to a different URL than the operator asked
+      // for, and the screen would show the substitution as if it were theirs.
+      if ($raw_slug === '') {
+        $this->redirect_to_settings_tab('routing', array('message' => 'base_slug_empty'));
+      }
+
+      $base_slug = sanitize_title($raw_slug);
+      if ($base_slug === '') {
+        $this->redirect_to_settings_tab('routing', array('message' => 'base_slug_invalid'));
+      }
+
       update_option('groove_folio_base_slug', $base_slug);
-    } else {
+    } elseif ('privacy' === $tab) {
       $analytics = isset($_POST['usage_analytics']) ? 1 : 0;
       update_option('groove_usage_analytics', $analytics);
+    } else {
+      // Only reachable from a stale or hand-edited form; nothing was written,
+      // so say so rather than confirming a save that did not happen.
+      $this->redirect_to_settings_tab('general', array('message' => 'unknown_tab'));
     }
 
-    $redirect = add_query_arg([
-      'page' => static::PAGE_ID,
-      'tab_key' => $tab,
-      'message' => 'settings_saved'
-    ], admin_url('admin.php'));
-
-    wp_safe_redirect($redirect);
-    exit;
+    $this->redirect_to_settings_tab($tab, array('message' => 'settings_saved'));
   }
 
   public function handle_collection_tag_save()
@@ -333,10 +352,10 @@ class Settings extends Page
     }
 
     $result = wp_delete_term($term_id, 'groove_collection_tag');
-    if (is_wp_error($result)) {
+    if (true !== $result) {
       $this->redirect_to_collections_tab(array(
-        'message' => 'collection_tag_error',
-        'error_code' => $result->get_error_code(),
+        'message' => 'collection_tag_delete_error',
+        'error_code' => is_wp_error($result) ? $result->get_error_code() : 'not_found',
       ));
     }
 
@@ -351,7 +370,7 @@ class Settings extends Page
     $default_title = $this->get_default_folio_title();
     $default_theme_title = Themes_Manager::get_default_folio_title($default_theme_id);
     ?>
-<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4">
+<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4" data-groove-track-changes>
   <?php wp_nonce_field('groove_save_settings', 'groove_nonce'); ?>
   <input type="hidden" name="action" value="save_groove_settings" />
   <input type="hidden" name="tab_key" value="general" />
@@ -422,7 +441,12 @@ class Settings extends Page
     </script>
 
     <div>
-      <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'groove'); ?></button>
+      <button
+        type="submit"
+        id="groove-save-general"
+        class="button button-primary"
+        data-groove-save
+        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove')); ?>"><?php esc_html_e('Save Changes', 'groove'); ?></button>
     </div>
   </section>
 </form>
@@ -435,7 +459,7 @@ class Settings extends Page
     $sample_folio = home_url('/' . $base_slug . '/my-folio');
     $sample_page = home_url('/' . $base_slug . '/my-folio/page/about');
     ?>
-<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4">
+<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4" data-groove-track-changes>
   <?php wp_nonce_field('groove_save_settings', 'groove_nonce'); ?>
   <input type="hidden" name="action" value="save_groove_settings" />
   <input type="hidden" name="tab_key" value="routing" />
@@ -470,7 +494,12 @@ class Settings extends Page
     </div>
 
     <div>
-      <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'groove'); ?></button>
+      <button
+        type="submit"
+        id="groove-save-routing"
+        class="button button-primary"
+        data-groove-save
+        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove')); ?>"><?php esc_html_e('Save Changes', 'groove'); ?></button>
     </div>
   </section>
 </form>
@@ -484,6 +513,9 @@ class Settings extends Page
     $is_editing = $edit_term instanceof \WP_Term;
     $form_title = $is_editing ? __('Edit Collection Tag', 'groove') : __('Add Collection Tag', 'groove');
     $submit_label = $is_editing ? __('Update Tag', 'groove') : __('Add Tag', 'groove');
+    $submit_idle = $is_editing
+      ? __('Nothing to save — this tag already matches what is stored.', 'groove')
+      : __('Give the tag a name first — the slug is optional.', 'groove');
     ?>
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4 xl:col-span-1">
@@ -492,7 +524,7 @@ class Settings extends Page
       <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('Manage the tags used to group folios into collections.', 'groove'); ?></p>
     </div>
 
-    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4">
+    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4" data-groove-track-changes>
       <?php wp_nonce_field('groove_save_collection_tag', 'groove_nonce'); ?>
       <input type="hidden" name="action" value="save_groove_collection_tag" />
       <input type="hidden" name="collection_tag_id" value="<?php echo esc_attr($is_editing ? (string) $edit_term->term_id : '0'); ?>" />
@@ -525,7 +557,12 @@ class Settings extends Page
       </div>
 
       <div class="flex items-center gap-2">
-        <button type="submit" class="button button-primary"><?php echo esc_html($submit_label); ?></button>
+        <button
+          type="submit"
+          id="groove-save-collection-tag"
+          class="button button-primary"
+          data-groove-save
+          data-groove-save-idle="<?php echo esc_attr($submit_idle); ?>"><?php echo esc_html($submit_label); ?></button>
         <?php if ($is_editing): ?>
           <a href="<?php echo esc_url($this->get_settings_tab_url('collections')); ?>" class="button button-secondary"><?php esc_html_e('Cancel', 'groove'); ?></a>
         <?php endif; ?>
@@ -592,7 +629,12 @@ class Settings extends Page
     }
 
     if ($this->pexels_is_available() && \Groove\Pexels\Key::is_locked_by_constant()) {
-      $this->set_pexels_notice('warning', __('GROOVE_PEXELS_API_KEY is defined in wp-config.php, so the stored key was not changed.', 'groove'));
+      $this->set_pexels_notice(
+        'warning',
+        __('GROOVE_PEXELS_API_KEY is defined in wp-config.php, so the stored key was not changed.', 'groove'),
+        __('The constant wins over anything saved here. Remove it from wp-config.php if you want to manage the key from this screen.', 'groove'),
+        '#groove-save-pexels-key'
+      );
       $this->redirect_to_imagery_tab();
     }
 
@@ -642,25 +684,40 @@ class Settings extends Page
     }
 
     if (!$this->pexels_is_available()) {
-      $this->set_pexels_notice('error', __('The Pexels client is unavailable.', 'groove'));
+      $this->set_pexels_notice(
+        'error',
+        __('The Pexels client is unavailable.', 'groove'),
+        __('The pexels/ helpers are missing from this copy of the plugin. Reinstall or update Groove Folios to restore them.', 'groove'),
+        '#groove-test-pexels-connection'
+      );
       $this->redirect_to_imagery_tab();
     }
 
     $client = new \Groove\Pexels\Client();
 
     if (!$client->has_key()) {
-      $this->set_pexels_notice('error', __('No Pexels API key is configured.', 'groove'));
+      $this->set_pexels_notice(
+        'error',
+        __('No Pexels API key is configured.', 'groove'),
+        __('Paste a key into the field above and save it, then test the connection again.', 'groove'),
+        '#groove-test-pexels-connection'
+      );
       $this->redirect_to_imagery_tab();
     }
 
     $result = $client->verify();
 
     if (is_wp_error($result)) {
-      $this->set_pexels_notice('error', sprintf(
-        /* translators: %s: error message returned by the Pexels API. */
-        __('Pexels rejected the request: %s', 'groove'),
-        $result->get_error_message()
-      ));
+      $this->set_pexels_notice(
+        'error',
+        sprintf(
+          /* translators: %s: error message returned by the Pexels API. */
+          __('Pexels rejected the request: %s', 'groove'),
+          $result->get_error_message()
+        ),
+        __('Check the key is still active in your Pexels account and paste it again. A key created moments ago can take a few minutes to work.', 'groove'),
+        '#groove-test-pexels-connection'
+      );
       $this->redirect_to_imagery_tab();
     }
 
@@ -692,14 +749,28 @@ class Settings extends Page
       $credits_exist = file_exists(\Groove\Pexels\Credits::path());
       $credits = \Groove\Pexels\Credits::all();
     }
+
+    // The outcome of saving, clearing or probing the key is a toast, and a
+    // failure also leaves its reason pinned to the button that produced it.
+    // The "helpers are missing" warning below stays inline: it describes the
+    // standing state of this screen, not something the operator just did.
+    if ($notice) {
+      $notice_anchor = isset($notice['anchor']) ? (string) $notice['anchor'] : '';
+
+      if ($notice_anchor !== '') {
+        \Groove\Toast::failure(
+          $notice['text'],
+          isset($notice['hint']) ? (string) $notice['hint'] : '',
+          $notice_anchor,
+          array(),
+          $notice['status']
+        );
+      } else {
+        \Groove\Toast::add($notice['text'], $notice['status']);
+      }
+    }
     ?>
 <div class="space-y-4">
-  <?php if ($notice): ?>
-  <div class="notice notice-<?php echo esc_attr($notice['status']); ?>">
-    <p><?php echo esc_html($notice['text']); ?></p>
-  </div>
-  <?php endif; ?>
-
   <?php if (!$available): ?>
   <div class="notice notice-warning">
     <p><?php esc_html_e('The Pexels helper classes are not installed in this copy of the plugin.', 'groove'); ?></p>
@@ -728,7 +799,7 @@ class Settings extends Page
     </div>
     <?php endif; ?>
 
-    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4" autocomplete="off">
+    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4" autocomplete="off" data-groove-track-changes>
       <?php wp_nonce_field('groove_save_pexels_key', 'groove_nonce'); ?>
       <input type="hidden" name="action" value="save_groove_pexels_key" />
 
@@ -752,7 +823,13 @@ class Settings extends Page
       </div>
 
       <div>
-        <button type="submit" class="button button-primary" <?php disabled($locked, true); ?>><?php esc_html_e('Save Key', 'groove'); ?></button>
+        <button
+          type="submit"
+          id="groove-save-pexels-key"
+          class="button button-primary"
+          data-groove-save
+          data-groove-save-idle="<?php echo esc_attr__('Paste a key into the field above to save it.', 'groove'); ?>"
+          <?php disabled($locked, true); ?>><?php esc_html_e('Save Key', 'groove'); ?></button>
       </div>
     </form>
 
@@ -773,7 +850,7 @@ class Settings extends Page
       <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
         <?php wp_nonce_field('groove_test_pexels_connection', 'groove_nonce'); ?>
         <input type="hidden" name="action" value="test_groove_pexels_connection" />
-        <button type="submit" class="button button-secondary" <?php disabled(!$available || !$has_key, true); ?>>
+        <button type="submit" id="groove-test-pexels-connection" class="button button-secondary" <?php disabled(!$available || !$has_key, true); ?>>
           <?php esc_html_e('Test Connection', 'groove'); ?>
         </button>
       </form>
@@ -883,7 +960,7 @@ class Settings extends Page
   public function display_privacy_fields()
   {
     ?>
-<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4">
+<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4" data-groove-track-changes>
   <?php wp_nonce_field('groove_save_settings', 'groove_nonce'); ?>
   <input type="hidden" name="action" value="save_groove_settings" />
   <input type="hidden" name="tab_key" value="privacy" />
@@ -920,7 +997,12 @@ class Settings extends Page
     </p>
 
     <div>
-      <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'groove'); ?></button>
+      <button
+        type="submit"
+        id="groove-save-privacy"
+        class="button button-primary"
+        data-groove-save
+        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove')); ?>"><?php esc_html_e('Save Changes', 'groove'); ?></button>
     </div>
   </section>
 </form>
@@ -972,38 +1054,140 @@ class Settings extends Page
 <?php
   }
 
+  /**
+   * Why a collection tag would not save, in the terms the operator can act on.
+   *
+   * wp_insert_term() and wp_update_term() report a handful of distinct
+   * failures under one generic message. Naming the actual one is the
+   * difference between "try again" and knowing which field to change.
+   *
+   * @param string $error_code Error code carried back from the redirect.
+   * @return array{0: string, 1: string} Message and next step.
+   */
+  private function get_collection_tag_error($error_code)
+  {
+    switch ($error_code) {
+      case 'duplicate_term_slug':
+        return array(
+          __('Another collection tag already uses that slug.', 'groove'),
+          __('Pick a different slug, or clear the field and one will be generated from the name.', 'groove'),
+        );
+      case 'term_exists':
+        return array(
+          __('A collection tag with that name already exists.', 'groove'),
+          __('Edit the existing tag from the list instead, or choose a different name.', 'groove'),
+        );
+      case 'invalid_taxonomy':
+        return array(
+          __('The collection tag taxonomy is not registered.', 'groove'),
+          __('Deactivate and reactivate Groove Folios so the taxonomy is registered again, then retry.', 'groove'),
+        );
+    }
+
+    return array(
+      __('The collection tag could not be saved.', 'groove'),
+      __('Reload this screen and try again. If it keeps failing, check the site error log for the database error behind it.', 'groove'),
+    );
+  }
+
+  /**
+   * Turn a `?message=` redirect key into a toast, and a failure into a
+   * toggletip pinned to the button that produced it.
+   *
+   * A toast alone reports a failure and then takes the reason away with it. An
+   * anchored toggletip leaves the reason — and the next step — at the control
+   * the operator pressed, which is where they are already looking.
+   *
+   * The args are consumed once shown, so reloading the settings screen does
+   * not replay an outcome from a save that already happened.
+   *
+   * @param string $message    Message key from the redirect.
+   * @param string $error_code Error code from the redirect, where there is one.
+   */
+  private function toast_message($message, $error_code = '')
+  {
+    if ($message === '') {
+      return;
+    }
+
+    $consumed = array('message', 'error_code');
+
+    $success = array(
+      'settings_saved' => __('Settings saved.', 'groove'),
+      'collection_tag_created' => __('Collection tag created.', 'groove'),
+      'collection_tag_updated' => __('Collection tag updated.', 'groove'),
+      'collection_tag_deleted' => __('Collection tag deleted.', 'groove'),
+    );
+
+    if (isset($success[$message])) {
+      \Groove\Toast::success($success[$message], $consumed);
+      return;
+    }
+
+    switch ($message) {
+      case 'base_slug_empty':
+        \Groove\Toast::failure(
+          __('A folio base slug is required.', 'groove'),
+          __('Enter the word you want in folio URLs — "folio" gives /folio/my-folio. The previous slug is still in place.', 'groove'),
+          '#groove-save-routing',
+          $consumed
+        );
+        return;
+
+      case 'base_slug_invalid':
+        \Groove\Toast::failure(
+          __('That base slug cannot be used in a URL.', 'groove'),
+          __('Use letters, numbers and hyphens, such as "folio" or "case-studies". The previous slug is still in place.', 'groove'),
+          '#groove-save-routing',
+          $consumed
+        );
+        return;
+
+      case 'collection_tag_empty':
+        \Groove\Toast::failure(
+          __('A collection tag needs a name.', 'groove'),
+          __('Type a name in the Name field above. The slug can be left blank — it is generated from the name.', 'groove'),
+          '#groove-save-collection-tag',
+          $consumed
+        );
+        return;
+
+      case 'collection_tag_error':
+        list($tag_message, $tag_hint) = $this->get_collection_tag_error($error_code);
+        \Groove\Toast::failure($tag_message, $tag_hint, '#groove-save-collection-tag', $consumed);
+        return;
+
+      case 'collection_tag_delete_error':
+        // No save button to point at — the delete button that failed belongs
+        // to a row that may no longer be on the screen.
+        \Groove\Toast::error(
+          'not_found' === $error_code
+            ? __('That collection tag was already gone, so nothing was removed.', 'groove')
+            : __('That collection tag could not be removed. Reload the screen and try again.', 'groove'),
+          $consumed
+        );
+        return;
+
+      case 'unknown_tab':
+        \Groove\Toast::failure(
+          __('Nothing was saved — that settings tab was not recognised.', 'groove'),
+          __('This usually means the page had been open long enough to go stale. Reload the settings screen and make the change again.', 'groove'),
+          '#groove-save-general',
+          $consumed
+        );
+        return;
+    }
+  }
+
   public function display_content()
   {
     $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'general';
     $message = isset($_GET['message']) ? sanitize_key(wp_unslash($_GET['message'])) : '';
+    $error_code = isset($_GET['error_code']) ? sanitize_key(wp_unslash($_GET['error_code'])) : '';
+
+    $this->toast_message($message, $error_code);
     ?>
 <div class="space-y-4">
-  <?php if ('settings_saved' === $message): ?>
-  <div class="notice notice-success">
-    <p><?php esc_html_e('Settings saved.', 'groove'); ?></p>
-  </div>
-  <?php elseif ('collection_tag_created' === $message): ?>
-  <div class="notice notice-success">
-    <p><?php esc_html_e('Collection tag created.', 'groove'); ?></p>
-  </div>
-  <?php elseif ('collection_tag_updated' === $message): ?>
-  <div class="notice notice-success">
-    <p><?php esc_html_e('Collection tag updated.', 'groove'); ?></p>
-  </div>
-  <?php elseif ('collection_tag_deleted' === $message): ?>
-  <div class="notice notice-success">
-    <p><?php esc_html_e('Collection tag deleted.', 'groove'); ?></p>
-  </div>
-  <?php elseif ('collection_tag_empty' === $message): ?>
-  <div class="notice notice-error">
-    <p><?php esc_html_e('Collection tag name is required.', 'groove'); ?></p>
-  </div>
-  <?php elseif ('collection_tag_error' === $message): ?>
-  <div class="notice notice-error">
-    <p><?php esc_html_e('Collection tag could not be saved.', 'groove'); ?></p>
-  </div>
-  <?php endif; ?>
-
   <?php if ('collections' === $tab_key): ?>
     <?php $this->display_tab_collections(); ?>
   <?php elseif ('routing' === $tab_key): ?>

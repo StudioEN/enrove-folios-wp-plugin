@@ -113,6 +113,7 @@ class Autoloader {
 		self::$classes_map = [
 			'Settings'  => 'includes/settings.php',
 			'Analytics' => 'includes/analytics.php',
+			'Toast'     => 'includes/toast.php',
 		];
 	}
 

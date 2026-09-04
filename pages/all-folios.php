@@ -564,7 +564,14 @@ class All_Folios extends Page
 		exit;
 	}
 
-	private function display_bulk_notice()
+	/**
+	 * Report the outcome of a bulk action as a toast.
+	 *
+	 * The list table underneath is the thing the operator came back to read, so
+	 * the count is reported over it rather than pushed on top of it. Removals
+	 * report as info: nothing about a trashed folio needs a green pill.
+	 */
+	private function queue_bulk_toast()
 	{
 		if (!isset($_GET['bulk_action']) || !isset($_GET['bulk_count'])) {
 			return;
@@ -577,33 +584,37 @@ class All_Folios extends Page
 		}
 
 		$message = '';
+		$type = \Groove\Toast::SUCCESS;
+
 		switch ($action) {
 			case 'trash':
 				$message = sprintf(
 					/* translators: %s: number of folios moved to trash */
-					esc_html(_n('%s folio moved to Trash.', '%s folios moved to Trash.', $count, 'groove')),
-					esc_html(number_format_i18n($count))
+					_n('%s folio moved to Trash.', '%s folios moved to Trash.', $count, 'groove'),
+					number_format_i18n($count)
 				);
+				$type = \Groove\Toast::INFO;
 				break;
 			case 'untrash':
 				$message = sprintf(
 					/* translators: %s: number of folios restored */
-					esc_html(_n('%s folio restored.', '%s folios restored.', $count, 'groove')),
-					esc_html(number_format_i18n($count))
+					_n('%s folio restored.', '%s folios restored.', $count, 'groove'),
+					number_format_i18n($count)
 				);
 				break;
 			case 'delete':
 				$message = sprintf(
 					/* translators: %s: number of folios deleted */
-					esc_html(_n('%s folio deleted permanently.', '%s folios deleted permanently.', $count, 'groove')),
-					esc_html(number_format_i18n($count))
+					_n('%s folio deleted permanently.', '%s folios deleted permanently.', $count, 'groove'),
+					number_format_i18n($count)
 				);
+				$type = \Groove\Toast::INFO;
 				break;
 			case 'duplicate':
 				$message = sprintf(
 					/* translators: %s: number of folios duplicated */
-					esc_html(_n('%s folio duplicated.', '%s folios duplicated.', $count, 'groove')),
-					esc_html(number_format_i18n($count))
+					_n('%s folio duplicated.', '%s folios duplicated.', $count, 'groove'),
+					number_format_i18n($count)
 				);
 				break;
 		}
@@ -611,11 +622,8 @@ class All_Folios extends Page
 		if ($message === '') {
 			return;
 		}
-		?>
-		<div class="notice notice-success is-dismissible">
-			<p><?php echo esc_html($message); ?></p>
-		</div>
-		<?php
+
+		\Groove\Toast::add($message, $type, array('bulk_action', 'bulk_count'));
 	}
 
 	private function duplicate_folio($post_id)
@@ -984,7 +992,7 @@ class All_Folios extends Page
 		$total_pages = (int) $results['total_pages'];
 		?>
 		<div class="wrap">
-			<?php $this->display_bulk_notice(); ?>
+			<?php $this->queue_bulk_toast(); ?>
 			<form id="posts-filter" method="get">
 				<input type="hidden" name="page" value="<?php echo esc_attr(static::PAGE_ID); ?>" />
 				<input type="hidden" name="post_status" value="<?php echo esc_attr($status); ?>" />

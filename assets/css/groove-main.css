@@ -1240,29 +1240,6 @@ body.groove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible
   margin: 0 0 12px;
 }
 
-/* ── Notices ─────────────────────────────────────────────────────────── */
-
-.g-themes-notice {
-  padding: 12px 14px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  border: 1px solid transparent;
-  border-left-width: 4px;
-  font-size: 13px;
-}
-
-.g-themes-notice--success {
-  background: var(--g-green-0);
-  border-color: var(--g-green-40);
-  color: var(--g-green-70);
-}
-
-.g-themes-notice--error {
-  background: var(--g-red-0);
-  border-color: var(--g-red-40);
-  color: var(--g-red-70);
-}
-
 @media (max-width: 960px) {
   .g-themes-summary-grid {
     grid-template-columns: 1fr;
@@ -2174,9 +2151,284 @@ body.groove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
   mix-blend-mode: normal;
 }
 
+/* ── Toasts ─────────────────────────────────────────────────────────────────
+   Outcome messages surface here instead of as an inline notice, so reporting
+   what happened never reflows the screen the operator is reading. Same pill
+   geometry as the collection filters, so the chrome reads as one family.
+
+   Not scoped to body.groove: the container is appended to <body> and toasts
+   are queued from admin-post redirects that can land on any admin screen.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.g-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  left: auto;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  /* Parked in the corner rather than centred: the bottom of the viewport is
+     already spoken for by #g-folio-save-indicator, and an outcome that lands
+     in the same place the operator is working reads as an interruption.
+     Never reach past the admin menu on a narrow screen. */
+  max-width: calc(100vw - 48px);
+  /* Only the pills themselves take the pointer. */
+  pointer-events: none;
+}
+
+.g-toast {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* A stadium shape stops reading as a pill once it runs long, so the message
+     wraps to a second line instead of stretching across the screen. */
+  max-width: min(520px, 100%);
+  min-height: 32px;
+  padding: 7px 8px 7px 14px;
+  border: 1px solid var(--g-border-strong);
+  border-radius: 999px;
+  background: var(--g-surface);
+  color: var(--g-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.g-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.g-toast.is-leaving {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.g-toast--success {
+  background: var(--g-green-0);
+  border-color: var(--g-green-40);
+  color: var(--g-green-70);
+}
+
+.g-toast--error {
+  background: var(--g-red-0);
+  border-color: var(--g-red-40);
+  color: var(--g-red-70);
+}
+
+.g-toast--warning {
+  background: var(--g-yellow-0);
+  border-color: var(--g-yellow-30);
+  color: var(--g-yellow-70);
+}
+
+.g-toast--info {
+  background: var(--g-blue-0);
+  border-color: var(--g-blue-5);
+  color: var(--g-blue-70);
+}
+
+.g-toast__content {
+  min-width: 0;
+}
+
+.g-toast__close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: currentColor;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.g-toast__close:hover,
+.g-toast__close:focus-visible {
+  opacity: 1;
+}
+
+.g-toast__close:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+
+/* ── Toggletips ─────────────────────────────────────────────────────────────
+   Where a toast reports that something failed, a toggletip says why, at the
+   button that failed, and holds still until it is dismissed. Anchored to <body>
+   and positioned from script: these hang off real <button>s inside cards that
+   would otherwise clip them, so they cannot nest inside their anchor the way
+   .g-tooltip-button does.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.g-toggletip {
+  --g-toggletip-bg: var(--g-surface);
+  --g-toggletip-border: var(--g-border-strong);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100001;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 10px 8px 10px 12px;
+  border: 1px solid var(--g-toggletip-border);
+  border-radius: 8px;
+  background: var(--g-toggletip-bg);
+  color: var(--g-text);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.g-toggletip[data-placement="top"] {
+  transform: translateY(4px);
+}
+
+.g-toggletip.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.g-toggletip--error {
+  --g-toggletip-bg: var(--g-red-0);
+  --g-toggletip-border: var(--g-red-5);
+  color: var(--g-red-70);
+}
+
+.g-toggletip--warning {
+  --g-toggletip-bg: var(--g-yellow-0);
+  --g-toggletip-border: var(--g-yellow-30);
+  color: var(--g-yellow-70);
+}
+
+.g-toggletip--info {
+  --g-toggletip-bg: var(--g-blue-0);
+  --g-toggletip-border: var(--g-blue-5);
+  color: var(--g-blue-70);
+}
+
+.g-toggletip__body {
+  min-width: 0;
+}
+
+.g-toggletip__message {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* The next step reads as the quieter half of the pair — present, but not
+   competing with the sentence that says what happened. */
+.g-toggletip__hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  opacity: 0.85;
+}
+
+.g-toggletip__close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-top: -1px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: currentColor;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.g-toggletip__close:hover,
+.g-toggletip__close:focus-visible {
+  opacity: 1;
+}
+
+.g-toggletip__close:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+
+/* A rotated square with two of its borders dropped, so the arrow carries the
+   bubble's own border and fill rather than floating free of them. Script sets
+   --g-toggletip-arrow-x to keep it over the anchor when the bubble has been
+   shifted back inside the viewport. */
+.g-toggletip__arrow {
+  position: absolute;
+  left: var(--g-toggletip-arrow-x, 20px);
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background: var(--g-toggletip-bg);
+  border: 1px solid var(--g-toggletip-border);
+  transform: rotate(45deg);
+}
+
+.g-toggletip[data-placement="bottom"] .g-toggletip__arrow {
+  top: -6px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.g-toggletip[data-placement="top"] .g-toggletip__arrow {
+  bottom: -6px;
+  border-left: 0;
+  border-top: 0;
+}
+
+/* A save button with nothing to save is held with aria-disabled rather than the
+   disabled attribute, so it keeps its place in the tab order and can still say
+   why it is doing nothing. Core's .disabled carries the paint; this carries the
+   cursor for anything core hangs off :disabled alone. */
+
+body.groove .button[aria-disabled="true"] {
+  cursor: default;
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
+  .g-toast,
+  .g-toggletip {
+    /* Still fades, but does not travel. */
+    transition: opacity 0.2s ease;
+    transform: none;
+  }
+  .g-toast.is-visible,
+  .g-toast.is-leaving,
+  .g-toggletip.is-visible,
+  .g-toggletip[data-placement="top"] {
+    transform: none;
+  }
   .g-tpp-overlay {
     transition: none;
   }
