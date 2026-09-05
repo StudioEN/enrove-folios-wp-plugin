@@ -12,4 +12,16 @@ return [
     'namespace' => 'Groove\Themes\Folio_Starter',
     'cover_class' => 'Groove\Themes\Folio_Starter\Cover',
     'page_class' => 'Groove\Themes\Folio_Starter\Page',
+    // Theme typeface defaults. A folio's own font pickers override these;
+    // Base_Theme loads whichever wins in one request. See themes/README.md.
+    'fonts' => [
+        'header' => [
+            'css_stack'     => "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            'google_family' => 'Inter:wght@400;500;600;700',
+        ],
+        'body' => [
+            'css_stack'     => "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            'google_family' => 'Inter:wght@400;500;600;700',
+        ],
+    ],
 ];

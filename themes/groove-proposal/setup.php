@@ -12,6 +12,16 @@ return [
   'namespace' => 'Groove\\Themes\\Groove_Proposal',
   'cover_class' => 'Groove\\Themes\\Groove_Proposal\\Cover',
   'page_class' => 'Groove\\Themes\\Groove_Proposal\\Page',
+  'fonts' => [
+    'header' => [
+      'css_stack'     => "'Fraunces', Georgia, 'Times New Roman', serif",
+      'google_family' => 'Fraunces:ital,wght@0,300;0,400;1,300;1,400',
+    ],
+    'body' => [
+      'css_stack'     => "'Inter', system-ui, -apple-system, sans-serif",
+      'google_family' => 'Inter:wght@400;500;600',
+    ],
+  ],
   'dependencies' => [
     'navigation-pane.php',
     'blocks.php',

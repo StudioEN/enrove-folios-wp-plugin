@@ -215,7 +215,7 @@ That call is what loads the data. Skipping it renders an empty theme.
 - enqueues `groove` (assets/css/groove-main.css) — the shared reset/layout
 - enqueues `groove-theme-<theme-id>` from `assets/css/theme.css`, dependent on `groove`,
   versioned by `filemtime()`
-- calls `enqueue_primary_font_style()` (see below)
+- calls `enqueue_folio_fonts()` (see below)
 - enqueues `groove` JS (assets/js/groove-main.js) with jQuery
 
 To add theme JS, **override and call `parent::ensure_script()` first** — in *both* `Cover` and `Page`:
@@ -242,10 +242,44 @@ Path helpers available: `get_theme_folder_path()`, `get_theme_folder_url()`, `ge
 `get_theme_assets_url()`, `get_theme_css_path()`, `get_theme_css_url()` — all resolve correctly for
 both plugin-bundled and `wp-content/groove-themes/` installs, so prefer them over `plugin_dir_url()`.
 
-### Font injection — the class contract
+### Fonts — declare them, never enqueue them
 
-`enqueue_primary_font_style()` reads the folio's `header_font` / `body_font` meta (legacy `fonts` meta
-is the fallback for both), enqueues the Google Fonts stylesheets, and injects:
+**A theme must not load a font itself.** No `@import` in `theme.css`, no `wp_enqueue_style()` of a
+Google Fonts URL in `ensure_script()`, no hand-written `<link>`. Everything goes through
+`Groove\Themes\Font_Loader`, which is the single place in the plugin that touches a font CDN.
+
+Declare the theme's defaults in `setup.php` instead:
+
+```php
+'fonts' => [
+    'header' => [
+        'css_stack'     => "'Fraunces', Georgia, 'Times New Roman', serif",
+        'google_family' => 'Fraunces:ital,wght@0,300;0,400;1,300;1,400',
+    ],
+    'body' => [
+        'css_stack'     => "'Inter', system-ui, -apple-system, sans-serif",
+        'google_family' => 'Inter:wght@400;500;600',
+    ],
+],
+```
+
+`google_family` is a `family=` fragment for the [css2 API](https://developers.google.com/fonts/docs/css2)
+— spaces as `+`, weights after the colon. Omit it (or leave it empty) for a system stack that needs no
+network request. Both values are sanitised, so an installed theme package cannot inject CSS or extra URL
+parameters. The block is optional; a theme that declares nothing simply falls back to the stacks written
+into its own CSS.
+
+**Resolution order, per role.** `Base_Theme::ensure_script()` calls `enqueue_folio_fonts()`, which asks
+`Font_Loader::resolve()` for each of `header` and `body`:
+
+1. the folio's own choice — `header_font` / `body_font` meta, validated against
+   `Utils::get_supported_primary_fonts()` (legacy single `fonts` meta is the fallback for both);
+2. the theme's `setup.php` default;
+3. nothing — the fallback stack in your CSS applies.
+
+Whatever wins, **both roles are fetched in one `css2` request** (duplicate families deduped), enqueued as
+the handle `groove-folio-fonts` with no `?ver=`, and paired with a `preconnect` to `fonts.gstatic.com`.
+Then these variables are injected on the theme handle:
 
 ```css
 .g-folio__theme-cover,
@@ -266,14 +300,32 @@ body.groove [class*="g-folio__theme-"][class$="-page"] {
 Working examples: `class="gm gm-cover g-folio__theme-cover"`, `class="gp gp-page g-folio__theme-page"`,
 `class="g-folio__theme-newsletter-page gn gn-page"`.
 
-Theme CSS should consume the variables with its own fallbacks so a folio with no font selected still looks right:
+Theme CSS consumes the variables with its own fallbacks, so the theme still looks right if the variables
+never arrive (an old folio, a partial render):
 
 ```css
 --gn-font-heading: var(--g-folio-header-font, 'Space Grotesk', sans-serif);
 --gn-font-body:    var(--g-folio-body-font,   'Source Serif 4', Georgia, serif);
 ```
 
-Supported fonts are the fixed list in `Utils::get_supported_primary_fonts()` (DM Sans, Inter, Lato,
+`--g-folio-primary-font` is the pre-role-split name, aliased to the body font. New themes should use the
+two role variables.
+
+**Where fonts load — and where they must not.** A font request is only ever made on a surface that
+renders a theme:
+
+| Surface | Path |
+| --- | --- |
+| Folio cover / page, published or `?groove_preview=1` | `Base_Theme::ensure_script()` |
+| Theme-picker preview (Add New → *Preview*) | same — the template instantiates the theme |
+| Password gate | `includes/folio-preview-template.php`, resolved by `Font_Loader`, linked by hand (it renders before `wp_head()`) |
+| Block editor, folio pages | the theme's `blocks.php`, **gated on the edited folio actually using that theme** |
+
+Nothing loads a font on a plain admin screen, on another theme's folio, or plugin-wide. If you add an
+editor-side font load, gate it the same way `groove-proposal/blocks.php` does — resolve the folio, check
+its `theme_id`, and hand the result to `Font_Loader::enqueue()` with the `.editor-styles-wrapper` selector.
+
+Folio-selectable fonts are the fixed list in `Utils::get_supported_primary_fonts()` (DM Sans, Inter, Lato,
 Merriweather, Montserrat, Noto Sans, Noto Serif, Nunito Sans, Poppins, Roboto).
 
 ### Other helpers
@@ -477,7 +529,8 @@ Consequences for theme code:
    `get_content()` and run output through `apply_embed_processing()`.
 5. Both files start with `if (!defined('ABSPATH')) { exit; }`.
 6. `assets/css/theme.css` scoped to a theme-private root, consuming `--g-folio-header-font` /
-   `--g-folio-body-font` with fallbacks.
+   `--g-folio-body-font` with fallbacks — and loading no font of its own (no `@import`; declare
+   `fonts` in `setup.php` instead).
 7. `assets/images/theme-thumb.png`, `theme-cover.png`, `theme-g-logo.png`.
 8. Reuse `g-folio__theme-nav-button` / `-nav-close` / `-page-nav-button` / `-page-nav-close` for nav so
    groove-main.js wires it up.

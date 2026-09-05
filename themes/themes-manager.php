@@ -108,6 +108,26 @@ class Themes_Manager extends Assets
         return $themes;
     }
 
+    /**
+     * A registered theme's declared typeface defaults.
+     *
+     * For callers that only have a theme ID (the password gate, the block
+     * editor) rather than a live theme instance.
+     *
+     * @param string $theme_id
+     * @return array Role => ['css_stack' => string, 'google_family' => string]
+     */
+    public static function get_theme_default_fonts(string $theme_id): array
+    {
+        if (!static::has($theme_id)) {
+            return [];
+        }
+
+        $cover_class = self::$registry[$theme_id]['cover_class'];
+
+        return $cover_class::get_default_fonts();
+    }
+
     // ── Sample content ─────────────────────────────────────────────────────
 
     /**

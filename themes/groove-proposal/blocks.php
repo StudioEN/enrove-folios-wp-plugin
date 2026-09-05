@@ -5,6 +5,9 @@
  * Loaded as a dependency via setup.php.
  */
 
+use Groove\Themes\Font_Loader;
+use Groove\Themes\Groove_Proposal\Cover;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -1238,14 +1241,38 @@ add_action('enqueue_block_editor_assets', function () {
     );
 
 
-    // Google Fonts for editor preview (Fraunces + Inter)
-    wp_enqueue_style(
-        'groove-proposal-editor-fonts',
-        'https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@400;500;600&display=swap',
-        [],
-        null
-    );
+    // Editor typography. Loaded through the same resolver the front end uses,
+    // so the canvas previews whatever this folio will actually render with —
+    // and only when the folio really is a Groove Proposal.
+    groove_proposal_enqueue_editor_fonts();
 });
+
+/**
+ * Load the edited folio's fonts into the block editor canvas.
+ *
+ * Skips entirely unless the page being edited belongs to a folio using this
+ * theme, so editing a folio built on any other theme costs no font request.
+ */
+function groove_proposal_enqueue_editor_fonts(): void
+{
+    $page = get_post();
+    if (!$page || $page->post_type !== 'groove_folio_page') {
+        return;
+    }
+
+    $folio_id = (int) get_post_meta($page->ID, 'folio_id', true);
+    if ($folio_id <= 0) {
+        return;
+    }
+
+    if ((string) get_post_meta($folio_id, 'theme_id', true) !== Cover::get_id()) {
+        return;
+    }
+
+    $resolved = Font_Loader::resolve($folio_id, Cover::get_default_fonts());
+
+    Font_Loader::enqueue($resolved, 'groove-proposal-editor-fonts', '.editor-styles-wrapper');
+}
 
 /**
  * Resolve the URL to this theme's folder.

@@ -17,15 +17,6 @@ class Cover extends Base_Theme
   {
     parent::ensure_script();
 
-    // Theme default fonts: Fraunces (display) + Inter (body).
-    // User-selected fonts from the folio admin will override via CSS custom properties.
-    wp_enqueue_style(
-      'groove-proposal-fonts',
-      'https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@400;500;600&display=swap',
-      [],
-      false
-    );
-
     $js_path = trailingslashit(GROOVE_PATH) . 'themes/' . static::get_id() . '/assets/js/groove-proposal.js';
     $version = file_exists($js_path) ? filemtime($js_path) : GROOVE_VERSION;
 

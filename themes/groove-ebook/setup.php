@@ -12,4 +12,14 @@ return [
     'namespace' => 'Groove\Themes\Groove_Ebook',
     'cover_class' => 'Groove\Themes\Groove_Ebook\Cover',
     'page_class' => 'Groove\Themes\Groove_Ebook\Page',
+    'fonts' => [
+        'header' => [
+            'css_stack'     => "'DM Sans', sans-serif",
+            'google_family' => 'DM+Sans:wght@400;500;600;700',
+        ],
+        'body' => [
+            'css_stack'     => "'DM Sans', sans-serif",
+            'google_family' => 'DM+Sans:wght@400;500;600;700',
+        ],
+    ],
 ];

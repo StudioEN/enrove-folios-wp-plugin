@@ -49,7 +49,7 @@ abstract class Base_Theme extends Assets
       $version
     );
 
-    $this->enqueue_primary_font_style('groove-theme-' . static::get_id());
+    $this->enqueue_folio_fonts('groove-theme-' . static::get_id());
 
     wp_enqueue_script('groove', $this->get_js_assets_url('groove-main'), ['jquery'], GROOVE_VERSION, true);
   }
@@ -125,60 +125,32 @@ abstract class Base_Theme extends Assets
     return isset($_REQUEST['folio_id']) ? (int) wp_unslash($_REQUEST['folio_id']) : 0;
   }
 
-  protected function get_selected_font_data($font_role = 'body')
+  /**
+   * The theme's own typeface defaults, declared in its setup.php `fonts` block.
+   * Used whenever the folio has not chosen a font for that role.
+   *
+   * @return array Role => ['css_stack' => string, 'google_family' => string]
+   */
+  public static function get_default_fonts(): array
   {
-    $folio_id = $this->get_folio_id_for_customization();
-    if ($folio_id <= 0) {
-      return null;
-    }
-
-    $font_keys = Utils::get_folio_font_keys($folio_id);
-    $font_key = Utils::normalize_primary_font_key($font_keys[$font_role] ?? '');
-    if ($font_key === '') {
-      return null;
-    }
-
-    return Utils::get_primary_font_data($font_key);
+    return Font_Loader::normalize_theme_fonts(static::get_setup_data()['fonts'] ?? []);
   }
 
-  protected function enqueue_primary_font_style($theme_handle)
+  /**
+   * Load this render's fonts. Delegates everything — resolution, the single
+   * combined request, the preconnect and the CSS variables — to Font_Loader,
+   * so themes never enqueue a font stylesheet of their own.
+   *
+   * @param string $theme_handle Handle of this theme's stylesheet.
+   */
+  protected function enqueue_folio_fonts($theme_handle)
   {
-    $header_font = $this->get_selected_font_data('header');
-    $body_font = $this->get_selected_font_data('body');
+    $resolved = Font_Loader::resolve(
+      $this->get_folio_id_for_customization(),
+      static::get_default_fonts()
+    );
 
-    if (!$header_font && !$body_font) {
-      return;
-    }
-
-    $fonts_to_enqueue = array();
-    if ($header_font && !empty($header_font['key']) && !empty($header_font['google_url'])) {
-      $fonts_to_enqueue[$header_font['key']] = $header_font;
-    }
-    if ($body_font && !empty($body_font['key']) && !empty($body_font['google_url'])) {
-      $fonts_to_enqueue[$body_font['key']] = $body_font;
-    }
-
-    foreach ($fonts_to_enqueue as $font) {
-      $font_handle = 'groove-folio-font-' . $font['key'];
-      wp_enqueue_style($font_handle, $font['google_url'], [], GROOVE_VERSION);
-    }
-
-    $declarations = array();
-    if ($header_font && !empty($header_font['css_stack'])) {
-      $declarations[] = '--g-folio-header-font: ' . $header_font['css_stack'];
-    }
-    if ($body_font && !empty($body_font['css_stack'])) {
-      $declarations[] = '--g-folio-body-font: ' . $body_font['css_stack'];
-      $declarations[] = '--g-folio-primary-font: var(--g-folio-body-font)';
-      $declarations[] = 'font-family: var(--g-folio-body-font)';
-    }
-
-    if (empty($declarations)) {
-      return;
-    }
-
-    $inline_css = '.g-folio__theme-cover, body.groove [class*="g-folio__theme-"][class$="-page"] { ' . implode('; ', $declarations) . '; }';
-    wp_add_inline_style($theme_handle, $inline_css);
+    Font_Loader::enqueue($resolved, $theme_handle, Font_Loader::FRONTEND_SELECTOR);
   }
 
   /**

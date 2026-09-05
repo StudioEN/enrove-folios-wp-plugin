@@ -1,4 +1,5 @@
 <?php
+use Groove\Themes\Font_Loader;
 use Groove\Themes\Themes_Manager;
 
 // NOTE: Themes_Manager::register_defaults() is already called in Plugin::__construct().
@@ -24,13 +25,18 @@ $theme = Themes_Manager::create_theme_for_current_request();
     $_pw_accent = isset($_pw_accent_map[$_pw_theme_id]) ? $_pw_accent_map[$_pw_theme_id][0] : '#2271b1';
     $_pw_accent_hover = isset($_pw_accent_map[$_pw_theme_id]) ? $_pw_accent_map[$_pw_theme_id][1] : '#135e96';
 
-    // Resolve folio fonts.
-    $_pw_font_keys = \Groove\Utils\Utils::get_folio_font_keys($password_post->ID);
-    $_pw_header_font = \Groove\Utils\Utils::get_primary_font_data($_pw_font_keys['header']);
-    $_pw_body_font = \Groove\Utils\Utils::get_primary_font_data($_pw_font_keys['body']);
+    // Resolve folio fonts through the same resolver the themes use, so the gate
+    // is typeset like the folio behind it. This document is rendered before
+    // wp_head(), so the one combined stylesheet is linked by hand below.
+    $_pw_system_stack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    $_pw_fonts = Font_Loader::resolve(
+      (int) $password_post->ID,
+      Themes_Manager::get_theme_default_fonts($_pw_theme_id)
+    );
+    $_pw_fonts_url = Font_Loader::build_url($_pw_fonts);
 
-    $_pw_heading_stack = $_pw_header_font ? $_pw_header_font['css_stack'] : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-    $_pw_body_stack = $_pw_body_font ? $_pw_body_font['css_stack'] : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    $_pw_heading_stack = $_pw_fonts['header']['css_stack'] ?? $_pw_system_stack;
+    $_pw_body_stack = $_pw_fonts['body']['css_stack'] ?? $_pw_system_stack;
 
     // Resolve theme background color.
     $_pw_bg_map = array(
@@ -48,11 +54,10 @@ $theme = Themes_Manager::create_theme_for_current_request();
   <meta charset="<?php bloginfo('charset'); ?>" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?php echo esc_html($password_post->post_title); ?></title>
-  <?php if ($_pw_header_font): ?>
-    <link rel="stylesheet" href="<?php echo esc_url($_pw_header_font['google_url']); ?>" />
-  <?php endif; ?>
-  <?php if ($_pw_body_font && (!$_pw_header_font || $_pw_body_font['key'] !== $_pw_header_font['key'])): ?>
-    <link rel="stylesheet" href="<?php echo esc_url($_pw_body_font['google_url']); ?>" />
+  <?php if ($_pw_fonts_url !== ''): ?>
+    <link rel="preconnect" href="<?php echo esc_url(Font_Loader::API_HOST); ?>" />
+    <link rel="preconnect" href="<?php echo esc_url(Font_Loader::FILE_HOST); ?>" crossorigin />
+    <link rel="stylesheet" href="<?php echo esc_url($_pw_fonts_url); ?>" />
   <?php endif; ?>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }

@@ -103,6 +103,15 @@ class Utils
     return $slug !== '' ? $slug : 'folio';
   }
 
+  /**
+   * The fixed list of typefaces a folio can choose from, per role.
+   *
+   * `google_family` is a `family=` fragment for the css2 API; themes declare
+   * their own defaults in the same shape. Everything is requested and injected
+   * by Groove\Themes\Font_Loader — never build a font URL anywhere else.
+   *
+   * @return array
+   */
   static function get_supported_primary_fonts()
   {
     return array(
@@ -177,7 +186,6 @@ class Utils
     $supported_fonts = Utils::get_supported_primary_fonts();
     $font = $supported_fonts[$font_key];
     $font['key'] = $font_key;
-    $font['google_url'] = 'https://fonts.googleapis.com/css2?family=' . $font['google_family'] . '&display=swap';
 
     return $font;
   }

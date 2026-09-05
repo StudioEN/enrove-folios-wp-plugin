@@ -96,7 +96,7 @@ body {
 @font-face {
   font-family: gicons;
   src: url(./icons.eot?5.21.0);
-  src: url(./icons.eot?5.21.0#iefix) format("embedded-opentype"), url(./icons.woff2?5.21.0) format("woff2"), url(../fonts/eicons.woff?5.21.0) format("woff"), url(../fonts/eicons.ttf?5.21.0) format("truetype"), url(./icons.svg?5.21.0#eicon) format("svg");
+  src: url(./icons.eot?5.21.0#iefix) format("embedded-opentype"), url(./icons.woff2?5.21.0) format("woff2"), url(./icons.woff?5.21.0) format("woff"), url(./icons.ttf?5.21.0) format("truetype"), url(./icons.svg?5.21.0#eicon) format("svg");
   font-weight: 400;
   font-style: normal
 }

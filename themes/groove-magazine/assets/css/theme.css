@@ -69,9 +69,6 @@
   --gm-overlay: rgba(15, 23, 42, 0.92);
 }
 
-/* ── Google Fonts import ── */
-@import url('https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Inter:wght@300;400;500;600;700&display=swap');
-
 /* ── Base Interaction styles ── */
 a,
 button,

@@ -12,6 +12,16 @@ return [
     'namespace' => 'Groove\Themes\Groove_Newsletter',
     'cover_class' => 'Groove\Themes\Groove_Newsletter\Cover',
     'page_class' => 'Groove\Themes\Groove_Newsletter\Page',
+    'fonts' => [
+        'header' => [
+            'css_stack'     => "'Space Grotesk', 'Helvetica Neue', sans-serif",
+            'google_family' => 'Space+Grotesk:wght@400;500;700',
+        ],
+        'body' => [
+            'css_stack'     => "'Source Serif 4', Georgia, serif",
+            'google_family' => 'Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600',
+        ],
+    ],
     'dependencies' => [
         'navigation-pane.php'
     ],
