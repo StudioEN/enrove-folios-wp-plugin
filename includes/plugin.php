@@ -8,7 +8,6 @@ use Groove\Pages\Overview;
 use Groove\Pages\All_Folios;
 use Groove\Pages\Folio;
 use Groove\Pages\Add_New;
-use Groove\Pages\Feedback;
 use Groove\Pages\Settings;
 use Groove\Pages\Themes;
 use Groove\Menu\Menu_Manager;
@@ -34,7 +33,6 @@ class Plugin
 	public static $instance = null;
 
 	public $overview;
-	public $feedback;
 	public $settings;
 	public $add_new;
 	public $all_folios;
@@ -78,8 +76,34 @@ class Plugin
 		$this->maybe_flush_rewrite_rules();
 		$this->add_cpt_support();
 		$this->init_components();
+		$this->clean_up_removed_features();
 
 		do_action('groove/init');
+	}
+
+	/**
+	 * Clear what the removed Feedback page and usage analytics left behind.
+	 *
+	 * A site that simply upgrades never deactivates, so the feedback retry cron
+	 * would otherwise stay in the cron array and fire hourly with nothing left
+	 * to answer it, and the analytics opt-in would sit in the options table
+	 * recording a consent to something the plugin no longer does.
+	 *
+	 * Submissions already stored in the `groove_feedback` post type are left
+	 * alone. They are the site owner's data; the post type is just no longer
+	 * registered, so they are invisible rather than gone. Drop this method once
+	 * no install can still be upgrading from a build that had either feature.
+	 */
+	private function clean_up_removed_features()
+	{
+		if (get_option('_groove_removed_features_cleaned')) {
+			return;
+		}
+
+		wp_clear_scheduled_hook('groove/feedback/retry');
+		delete_option('groove_usage_analytics');
+
+		update_option('_groove_removed_features_cleaned', 1);
 	}
 
 	/**
@@ -112,7 +136,6 @@ class Plugin
 		$this->overview = new Overview();
 		$this->all_folios = new All_Folios();
 		$this->add_new = new Add_New();
-		$this->feedback = new Feedback();
 		$this->settings = new Settings();
 		$this->themes = new Themes();
 

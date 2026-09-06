@@ -233,8 +233,7 @@ class Settings extends Page
 
     // Each tab writes only its own options. Every tab used to fall through to
     // one of two branches, so saving General reset the routing slug to "folio"
-    // and saving Routing turned usage analytics off — a tab quietly undoing a
-    // setting the operator had made on another one.
+    // — a tab quietly undoing a setting the operator had made on another one.
     if ('general' === $tab) {
       $themes = Themes_Manager::get_all_themes();
       $default_theme = isset($_POST['default_theme_id']) ? sanitize_key(wp_unslash($_POST['default_theme_id'])) : '';
@@ -273,9 +272,6 @@ class Settings extends Page
       }
 
       update_option('groove_folio_base_slug', $base_slug);
-    } elseif ('privacy' === $tab) {
-      $analytics = isset($_POST['usage_analytics']) ? 1 : 0;
-      update_option('groove_usage_analytics', $analytics);
     } else {
       // Only reachable from a stale or hand-edited form; nothing was written,
       // so say so rather than confirming a save that did not happen.
@@ -957,18 +953,48 @@ class Settings extends Page
 <?php
   }
 
+  /**
+   * Privacy tab.
+   *
+   * A statement, not a form. The plugin collects nothing, so there is no
+   * preference to store — and a Save button over a panel with no inputs would
+   * imply there is. What it does list is every request the plugin actually
+   * makes, including the one that reaches a third party without the reader
+   * necessarily realising it: a folio's typefaces are fetched by the visitor's
+   * own browser, so Google sees their IP address. Saying "we collect nothing"
+   * and stopping there would be true about us and misleading about them.
+   */
   public function display_privacy_fields()
   {
     ?>
-<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="g-settings-form space-y-4" data-groove-track-changes>
-  <?php wp_nonce_field('groove_save_settings', 'groove_nonce'); ?>
-  <input type="hidden" name="action" value="save_groove_settings" />
-  <input type="hidden" name="tab_key" value="privacy" />
-
+<div class="space-y-4">
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
     <div>
       <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Privacy', 'groove'); ?></h3>
-      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('Review policy details and control optional analytics.', 'groove'); ?></p>
+      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('What this plugin sends, and where it goes.', 'groove'); ?></p>
+    </div>
+
+    <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 space-y-2">
+      <p class="m-0 text-sm font-medium text-gray-800">
+        <?php esc_html_e('Groove Folios collects nothing about you or your site.', 'groove'); ?>
+      </p>
+      <p class="m-0 text-sm text-gray-600">
+        <?php esc_html_e('No analytics, no usage tracking, no telemetry — so there is nothing here to switch on or off. The plugin never reports back to StudioEN, and your folios, collection tags and settings stay in your own WordPress database.', 'groove'); ?>
+      </p>
+    </div>
+
+    <div class="space-y-2">
+      <h4 class="m-0 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <?php esc_html_e('Requests the plugin does make', 'groove'); ?>
+      </h4>
+      <ul class="m-0 pl-5 list-disc space-y-1 text-sm text-gray-600">
+        <li>
+          <?php esc_html_e('Google Fonts — when a folio is rendered, the reader’s browser fetches the theme’s typefaces from fonts.googleapis.com, which means Google sees the reader’s IP address. This happens on your published folios, not in the admin.', 'groove'); ?>
+        </li>
+        <li>
+          <?php esc_html_e('Pexels — only if you add your own API key on the Imagery tab, and only when you run the image curation script or press the connection test yourself.', 'groove'); ?>
+        </li>
+      </ul>
     </div>
 
     <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3">
@@ -979,33 +1005,8 @@ class Settings extends Page
         </a>
       </p>
     </div>
-
-    <label class="flex items-center gap-2">
-      <input
-        type="checkbox"
-        name="usage_analytics"
-        value="1"
-        class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-        <?php checked(get_option('groove_usage_analytics', 0), 1); ?> />
-      <span class="text-sm text-gray-700">
-        <?php esc_html_e('Share anonymous usage analytics with us to improve product experience.', 'groove'); ?>
-      </span>
-    </label>
-
-    <p class="m-0 text-xs text-gray-500">
-      <?php esc_html_e('This setting covers passive analytics only. Messages you send from the Feedback page are delivered to StudioEN whether or not this is enabled — they include the email address and message you type, plus your site URL and plugin version.', 'groove'); ?>
-    </p>
-
-    <div>
-      <button
-        type="submit"
-        id="groove-save-privacy"
-        class="button button-primary"
-        data-groove-save
-        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove')); ?>"><?php esc_html_e('Save Changes', 'groove'); ?></button>
-    </div>
   </section>
-</form>
+</div>
 <?php
   }
 

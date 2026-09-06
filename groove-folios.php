@@ -45,18 +45,6 @@ if (!version_compare(PHP_VERSION, '7.0', '>=')) {
 
 	// Flush rewrite rules once on activation so /folio/ URLs resolve immediately.
 	register_activation_hook(__FILE__, 'groove_flush_rewrite_rules');
-
-	register_activation_hook(__FILE__, function () {
-		\Groove\Analytics::track('plugin_activated');
-	});
-
-	register_deactivation_hook(__FILE__, function () {
-		\Groove\Analytics::track('plugin_deactivated');
-
-		// Stop retrying undelivered feedback. The stored submissions stay put,
-		// and the schedule is recreated if the plugin is reactivated.
-		wp_clear_scheduled_hook(\Groove\Pages\Feedback::RETRY_HOOK);
-	});
 }
 
 /**

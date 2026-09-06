@@ -223,7 +223,6 @@ class Module extends BaseModule
 			'groove-add-new',
 			'groove-themes',
 			'groove-settings',
-			'groove-feedback',
 		);
 	}
 

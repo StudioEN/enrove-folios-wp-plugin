@@ -15,8 +15,7 @@ A "Folio" is a general-purpose multi-page document container; the theme you pick
 - Multiple built-in themes (Folio Starter, Groove eBook, Groove Newsletter, Groove Magazine, Groove Proposal), each with cover/page/setup templates
 - Folio duplication, password-protected folios, custom logo and typeface support
 - Configurable Folio URL routing/permalinks
-- Anonymous, opt-in usage analytics (Settings → Privacy)
-- In-plugin Feedback form that delivers bug reports, questions, and ideas straight to the team
+- Collects nothing: no analytics, no telemetry, no phone-home (Settings → Privacy states what the plugin does and does not send)
 
 ## Requirements
 

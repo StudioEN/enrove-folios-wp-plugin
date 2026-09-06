@@ -120,11 +120,6 @@ class Add_New extends Page
           $this->create_sample_pages((int) $folio_id, $default_status, $sample_content['pages']);
         }
 
-        \Groove\Analytics::track('folio_created', [
-          'theme'  => $theme_id,
-          'status' => $default_status,
-        ]);
-
         $redirect_url = admin_url('admin.php?page=groove-folio&folio_id=' . $folio_id);
         wp_safe_redirect($redirect_url);
         exit;
