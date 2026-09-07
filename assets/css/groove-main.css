@@ -263,11 +263,17 @@ body.groove.groove-folios_page_groove-settings .nav-tab-wrapper {
   margin-bottom: 16px;
 }
 
-/* Keep the WP list table contained on All Folios. */
+/* Keep the WP list table contained on All Folios.
+ *
+ * Deliberately no overflow here. `overflow-x: auto` would make .wrap a block
+ * formatting context, and a BFC refuses to overlap a float -- so it would shrink
+ * away from the right-floated Screen Options tab and leave a tab-width strip of
+ * dead space down the full height of the page. Nothing needs to scroll anyway:
+ * the container queries further down drop a column before the remaining floors
+ * can outgrow the available width. */
 body.groove.groove-overview_page_groove-all-folios #wpbody-content .wrap,
 body.groove.groove-folios_page_groove-all-folios #wpbody-content .wrap {
   max-width: 100%;
-  overflow-x: auto;
 }
 
 body.groove.groove-overview_page_groove-folio #wpbody-content .wrap,
@@ -275,9 +281,15 @@ body.groove.groove-folios_page_groove-folio #wpbody-content .wrap {
   max-width: 100%;
 }
 
+/* container-type: inline-size makes this a formatting context too, so it would
+ * shrink away from the Screen Options float the same way if it ever sat level
+ * with it. It starts below the float today; `clear` keeps that true. */
 body.groove.groove-overview_page_groove-all-folios #posts-filter,
 body.groove.groove-folios_page_groove-all-folios #posts-filter {
   max-width: 100%;
+  clear: both;
+  container-type: inline-size;
+  container-name: g-folios;
 }
 
 body.groove.groove-overview_page_groove-folio #pages-filter,
@@ -290,7 +302,6 @@ body.groove.groove-folios_page_groove-folio #pages-filter {
 body.groove.groove-overview_page_groove-all-folios #posts-filter .wp-list-table,
 body.groove.groove-folios_page_groove-all-folios #posts-filter .wp-list-table {
   width: 100%;
-  min-width: 780px;
 }
 
 body.groove.groove-overview_page_groove-folio #pages-filter .wp-list-table,
@@ -1717,41 +1728,141 @@ body.groove .g-all-folios__collection-pill.is-active:focus {
   color: #fff;
 }
 
-/* All Folios table — fixed column widths so pill filtering doesn't shift columns */
+/* All Folios table
+ *
+ * Widths are fixed rather than content-driven so filtering by collection never
+ * shifts the columns, but they are set as percentages so the table stays fluid
+ * and every column shares in the space a wide window offers — rather than one
+ * column soaking up all of it. (The widths have to be plain percentages: under
+ * table-layout: fixed a width mixing % and px is discarded and the column falls
+ * back to auto.)
+ *
+ * The percentages are proportional to each column's floor width, and always add
+ * up to 100%, so at --g-cols-min every column sits exactly on its floor and
+ * nothing is squeezed. The checkbox stays pinned in px.
+ */
 body.groove .wp-list-table.table-view-list.posts {
   table-layout: fixed;
+  --g-cols-min: 1133px;
+  --g-w-title: 31%;
+  --g-w-theme: 13.7%;
+  --g-w-tags: 16.4%;
+  --g-w-count: 10.5%;
+  --g-w-status: 11%;
+  --g-w-modified: 17.4%;
+  min-width: var(--g-cols-min);
 }
 
 body.groove .wp-list-table.table-view-list.posts .column-cb {
   width: 38px;
 }
 
-body.groove .wp-list-table.table-view-list.posts th:nth-child(3),
-body.groove .wp-list-table.table-view-list.posts th:nth-child(4),
-body.groove .wp-list-table.table-view-list.posts th:nth-child(5),
-body.groove .wp-list-table.table-view-list.posts th:nth-child(6),
-body.groove .wp-list-table.table-view-list.posts th:nth-child(7) {
+body.groove .wp-list-table.table-view-list.posts .column-title {
+  width: var(--g-w-title);
+}
+
+body.groove .wp-list-table.table-view-list.posts .column-theme_name {
+  width: var(--g-w-theme);
+}
+
+body.groove .wp-list-table.table-view-list.posts .column-collection_tags {
+  width: var(--g-w-tags);
+}
+
+body.groove .wp-list-table.table-view-list.posts .column-page_count {
+  width: var(--g-w-count);
+}
+
+body.groove .wp-list-table.table-view-list.posts .column-publish_status {
+  width: var(--g-w-status);
+}
+
+body.groove .wp-list-table.table-view-list.posts .column-modified {
+  width: var(--g-w-modified);
+}
+
+body.groove .wp-list-table.table-view-list.posts thead th.column-theme_name,
+body.groove .wp-list-table.table-view-list.posts thead th.column-collection_tags,
+body.groove .wp-list-table.table-view-list.posts thead th.column-page_count,
+body.groove .wp-list-table.table-view-list.posts thead th.column-publish_status,
+body.groove .wp-list-table.table-view-list.posts thead th.column-modified {
   white-space: nowrap;
 }
 
-body.groove .wp-list-table.table-view-list.posts th:nth-child(3) {
-  width: 155px;
+/* Drop columns as the table's own container narrows, least useful first:
+   Publish Status and Collection Tags both restate a filter that sits directly
+   above the table, so they go before the columns that only live here. Each step
+   lowers the floor total and re-splits the percentages across the columns still
+   standing. Everything stays available from Screen Options, and below 782px
+   WordPress stacks the whole row behind its toggle — so this only applies
+   above that. */
+@media screen and (min-width: 783px) {
+  @container g-folios (max-width: 1132px) {
+    body.groove .wp-list-table.table-view-list.posts {
+      --g-cols-min: 1013px;
+      --g-w-title: 34.9%;
+      --g-w-theme: 15.4%;
+      --g-w-tags: 18.4%;
+      --g-w-count: 11.8%;
+      --g-w-modified: 19.5%;
+    }
+
+    body.groove .wp-list-table.table-view-list.posts .column-publish_status {
+      display: none;
+    }
+  }
+
+  @container g-folios (max-width: 1012px) {
+    body.groove .wp-list-table.table-view-list.posts {
+      --g-cols-min: 898px;
+      --g-w-title: 39.5%;
+      --g-w-theme: 17.5%;
+      --g-w-tags: 20.9%;
+      --g-w-modified: 22.1%;
+    }
+
+    body.groove .wp-list-table.table-view-list.posts .column-page_count {
+      display: none;
+    }
+  }
+
+  @container g-folios (max-width: 897px) {
+    body.groove .wp-list-table.table-view-list.posts {
+      --g-cols-min: 718px;
+      --g-w-title: 50%;
+      --g-w-theme: 22.1%;
+      --g-w-modified: 27.9%;
+    }
+
+    body.groove .wp-list-table.table-view-list.posts .column-collection_tags {
+      display: none;
+    }
+  }
+
+  @container g-folios (max-width: 717px) {
+    body.groove .wp-list-table.table-view-list.posts {
+      --g-cols-min: 528px;
+      --g-w-title: 69.4%;
+      --g-w-theme: 30.6%;
+    }
+
+    body.groove .wp-list-table.table-view-list.posts .column-modified {
+      display: none;
+    }
+  }
 }
 
-body.groove .wp-list-table.table-view-list.posts th:nth-child(4) {
-  width: 155px;
-}
+@media screen and (max-width: 782px) {
+  body.groove .wp-list-table.table-view-list.posts {
+    --g-cols-min: 0px;
+  }
 
-body.groove .wp-list-table.table-view-list.posts th:nth-child(5) {
-  width: 115px;
-}
-
-body.groove .wp-list-table.table-view-list.posts th:nth-child(6) {
-  width: 115px;
-}
-
-body.groove .wp-list-table.table-view-list.posts th:nth-child(7) {
-  width: 195px;
+  /* The stacked view labels each cell with its data-colname, and that rule
+     catches the primary cell too — where the label lands on top of the folio
+     title instead of beside it. The title needs no label. */
+  body.groove .wp-list-table.table-view-list.posts tr:not(.inline-edit-row):not(.no-items) td.column-primary::before {
+    content: none;
+  }
 }
 
 /* Collection tags combobox dropdown */
