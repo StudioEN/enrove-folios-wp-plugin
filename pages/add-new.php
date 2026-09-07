@@ -77,8 +77,8 @@ class Add_New extends Page
       }
 
       // An explicit default folio title always wins. Left blank, the title comes
-      // from the theme being created, so a magazine starts as "A new issue" and
-      // a proposal as "A new proposal" rather than everything sharing one name.
+      // from the theme being created, so a magazine starts as "A New Issue" and
+      // a proposal as "A New Proposal" rather than everything sharing one name.
       $title = trim((string) get_option('groove_default_folio_title', ''));
       if ($title === '') {
         $title = \Groove\Themes\Themes_Manager::get_default_folio_title($theme_id);
@@ -225,29 +225,34 @@ class Add_New extends Page
 ?>
   </div>
   <input type="hidden" id="g-add-new-theme-id" name="themeId" value="<?php echo esc_attr($first_theme_id)?>" />
-  <?php foreach ($sample_definitions as $sample_theme_id => $sample) :
-    $is_selected_theme = ($sample_theme_id === $first_theme_id);
-    // Fields in a hidden section start disabled so a no-JS submit cannot seed
-    // the wrong theme's content; groove-main.js re-enables the visible one.
-    $field_disabled = $is_selected_theme ? '' : ' disabled="disabled"';
-    $field_id = 'seed_sample_content_' . sanitize_key($sample_theme_id);
-    ?>
-  <div class="<?php echo $is_selected_theme ? '' : 'hidden'; ?> my-5"
-    data-add-new-theme-target="<?php echo esc_attr($sample_theme_id); ?>" data-disable-hidden-fields="1">
-    <label for="<?php echo esc_attr($field_id); ?>" class="inline-flex items-center text-sm text-gray-800">
-      <input type="hidden" name="seed_sample_content" value="0"<?php echo $field_disabled; ?> />
-      <input type="checkbox" id="<?php echo esc_attr($field_id); ?>" name="seed_sample_content" value="1"
-        class="mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"<?php echo $field_disabled; ?> />
-      <?php echo esc_html($sample['label']); ?>
-    </label>
-    <?php if ($sample['description'] !== '') : ?>
-    <p class="m-0 mt-2 text-xs text-gray-500">
-      <?php echo esc_html($sample['description']); ?>
-    </p>
-    <?php endif; ?>
-  </div>
-  <?php endforeach; ?>
   <div class="g-folio__theme-button">
+    <?php foreach ($sample_definitions as $sample_theme_id => $sample) :
+      $is_selected_theme = ($sample_theme_id === $first_theme_id);
+      // Fields in a hidden section start disabled so a no-JS submit cannot seed
+      // the wrong theme's content; groove-main.js re-enables the visible one.
+      $field_disabled = $is_selected_theme ? '' : ' disabled="disabled"';
+      $field_id = 'seed_sample_content_' . sanitize_key($sample_theme_id);
+      ?>
+    <div class="g-folio__sample-toggle<?php echo $is_selected_theme ? '' : ' hidden'; ?>"
+      data-add-new-theme-target="<?php echo esc_attr($sample_theme_id); ?>" data-disable-hidden-fields="1">
+      <label for="<?php echo esc_attr($field_id); ?>" class="inline-flex items-center text-sm text-gray-800">
+        <input type="hidden" name="seed_sample_content" value="0"<?php echo $field_disabled; ?> />
+        <input type="checkbox" id="<?php echo esc_attr($field_id); ?>" name="seed_sample_content" value="1"
+          class="mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"<?php echo $field_disabled; ?> />
+        <?php echo esc_html($sample['label']); ?>
+      </label>
+      <?php if ($sample['description'] !== '') : ?>
+      <?php /* The full sentence would crowd the footer, so it waits behind the
+               icon. aria-label carries the same text as the bubble, so the
+               description survives even when the tooltip script has not run. */ ?>
+      <button type="button" class="g-folio__sample-info g-tooltip-button g-tooltip-button--wrap"
+        aria-label="<?php echo esc_attr($sample['description']); ?>"
+        data-tooltip-text="<?php echo esc_attr($sample['description']); ?>"<?php echo $field_disabled; ?>>
+        <span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
+      </button>
+      <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
     <button type="submit" class="button button-primary">
       <?php echo esc_html__('Continue', 'groove'); ?>
     </button>

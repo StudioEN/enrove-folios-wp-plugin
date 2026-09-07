@@ -493,6 +493,18 @@ body.groove .g-tooltip-button .g-tooltip-bubble {
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
+/* Labels are short enough to stay on one line; a sentence of explanation is
+   not, so this variant lets the bubble wrap and sets it left-ranged. */
+body.groove .g-tooltip-button--wrap .g-tooltip-bubble {
+  white-space: normal;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+  padding: 8px 10px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+}
+
 body.groove .g-tooltip-button .g-tooltip-arrow {
   content: "";
   position: absolute;
@@ -845,9 +857,67 @@ body.groove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible
   scrollbar-color: var(--g-gray-20) var(--g-gray-5);
 }
 
+/* Add New footer: the sample-content toggle rides on the leading edge of the
+   action row, Continue keeps the trailing corner. margin-right on the toggle
+   rather than space-between on the row, so a theme that ships no sample
+   content — and so renders no toggle — does not leave Continue at the left. */
 .g-folio__theme-button {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 12px;
+  /* The sample-content block used to carry this gap above Continue; it now
+     sits in the row, so the row owns the separation from the theme grid. */
+  margin-top: 20px;
+}
+
+body.groove .g-folio__sample-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  min-width: 0;
+}
+
+/* Tailwind emits .hidden inside @layer utilities, and an unlayered rule beats a
+   layered one whatever the specificity — so the display:flex above would defeat
+   the bare .hidden the JS toggles, and every theme's row would show at once.
+   This rule is unlayered too, and more specific, so it takes hiding back. */
+body.groove .g-folio__sample-toggle.hidden {
+  display: none;
+}
+
+body.groove .g-folio__sample-info {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: var(--g-gray-30);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  transition: color 0.15s ease;
+}
+
+body.groove .g-folio__sample-info:hover,
+body.groove .g-folio__sample-info:focus-visible {
+  color: var(--g-gray-60);
+}
+
+body.groove .g-folio__sample-info:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+}
+
+body.groove .g-folio__sample-info .dashicons {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
 }
 
 .g-folio__theme-thumb {

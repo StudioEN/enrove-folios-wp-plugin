@@ -19,6 +19,151 @@ jQuery(function () {
     }
   }
 
+  // Hover/focus tooltip for icon-only controls. Lives at the top of the file,
+  // not inside a page branch: the folio editor's font resets and copy-link were
+  // the first callers, the Add New sample-content hint is the next, and any
+  // screen that needs one should be able to reach it.
+  function createAdaptiveTooltip(buttonInput, defaultText) {
+    const tooltipBtn = buttonInput && buttonInput.jquery ? buttonInput : jQuery(buttonInput)
+    if (!tooltipBtn.length) {
+      return null
+    }
+
+    let tooltipResetTimer = null
+    let tooltipBubble = tooltipBtn.find('.g-tooltip-bubble')
+    let tooltipArrow = tooltipBtn.find('.g-tooltip-arrow')
+
+    if (!tooltipBubble.length) {
+      tooltipBubble = jQuery('<span class="g-tooltip-bubble" aria-hidden="true"></span>')
+      tooltipBtn.append(tooltipBubble)
+    }
+
+    if (!tooltipArrow.length) {
+      tooltipArrow = jQuery('<span class="g-tooltip-arrow" aria-hidden="true"></span>')
+      tooltipBtn.append(tooltipArrow)
+    }
+
+    function setTooltipText(text) {
+      const normalizedText = String(text || '')
+      tooltipBubble.text(normalizedText)
+      tooltipBtn.attr('data-tooltip-text', normalizedText)
+      if (normalizedText) {
+        tooltipBtn.attr('aria-label', normalizedText)
+      }
+    }
+
+    function clamp(value, min, max) {
+      if (max < min) {
+        return min
+      }
+      return Math.max(min, Math.min(value, max))
+    }
+
+    function updateTooltipPlacement() {
+      const buttonNode = tooltipBtn.get(0)
+      const tooltipNode = tooltipBubble.get(0)
+      if (!buttonNode || !tooltipNode) {
+        return
+      }
+
+      const buttonRect = buttonNode.getBoundingClientRect()
+      const tooltipRect = tooltipNode.getBoundingClientRect()
+      if (!tooltipRect.width || !tooltipRect.height) {
+        return
+      }
+
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight
+      const adminBar = document.getElementById('wpadminbar')
+      let topInset = 0
+      if (adminBar) {
+        const adminBarRect = adminBar.getBoundingClientRect()
+        if (adminBarRect.bottom > 0) {
+          topInset = adminBarRect.bottom
+        }
+      }
+
+      const viewportPadding = 8
+      const tooltipGap = 8
+      const tooltipArrowSize = 5
+      const safeTop = Math.max(viewportPadding, topInset + viewportPadding)
+
+      const requiredVerticalSpace = tooltipRect.height + tooltipGap + tooltipArrowSize
+      const requiredHorizontalSpace = tooltipRect.width + tooltipGap + tooltipArrowSize
+
+      const availableTop = buttonRect.top - safeTop
+      const availableBottom = viewportHeight - buttonRect.bottom - viewportPadding
+      const availableLeft = buttonRect.left - viewportPadding
+      const availableRight = viewportWidth - buttonRect.right - viewportPadding
+
+      let placement = 'right'
+      if (availableTop >= requiredVerticalSpace) {
+        placement = 'top'
+      } else if (availableBottom >= requiredVerticalSpace) {
+        placement = 'bottom'
+      } else if (availableLeft >= requiredHorizontalSpace) {
+        placement = 'left'
+      } else if (availableRight >= requiredHorizontalSpace) {
+        placement = 'right'
+      }
+
+      let shiftX = 0
+      let shiftY = 0
+      if (placement === 'top' || placement === 'bottom') {
+        const anchorCenterX = buttonRect.left + (buttonRect.width / 2)
+        const minCenterX = viewportPadding + (tooltipRect.width / 2)
+        const maxCenterX = viewportWidth - viewportPadding - (tooltipRect.width / 2)
+        const clampedCenterX = clamp(anchorCenterX, minCenterX, maxCenterX)
+        shiftX = clampedCenterX - anchorCenterX
+      } else {
+        const anchorCenterY = buttonRect.top + (buttonRect.height / 2)
+        const minCenterY = safeTop + (tooltipRect.height / 2)
+        const maxCenterY = viewportHeight - viewportPadding - (tooltipRect.height / 2)
+        const clampedCenterY = clamp(anchorCenterY, minCenterY, maxCenterY)
+        shiftY = clampedCenterY - anchorCenterY
+      }
+
+      tooltipBtn.attr('data-tooltip-placement', placement)
+      buttonNode.style.setProperty('--g-tooltip-shift-x', shiftX + 'px')
+      buttonNode.style.setProperty('--g-tooltip-shift-y', shiftY + 'px')
+    }
+
+    function showTooltip(text, autoHideMs = 0, resetText = '') {
+      if (typeof text !== 'undefined') {
+        setTooltipText(text)
+      }
+      updateTooltipPlacement()
+      tooltipBtn.addClass('is-tooltip-visible')
+      clearTimeout(tooltipResetTimer)
+      if (autoHideMs > 0) {
+        tooltipResetTimer = setTimeout(function () {
+          if (resetText !== '') {
+            setTooltipText(resetText)
+          }
+          tooltipBtn.removeClass('is-tooltip-visible')
+        }, autoHideMs)
+      }
+    }
+
+    const resolvedDefaultText = String(defaultText || tooltipBtn.data('tooltip-text') || tooltipBtn.attr('aria-label') || '')
+    setTooltipText(resolvedDefaultText)
+    tooltipBtn.attr('data-tooltip-placement', 'top')
+
+    tooltipBtn.on('mouseenter focus', function () {
+      updateTooltipPlacement()
+    })
+
+    jQuery(window).on('resize scroll', function () {
+      if (tooltipBtn.hasClass('is-tooltip-visible') || tooltipBtn.is(':hover') || tooltipBtn.is(':focus')) {
+        updateTooltipPlacement()
+      }
+    })
+
+    return {
+      show: showTooltip,
+    }
+  }
+
   const Groove = Object.create({
     screenId: settings.screenId || window.GROOVE_SCREEN_ID || '',
     themeId: settings.themeId || window.GROOVE_THEME_ID || null,
@@ -438,147 +583,6 @@ jQuery(function () {
         saveBtn.text(originalLabel)
       })
     })
-
-    function createAdaptiveTooltip(buttonInput, defaultText) {
-      const tooltipBtn = buttonInput && buttonInput.jquery ? buttonInput : jQuery(buttonInput)
-      if (!tooltipBtn.length) {
-        return null
-      }
-
-      let tooltipResetTimer = null
-      let tooltipBubble = tooltipBtn.find('.g-tooltip-bubble')
-      let tooltipArrow = tooltipBtn.find('.g-tooltip-arrow')
-
-      if (!tooltipBubble.length) {
-        tooltipBubble = jQuery('<span class="g-tooltip-bubble" aria-hidden="true"></span>')
-        tooltipBtn.append(tooltipBubble)
-      }
-
-      if (!tooltipArrow.length) {
-        tooltipArrow = jQuery('<span class="g-tooltip-arrow" aria-hidden="true"></span>')
-        tooltipBtn.append(tooltipArrow)
-      }
-
-      function setTooltipText(text) {
-        const normalizedText = String(text || '')
-        tooltipBubble.text(normalizedText)
-        tooltipBtn.attr('data-tooltip-text', normalizedText)
-        if (normalizedText) {
-          tooltipBtn.attr('aria-label', normalizedText)
-        }
-      }
-
-      function clamp(value, min, max) {
-        if (max < min) {
-          return min
-        }
-        return Math.max(min, Math.min(value, max))
-      }
-
-      function updateTooltipPlacement() {
-        const buttonNode = tooltipBtn.get(0)
-        const tooltipNode = tooltipBubble.get(0)
-        if (!buttonNode || !tooltipNode) {
-          return
-        }
-
-        const buttonRect = buttonNode.getBoundingClientRect()
-        const tooltipRect = tooltipNode.getBoundingClientRect()
-        if (!tooltipRect.width || !tooltipRect.height) {
-          return
-        }
-
-        const viewportWidth = window.innerWidth || document.documentElement.clientWidth
-        const viewportHeight = window.innerHeight || document.documentElement.clientHeight
-        const adminBar = document.getElementById('wpadminbar')
-        let topInset = 0
-        if (adminBar) {
-          const adminBarRect = adminBar.getBoundingClientRect()
-          if (adminBarRect.bottom > 0) {
-            topInset = adminBarRect.bottom
-          }
-        }
-
-        const viewportPadding = 8
-        const tooltipGap = 8
-        const tooltipArrowSize = 5
-        const safeTop = Math.max(viewportPadding, topInset + viewportPadding)
-
-        const requiredVerticalSpace = tooltipRect.height + tooltipGap + tooltipArrowSize
-        const requiredHorizontalSpace = tooltipRect.width + tooltipGap + tooltipArrowSize
-
-        const availableTop = buttonRect.top - safeTop
-        const availableBottom = viewportHeight - buttonRect.bottom - viewportPadding
-        const availableLeft = buttonRect.left - viewportPadding
-        const availableRight = viewportWidth - buttonRect.right - viewportPadding
-
-        let placement = 'right'
-        if (availableTop >= requiredVerticalSpace) {
-          placement = 'top'
-        } else if (availableBottom >= requiredVerticalSpace) {
-          placement = 'bottom'
-        } else if (availableLeft >= requiredHorizontalSpace) {
-          placement = 'left'
-        } else if (availableRight >= requiredHorizontalSpace) {
-          placement = 'right'
-        }
-
-        let shiftX = 0
-        let shiftY = 0
-        if (placement === 'top' || placement === 'bottom') {
-          const anchorCenterX = buttonRect.left + (buttonRect.width / 2)
-          const minCenterX = viewportPadding + (tooltipRect.width / 2)
-          const maxCenterX = viewportWidth - viewportPadding - (tooltipRect.width / 2)
-          const clampedCenterX = clamp(anchorCenterX, minCenterX, maxCenterX)
-          shiftX = clampedCenterX - anchorCenterX
-        } else {
-          const anchorCenterY = buttonRect.top + (buttonRect.height / 2)
-          const minCenterY = safeTop + (tooltipRect.height / 2)
-          const maxCenterY = viewportHeight - viewportPadding - (tooltipRect.height / 2)
-          const clampedCenterY = clamp(anchorCenterY, minCenterY, maxCenterY)
-          shiftY = clampedCenterY - anchorCenterY
-        }
-
-        tooltipBtn.attr('data-tooltip-placement', placement)
-        buttonNode.style.setProperty('--g-tooltip-shift-x', shiftX + 'px')
-        buttonNode.style.setProperty('--g-tooltip-shift-y', shiftY + 'px')
-      }
-
-      function showTooltip(text, autoHideMs = 0, resetText = '') {
-        if (typeof text !== 'undefined') {
-          setTooltipText(text)
-        }
-        updateTooltipPlacement()
-        tooltipBtn.addClass('is-tooltip-visible')
-        clearTimeout(tooltipResetTimer)
-        if (autoHideMs > 0) {
-          tooltipResetTimer = setTimeout(function () {
-            if (resetText !== '') {
-              setTooltipText(resetText)
-            }
-            tooltipBtn.removeClass('is-tooltip-visible')
-          }, autoHideMs)
-        }
-      }
-
-      const resolvedDefaultText = String(defaultText || tooltipBtn.data('tooltip-text') || tooltipBtn.attr('aria-label') || '')
-      setTooltipText(resolvedDefaultText)
-      tooltipBtn.attr('data-tooltip-placement', 'top')
-
-      tooltipBtn.on('mouseenter focus', function () {
-        updateTooltipPlacement()
-      })
-
-      jQuery(window).on('resize scroll', function () {
-        if (tooltipBtn.hasClass('is-tooltip-visible') || tooltipBtn.is(':hover') || tooltipBtn.is(':focus')) {
-          updateTooltipPlacement()
-        }
-      })
-
-      return {
-        show: showTooltip,
-      }
-    }
 
     createAdaptiveTooltip('#g-reset-header-font', 'Reset font')
     createAdaptiveTooltip('#g-reset-body-font', 'Reset font')
@@ -1155,6 +1159,13 @@ jQuery(function () {
       if (nextCard) {
         selectAddNewTheme(nextCard)
       }
+    })
+
+    // What the sample content actually seeds is a sentence too long to sit in
+    // the footer next to Continue, so it hangs off an info button instead. One
+    // per theme: only the selected theme's row is ever on screen.
+    jQuery('.g-folio__sample-info').each(function () {
+      createAdaptiveTooltip(this)
     })
 
     const initialSelectedCard = jQuery(themeCardsSelector + '[aria-checked="true"]').first()

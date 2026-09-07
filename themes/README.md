@@ -694,7 +694,7 @@ Themes that need their own fields store them as **post meta on the folio** and a
       $tabs['proposal'] = ['label' => …, 'attrs' => ['data-theme-target' => 'groove-proposal']];
   }
   ```
-  `data-theme-target` / `data-add-new-theme-target` are handled in groove-main.js:1047 and :1093 —
+  `data-theme-target` / `data-add-new-theme-target` are handled in groove-main.js:1051 and :1097 —
   elements show only while that theme is selected in the picker, without a page reload.
 - The theme reads them back in `get_data()` into `$this->proposal_meta`.
 - Defaults are declared in [fields/folio-fields.php](../fields/folio-fields.php).
