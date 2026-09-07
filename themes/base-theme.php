@@ -309,7 +309,7 @@ abstract class Base_Theme extends Assets
    * Title a new folio takes when the site has no explicit default of its own.
    *
    * Lets each theme name its output in its own terms — an issue, a proposal, an
-   * eBook — instead of every folio starting life as "A new folio". Themes that
+   * eBook — instead of every folio starting life as "A New Folio". Themes that
    * omit the key fall back to that generic title in Themes_Manager.
    *
    * @return string  Empty when the theme states no preference.

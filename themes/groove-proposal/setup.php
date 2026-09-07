@@ -1,7 +1,7 @@
 <?php
 return [
   'name' => 'Groove Proposal',
-  'default_title' => 'A new proposal',
+  'default_title' => 'A New Proposal',
   'thumbnail' => 'theme-thumb.png',
   'cover' => 'theme-cover.jpg',
   'image_set' => 'studio',

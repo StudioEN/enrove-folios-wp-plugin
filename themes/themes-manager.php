@@ -245,7 +245,7 @@ class Themes_Manager extends Assets
      */
     public static function get_default_folio_title(string $theme_id): string
     {
-        $fallback = __('A new folio', 'groove');
+        $fallback = __('A New Folio', 'groove');
 
         if ($theme_id === '' || !isset(self::$registry[$theme_id]['cover_class'])) {
             return $fallback;
