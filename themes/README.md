@@ -52,7 +52,7 @@ and cache-busted by `filemtime()`.
 | Theme | Character | Learn from it |
 |-------|-----------|---------------|
 | [folio-starter/](folio-starter/) | Minimal, no JS, no nav pane | The baseline shape of a theme |
-| [groove-ebook/](groove-ebook/) | Minimal + full-bleed cover, frosted chrome | Cross-document view transitions with no JS; `@supports`-guarded `backdrop-filter` |
+| [groove-ebook/](groove-ebook/) | Minimal + full-bleed cover, frosted chrome, book blocks | Cross-document view transitions with no JS; `@supports`-guarded `backdrop-filter`; a block kit styled entirely from `theme.css` |
 | [groove-newsletter/](groove-newsletter/) | Shared nav pane, scoped tokens, view transitions | `dependencies`, `body.groove .gn` scoping |
 | [groove-magazine/](groove-magazine/) | Runtime palette extraction from feature images | Theme JS, dark mode bootstrap |
 | [groove-proposal/](groove-proposal/) | Folio-level meta fields, custom blocks, dark mode | Theme-specific admin UI + blocks |
@@ -705,9 +705,26 @@ notably the accent/background maps in `includes/folio-preview-template.php`.
 
 ### Custom blocks
 
+Two themes ship blocks: `groove-proposal` (fourteen, with folio-level settings behind them) and
+`groove-ebook` (seven, no settings, and an editor enqueue driven by one manifest array rather than a
+`wp_enqueue_script` call per block).
+
 `blocks.php` (loaded via `dependencies`) registers server-rendered blocks with
 `register_block_type(..., ['render_callback' => …])`, adds a block category via `block_categories_all`,
 and enqueues editor JS on `enqueue_block_editor_assets` **gated on `$screen->post_type === 'groove_folio_page'`**.
+
+Seed your blocks into `sample-content.php` — an empty inserter does not explain what a block is for. Most
+seed as literal block comments. One that carries **markup** in an attribute cannot: `<`, `>`, `&` and `--`
+have to be escaped before the JSON can sit inside an HTML comment, which is what `serializeAttributes()`
+in `@wordpress/blocks` does on save. Escape them the same way and the seeded block is byte-identical to
+what the editor writes back, instead of showing a diff the first time somebody saves the page. See the
+`$block()` helper in `groove-ebook/sample-content.php`.
+
+For placeholder imagery, `Themes_Manager::theme_image_url($theme, $role)` gives the picture and one of two
+credit helpers gives its attribution: `theme_image_caption()` returns a `<figcaption>` for `core/image`,
+`theme_image_credit()` returns the bare line for a block with a `credit` field of its own. Both carry the
+Pexels links the licence requires, and both return `''` before the curator has run — so a theme must
+tolerate an empty credit rather than print "Photo by  on Pexels".
 Editor scripts depend on `['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components']` and are plain
 `wp.element.createElement` JS — no JSX, no build step. Block markup uses the theme's private prefix
 (`gp-metrics__value`) and is styled from `assets/css/theme.css`.

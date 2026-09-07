@@ -32,8 +32,13 @@ body.groove .g-folio__theme-2-page {
   --folio-on-accent: #fff;
   --folio-on-ground: #fff;
 
-  /* Lines */
+  /* Lines. --folio-rule is the near-white hairline the chrome already used;
+     --folio-rule-strong is filled because the book blocks below consume it —
+     an epigraph's left rule and a section break's short rule both disappear at
+     #F0F0F1. Its value is the contract's own fallback, stated here rather than
+     inherited so the slot is filled on purpose. */
   --folio-rule: #F0F0F1;
+  --folio-rule-strong: #DCDCDE;
 
   /* Accent — links and nav items. */
   --folio-accent: #3858E9;
@@ -120,6 +125,12 @@ body.groove .g-folio__theme-2-page {
      and the scroll-margin that keeps an anchored heading from landing under
      it — so it is one number, not four. */
   --ge-navbar-h: 48px;
+
+  /* The reading card's padding. A number rather than a literal for the same
+     reason as the bar's height: a plate that bleeds to the edge of the card
+     cancels this padding with a negative margin, and the two have to be the
+     same value at every width or the picture lands short of the edge. */
+  --ge-card-pad: var(--folio-space-5);
 
   --ge-brief-author: #F0F6FC;
   --ge-brief-copyright: #9EC2E6;
@@ -1017,7 +1028,7 @@ body.groove .g-folio__theme-2-page {
 .g-folio__theme-2-page .g-folio__theme-page-content {
   background-color: var(--folio-surface);
   width: min(954px, 100%);
-  padding: 24px;
+  padding: var(--ge-card-pad);
   box-sizing: border-box;
 }
 
@@ -1146,6 +1157,405 @@ body.groove .g-folio__theme-2-page {
 }
 
 
+/* ── Book furniture ─────────────────────────────────────────────────────────
+   The seven blocks registered in blocks.php. Core Gutenberg already sets a
+   book's running text — paragraphs with drop caps, headings, images, lists,
+   footnotes — and none of that is restyled here. These are the things a book
+   puts AROUND its prose; the argument for the set is in blocks.php.
+
+   Two constraints shape every rule below.
+
+   The first is that this file has to say everything. A folio renders through
+   the site's own WordPress front end, so the active site theme's stylesheet
+   loads beside this one and has opinions about figure, blockquote, cite, ul,
+   ol, li and h3 — every one of which appears in this kit. So each block states
+   its family, size, colour and margins outright rather than inheriting and
+   hoping. It is the same reason the interaction states further up had to be
+   written at all: anything this file leaves unsaid, some other stylesheet says
+   instead.
+
+   The second is that the kit is monochrome, and that is a decision with a
+   number behind it. --folio-accent-2, this theme's green, measures 2.8:1 on
+   the white card — under the 4.5:1 floor for body text and under the 3:1 one
+   for large text as well. It appears exactly once below, as the pull quote's
+   rule, which carries no type. Every label here is --folio-text-muted at
+   10:1 instead, and --folio-text-subtle (3.25:1) is spent on three marks and
+   nothing else: the dash before an epigraph's attribution, the dash before a
+   summary point, and the section break's glyph. All three are decoration, and
+   two of them are generated content, which is why they are dashes and not
+   words — a screen reader that reads CSS content aloud has nothing to say.
+
+   That restraint suits the material anyway. The blue field and the green
+   numerals are where this theme spends its colour; the reading card is where
+   the reader should stop noticing the design and start reading the book.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* The card contains its floats. Only the inset pull quote below floats, and
+   without a formatting context here it would hang out of the bottom of the
+   white card whenever it was the last thing on the page. flow-root rather than
+   overflow: hidden, which would also clip the bleeding plate. */
+.g-folio__theme-2-page .g-folio__theme-page-content {
+  display: flow-root;
+}
+
+/* And each block that has an edge of its own establishes one too. A float
+   shortens the LINE boxes beside it, not the block boxes: without this a
+   summary's rule or an aside's panel would slide underneath a floated quote
+   instead of sitting beside it. The section break is already a flex container,
+   which is a formatting context by definition. */
+.g-folio__theme-2-page .ge-epigraph,
+.g-folio__theme-2-page .ge-aside,
+.g-folio__theme-2-page .ge-plate,
+.g-folio__theme-2-page .ge-summary,
+.g-folio__theme-2-page .ge-references {
+  display: flow-root;
+}
+
+/* Every block below carries its own vertical rhythm, which would otherwise
+   double up against the card's padding at the two ends of the page. */
+.g-folio__theme-2-page .g-folio__theme-page-content > *:first-child {
+  margin-top: 0;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ─── Epigraph ─── */
+
+.g-folio__theme-2-page .ge-epigraph {
+  margin: var(--folio-space-6) 0 var(--folio-space-7);
+  padding-left: var(--folio-space-5);
+  border-left: 1px solid var(--folio-rule-strong);
+  max-width: 34rem;
+}
+
+.g-folio__theme-2-page .ge-epigraph__text {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  quotes: none;
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-body);
+  font-style: italic;
+  font-weight: 400;
+  line-height: var(--folio-leading-body);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-epigraph__attribution {
+  margin-top: var(--folio-space-3);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-meta);
+  font-weight: 500;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text);
+}
+
+/* The dash is drawn, not stored: an author who types their own into the field
+   would otherwise end up with two. */
+.g-folio__theme-2-page .ge-epigraph__attribution::before {
+  content: "\2014\00a0";
+  color: var(--folio-text-subtle);
+}
+
+/* ─── Pull quote ─── */
+
+.g-folio__theme-2-page .ge-pullquote {
+  margin: var(--folio-space-7) 0;
+  padding-top: var(--folio-space-4);
+  /* The one place the green lands on the white card. It carries no type, so
+     its 2.8:1 is a question of texture rather than legibility. */
+  border-top: 2px solid var(--folio-accent-2);
+}
+
+.g-folio__theme-2-page .ge-pullquote__text {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  quotes: none;
+  font-family: var(--folio-font-body);
+  font-size: var(--ge-text-subtitle);
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--folio-text);
+}
+
+/* Inset floats the quote beside the prose, which is what a printed page does
+   with a lifted line. It needs a column wide enough to still read as one, so
+   below that width the block quietly stays full-width — declared here rather
+   than in the responsive section for the same reason the sidebar's query is:
+   this governs one component and nothing else. */
+@media screen and (min-width: 700px) {
+  .g-folio__theme-2-page .ge-pullquote--inset {
+    float: right;
+    clear: right;
+    width: min(22rem, 42%);
+    margin: var(--folio-space-2) 0 var(--folio-space-5) var(--folio-space-6);
+  }
+}
+
+/* ─── Aside ─── */
+
+.g-folio__theme-2-page .ge-aside {
+  margin: var(--folio-space-6) 0;
+  padding: var(--folio-space-4) var(--folio-space-5);
+  background-color: var(--folio-surface-alt);
+  border-radius: 2px;
+}
+
+.g-folio__theme-2-page .ge-aside__label {
+  display: block;
+  margin-bottom: var(--folio-space-2);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-aside__body {
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-meta);
+  line-height: var(--folio-leading-body);
+  color: var(--folio-text-muted);
+}
+
+/* ─── Plate ─── */
+
+.g-folio__theme-2-page .ge-plate {
+  margin: var(--folio-space-7) 0;
+}
+
+.g-folio__theme-2-page .ge-plate__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* A plate that runs to the edge of the reading card. The negative margin has
+   to cancel the card's padding exactly, which is what --ge-card-pad is for. */
+.g-folio__theme-2-page .ge-plate--bleed {
+  margin-inline: calc(var(--ge-card-pad) * -1);
+}
+
+/* The caption is type, so it comes back inside the measure the picture left. */
+.g-folio__theme-2-page .ge-plate--bleed .ge-plate__caption {
+  padding-inline: var(--ge-card-pad);
+}
+
+.g-folio__theme-2-page .ge-plate__caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--folio-space-2);
+  margin-top: var(--folio-space-3);
+  font-family: var(--folio-font-body);
+}
+
+.g-folio__theme-2-page .ge-plate__label {
+  flex: 0 0 auto;
+  font-size: var(--folio-text-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-plate__text {
+  flex: 1 1 12rem;
+  font-size: var(--folio-text-meta);
+  line-height: 1.55;
+  color: var(--folio-text-muted);
+}
+
+/* The credit takes its own line under the caption. Italic and one step down
+   rather than a lighter grey — --folio-text-subtle is 3.25:1 and this is
+   still type someone has to be able to read. */
+.g-folio__theme-2-page .ge-plate__credit {
+  flex: 1 1 100%;
+  font-size: var(--folio-text-label);
+  font-style: italic;
+  line-height: 1.55;
+  color: var(--folio-text-muted);
+}
+
+/* ─── Section break ─── */
+
+.g-folio__theme-2-page .ge-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--folio-space-7) 0;
+  min-height: var(--folio-space-5);
+}
+
+/* Both marks are decoration — the glyph carries aria-hidden and the rule is
+   drawn — so --folio-text-subtle here is a texture choice with no contrast
+   floor to meet. The separator role on the wrapper is what announces the
+   break to a screen reader. */
+.g-folio__theme-2-page .ge-ornament__mark {
+  font-family: var(--folio-font-body);
+  font-size: 1.125rem;
+  line-height: 1;
+  letter-spacing: 0.15em;
+  color: var(--folio-text-subtle);
+}
+
+.g-folio__theme-2-page .ge-ornament--rule::after {
+  content: "";
+  width: var(--folio-space-7);
+  height: 1px;
+  background-color: var(--folio-rule-strong);
+}
+
+/* Nothing drawn at all: the break is the white space, which is what most
+   novels use and what a reader stops seeing fastest. */
+.g-folio__theme-2-page .ge-ornament--blank {
+  margin: var(--folio-space-8) 0;
+  min-height: 0;
+}
+
+/* ─── Chapter summary ─── */
+
+.g-folio__theme-2-page .ge-summary {
+  margin: var(--folio-space-7) 0;
+  padding: var(--folio-space-5) 0;
+  /* Heavier above than below, so the box reads as closing the section it sits
+     under rather than opening the next one. */
+  border-top: 1px solid var(--folio-text);
+  border-bottom: 1px solid var(--folio-rule-strong);
+}
+
+.g-folio__theme-2-page .ge-summary__title {
+  margin: 0 0 var(--folio-space-4);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-summary__points {
+  margin: 0;
+  padding: 0;
+  /* The markup carries role="list": Safari drops list semantics when the
+     marker is removed, and these are a list whether or not they show bullets. */
+  list-style: none;
+}
+
+.g-folio__theme-2-page .ge-summary__point {
+  position: relative;
+  margin: 0 0 var(--folio-space-3);
+  padding-left: var(--folio-space-5);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-body);
+  line-height: var(--folio-leading-body);
+  color: var(--folio-text);
+}
+
+.g-folio__theme-2-page .ge-summary__point:last-child {
+  margin-bottom: 0;
+}
+
+/* A dash rather than a number: numbering these would claim an order the
+   points do not have. */
+.g-folio__theme-2-page .ge-summary__point::before {
+  content: "\2014";
+  position: absolute;
+  left: 0;
+  color: var(--folio-text-subtle);
+}
+
+/* ─── References ─── */
+
+.g-folio__theme-2-page .ge-references {
+  margin: var(--folio-space-7) 0;
+}
+
+.g-folio__theme-2-page .ge-references__title {
+  margin: 0 0 var(--folio-space-4);
+  padding-bottom: var(--folio-space-2);
+  border-bottom: 1px solid var(--folio-rule-strong);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-references__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ge-reference;
+}
+
+.g-folio__theme-2-page .ge-references__entry {
+  position: relative;
+  margin: 0 0 var(--folio-space-4);
+  padding-left: var(--folio-space-6);
+  counter-increment: ge-reference;
+  font-family: var(--folio-font-body);
+  line-height: 1.5;
+}
+
+.g-folio__theme-2-page .ge-references__entry:last-child {
+  margin-bottom: 0;
+}
+
+/* Numbered from a counter rather than the list's own marker, so the number can
+   be set in the muted tier while the entry stays at full strength. It is the
+   citation's handle, not decoration, so it does not go to --folio-text-subtle. */
+.g-folio__theme-2-page .ge-references__entry::before {
+  content: counter(ge-reference) ".";
+  position: absolute;
+  left: 0;
+  font-size: var(--folio-text-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-references__author,
+.g-folio__theme-2-page .ge-references__work,
+.g-folio__theme-2-page .ge-references__note,
+.g-folio__theme-2-page .ge-references__link {
+  display: block;
+}
+
+.g-folio__theme-2-page .ge-references__author {
+  font-size: var(--folio-text-meta);
+  font-weight: 500;
+  color: var(--folio-text);
+}
+
+.g-folio__theme-2-page .ge-references__work {
+  font-size: var(--folio-text-meta);
+  font-style: italic;
+  color: var(--folio-text);
+}
+
+/* A linked title takes the link colour and underline from the prose-link rule
+   above. Without this the cite's own colour would win over what it inherits
+   from the anchor, and the link would look exactly like the entries that are
+   not links. */
+.g-folio__theme-2-page .ge-references__link .ge-references__work {
+  color: inherit;
+}
+
+.g-folio__theme-2-page .ge-references__note {
+  font-size: var(--folio-text-label);
+  color: var(--folio-text-muted);
+}
+
 /* ── Responsive ─────────────────────────────────────────────────────────────
    Three widths and one input type, each with a single job:
 
@@ -1206,8 +1616,10 @@ body.groove .g-folio__theme-2-page {
     padding: var(--folio-space-5) var(--folio-space-4);
   }
 
-  .g-folio__theme-2-page .g-folio__theme-page-content {
-    padding: var(--folio-space-4);
+  /* Written at the same specificity as the token block above — a media query
+     adds none of its own, and `.g-folio__theme-2-page` alone would lose. */
+  body.groove .g-folio__theme-2-page {
+    --ge-card-pad: var(--folio-space-4);
   }
 }
 

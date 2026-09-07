@@ -10,8 +10,19 @@
  *   folio_meta  Extra folio meta written when the seed runs.
  *   pages       Ordered list of ['title', 'content'] folio pages.
  *
- * Groove eBook registers no custom blocks, so this is core Gutenberg only.
  * Its contents rail is built from h2 headings, so every section leads with one.
+ *
+ * The seed mixes core Gutenberg with all seven of the theme's own book blocks
+ * (blocks.php), so a new folio shows what the kit is for rather than listing it
+ * in an empty inserter. Each appears where a book would actually use it: the
+ * epigraph opens a chapter, the summary closes one, the references sit in the
+ * back matter.
+ *
+ * Most blocks are written as literal block comments below, which is the most
+ * readable form. The plates are not: their credit carries the Pexels
+ * attribution links, so the attribute JSON contains markup, and markup has to
+ * be escaped before it can sit inside an HTML comment. $block() does that
+ * escaping the same way the editor does — see the note on it.
  *
  * @package Groove
  */
@@ -32,20 +43,85 @@ $img_texture  = Themes_Manager::theme_image_url($theme, 'texture');
 $img_process  = Themes_Manager::theme_image_url($theme, 'process');
 $img_backdrop = Themes_Manager::theme_image_url($theme, 'backdrop');
 
-$cap_hero     = Themes_Manager::theme_image_caption($theme, 'hero');
-$cap_texture  = Themes_Manager::theme_image_caption($theme, 'texture');
-$cap_process  = Themes_Manager::theme_image_caption($theme, 'process');
 $cap_backdrop = Themes_Manager::theme_image_caption($theme, 'backdrop');
+
+// The plate has a credit field of its own, so it wants the credit line rather
+// than the <figcaption> core/image wants.
+$cr_hero    = Themes_Manager::theme_image_credit($theme, 'hero');
+$cr_texture = Themes_Manager::theme_image_credit($theme, 'texture');
+$cr_process = Themes_Manager::theme_image_credit($theme, 'process');
+
+/**
+ * Serialise one void block comment.
+ *
+ * Attribute JSON sits inside an HTML comment, so four sequences have to be
+ * escaped before they can appear in it: `<`, `>`, `&` and `--`. That is what
+ * serializeAttributes() in @wordpress/blocks does, and doing the same here
+ * means a seeded block is byte-identical to the one the editor writes back the
+ * first time somebody saves the page — no spurious diff, and no broken comment
+ * when a credit contains an anchor.
+ *
+ * Empty attributes are dropped rather than written out as "": the block's own
+ * defaults already cover them, and a seed that only states what it changes is
+ * far easier to read against the block's registration.
+ *
+ * @param string $name  Block name, e.g. 'groove-ebook/plate'.
+ * @param array  $attrs Attributes to state.
+ * @return string
+ */
+$block = static function (string $name, array $attrs): string {
+  $attrs = array_filter($attrs, static function ($value) {
+    return $value !== '' && $value !== false && $value !== null;
+  });
+
+  $json = (string) wp_json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+  $json = str_replace(
+    ['--', '<', '>', '&'],
+    ['\\u002d\\u002d', '\\u003c', '\\u003e', '\\u0026'],
+    $json
+  );
+
+  return '<!-- wp:' . $name . ' ' . $json . ' /-->';
+};
+
+// Three plates, numbered the way a book numbers them: the frontispiece is not
+// a figure, so it is labelled rather than counted, and the two that are
+// figures run in one sequence across chapters rather than restarting.
+$plate_front = $block('groove-ebook/plate', [
+  'url'     => $img_hero,
+  'alt'     => __('An open book resting face down beside a window', 'groove'),
+  'label'   => __('Frontispiece', 'groove'),
+  'caption' => __('The reading moment this book keeps returning to.', 'groove'),
+  'credit'  => $cr_hero,
+  'bleed'   => true,
+]);
+
+$plate_one = $block('groove-ebook/plate', [
+  'url'     => $img_process,
+  'alt'     => __('A workbench mid-project, offcuts and practice pieces pushed to one side', 'groove'),
+  'label'   => __('Fig. 1', 'groove'),
+  'caption' => __('A bench part-way through the work. Everything to the left of the vice is a mistake somebody was allowed to make.', 'groove'),
+  'credit'  => $cr_process,
+]);
+
+$plate_two = $block('groove-ebook/plate', [
+  'url'     => $img_texture,
+  'alt'     => __('Layers of proofing paper stacked and slightly fanned', 'groove'),
+  'label'   => __('Fig. 2', 'groove'),
+  'caption' => __('Eleven proofs of the same page, kept in order. Only the last one was any good, and it needed the other ten.', 'groove'),
+  'credit'  => $cr_texture,
+]);
 
 return array(
   'label'       => __('Create with sample eBook content', 'groove'),
-  'description' => __('Seeds a four-part eBook: a foreword, two full chapters and a colophon, with pull quotes and plate images.', 'groove'),
+  'description' => __('Seeds a four-part eBook — a foreword, two chapters and a colophon — using the whole book kit: epigraphs, plates, section breaks and a reference list.', 'groove'),
   'subtitle'    => __('A short book about working slowly', 'groove'),
   'folio_meta'  => array(),
   'pages'       => array(
     array(
       'title' => __('Foreword', 'groove'),
       'content' => (string) <<<HTML
+{$plate_front}
 <!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">This book began as a complaint. I had spent a decade being paid to make things faster and had started to notice that almost nothing I was proud of had been made quickly. What follows is an attempt to work out whether that was sentiment or evidence.</p>
 <!-- /wp:paragraph -->
@@ -55,18 +131,13 @@ return array(
 <!-- wp:paragraph -->
 <p>Each chapter stands on its own and can be read in about fifteen minutes. They are ordered by argument rather than chronology, so beginning in the middle costs you very little. Where I quote someone, the full source is in the colophon at the back.</p>
 <!-- /wp:paragraph -->
-<!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_hero}" alt="An open book resting face down beside a window"/>{$cap_hero}</figure>
-<!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>A warning</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
 <p>I am not going to argue that slow is good. Plenty of slow work is slow because it is badly organised, and plenty of fast work is fast because someone thought hard in advance. The distinction I care about is different, and it takes the whole book to draw.</p>
 <!-- /wp:paragraph -->
-<!-- wp:separator -->
-<hr class="wp-block-separator has-alpha-channel-opacity"/>
-<!-- /wp:separator -->
+<!-- wp:groove-ebook/ornament {"mark":"asterism"} /-->
 <!-- wp:paragraph -->
 <p>Replace this page with your own front matter — a foreword, a dedication, or simply a summary of what the reader is about to get.</p>
 <!-- /wp:paragraph -->
@@ -75,6 +146,7 @@ HTML,
     array(
       'title' => __('One: The Material of Attention', 'groove'),
       'content' => (string) <<<HTML
+<!-- wp:groove-ebook/epigraph {"text":"The hand is the window on to the mind.","attribution":"Immanuel Kant"} /-->
 <!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">A bookbinder I know can tell, by the sound a signature makes when it is folded, whether the grain is running the right way. She has never explained this to me in a way I could act on. She has simply done it, several thousand times, until the knowledge moved out of her head and into her hands.</p>
 <!-- /wp:paragraph -->
@@ -87,18 +159,14 @@ HTML,
 <!-- wp:paragraph -->
 <p>What transfers instead is a habit of attention: knowing where to look, and knowing when something is slightly wrong before you can say why. That habit is built by repetition under conditions where mistakes are cheap and visible. Remove either condition and the habit does not form.</p>
 <!-- /wp:paragraph -->
-<!-- wp:pullquote -->
-<figure class="wp-block-pullquote"><blockquote><p>The apprentice is not slow because they are learning. They are learning because they are slow.</p></blockquote></figure>
-<!-- /wp:pullquote -->
+<!-- wp:groove-ebook/pull-quote {"text":"The apprentice is not slow because they are learning. They are learning because they are slow."} /-->
 <!-- wp:heading {"level":2} -->
 <h2>Cheap mistakes, visible mistakes</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
 <p>Consider what happens when we optimise a workshop. The offcuts go, the false starts go, the practice pieces go. Each of those is waste by any reasonable measure, and each of them was the only place a beginner could be wrong without consequence. We did not remove the learning deliberately. We removed the conditions and the learning left with them.</p>
 <!-- /wp:paragraph -->
-<!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_process}" alt="A workbench mid-project, offcuts and practice pieces pushed to one side"/>{$cap_process}</figure>
-<!-- /wp:image -->
+{$plate_one}
 <!-- wp:heading {"level":2} -->
 <h2>What this costs</h2>
 <!-- /wp:heading -->
@@ -114,6 +182,7 @@ HTML,
 <!-- wp:paragraph -->
 <p>The third is the one that decides whether the other two were worth spending.</p>
 <!-- /wp:paragraph -->
+<!-- wp:groove-ebook/summary {"title":"What this chapter argued","points":["Skill leaves the head and moves into the hands, and only repetition moves it.","The offcuts and the practice pieces were the learning, not the waste.","Tolerance for visible failure is the scarce resource — not time, and not material."]} /-->
 HTML,
     ),
     array(
@@ -128,6 +197,7 @@ HTML,
 <!-- wp:paragraph -->
 <p>Most workplaces reward the demonstration of competence rather than its acquisition. This is not malice; competence is legible and acquisition is not. But the incentive is real, and it teaches people to show work only once it is safe to show, which is precisely when feedback has stopped being useful.</p>
 <!-- /wp:paragraph -->
+<!-- wp:groove-ebook/aside {"label":"A caveat","body":"None of this is an argument against deadlines. A deadline decides when the work stops. It is not a verdict on how the work was made."} /-->
 <!-- wp:quote -->
 <blockquote class="wp-block-quote"><!-- wp:paragraph -->
 <p>Show me the version you are embarrassed by. The finished one has nothing left to teach either of us.</p>
@@ -148,9 +218,7 @@ HTML,
 <li>Keep the rejected versions somewhere you will see them. They are the only record of why the final thing looks the way it does.</li>
 <!-- /wp:list-item --></ol>
 <!-- /wp:list -->
-<!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_texture}" alt="Layers of proofing paper stacked and slightly fanned"/>{$cap_texture}</figure>
-<!-- /wp:image -->
+{$plate_two}
 <!-- wp:heading {"level":2} -->
 <h2>Where this leaves us</h2>
 <!-- /wp:heading -->
@@ -178,6 +246,10 @@ HTML,
 <!-- /wp:list-item --></ul>
 <!-- /wp:list -->
 <!-- wp:heading {"level":2} -->
+<h2>Further reading</h2>
+<!-- /wp:heading -->
+<!-- wp:groove-ebook/references {"title":"","entries":[{"author":"Sennett, Richard","work":"The Craftsman","note":"Yale University Press, 2008","url":""},{"author":"Pye, David","work":"The Nature and Art of Workmanship","note":"Cambridge University Press, 1968","url":""},{"author":"Sudjic, Deyan","work":"The Language of Things","note":"Penguin, 2008","url":""}]} /-->
+<!-- wp:heading {"level":2} -->
 <h2>Thanks</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
@@ -186,9 +258,7 @@ HTML,
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
 <figure class="wp-block-image size-large"><img src="{$img_backdrop}" alt="A soft, near-monochrome surface used as a closing plate"/>{$cap_backdrop}</figure>
 <!-- /wp:image -->
-<!-- wp:separator -->
-<hr class="wp-block-separator has-alpha-channel-opacity"/>
-<!-- /wp:separator -->
+<!-- wp:groove-ebook/ornament {"mark":"rule"} /-->
 <!-- wp:paragraph -->
 <p>Replace this page with your own colophon: edition details, sources, permissions and thanks.</p>
 <!-- /wp:paragraph -->

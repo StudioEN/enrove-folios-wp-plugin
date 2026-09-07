@@ -379,6 +379,23 @@ class Themes_Manager extends Assets
     }
 
     /**
+     * The same credit as a bare line, for a theme block that prints its own
+     * element around it.
+     *
+     * theme_image_caption() returns a <figcaption> because core/image expects
+     * one. A theme block with a `credit` attribute expects the opposite: the
+     * text only, because the block already has a place to put it.
+     *
+     * @param string $theme_id
+     * @param string $role
+     * @return string  Credit HTML with no wrapper element, or ''.
+     */
+    public static function theme_image_credit(string $theme_id, string $role): string
+    {
+        return static::sample_image_credit_line(static::sample_image_slug($theme_id, $role));
+    }
+
+    /**
      * Absolute path of a curated Pexels placeholder, by manifest slug.
      *
      * @param string $slug
@@ -461,6 +478,40 @@ class Themes_Manager extends Assets
         }
 
         return '<figcaption class="wp-block-image__caption">' . $credit . '</figcaption>';
+    }
+
+    /**
+     * "Photo by X on Pexels" with its links but no wrapper element.
+     *
+     * Credits::render() always wraps its text — a <figcaption> or a <span>,
+     * depending on context — and a block that stores this in an attribute is
+     * going to print an element of its own around it. The wrapper is unwrapped
+     * here rather than nested: the attribute is edited as rich text, where a
+     * stray outer span is something an author can half-delete, and a
+     * half-deleted wrapper is worse than no wrapper at all. The anchors stay,
+     * because the Pexels licence asks for them.
+     *
+     * @param string $slug
+     * @return string  Credit HTML, or '' when the manifest has no record.
+     */
+    public static function sample_image_credit_line(string $slug): string
+    {
+        $slug = sanitize_key($slug);
+        if ($slug === '' || !class_exists('\Groove\Pexels\Credits')) {
+            return '';
+        }
+
+        $credit = trim((string) \Groove\Pexels\Credits::render($slug, 'inline'));
+        if ($credit === '') {
+            return '';
+        }
+
+        if (preg_match('#^<span\b[^>]*>(.*)</span>$#is', $credit, $matches)) {
+            $credit = trim($matches[1]);
+        }
+
+        // Stored in post_content, so filtered the way WordPress filters bodies.
+        return $credit === '' ? '' : wp_kses_post($credit);
     }
 
     // ── Theme factories ────────────────────────────────────────────────────
