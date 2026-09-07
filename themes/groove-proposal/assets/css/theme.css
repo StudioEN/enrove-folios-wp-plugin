@@ -5,99 +5,145 @@
 
 /* ─── Design Tokens: Light Mode ─── */
 
+/* Shared contract: the --folio-* slots (see assets/css/folio-contract.css) carry the
+   literal values; every --gp-* token is an alias pointing at its slot. The scheme
+   blocks below redeclare the SLOTS only — these aliases live on :root too, so they
+   resolve against whichever slot value wins for the current scheme. Tokens with no
+   slot (--gp-accent-mid, --gp-warm-mid, --gp-nav-width) stay private and are
+   declared literally in every block that needs them. */
+
 :root {
   /* Typography
      Display: Fraunces (italic, optical, characterful serif)
      Sans: Inter (high-legibility, neutral body & UI)
      Both loaded via PHP enqueue; user-selected fonts override via --g-folio-* */
-  --gp-font-display: var(--g-folio-header-font, 'Fraunces', Georgia, 'Times New Roman', serif);
-  --gp-font-sans: var(--g-folio-body-font, 'Inter', system-ui, -apple-system, sans-serif);
+  --folio-font-heading: var(--g-folio-header-font, 'Fraunces', Georgia, 'Times New Roman', serif);
+  --folio-font-body: var(--g-folio-body-font, 'Inter', system-ui, -apple-system, sans-serif);
+  --gp-font-display: var(--folio-font-heading);
+  --gp-font-sans: var(--folio-font-body);
 
-  /* Surface — near-neutral paper with a whisper of warmth (not oat/cream, not blue-grey) */
-  --gp-bg: #ededeb;
-  --gp-surface: #f7f7f5;
-  --gp-surface-muted: #e3e3e0;
-  --gp-border: rgba(27, 26, 24, 0.12);
-  --gp-border-strong: rgba(27, 26, 24, 0.2);
+  /* Surface — near-neutral paper with a whisper of warmth (not oat/cream, not blue-grey)
+     Note: --folio-surface-alt recesses here rather than lifts — the slot is
+     direction-neutral by design. */
+  --folio-ground: #ededeb;
+  --folio-surface: #f7f7f5;
+  --folio-surface-alt: #e3e3e0;
+  --folio-rule: rgba(27, 26, 24, 0.12);
+  --folio-rule-strong: rgba(27, 26, 24, 0.2);
+  --gp-bg: var(--folio-ground);
+  --gp-surface: var(--folio-surface);
+  --gp-surface-muted: var(--folio-surface-alt);
+  --gp-border: var(--folio-rule);
+  --gp-border-strong: var(--folio-rule-strong);
 
   /* Text — neutral ink, a shade warm */
-  --gp-text: #1b1a18;
-  --gp-text-muted: #4a4844;
-  --gp-text-subtle: #666259;
+  --folio-text: #1b1a18;
+  --folio-text-muted: #4a4844;
+  --folio-text-subtle: #666259;
+  --gp-text: var(--folio-text);
+  --gp-text-muted: var(--folio-text-muted);
+  --gp-text-subtle: var(--folio-text-subtle);
 
   /* Accent — indigo blue. System colour: links, actions, navigation, active state. */
-  --gp-accent: #27498c;
-  --gp-accent-hover: #1a4173;
-  --gp-accent-soft: rgba(39, 73, 140, 0.08);
+  --folio-accent: #27498c;
+  --folio-accent-hover: #1a4173;
+  --folio-accent-soft: rgba(39, 73, 140, 0.08);
+  --folio-on-accent: #ffffff;
+  --gp-accent: var(--folio-accent);
+  --gp-accent-hover: var(--folio-accent-hover);
+  --gp-accent-soft: var(--folio-accent-soft);
+  --gp-on-accent: var(--folio-on-accent);
+  /* private — no contract slot for a mid-strength accent wash */
   --gp-accent-mid: rgba(39, 73, 140, 0.22);
-  --gp-on-accent: #ffffff;
 
   /* Warm secondary — bronze, roughly complementary to the accent. Used sparingly for
-     the human/evidence moments (quotes, stat rules, tags) so the page isn't all cool. */
-  --gp-warm: #855c22;
-  --gp-warm-soft: rgba(133, 92, 34, 0.1);
+     the human/evidence moments (quotes, stat rules, tags) so the page isn't all cool.
+     This is the contract's second hue: --folio-accent-2 is emphasis that is NOT
+     interactive, as against --folio-accent, which owns links and buttons. */
+  --folio-accent-2: #855c22;
+  --folio-accent-2-soft: rgba(133, 92, 34, 0.1);
+  --gp-warm: var(--folio-accent-2);
+  --gp-warm-soft: var(--folio-accent-2-soft);
+  /* private — a third step neither the accent nor the contract has */
   --gp-warm-mid: rgba(133, 92, 34, 0.28);
 
   /* Misc */
-  --gp-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.06);
-  --gp-overlay: rgba(20, 18, 15, 0.52);
+  --folio-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.06);
+  --folio-overlay: rgba(20, 18, 15, 0.52);
+  --gp-overlay: var(--folio-overlay);
+
+  /* Motion — the contract wants duration and curve as separate slots. --gp-transition
+     keeps its exact packed literal so every existing `transition:` shorthand that
+     consumes it is byte-for-byte unchanged. */
+  --folio-dur: 0.2s;
+  --folio-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --gp-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Layout */
+  /* Layout — private, no slot */
   --gp-nav-width: 220px;
 }
 
 /* ─── Dark Mode ─── */
 
-:root.gp-theme-dark {
-  --gp-bg: #181714;
-  --gp-surface: #201f1b;
-  --gp-surface-muted: #2a2823;
-  --gp-border: rgba(235, 233, 228, 0.1);
-  --gp-border-strong: rgba(235, 233, 228, 0.18);
+/* Explicit dark. .gp-theme-dark is written by assets/js/groove-proposal.js and by the
+   pre-paint bootstrap in cover.php / page.php; .folio-scheme-dark is the canonical
+   contract name, added alongside it. Slots only — plus the private tokens that have
+   no slot. The --gp-* aliases on :root above resolve against these. */
 
-  --gp-text: #ebe9e4;
-  --gp-text-muted: #bab6ae;
-  --gp-text-subtle: #9a958c;
+:root.gp-theme-dark,
+:root.folio-scheme-dark {
+  --folio-ground: #181714;
+  --folio-surface: #201f1b;
+  --folio-surface-alt: #2a2823;
+  --folio-rule: rgba(235, 233, 228, 0.1);
+  --folio-rule-strong: rgba(235, 233, 228, 0.18);
 
-  --gp-accent: #8fadde;
-  --gp-accent-hover: #aac2e8;
-  --gp-accent-soft: rgba(143, 173, 222, 0.14);
+  --folio-text: #ebe9e4;
+  --folio-text-muted: #bab6ae;
+  --folio-text-subtle: #9a958c;
+
+  --folio-accent: #8fadde;
+  --folio-accent-hover: #aac2e8;
+  --folio-accent-soft: rgba(143, 173, 222, 0.14);
+  --folio-on-accent: #181714;
   --gp-accent-mid: rgba(143, 173, 222, 0.30);
-  --gp-on-accent: #181714;
 
-  --gp-warm: #d9a961;
-  --gp-warm-soft: rgba(217, 169, 97, 0.14);
+  --folio-accent-2: #d9a961;
+  --folio-accent-2-soft: rgba(217, 169, 97, 0.14);
   --gp-warm-mid: rgba(217, 169, 97, 0.30);
 
-  --gp-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
-  --gp-overlay: rgba(0, 0, 0, 0.68);
+  --folio-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
+  --folio-overlay: rgba(0, 0, 0, 0.68);
 }
 
+/* System dark, but only when no explicit choice has been made — in either vocabulary.
+   The :not() guard is load-bearing: it is what makes an explicit light choice win over
+   the OS preference. Both the legacy and the contract light/dark classes are excluded. */
+
 @media (prefers-color-scheme: dark) {
-  :root:not(.gp-theme-light):not(.gp-theme-dark) {
-    --gp-bg: #181714;
-    --gp-surface: #201f1b;
-    --gp-surface-muted: #2a2823;
-    --gp-border: rgba(235, 233, 228, 0.1);
-    --gp-border-strong: rgba(235, 233, 228, 0.18);
+  :root:not(.gp-theme-light):not(.gp-theme-dark):not(.folio-scheme-light):not(.folio-scheme-dark) {
+    --folio-ground: #181714;
+    --folio-surface: #201f1b;
+    --folio-surface-alt: #2a2823;
+    --folio-rule: rgba(235, 233, 228, 0.1);
+    --folio-rule-strong: rgba(235, 233, 228, 0.18);
 
-    --gp-text: #ebe9e4;
-    --gp-text-muted: #bab6ae;
-    --gp-text-subtle: #9a958c;
+    --folio-text: #ebe9e4;
+    --folio-text-muted: #bab6ae;
+    --folio-text-subtle: #9a958c;
 
-    --gp-accent: #8fadde;
-    --gp-accent-hover: #aac2e8;
-    --gp-accent-soft: rgba(143, 173, 222, 0.14);
+    --folio-accent: #8fadde;
+    --folio-accent-hover: #aac2e8;
+    --folio-accent-soft: rgba(143, 173, 222, 0.14);
+    --folio-on-accent: #181714;
     --gp-accent-mid: rgba(143, 173, 222, 0.30);
-    --gp-on-accent: #181714;
 
-    --gp-warm: #d9a961;
-    --gp-warm-soft: rgba(217, 169, 97, 0.14);
+    --folio-accent-2: #d9a961;
+    --folio-accent-2-soft: rgba(217, 169, 97, 0.14);
     --gp-warm-mid: rgba(217, 169, 97, 0.30);
 
-    --gp-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
-    --gp-overlay: rgba(0, 0, 0, 0.68);
+    --folio-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.3);
+    --folio-overlay: rgba(0, 0, 0, 0.68);
   }
 }
 
@@ -110,8 +156,13 @@
 }
 
 .gp {
-  --gp-font-display: var(--g-folio-header-font, 'Fraunces', Georgia, 'Times New Roman', serif);
-  --gp-font-sans: var(--g-folio-body-font, 'Inter', system-ui, -apple-system, sans-serif);
+  /* Re-declared on the theme root as well as :root so the font slots survive contexts
+     where :root is not the folio's own document. Slots first, aliases pointing at them,
+     so an override of --folio-font-* on .gp still reaches --gp-font-*. */
+  --folio-font-heading: var(--g-folio-header-font, 'Fraunces', Georgia, 'Times New Roman', serif);
+  --folio-font-body: var(--g-folio-body-font, 'Inter', system-ui, -apple-system, sans-serif);
+  --gp-font-display: var(--folio-font-heading);
+  --gp-font-sans: var(--folio-font-body);
   min-height: 100vh;
   color: var(--gp-text);
   background: var(--gp-bg);
@@ -119,6 +170,17 @@
 
 .gp a {
   color: inherit;
+}
+
+/* Focus ring. This theme had none — the only :focus in the file was a
+   :focus-within on the logo strip — so keyboard users had nothing but the
+   browser default, which several of the buttons below suppress. Reads
+   --folio-focus, which defers to the accent and so follows the light/dark
+   scheme and the dynamic palette without restating either. */
+.gp :focus-visible {
+  outline: 2px solid var(--folio-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* ─── Menu icon ─── */
@@ -189,7 +251,8 @@
   content: 'Dark';
 }
 
-:root.gp-theme-dark .gp-theme-toggle::before {
+:root.gp-theme-dark .gp-theme-toggle::before,
+:root.folio-scheme-dark .gp-theme-toggle::before {
   content: 'Light';
 }
 
@@ -2073,27 +2136,33 @@ a.gp-page__footer-arrow:hover::after {
 }
 
 /* Dark mode variant colors */
-:root.gp-theme-dark .gp-callout-box--tip {
+:root.gp-theme-dark .gp-callout-box--tip,
+:root.folio-scheme-dark .gp-callout-box--tip {
   border-left-color: #5cb85c;
 }
 
-:root.gp-theme-dark .gp-callout-box--tip .gp-callout-box__label {
+:root.gp-theme-dark .gp-callout-box--tip .gp-callout-box__label,
+:root.folio-scheme-dark .gp-callout-box--tip .gp-callout-box__label {
   color: #5cb85c;
 }
 
-:root.gp-theme-dark .gp-callout-box--important {
+:root.gp-theme-dark .gp-callout-box--important,
+:root.folio-scheme-dark .gp-callout-box--important {
   border-left-color: var(--gp-warm);
 }
 
-:root.gp-theme-dark .gp-callout-box--important .gp-callout-box__label {
+:root.gp-theme-dark .gp-callout-box--important .gp-callout-box__label,
+:root.folio-scheme-dark .gp-callout-box--important .gp-callout-box__label {
   color: var(--gp-warm);
 }
 
-:root.gp-theme-dark .gp-callout-box--warning {
+:root.gp-theme-dark .gp-callout-box--warning,
+:root.folio-scheme-dark .gp-callout-box--warning {
   border-left-color: #e74c3c;
 }
 
-:root.gp-theme-dark .gp-callout-box--warning .gp-callout-box__label {
+:root.gp-theme-dark .gp-callout-box--warning .gp-callout-box__label,
+:root.folio-scheme-dark .gp-callout-box--warning .gp-callout-box__label {
   color: #e74c3c;
 }
 

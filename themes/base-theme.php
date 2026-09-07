@@ -38,6 +38,16 @@ abstract class Base_Theme extends Assets
     // Shared plugin CSS (admin bar reset, global layout).
     wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], GROOVE_VERSION);
 
+    // The theme contract: the --folio-* slots every theme fills, with WordPress
+    // admin-palette fallbacks. Loaded before theme CSS so a theme's own
+    // declarations win, and after 'groove' so --g-folio-* fonts are in scope.
+    wp_enqueue_style(
+      'groove-folio-contract',
+      $this->get_css_assets_url('folio-contract'),
+      ['groove'],
+      GROOVE_VERSION
+    );
+
     // Per-theme CSS (built-in or installed package).
     $theme_css_path = $this->get_theme_css_path();
     $version = file_exists($theme_css_path) ? filemtime($theme_css_path) : GROOVE_VERSION;
@@ -45,7 +55,7 @@ abstract class Base_Theme extends Assets
     wp_enqueue_style(
       'groove-theme-' . static::get_id(),
       $this->get_theme_css_url(),
-      ['groove'],
+      ['groove', 'groove-folio-contract'],
       $version
     );
 

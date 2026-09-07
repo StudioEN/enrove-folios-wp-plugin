@@ -16,9 +16,12 @@
 .g-folio__theme-1,
 .g-folio__theme-1-page {
   /* Families. --g-folio-header-font / --g-folio-body-font are injected per
-     folio by Base_Theme::enqueue_primary_font_style(). */
-  --fs-font-heading: var(--g-folio-header-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-  --fs-font-body: var(--g-folio-body-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+     folio by Base_Theme::enqueue_primary_font_style().
+     The contract slot carries the stack; --fs-* is the private alias. */
+  --folio-font-heading: var(--g-folio-header-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  --folio-font-body: var(--g-folio-body-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  --fs-font-heading: var(--folio-font-heading);
+  --fs-font-body: var(--folio-font-body);
 
   /* Type scale. Fluid so nothing jumps between tiers. */
   --fs-display: clamp(2.5rem, 1.9rem + 2.6vw, 4rem);
@@ -65,22 +68,62 @@
   --fs-cover-columns: minmax(0, 1fr) minmax(0, 1fr);
   --fs-band-h: clamp(160px, 38vw, 260px);
 
-  /* Colour — one accent, one tint, four greys. */
-  --fs-accent: #3858E9;
-  --fs-accent-hover: #2145D4;
-  --fs-surface: #FFFFFF;
-  --fs-surface-tint: #F0F6FC;
-  --fs-surface-chip: #F6F7F7;
-  --fs-ink: #101517;
-  --fs-ink-muted: #3C434A;
-  --fs-ink-subtle: #646970;
-  --fs-ink-faint: #50575E;
-  --fs-rule: #F0F0F1;
-  --fs-rule-strong: #DCDCDE;
-  --fs-shadow-pane: 0 8px 32px rgba(16, 21, 23, .12);
+  /* Colour — one accent, one tint, four greys.
 
-  --fs-ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --fs-dur: 280ms;
+     Contract slots carry the literal values; every --fs-* colour below is an
+     alias pointing at its slot, so existing selectors are untouched and an
+     override of a --folio-* name flows through. Unfilled here:
+     --folio-on-accent (this theme has no such token — the button at
+     .g-folio__theme-fields-submit reuses --fs-surface for its label, and the
+     contract fallback #ffffff already matches), which falls back to
+     folio-contract.css.
+
+     --fs-ink-faint stays private: this theme has four text tones where the
+     contract has three, and the names run against lightness — "faint"
+     (#50575E) is darker than "subtle" (#646970). The slots are mapped by
+     measured lightness, not by name. */
+  --folio-accent: #3858E9;
+  --folio-accent-hover: #2145D4;
+  --folio-surface: #FFFFFF;
+  /* Single white plane: the page shell ground and the content surface are the
+     same value in this theme, so ground aliases surface rather than restating
+     it. */
+  --folio-ground: var(--folio-surface);
+  /* --fs-surface-tint is the accent-hued wash (#F0F6FC is the pale tint of
+     --folio-accent), carrying full-strength ink on the cover brief and the nav
+     pane — that is accent-soft. --fs-surface-chip is the neutral second
+     plane behind controls — that is surface-alt. */
+  --folio-accent-soft: #F0F6FC;
+  --folio-surface-alt: #F6F7F7;
+  --folio-text: #101517;
+  --folio-text-muted: #3C434A;
+  --folio-text-subtle: #646970;
+  --folio-rule: #F0F0F1;
+  --folio-rule-strong: #DCDCDE;
+  --folio-shadow: 0 8px 32px rgba(16, 21, 23, .12);
+  /* The translucent top bar. It was a literal at its one call site and the
+     slot read "this theme has no scrim", which was wrong — and it mattered,
+     because groove-main.js repainted that bar on scroll with its own hardcoded
+     rgba() and the slot could not have changed it. */
+  --folio-overlay: rgba(255, 255, 255, 0.90);
+
+  --fs-accent: var(--folio-accent);
+  --fs-accent-hover: var(--folio-accent-hover);
+  --fs-surface: var(--folio-surface);
+  --fs-surface-tint: var(--folio-accent-soft);
+  --fs-surface-chip: var(--folio-surface-alt);
+  --fs-ink: var(--folio-text);
+  --fs-ink-muted: var(--folio-text-muted);
+  --fs-ink-subtle: var(--folio-text-subtle);
+  --fs-ink-faint: #50575E;
+  --fs-rule: var(--folio-rule);
+  --fs-rule-strong: var(--folio-rule-strong);
+  --fs-shadow-pane: var(--folio-shadow);
+
+  --folio-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --folio-dur: 280ms;
+  --fs-ease: var(--folio-ease);
+  --fs-dur: var(--folio-dur);
 
   font-family: var(--fs-font-body);
 }
@@ -95,7 +138,7 @@
 /* Focus ring. Replaces the `outline: none` that used to sit on every button. */
 .g-folio__theme-1 :focus-visible,
 .g-folio__theme-1-page :focus-visible {
-  outline: 2px solid var(--fs-accent);
+  outline: 2px solid var(--folio-focus);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -283,9 +326,13 @@
   justify-content: center;
   height: 40px;
   width: 40px;
+  z-index: 1;
   padding: 0;
   border: none;
-  background: transparent;
+  /* The pane's own ground, not transparent: the button sits over the scrolling
+     content box rather than inside it, so a long contents list passes behind
+     it. Same value the pane paints, so nothing changes at rest. */
+  background: var(--fs-surface-tint);
   color: var(--fs-ink-muted);
   cursor: pointer;
 }
@@ -487,10 +534,18 @@
   height: var(--fs-navbar-h);
   width: 100%;
   padding: 0 var(--fs-3);
-  background-color: rgba(255, 255, 255, 0.90);
+  background-color: var(--folio-overlay);
+  transition: background-color var(--folio-dur) var(--folio-ease);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   border-bottom: 2px solid var(--fs-surface-tint);
+}
+
+/* Past the first screenful the bar goes opaque so type does not read through
+   it. groove-main.js used to write both colours inline as literal rgba(),
+   which meant the slot above was decorative; it now toggles this class. */
+.g-folio__theme-1-page .g-folio__theme-page-nav-bar.is-scrolled {
+  background-color: var(--fs-surface);
 }
 
 .g-folio__theme-1-page .g-folio__theme-page-nav-bar-main {

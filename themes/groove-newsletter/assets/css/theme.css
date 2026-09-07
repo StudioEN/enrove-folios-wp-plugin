@@ -8,21 +8,46 @@ body.groove .gn * {
 }
 
 body.groove .gn {
-  --gn-bg: #eee7db;
-  --gn-surface: #f7f1e6;
-  --gn-elevated: #fcf8f1;
-  --gn-border: #cabfaa;
-  --gn-text: #181512;
-  --gn-text-muted: #595046;
-  --gn-text-subtle: #7b7267;
-  --gn-accent: #8b4726;
-  --gn-accent-strong: #6f3115;
-  --gn-accent-soft: #ead7ca;
+  /* ── Folio theme contract ────────────────────────────────────────────
+     The slots below carry this theme's values; every --gn-* name is kept
+     and now aliases the slot it maps to. See assets/css/folio-contract.css.
+     Override a --folio-* slot and the private names follow. */
+  --folio-ground: #eee7db;
+  --folio-surface: #f7f1e6;
+  --folio-surface-alt: #fcf8f1;
+  --folio-text: #181512;
+  --folio-text-muted: #595046;
+  --folio-text-subtle: #7b7267;
+  --folio-accent: #8b4726;
+  --folio-accent-hover: #6f3115;
+  --folio-accent-soft: #ead7ca;
+  --folio-font-heading: var(--g-folio-header-font, 'Space Grotesk', 'Helvetica Neue', sans-serif);
+  --folio-font-body: var(--g-folio-body-font, 'Source Serif 4', Georgia, serif);
+  /* The two line slots stay computed, and read the SLOTS they mix from:
+     the theme's JS repaints --folio-text / --folio-ground inline per time
+     of day, so the rules keep tracking that repaint. Neither slot resolves
+     back through a rule, so there is no cycle. */
+  --folio-rule: color-mix(in srgb, var(--folio-text) 12%, var(--folio-ground));
+  --folio-rule-strong: color-mix(in srgb, var(--folio-text) 24%, var(--folio-ground));
+  --folio-shadow: 0 24px 60px rgba(24, 21, 18, 0.09);
+
+  --gn-bg: var(--folio-ground);
+  --gn-surface: var(--folio-surface);
+  --gn-elevated: var(--folio-surface-alt);
+  --gn-text: var(--folio-text);
+  --gn-text-muted: var(--folio-text-muted);
+  --gn-text-subtle: var(--folio-text-subtle);
+  --gn-accent: var(--folio-accent);
+  --gn-accent-strong: var(--folio-accent-hover);
+  --gn-accent-soft: var(--folio-accent-soft);
   --gn-nav-hover: #efe1d5;
-  --gn-focus: #111111;
+  /* Near-black rather than the accent: this theme's accent is a warm brown
+     that all but disappears against the paper ground. */
+  --folio-focus: #111111;
+  --gn-focus: var(--folio-focus);
   --gn-cover-scrim: linear-gradient(140deg, rgba(15, 15, 17, 0.76), rgba(15, 15, 17, 0.34));
-  --gn-font-heading: var(--g-folio-header-font, 'Space Grotesk', 'Helvetica Neue', sans-serif);
-  --gn-font-body: var(--g-folio-body-font, 'Source Serif 4', Georgia, serif);
+  --gn-font-heading: var(--folio-font-heading);
+  --gn-font-body: var(--folio-font-body);
   --gn-cover-split: 61.25%;
   --gn-cover-grid-columns: minmax(0, 1.22fr) minmax(280px, 0.78fr);
   --gn-cover-right-inset: clamp(18px, 2.2vw, 34px);
@@ -32,9 +57,8 @@ body.groove .gn {
   --gn-cover-left-subtle: #57606f;
   --gn-cover-right-text: #fbf8f2;
   --gn-cover-right-muted: rgba(247, 242, 233, 0.88);
-  --gn-rule: color-mix(in srgb, var(--gn-text) 12%, var(--gn-bg));
-  --gn-rule-strong: color-mix(in srgb, var(--gn-text) 24%, var(--gn-bg));
-  --gn-paper-shadow: 0 24px 60px rgba(24, 21, 18, 0.09);
+  --gn-rule: var(--folio-rule);
+  --gn-rule-strong: var(--folio-rule-strong);
   color: var(--gn-text);
   font-family: var(--gn-font-body);
   background: var(--gn-bg);

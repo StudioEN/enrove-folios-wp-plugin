@@ -3,18 +3,26 @@
 
   var ROOT = document.documentElement;
   var STORAGE_KEY = 'gp-theme';
+  // The dynamic palette writes the CONTRACT slots, not this theme's private
+  // names, because every private below aliases its slot in theme.css. Writing
+  // the slot repaints the private with it AND keeps --folio-* telling the truth
+  // about what the page is painting; writing the private would repaint the
+  // theme correctly while leaving the contract on the stylesheet's static value.
+  // --gp-accent-mid has no slot, so it stays private. This list must stay in
+  // step with applyDynamicPalette() — clearDynamicPalette() removes exactly
+  // these, and a name written but not listed would survive leaving dynamic mode.
   var DYNAMIC_ACCENT_PROPERTIES = [
-    '--gp-bg',
-    '--gp-surface',
-    '--gp-surface-muted',
-    '--gp-border',
-    '--gp-border-strong',
-    '--gp-text-muted',
-    '--gp-text-subtle',
-    '--gp-overlay',
-    '--gp-accent',
-    '--gp-accent-hover',
-    '--gp-accent-soft',
+    '--folio-ground',
+    '--folio-surface',
+    '--folio-surface-alt',
+    '--folio-rule',
+    '--folio-rule-strong',
+    '--folio-text-muted',
+    '--folio-text-subtle',
+    '--folio-overlay',
+    '--folio-accent',
+    '--folio-accent-hover',
+    '--folio-accent-soft',
     '--gp-accent-mid',
   ];
   var currentDominantColor = null;
@@ -254,17 +262,17 @@
     }
 
     var style = ROOT.style;
-    style.setProperty('--gp-bg', palette.bg);
-    style.setProperty('--gp-surface', palette.surface);
-    style.setProperty('--gp-surface-muted', palette.surfaceMuted);
-    style.setProperty('--gp-border', palette.border);
-    style.setProperty('--gp-border-strong', palette.borderStrong);
-    style.setProperty('--gp-text-muted', palette.textMuted);
-    style.setProperty('--gp-text-subtle', palette.textSubtle);
-    style.setProperty('--gp-overlay', palette.overlay);
-    style.setProperty('--gp-accent', palette.accent);
-    style.setProperty('--gp-accent-hover', palette.accentHover);
-    style.setProperty('--gp-accent-soft', palette.accentSoft);
+    style.setProperty('--folio-ground', palette.bg);
+    style.setProperty('--folio-surface', palette.surface);
+    style.setProperty('--folio-surface-alt', palette.surfaceMuted);
+    style.setProperty('--folio-rule', palette.border);
+    style.setProperty('--folio-rule-strong', palette.borderStrong);
+    style.setProperty('--folio-text-muted', palette.textMuted);
+    style.setProperty('--folio-text-subtle', palette.textSubtle);
+    style.setProperty('--folio-overlay', palette.overlay);
+    style.setProperty('--folio-accent', palette.accent);
+    style.setProperty('--folio-accent-hover', palette.accentHover);
+    style.setProperty('--folio-accent-soft', palette.accentSoft);
     style.setProperty('--gp-accent-mid', palette.accentMid);
   }
 

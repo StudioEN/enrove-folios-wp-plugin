@@ -12,22 +12,6 @@ class Cover extends Base_Theme
 {
   public $subtitle;
 
-  public function ensure_script()
-  {
-    parent::ensure_script();
-
-    $js_path = $this->get_theme_assets_path() . 'js/folio-starter.js';
-    $version = file_exists($js_path) ? filemtime($js_path) : GROOVE_VERSION;
-
-    wp_enqueue_script(
-      'folio-starter-theme',
-      $this->get_theme_assets_url() . 'js/folio-starter.js',
-      [],
-      $version,
-      true
-    );
-  }
-
   function get_page_data()
   {
     $page = parent::get_page_data();
@@ -38,14 +22,17 @@ class Cover extends Base_Theme
   function display_nav()
   {
     ?>
-    <nav class="g-folio__theme-nav" aria-label="<?= esc_attr__('Folio contents', 'groove') ?>">
+    <nav class="g-folio__theme-nav" aria-label="<?= esc_attr__('Folio contents', 'groove') ?>"
+      data-groove-drawer=".g-folio__theme-nav-button">
+      <?php // Outside the -content box, which is the scroller: the close button
+        // used to scroll away with a long contents list. ?>
+      <button type="button" class="g-folio__theme-nav-close" aria-label="<?= esc_attr__('Close navigation', 'groove') ?>">
+        <svg class="g-folio__theme-close-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+        </svg>
+      </button>
       <div class="g-folio__theme-nav-content">
-        <button type="button" class="g-folio__theme-nav-close" aria-label="<?= esc_attr__('Close navigation', 'groove') ?>">
-          <svg class="g-folio__theme-close-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-          </svg>
-        </button>
         <h3 class="g-folio__theme-nav-name">
           <?= esc_html($this->theme_name) ?>
         </h3>

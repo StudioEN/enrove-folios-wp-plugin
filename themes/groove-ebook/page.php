@@ -181,7 +181,8 @@ class Page extends Base_Theme
     ?>
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
-        <button class="g-folio__theme-page-nav-button" aria-label="Open navigation">
+        <button type="button" class="g-folio__theme-page-nav-button"
+          aria-label="<?= esc_attr__('Open navigation', 'groove') ?>" aria-expanded="false">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -195,8 +196,8 @@ class Page extends Base_Theme
         </div>
       </div>
 
-      <div class="g-folio__theme-page-nav-bar-toggle">
-      </div>
+      <button type="button" class="g-folio__theme-page-nav-bar-toggle"
+        aria-label="<?= esc_attr__('Toggle contents', 'groove') ?>" aria-expanded="false"></button>
 
     </div>
     <?php $this->display_mobile_nav() ?>
@@ -208,7 +209,8 @@ class Page extends Base_Theme
     $on_this_page_label = Utils::get_folio_on_this_page_label((int) $this->folio_id);
     $blocks = parse_blocks($this->content);
     ?>
-    <nav class="g-folio__theme-page-mobile-nav">
+    <nav class="g-folio__theme-page-mobile-nav" aria-label="<?= esc_attr__('On this page', 'groove') ?>"
+      data-groove-drawer=".g-folio__theme-page-nav-bar-toggle" data-groove-drawer-lock="off">
       <div class="g-folio__theme-page-mobile-nav-content">
         <div class="g-folio__theme-page-mobile-nav-label"><?= esc_html($on_this_page_label) ?></div>
         <div class="g-folio__theme-page-mobile-navs">
@@ -230,7 +232,7 @@ class Page extends Base_Theme
           }
           ?>
         </div>
-        <div class="g-folio__theme-page-mobile-nav-back">↑ Back to top</div>
+        <button type="button" class="g-folio__theme-page-mobile-nav-back">↑ Back to top</button>
       </div>
     </nav>
     <?php
@@ -254,9 +256,12 @@ class Page extends Base_Theme
       $folio_url = Utils::get_folio_permalink_by_id($folio->ID);
     }
     ?>
-    <nav class="g-folio__theme-page-nav">
+    <nav class="g-folio__theme-page-nav" aria-label="<?= esc_attr__('Folio contents', 'groove') ?>"
+      data-groove-drawer=".g-folio__theme-page-nav-button">
+      <?php // Outside .g-folio__theme-page-nav-content, which is the scrolling box. ?>
+      <button type="button" class="g-folio__theme-page-nav-close"
+        aria-label="<?= esc_attr__('Close navigation', 'groove') ?>"></button>
       <div class="g-folio__theme-page-nav-content">
-        <button class="g-folio__theme-page-nav-close"></button>
         <h3 class="g-folio__theme-page-nav-name">
           <?php if (!empty($folio_url)): ?>
             <a href="<?= esc_url($folio_url) ?>">
