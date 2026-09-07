@@ -52,7 +52,7 @@ and cache-busted by `filemtime()`.
 | Theme | Character | Learn from it |
 |-------|-----------|---------------|
 | [folio-starter/](folio-starter/) | Minimal, no JS, no nav pane | The baseline shape of a theme |
-| [groove-ebook/](groove-ebook/) | Minimal + full-bleed cover | Same shape, different styling |
+| [groove-ebook/](groove-ebook/) | Minimal + full-bleed cover, frosted chrome | Cross-document view transitions with no JS; `@supports`-guarded `backdrop-filter` |
 | [groove-newsletter/](groove-newsletter/) | Shared nav pane, scoped tokens, view transitions | `dependencies`, `body.groove .gn` scoping |
 | [groove-magazine/](groove-magazine/) | Runtime palette extraction from feature images | Theme JS, dark mode bootstrap |
 | [groove-proposal/](groove-proposal/) | Folio-level meta fields, custom blocks, dark mode | Theme-specific admin UI + blocks |

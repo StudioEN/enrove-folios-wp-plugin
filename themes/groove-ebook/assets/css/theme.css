@@ -6,11 +6,10 @@
    Declared on the theme's two roots, not on :root. The rendered document
    carries body.groove, and so does wp-admin (admin_body_class), so a :root
    block would leak into admin screens — see themes/README.md "CSS scoping".
-   Every selector in this file is a descendant of one of these two roots, so
-   scoping here reaches every element the theme styles.
-
-   This is extraction only: every token holds the exact literal that was
-   already at its call sites. Nothing renders differently.
+   Every selector in this file is a descendant of one of these two roots, and
+   so reaches every element the theme styles. The one exception is the
+   view-transition section below: those pseudos hang off the document root and
+   cannot be scoped at all, which is why the section argues for itself.
    ─────────────────────────────────────────────────────────────────────────── */
 body.groove .g-folio__theme-2,
 body.groove .g-folio__theme-2-page {
@@ -76,6 +75,38 @@ body.groove .g-folio__theme-2-page {
   --folio-overlay: rgba(255, 255, 255, 0.90);
   --folio-dur: .3s;
 
+  /* Frosted chrome, for the fixed top bar. Past the first screenful the bar
+     had to go fully opaque, because at any lower opacity the running type
+     passing under it read straight through. A blurred backdrop is the other
+     answer, and it lets the bar stay a translucent plane instead: what passes
+     beneath dissolves rather than showing through.
+
+     Only the rules inside the @supports guard read these, so an engine without
+     backdrop-filter keeps the opaque bar it has today.
+
+     The bar's UNSCROLLED colour is deliberately not here — it keeps
+     --folio-overlay. The blur is on the bar in that state too, and does real
+     work there: is-scrolled does not flip until scrollY > 96 (groove-main.js),
+     and the bar is 48px with the page title starting at 80px, so there is a
+     band where the title and the top of the reading card travel under a bar
+     that is still at its unscrolled colour. What the state does NOT need is a
+     lower opacity: that would be a glass affordance rather than an answer to
+     anything.
+
+     The mobile contents dropdown that hangs off the bar is NOT frosted, and
+     the reason is contrast, not taste. The bar carries --folio-text and
+     --folio-text-muted, which sit at 14.4:1 and 7.8:1 on this surface over the
+     blue ground — margin to spare. The dropdown carries --folio-accent links,
+     which are far lighter: the same surface puts them at 4.39:1, under the
+     4.5:1 floor for body text and below the 5.6:1 they have on the opaque
+     panel today. Matching the two materials is not worth spending that. */
+  --ge-navbar-blur: blur(16px);
+  --ge-navbar-glass: rgba(255, 255, 255, 0.86);
+  /* The frosted bar over the white reading card is white on white, so the one
+     thing that still separates them is an edge. --folio-rule is near-white and
+     would not carry it. */
+  --ge-navbar-edge: color-mix(in srgb, var(--folio-text) 8%, transparent);
+
   /* ── Theme-private ──────────────────────────────────────────────────────
      Aliases point at slots; the rest are colours with no slot to point at. */
   --ge-on-ground: var(--folio-on-ground);
@@ -97,6 +128,64 @@ body.groove .g-folio__theme-2-page {
   --ge-nav-order: var(--folio-accent-2);
   --ge-catalog: var(--folio-accent-2-soft);
   --ge-shadow-dropdown: 0px 5px 10px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* ── View transitions ────────────────────────────────────────────────
+   Every page of a folio is its own document, so what smooths the move between
+   them is the cross-document view transition, not a router. It arms only when
+   BOTH documents opt in, and only a folio render loads this file: a link out
+   to the rest of the site finds no @view-transition on the far side and
+   navigates hard, which is right — that is somewhere else, not the next page.
+
+   The whole of it is a slower, eased version of the browser's own cross-fade.
+   There is no slide and nothing is given a view-transition-name, and both of
+   those are decisions rather than omissions:
+
+     · A translate on the root pseudos moves the two snapshots off each other,
+       and the strip where only one of them is painted goes half-transparent
+       for a frame — the document's background reads through between the two
+       pages, and this theme's ground is a saturated blue sitting on whatever
+       colour the site's body happens to be. A cross-fade alone has no strip.
+
+     · The fixed top bar is in the same place on both pages, so it cross-fades
+       to itself and already appears to hold still while the reading column
+       turns over. Naming it would buy the same stillness and cost the frost:
+       a named element is captured into its own isolated group, where a
+       backdrop-filter has no backdrop left to sample.
+
+   These are literals rather than tokens. ::view-transition-* pseudos are
+   attached to the DOCUMENT root, outside .g-folio__theme-2-page, so a custom
+   property declared on this theme's roots cannot reach them.
+
+   Engines without the feature ignore the whole section and navigate exactly as
+   they do today. Nothing here is load-bearing.
+   ──────────────────────────────────────────────────────────────────── */
+
+@view-transition {
+  navigation: auto;
+}
+
+/* The group is in the list for the one case where it animates at all: the two
+   documents' viewports differ in height, as they do when a mobile URL bar
+   collapses across the navigation. Left out it would resize on the UA's 0.25s
+   while its contents cross-faded on 340ms. */
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 340ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The reduced-motion block at the foot of this file cannot reach these: it
+     selects descendants of the theme's roots, and these pseudos hang off the
+     document root. Same treatment, stated where it applies. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+  }
 }
 
 /* ── Interaction states ─────────────────────────────────────────────────────
@@ -501,6 +590,12 @@ body.groove .g-folio__theme-2-page {
 .g-folio__theme-2-page .g-folio__theme-page-name {
   margin-left: 16px;
   font-size: var(--folio-text-meta);
+  /* Named, not inherited. Its own sibling below states --folio-text-muted, so
+     the intent was always the pair; this half was left to inherit from the
+     site's body, which put the one line of type on the bar at whatever colour
+     the active WordPress theme happened to set. That matters more now the bar
+     is translucent: the contrast behind it is this theme's to know. */
+  color: var(--folio-text);
 }
 
 .g-folio__theme-2-page .g-folio__theme-folio-name {
@@ -732,12 +827,44 @@ body.groove .g-folio__theme-2-page {
   box-sizing: border-box;
 }
 
-/* Past the first screenful the bar goes opaque so type does not read through
-   it. groove-main.js used to write both colours inline as literal rgba(), so
-   the slot above was decorative and a theme could not change either one. It
-   now toggles this class and the colours live here. */
+/* Past the first screenful the bar firms up so type does not read through it.
+   groove-main.js used to write both colours inline as literal rgba(), so the
+   slot above was decorative and a theme could not change either one. It now
+   toggles this class and the colours live here.
+
+   Only the solid half is a fallback. The unscrolled 0.90 above applies in
+   both branches — the @supports block below sets no colour for that state,
+   only the filter — and it is this rule that the blur replaces, so the bar
+   never has to go fully opaque where backdrop-filter exists. */
 .g-folio__theme-2-page .g-folio__theme-page-nav-bar.is-scrolled {
   background-color: var(--folio-surface);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* The filter goes on the bar in both states, not just the scrolled one.
+     Partly because backdrop-filter does not interpolate, so adding it at the
+     class toggle would pop — and partly because the unscrolled state is not
+     idle: is-scrolled waits for scrollY > 96 while the bar is 48px and the
+     title starts at 80px, so the type crossing that band is blurred by this
+     rule and nothing else. Only the COLOUR is left to the state below. */
+  .g-folio__theme-2-page .g-folio__theme-page-nav-bar {
+    -webkit-backdrop-filter: var(--ge-navbar-blur);
+    backdrop-filter: var(--ge-navbar-blur);
+    /* The colour is no longer the only thing that changes on scroll. */
+    transition: background-color var(--folio-dur) var(--folio-ease),
+      box-shadow var(--folio-dur) var(--folio-ease);
+  }
+
+  /* This is the state the blur was added for. Scrolled, the bar sits over the
+     white reading card, and the fallback answer to that is to go solid; here
+     it can stay translucent and let the type passing under it dissolve. Which
+     leaves white frost on white paper with nothing to tell them apart, so the
+     hairline is the edge. Both belong to this state only — over the blue
+     ground a hairline reads as a seam rather than a border. */
+  .g-folio__theme-2-page .g-folio__theme-page-nav-bar.is-scrolled {
+    background-color: var(--ge-navbar-glass);
+    box-shadow: 0 1px 0 0 var(--ge-navbar-edge);
+  }
 }
 
 .g-folio__theme-2-page .g-folio__theme-page-nav-bar-main {
