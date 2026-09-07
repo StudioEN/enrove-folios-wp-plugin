@@ -1399,9 +1399,30 @@ jQuery(function () {
       }
     })
 
+    // open_add_new is a one-shot instruction, so it is spent the moment it is
+    // read. Left in the address bar it becomes the referrer for everything the
+    // operator does next, and the row actions hand that referrer to core's
+    // post.php, which sends them straight back to it — so trashing a folio
+    // returned to ?open_add_new=1 and reopened the theme picker over the list.
+    // Refreshing had the same effect.
+    function consumeAddNewFlag() {
+      if (!window.history || !window.history.replaceState) {
+        return
+      }
+
+      const url = new URL(window.location.href)
+      if (!url.searchParams.has('open_add_new')) {
+        return
+      }
+
+      url.searchParams.delete('open_add_new')
+      window.history.replaceState(window.history.state, '', url.toString())
+    }
+
     // Auto-open when redirected from groove-add-new nav link.
     if (settings.openAddNewModal) {
       openAddNewModal()
+      consumeAddNewFlag()
     }
 
     // Intercept the sidebar "Add New Folio" nav link so it opens the modal
