@@ -1166,27 +1166,35 @@ jQuery(function () {
   }
 
   if (Groove.isPreview()) {
+    // Past the first screenful the top bar goes opaque. This used to write two
+    // literal rgba() values as inline styles, which beat the stylesheet on the
+    // element itself: the bar ignored --folio-overlay and no theme could
+    // restyle either state. It now toggles a class and the colours live in the
+    // theme CSS. The filter leaves this to folio-starter and groove-ebook —
+    // groove-newsletter and groove-proposal paint their own bars.
     function setNavBarBackgroundColor() {
       const navBars = jQuery('.g-folio__theme-page-nav-bar').filter(function () {
         return jQuery(this).closest('.gn-page, .gp-page').length === 0
       })
 
-      if (window.scrollY > 96) {
-        navBars.css('background-color', 'rgba(255, 255, 255, 1)')
-      } else {
-        navBars.css('background-color', 'rgba(255, 255, 255, 0.9)')
-      }
+      navBars.toggleClass('is-scrolled', window.scrollY > 96)
     }
 
     setNavBarBackgroundColor()
 
-    jQuery('.g-folio__theme-page-nav-bar-toggle').click(function () {
-      if (jQuery('.g-folio__theme-page-mobile-nav').hasClass('visible')) {
-        jQuery('.g-folio__theme-page-mobile-nav').removeClass('visible')
-      } else {
-        jQuery('.g-folio__theme-page-mobile-nav').addClass('visible')
-      }
-    })
+    // Scoped the same way setNavBarBackgroundColor is, and for a sharper
+    // reason: groove-newsletter and groove-proposal bind this same element in
+    // their own theme JS and toggle the same class from its current state. With
+    // both bound, one click toggled twice and the panel never opened. This
+    // handler now leaves those two themes to their own controllers.
+    jQuery('.g-folio__theme-page-nav-bar-toggle')
+      .filter(function () {
+        return jQuery(this).closest('.gn-page, .gp-page').length === 0
+      })
+      .click(function () {
+        // Class only. aria-expanded is the drawer controller's job — see below.
+        jQuery('.g-folio__theme-page-mobile-nav').toggleClass('visible')
+      })
 
     jQuery('.g-folio__theme-page-mobile-nav-back').click(function () {
       window.scrollTo({
@@ -1213,6 +1221,133 @@ jQuery(function () {
     jQuery('.g-folio__theme-page-nav-close').click(function () {
       jQuery('.g-folio__theme-page-nav').removeClass('visible')
     })
+
+    // ── Drawer behaviour ───────────────────────────────────────────────────
+    // The handlers above are the whole of open and close: they toggle
+    // `.visible` and nothing else. Everything a bare addClass cannot give you —
+    // ARIA state, Escape, click-outside dismissal, scroll lock and focus
+    // handling — is layered on here for any pane that opts in with
+    //
+    //   data-groove-drawer="<selector of its trigger>"
+    //
+    // Opt-in rather than automatic because groove-newsletter and
+    // groove-proposal ship their own drawer controllers and would double-handle
+    // it. A theme that wants the shared behaviour declares one attribute; a
+    // theme that owns its drawers says nothing. Add
+    // data-groove-drawer-lock="off" for a dropdown-style panel that should not
+    // lock the page behind it.
+    //
+    // This was groove-ebook's two missing dismissals and folio-starter's
+    // private copy of the same 140 lines. See themes/README.md.
+    const drawers = Array.prototype.slice
+      .call(document.querySelectorAll('[data-groove-drawer]'))
+      .map(function (pane) {
+        return {
+          pane: pane,
+          trigger: document.querySelector(pane.getAttribute('data-groove-drawer')),
+          lock: pane.getAttribute('data-groove-drawer-lock') !== 'off',
+          lastFocused: null
+        }
+      })
+
+    if (drawers.length) {
+      const isDrawerOpen = function (drawer) {
+        return drawer.pane.classList.contains('visible')
+      }
+
+      const closeDrawer = function (drawer) {
+        drawer.pane.classList.remove('visible')
+      }
+
+      const syncScrollLock = function () {
+        const locked = drawers.some(function (drawer) {
+          return drawer.lock && isDrawerOpen(drawer)
+        })
+
+        document.body.style.overflow = locked ? 'hidden' : ''
+      }
+
+      // A pane is visibility:hidden until it has slid in, and an element that
+      // computes to hidden silently refuses focus — so wait for the transition
+      // rather than guessing a delay. The timer covers a transition that never
+      // fires: reduced motion, or a panel that does not animate at all.
+      const focusWhenReady = function (pane, target) {
+        let timer = null
+
+        const attempt = function () {
+          pane.removeEventListener('transitionend', attempt)
+          clearTimeout(timer)
+
+          if (pane.classList.contains('visible')) {
+            target.focus()
+          }
+        }
+
+        pane.addEventListener('transitionend', attempt)
+        timer = setTimeout(attempt, 350)
+      }
+
+      const onDrawerToggle = function (drawer) {
+        const open = isDrawerOpen(drawer)
+
+        if (drawer.trigger) {
+          drawer.trigger.setAttribute('aria-expanded', open ? 'true' : 'false')
+        }
+
+        syncScrollLock()
+
+        if (open) {
+          drawer.lastFocused = document.activeElement
+
+          // The close button first, so Escape and Tab both start somewhere sane.
+          const first = drawer.pane.querySelector(
+            '.g-folio__theme-nav-close, .g-folio__theme-page-nav-close, a, button'
+          )
+
+          if (first) {
+            focusWhenReady(drawer.pane, first)
+          }
+        } else if (drawer.lastFocused && typeof drawer.lastFocused.focus === 'function') {
+          drawer.lastFocused.focus()
+          drawer.lastFocused = null
+        }
+      }
+
+      drawers.forEach(function (drawer) {
+        new MutationObserver(function () {
+          onDrawerToggle(drawer)
+        }).observe(drawer.pane, { attributes: true, attributeFilter: ['class'] })
+      })
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape' && event.key !== 'Esc') {
+          return
+        }
+
+        drawers.forEach(function (drawer) {
+          if (isDrawerOpen(drawer)) {
+            closeDrawer(drawer)
+          }
+        })
+      })
+
+      document.addEventListener('click', function (event) {
+        drawers.forEach(function (drawer) {
+          if (!isDrawerOpen(drawer)) {
+            return
+          }
+          // The click that opened it bubbles to here too.
+          if (drawer.pane.contains(event.target)) {
+            return
+          }
+          if (drawer.trigger && drawer.trigger.contains(event.target)) {
+            return
+          }
+
+          closeDrawer(drawer)
+        })
+      })
+    }
   }
 
   // Breadcrumbs on groove_folio_page editor screens are handled by

@@ -1,0 +1,155 @@
+/* ── The folio theme contract ──────────────────────────────────────────────
+   Every folio theme fills the same set of named slots. A theme keeps its own
+   values and its own private tokens — the slots are a floor, not a ceiling —
+   but anything that wants to work across themes (a per-folio accent, a scheme
+   toggle, a future block that must sit on any theme) can only read a name that
+   every theme agrees on.
+
+   This is the same trick themes/font-loader.php already plays with
+   --g-folio-header-font / --g-folio-body-font: the plugin writes one name, and
+   every theme reads it. This file extends that from type to colour, depth and
+   motion.
+
+   HOW A THEME FILLS THE CONTRACT
+   ------------------------------
+   Declare the slots wherever the theme already declares its tokens — on
+   :root, on its page class, wherever — and point the theme's own tokens at
+   them, never the other way round:
+
+     .my-theme-page {
+       --folio-surface: #f7f1e6;      // the slot carries the value
+       --my-surface: var(--folio-surface);   // the private name is an alias
+     }
+
+   That direction matters. Existing selectors keep reading --my-surface and
+   nothing in the theme's stylesheet has to change, while anything reading
+   --folio-surface gets the right answer. Reverse the direction and an override
+   of --folio-surface silently does nothing.
+
+   DARK / LIGHT
+   ------------
+   A theme that ships a scheme redeclares the SLOTS in its scheme blocks, not
+   its private aliases — the aliases already point here, so re-pointing them is
+   a no-op that breaks the chain. Themes may keep their own scheme class names;
+   new themes should use .folio-scheme-light / .folio-scheme-dark on :root.
+
+   The values below are fallbacks, not a house style: they are the WordPress
+   admin palette, so a theme that fills nothing still renders as recognisably
+   Groove rather than as unstyled HTML. Every one of them is meant to be
+   overridden.
+   ────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Surfaces — ground is the page behind everything; surface is the plane
+     content sits on; surface-alt is the theme's other tone, whichever
+     direction it runs (newsletter lifts, proposal recesses). */
+  --folio-ground: #ffffff;
+  --folio-surface: #ffffff;
+  --folio-surface-alt: #f6f7f7;
+
+  /* Text — three tiers, darkest first. A theme with more tones keeps the
+     extras private; a theme with fewer points two slots at one value. */
+  --folio-text: #1d2327;
+  --folio-text-muted: #50575e;
+  --folio-text-subtle: #646970;
+
+  /* Text that sits ON a coloured fill. Two slots, because they are two
+     different questions: --folio-on-accent is type on the accent (a button, a
+     tag), --folio-on-ground is type on the page ground, which most themes leave
+     alone but a theme with a chromatic ground needs — groove-ebook puts white
+     type on a blue field at thirteen sites. The default defers to --folio-text,
+     which is correct for the white ground above; override it the moment your
+     ground stops being pale. */
+  --folio-on-accent: #ffffff;
+  --folio-on-ground: var(--folio-text);
+
+  /* Lines */
+  --folio-rule: #f0f0f1;
+  --folio-rule-strong: #dcdcde;
+
+  /* Accent — one hue, three jobs: the accent itself, its interactive state,
+     and a wash pale enough to carry --folio-text. */
+  --folio-accent: #3858e9;
+  --folio-accent-hover: #2145e6;
+  --folio-accent-soft: #f0f6fc;
+
+  /* Focus ring. A slot of its own rather than a reuse of --folio-accent,
+     because the two answer different questions: the accent is the theme's link
+     colour, and a theme whose ground is that same hue needs a ring that stays
+     visible on it. Three themes already had this privately under three
+     different names (--fs-accent, --gm-accent, --gn-focus) before it was named
+     here. The default defers to the accent, which is right on a pale ground.
+
+     Fill it AND paint it: a filled slot with no :focus-visible rule is a
+     contract that lies. See themes/README.md "Interaction states". */
+  --folio-focus: var(--folio-accent);
+
+  /* Type — seeded from the operator's font choices via themes/font-loader.php,
+     with the theme's own stack as the fallback. */
+  --folio-font-heading: var(--g-folio-header-font, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  --folio-font-body: var(--g-folio-body-font, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+
+  /* Depth */
+  --folio-shadow: 0 8px 32px rgba(29, 35, 39, 0.12);
+  --folio-overlay: rgba(29, 35, 39, 0.52);
+
+  /* A second hue, for emphasis that is NOT interactive — the primary accent
+     owns links and buttons; this owns pull quotes, ordinals, tags, stat rules.
+     Two themes had one privately before it was named here: groove-proposal's
+     warm family and groove-ebook's green. The defaults collapse onto the
+     primary, so a single-hue theme fills nothing and still reads correctly. */
+  --folio-accent-2: var(--folio-accent);
+  --folio-accent-2-soft: var(--folio-accent-soft);
+
+  /* Motion — kept as two composable parts rather than one shorthand, so a
+     theme can retime without restating the curve. Themes that also want a
+     packed `transition` value keep it private. */
+  --folio-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --folio-dur: 280ms;
+
+  /* ── Optional: space and type ───────────────────────────────────────────
+     Everything above is colour, and every theme fills it. What follows is
+     opt-in: a theme with its own scale ignores these entirely, and three of
+     the five do. They exist so a NEW theme gets a working fluid ramp without
+     having to derive one, and so anything shared can reason about rhythm.
+
+     The values are folio-starter's, which is the theme that was rebuilt for
+     responsive and is the reference for the others. Override any of them. */
+
+  --folio-space-1: 4px;
+  --folio-space-2: 8px;
+  --folio-space-3: 12px;
+  --folio-space-4: 16px;
+  --folio-space-5: 24px;
+  --folio-space-6: 32px;
+  --folio-space-7: 48px;
+  --folio-space-8: 64px;
+  --folio-space-9: 80px;
+
+  /* Fluid by default: these clamp between a phone and a desktop rather than
+     stepping at a breakpoint, which is what stops a theme needing a media
+     query per heading. */
+  --folio-text-display: clamp(2.5rem, 1.9rem + 2.6vw, 4rem);
+  --folio-text-title: clamp(1.75rem, 1.5rem + 1.25vw, 2.25rem);
+  --folio-text-h2: clamp(1.375rem, 1.2rem + 0.85vw, 1.75rem);
+  --folio-text-h3: clamp(1.125rem, 1.05rem + 0.4vw, 1.3125rem);
+  --folio-text-body: clamp(1rem, 0.955rem + 0.18vw, 1.0625rem);
+  --folio-text-meta: 0.875rem;
+  --folio-text-label: 0.75rem;
+
+  --folio-leading-display: 1.08;
+  --folio-leading-title: 1.2;
+  --folio-leading-body: 1.7;
+  --folio-leading-ui: 1.4;
+}
+
+/* Reduced motion is deliberately NOT handled here. These fallbacks sit on
+   :root, and a theme declares its own slots on its theme root — which is
+   nearer, so it wins. A `@media (prefers-reduced-motion) :root { --folio-dur: 0 }`
+   block would therefore apply to exactly the themes that filled nothing, and
+   silently miss every theme that did. A contract rule that quietly does not
+   apply is worse than no rule.
+
+   Themes honour reduced motion themselves, in their own stylesheet, at their
+   own specificity. folio-starter is the reference: it kills transitions with
+   `transition-duration: 1ms !important` rather than by retiming a token. */

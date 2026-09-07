@@ -293,12 +293,26 @@
     }
 
     // ── Apply palette to CSS custom properties ─────────────────────────────
+    // Where the folio contract has a slot, write the SLOT, not the private name.
+    // theme.css declares --gm-accent / --gm-accent-link / --gm-accent-subtle as
+    // pure aliases onto --folio-accent / --folio-accent-hover / --folio-accent-soft,
+    // so setting the slot inline repaints the theme exactly as before AND leaves
+    // anything reading the contract on the live accent instead of the static
+    // stylesheet blue. (--folio-accent-2 / -2-soft need nothing: this theme is
+    // single-hue, and the contract defaults them onto the primary, so they track
+    // these writes for free.)
+    //
+    // The rest have no slot and stay private:
+    //   --gm-accent-muted / -progress / -footer-hover are lower-contrast steps of
+    //     the SAME extracted hue, not a second hue.
+    //   --gm-hero-overlay is a literal in theme.css and is NOT --folio-overlay —
+    //     that slot is aliased by the separate --gm-overlay token.
     function applyPalette(palette) {
         var root = document.documentElement.style;
-        root.setProperty('--gm-accent', palette.accent);
-        root.setProperty('--gm-accent-link', palette.accentLink);
+        root.setProperty('--folio-accent', palette.accent);
+        root.setProperty('--folio-accent-hover', palette.accentLink);
+        root.setProperty('--folio-accent-soft', palette.accentSubtle);
         root.setProperty('--gm-accent-muted', palette.accentMuted);
-        root.setProperty('--gm-accent-subtle', palette.accentSubtle);
         root.setProperty('--gm-accent-progress', palette.accentProgress);
         root.setProperty('--gm-accent-footer-hover', palette.accentFooterHover);
         root.setProperty('--gm-hero-overlay', palette.heroOverlay);

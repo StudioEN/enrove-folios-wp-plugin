@@ -210,7 +210,6 @@
       bg: rgbToHex(bg),
       surface: rgbToHex(surface),
       elevated: rgbToHex(elevated),
-      border: rgbToHex(mixRgb(hexToRgb(text), surface, 0.82)),
       text: text,
       textMuted: rgbToHex(mixRgb(hexToRgb(text), surface, 0.58)),
       textSubtle: rgbToHex(mixRgb(hexToRgb(text), surface, 0.7)),
@@ -294,16 +293,23 @@
       return;
     }
 
-    node.style.setProperty('--gn-bg', palette.bg);
-    node.style.setProperty('--gn-surface', palette.surface);
-    node.style.setProperty('--gn-elevated', palette.elevated);
-    node.style.setProperty('--gn-border', palette.border);
-    node.style.setProperty('--gn-text', palette.text);
-    node.style.setProperty('--gn-text-muted', palette.textMuted);
-    node.style.setProperty('--gn-text-subtle', palette.textSubtle);
-    node.style.setProperty('--gn-accent', palette.accent);
-    node.style.setProperty('--gn-accent-strong', palette.accentStrong);
-    node.style.setProperty('--gn-accent-soft', palette.accentSoft);
+    /* Contract slots. Every --gn-* name below aliases the slot it maps to in
+       theme.css, so writing the slot repaints the private name with it — and
+       --folio-rule / --folio-rule-strong, which mix from --folio-text and
+       --folio-ground, track the repaint too. Write the slot, never the alias:
+       set the alias instead and anything reading the contract goes stale. */
+    node.style.setProperty('--folio-ground', palette.bg);
+    node.style.setProperty('--folio-surface', palette.surface);
+    node.style.setProperty('--folio-surface-alt', palette.elevated);
+    node.style.setProperty('--folio-text', palette.text);
+    node.style.setProperty('--folio-text-muted', palette.textMuted);
+    node.style.setProperty('--folio-text-subtle', palette.textSubtle);
+    node.style.setProperty('--folio-accent', palette.accent);
+    node.style.setProperty('--folio-accent-hover', palette.accentStrong);
+    node.style.setProperty('--folio-accent-soft', palette.accentSoft);
+
+    /* Privates with no slot: theme.css holds a literal for each of these, so
+       there is nothing to alias onto and the private name is the only handle. */
     node.style.setProperty('--gn-nav-hover', palette.navHover);
     node.style.setProperty('--gn-focus', palette.focus);
     node.style.setProperty('--gn-cover-scrim', palette.coverScrim);
