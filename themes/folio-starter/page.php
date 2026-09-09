@@ -333,8 +333,12 @@ class Page extends Base_Theme
           <?php
           $index = 1;
           foreach ($this->pages as $page) {
+            // The contents list named every page and marked none of them, so
+            // the pane could not say where you already were.
+            $is_current = ((int) $page->ID === (int) $this->id);
             ?>
-            <a class="g-folio__theme-page-nav-item-link" href="<?= esc_url(Utils::get_folio_permalink_by_id($page->ID)) ?>">
+            <a class="g-folio__theme-page-nav-item-link" href="<?= esc_url(Utils::get_folio_permalink_by_id($page->ID)) ?>"
+              <?= $is_current ? 'aria-current="page"' : '' ?>>
               <div class="g-folio__theme-page-nav-item">
                 <i class="g-folio__theme-page-nav-item-order"><?= $index ?></i>
                 <?= esc_html($page->post_title) ?>

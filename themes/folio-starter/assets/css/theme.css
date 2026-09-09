@@ -11,6 +11,120 @@
    .g-folio__theme-cover and [class*="g-folio__theme-"][class$="-page"].
    ───────────────────────────────────────────────────────────────────────────── */
 
+/* ── Cross-document view transitions ───────────────────────────────────────
+   Cover → page and page → page are same-origin navigations, so the browser
+   can carry one document into the next. Kept deliberately plainer than the
+   newsletter's: this theme is typography-led, and translating type while it
+   is also fading reads as smear. The outgoing snapshot takes the blur and
+   the drift; the incoming one arrives clean and only settles.
+
+   The fixed navbar and the rail's label are named, which lifts them out of
+   the root snapshot so they hold their place across the navigation instead
+   of fading out and back in with everything else.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@view-transition {
+  navigation: auto;
+}
+
+@keyframes fs-vt-out {
+  from {
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  to {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
+@keyframes fs-vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduced-motion pair: the same navigation, carried by opacity alone. */
+@keyframes fs-vt-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fs-vt-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-fill-mode: both;
+  /* The pseudos live on the document root, outside the theme root, so they
+     cannot read --fs-*; the contract's --folio-* names are on :root. */
+  animation-timing-function: var(--folio-ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+::view-transition-old(root) {
+  animation-name: fs-vt-out;
+  animation-duration: 180ms;
+}
+
+::view-transition-new(root) {
+  animation-name: fs-vt-in;
+  animation-duration: 300ms;
+}
+
+/* Chrome that survives the navigation: cross-fade in place, no drift. Only
+   the navbar qualifies — it is fixed at top: 0 with the same geometry in both
+   documents, so its group animation is a no-op and naming it buys stillness
+   for free. The rail's label was named here too and should not have been: it
+   is sticky, so its viewport position is a function of how far the outgoing
+   page was scrolled, and naming it turned a cross-fade into a slide the
+   length of that scroll offset. It cross-fades with the article instead. */
+::view-transition-old(fs-navbar),
+::view-transition-new(fs-navbar) {
+  animation-duration: 220ms;
+  animation-timing-function: var(--folio-ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+/* The group pseudos carry the transform and the width/height tween between
+   the old box and the new one, and the UA default for them is 250ms — longer
+   than either fade above, and untouched by anything that only names
+   -old/-new. Left alone, the root group resizes on its own clock whenever the
+   two documents' viewports differ (a mobile URL bar collapsing across the
+   navigation is the usual way that happens). */
+::view-transition-group(root) {
+  animation-duration: 300ms;
+  animation-timing-function: var(--folio-ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+::view-transition-group(fs-navbar) {
+  animation-duration: 220ms;
+  animation-timing-function: var(--folio-ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+/* Rail and in-page anchors. Scoped with :has so the rule cannot reach a
+   document this theme is not rendering. */
+html:has(.g-folio__theme-1-page) {
+  scroll-behavior: smooth;
+}
+
 /* ── Tokens ────────────────────────────────────────────────────────────────── */
 
 .g-folio__theme-1,
@@ -124,6 +238,9 @@
   --folio-dur: 280ms;
   --fs-ease: var(--folio-ease);
   --fs-dur: var(--folio-dur);
+  /* Hover feedback wants to land before the pointer has settled; the page
+     duration above reads as lag on a row you are only passing over. */
+  --fs-dur-quick: 140ms;
 
   font-family: var(--fs-font-body);
 }
@@ -295,6 +412,11 @@
   color: inherit;
 }
 
+.g-folio__theme-1 .g-folio__theme-site:hover {
+  color: var(--fs-ink);
+  text-decoration: underline;
+}
+
 /* ── Icon buttons (both views) ─────────────────────────────────────────────── */
 
 .g-folio__theme-1 .g-folio__theme-nav-button,
@@ -310,10 +432,22 @@
   background: var(--fs-surface-chip);
   color: var(--fs-ink-muted);
   cursor: pointer;
+  transition:
+    background-color var(--fs-dur-quick) var(--fs-ease),
+    color var(--fs-dur-quick) var(--fs-ease);
 }
 
 .g-folio__theme-1-page .g-folio__theme-page-nav-button {
   color: var(--fs-accent);
+}
+
+/* The neutral chip warms to the accent wash. One step, no scale, no shadow —
+   the pane it opens is that same tint, so the button previews its own
+   destination. */
+.g-folio__theme-1 .g-folio__theme-nav-button:hover,
+.g-folio__theme-1-page .g-folio__theme-page-nav-button:hover {
+  background: var(--fs-surface-tint);
+  color: var(--fs-accent-hover);
 }
 
 .g-folio__theme-1 .g-folio__theme-nav-close,
@@ -335,6 +469,17 @@
   background: var(--fs-surface-tint);
   color: var(--fs-ink-muted);
   cursor: pointer;
+  transition:
+    background-color var(--fs-dur-quick) var(--fs-ease),
+    color var(--fs-dur-quick) var(--fs-ease);
+}
+
+/* Inverse of the open button: this one already sits on the tint, so it lifts
+   to the white plane rather than sinking into it. */
+.g-folio__theme-1 .g-folio__theme-nav-close:hover,
+.g-folio__theme-1-page .g-folio__theme-page-nav-close:hover {
+  background: var(--fs-surface);
+  color: var(--fs-ink);
 }
 
 .g-folio__theme-1 .g-folio__theme-menu-icon,
@@ -433,11 +578,17 @@
   align-items: center;
   justify-content: flex-start;
   min-height: 64px;
+  /* No horizontal bleed. The pane's scroller sets overflow-y, which forces
+     overflow-x to `auto` on the other axis, so anything pushed outside the
+     content box is clipped rather than drawn — the wash and its marker have
+     to live inside the text column. Flush left is where the label and the
+     folio title already sit, so the row lines up with them. */
   font-size: var(--fs-nav-item);
   font-weight: 600;
   line-height: var(--fs-leading-ui);
   color: var(--fs-accent);
   cursor: pointer;
+  transition: background-color var(--fs-dur-quick) var(--fs-ease);
 }
 
 .g-folio__theme-1 .g-folio__theme-nav-item::after,
@@ -449,6 +600,66 @@
   width: 100%;
   height: 1px;
   background-color: var(--fs-rule);
+}
+
+/* The hover marker. It sits on the text column's left edge and is the only
+   thing that moves — the row itself lifts by changing plane, not by
+   translating. */
+.g-folio__theme-1 .g-folio__theme-nav-item::before,
+.g-folio__theme-1-page .g-folio__theme-page-nav-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--fs-2);
+  bottom: var(--fs-2);
+  width: 2px;
+  background-color: var(--fs-accent);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--fs-dur-quick) var(--fs-ease);
+}
+
+/* Pointer and keyboard get the same row, so tabbing through the contents
+   reads the same as running a cursor down it. */
+.g-folio__theme-1 .g-folio__theme-nav-item-link:hover .g-folio__theme-nav-item,
+.g-folio__theme-1 .g-folio__theme-nav-item-link:focus-visible .g-folio__theme-nav-item,
+.g-folio__theme-1-page .g-folio__theme-page-nav-item-link:hover .g-folio__theme-page-nav-item,
+.g-folio__theme-1-page .g-folio__theme-page-nav-item-link:focus-visible .g-folio__theme-page-nav-item {
+  /* White against the pane's tint: the row reads as paper lifted off the
+     wash rather than as a highlight painted onto it. */
+  background-color: var(--fs-surface);
+}
+
+.g-folio__theme-1 .g-folio__theme-nav-item-link:hover .g-folio__theme-nav-item::before,
+.g-folio__theme-1 .g-folio__theme-nav-item-link:focus-visible .g-folio__theme-nav-item::before,
+.g-folio__theme-1-page .g-folio__theme-page-nav-item-link:hover .g-folio__theme-page-nav-item::before,
+.g-folio__theme-1-page .g-folio__theme-page-nav-item-link:focus-visible .g-folio__theme-page-nav-item::before {
+  transform: scaleY(1);
+}
+
+/* The page you are already on. The contents list named every page and marked
+   none of them. Its title drops out of link blue into ink — it is not a
+   destination — and the marker stays out at full height rather than the
+   inset hover height, so "here" survives without colour carrying it alone. */
+.g-folio__theme-1-page .g-folio__theme-page-nav-item-link[aria-current="page"] .g-folio__theme-page-nav-item {
+  background-color: var(--fs-surface);
+  color: var(--fs-ink);
+}
+
+.g-folio__theme-1-page .g-folio__theme-page-nav-item-link[aria-current="page"] .g-folio__theme-page-nav-item::before {
+  transform: scaleY(1);
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+/* Hovering the row you are already on must not shrink its marker back to the
+   hover height. This rule and the hover one are both (0,4,1), so the order
+   here is what decides it — keep this block below the hover block. */
+.g-folio__theme-1-page .g-folio__theme-page-nav-item-link[aria-current="page"]:hover .g-folio__theme-page-nav-item::before,
+.g-folio__theme-1-page .g-folio__theme-page-nav-item-link[aria-current="page"]:focus-visible .g-folio__theme-page-nav-item::before {
+  top: 0;
+  bottom: 0;
 }
 
 .g-folio__theme-1 .g-folio__theme-nav-item-order,
@@ -539,6 +750,9 @@
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   border-bottom: 2px solid var(--fs-surface-tint);
+  /* Lifted out of the root snapshot so the bar holds still while the page
+     under it changes, instead of fading out and back in with the article. */
+  view-transition-name: fs-navbar;
 }
 
 /* Past the first screenful the bar goes opaque so type does not read through
@@ -595,6 +809,11 @@
   cursor: pointer;
   list-style: none;
   color: var(--fs-ink-muted);
+  transition: color var(--fs-dur-quick) var(--fs-ease);
+}
+
+.g-folio__theme-1-page .g-folio__theme-page-contents-summary:hover {
+  color: var(--fs-ink);
 }
 
 .g-folio__theme-1-page .g-folio__theme-page-contents-summary::-webkit-details-marker {
@@ -734,6 +953,26 @@
   margin-inline: 0;
 }
 
+/* Links the author writes into the body. There was no rule for these at all,
+   so they fell through to the UA's #0000EE — the one place in the theme where
+   a colour arrived from outside the palette. Underlined at rest rather than
+   coloured only: these sit inside running text, where colour alone is not a
+   sufficient signal, and the rule below is the same one the rail and the
+   footer use one step further in. */
+.g-folio__theme-1-page .g-folio__theme-page-content a {
+  color: var(--fs-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+  transition: color var(--fs-dur-quick) var(--fs-ease);
+}
+
+.g-folio__theme-1-page .g-folio__theme-page-content a:hover,
+.g-folio__theme-1-page .g-folio__theme-page-content a:focus-visible {
+  color: var(--fs-accent-hover);
+  text-decoration-thickness: 2px;
+}
+
 /* Anchors from the rail and the mobile panel must clear the fixed navbar. */
 .g-folio__theme-1-page .g-folio__theme-page-content [id] {
   scroll-margin-top: calc(var(--fs-navbar-h) + var(--fs-4));
@@ -771,10 +1010,35 @@
   color: var(--fs-accent);
   text-decoration: none;
   word-wrap: break-word;
+  position: relative;
+  transition: color var(--fs-dur-quick) var(--fs-ease);
 }
 
-.g-folio__theme-1-page .g-folio__theme-page-catalog a:hover {
-  text-decoration: underline;
+/* The rail already draws a hairline down its left edge. Rather than underline
+   the label, the hover lights up the segment of that rule beside it — the
+   indicator is the rail itself, which keeps the list reading as a margin note
+   and not as a menu. */
+.g-folio__theme-1-page .g-folio__theme-page-catalog a::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--fs-4) * -1 - 1px);
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--fs-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--fs-dur-quick) var(--fs-ease);
+}
+
+.g-folio__theme-1-page .g-folio__theme-page-catalog a:hover,
+.g-folio__theme-1-page .g-folio__theme-page-catalog a:focus-visible {
+  color: var(--fs-accent-hover);
+}
+
+.g-folio__theme-1-page .g-folio__theme-page-catalog a:hover::before,
+.g-folio__theme-1-page .g-folio__theme-page-catalog a:focus-visible::before {
+  transform: scaleX(1);
 }
 
 /* ── Page footer ───────────────────────────────────────────────────────────── */
@@ -806,6 +1070,17 @@
   justify-content: flex-end;
 }
 
+/* The arrow leans the way it points. Two pixels — enough to register as a
+   direction, not enough to read as a control moving. */
+.g-folio__theme-1-page .g-folio__theme-page-arrow {
+  transition: transform var(--fs-dur-quick) var(--fs-ease);
+}
+
+.g-folio__theme-1-page .g-folio__theme-page-next:hover .g-folio__theme-page-arrow,
+.g-folio__theme-1-page .g-folio__theme-page-next:focus-within .g-folio__theme-page-arrow {
+  transform: translateX(2px);
+}
+
 .g-folio__theme-1-page .g-folio__theme-page-next a,
 .g-folio__theme-1-page .g-folio__theme-page-prev a {
   min-width: 0;
@@ -824,6 +1099,11 @@
 
 .g-folio__theme-1-page .g-folio__theme-page-prev .g-folio__theme-page-arrow {
   transform: rotate(180deg);
+}
+
+.g-folio__theme-1-page .g-folio__theme-page-prev:hover .g-folio__theme-page-arrow,
+.g-folio__theme-1-page .g-folio__theme-page-prev:focus-within .g-folio__theme-page-arrow {
+  transform: translateX(-2px) rotate(180deg);
 }
 
 .g-folio__theme-1-page .g-folio__theme-page-powerby {
@@ -969,10 +1249,44 @@
 
 @media (prefers-reduced-motion: reduce) {
 
+  .g-folio__theme-1,
   .g-folio__theme-1 *,
+  .g-folio__theme-1-page,
   .g-folio__theme-1-page * {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* The rule above cannot reach these: the view-transition pseudos are
+     children of the document root, not of the theme root, and the smooth
+     scroll now sits on <html>. The transition is not switched off — a hard
+     cut between two documents is its own jolt — it is cut to a plain
+     cross-fade with no drift and no blur. */
+  html:has(.g-folio__theme-1-page) {
+    scroll-behavior: auto;
+  }
+
+  ::view-transition-old(root) {
+    animation-name: fs-vt-fade-out;
+    animation-duration: 120ms;
+  }
+
+  ::view-transition-new(root) {
+    animation-name: fs-vt-fade-in;
+    animation-duration: 120ms;
+  }
+
+  ::view-transition-old(fs-navbar),
+  ::view-transition-new(fs-navbar) {
+    animation-duration: 120ms;
+  }
+
+  /* Named last and with the wildcard, because the group pseudos are the ones
+     that translate and resize, and naming -old/-new never reaches them. This
+     is the rule that stops a scroll-length pan under reduced motion. */
+  ::view-transition-group(*) {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
   }
 }
