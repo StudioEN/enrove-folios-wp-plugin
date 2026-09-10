@@ -10,8 +10,6 @@ if (!defined('ABSPATH')) {
 
 class Page extends Base_Theme
 {
-  public $folio_id;
-  public $folio;
   public $show_in_page_nav = true;
 
   public function __construct()
@@ -35,28 +33,6 @@ class Page extends Base_Theme
       $version,
       true
     );
-  }
-
-  public function get_folio_data()
-  {
-    $wp_query = $this->get_the_wp_query([
-      'post__in' => [$this->folio_id],
-      'post_status' => Utils::get_viewable_post_statuses(),
-      'post_type' => 'groove_folio',
-    ]);
-
-    $folio = $wp_query->post;
-
-    // Direct fallback: WP_Query may miss the folio in some status-filtering edge cases
-    if (!$folio && $this->folio_id > 0) {
-      $direct = get_post($this->folio_id);
-      if ($direct && $direct->post_type === 'groove_folio' && Utils::can_current_request_view_post($direct)) {
-        $folio = $direct;
-      }
-    }
-
-    $this->folio = $folio;
-    return $folio;
   }
 
   public function get_data()
@@ -109,26 +85,6 @@ class Page extends Base_Theme
     }
 
     return null;
-  }
-
-  public function to_anchor_name($string)
-  {
-    $dstr = preg_replace_callback('/([A-Z]+)/', function ($matches) {
-      return '-' . strtolower($matches[0]);
-    }, $string);
-
-    $dst = preg_replace_callback('/([\s]+)/', function ($matches) {
-      return '-';
-    }, $dstr);
-
-    return trim((string) preg_replace('/_{2,}/', '-', (string) $dst), '-');
-  }
-
-  public function get_html_id($element)
-  {
-    $id = $element->getAttribute('id');
-    $text_content = $element->textContent;
-    return $id ? $id : $this->to_anchor_name($text_content);
   }
 
   protected function get_heading_anchors(): array
@@ -239,41 +195,6 @@ class Page extends Base_Theme
     }
 
     return $this->apply_embed_processing($results);
-  }
-
-  protected function get_current_index(): int
-  {
-    if (empty($this->pages) || !is_array($this->pages)) {
-      return -1;
-    }
-
-    foreach ($this->pages as $index => $page) {
-      if ((int) $page->ID === (int) $this->id) {
-        return $index;
-      }
-    }
-
-    return -1;
-  }
-
-  protected function get_prev_page()
-  {
-    $index = $this->get_current_index();
-    if ($index > 0) {
-      return $this->pages[$index - 1];
-    }
-
-    return null;
-  }
-
-  protected function get_next_page()
-  {
-    $index = $this->get_current_index();
-    if ($index > -1 && is_array($this->pages) && $index < count($this->pages) - 1) {
-      return $this->pages[$index + 1];
-    }
-
-    return null;
   }
 
   protected function get_progress_context(): array
@@ -414,7 +335,7 @@ class Page extends Base_Theme
     return ['version' => $version, 'status' => $status, 'date' => $date, 'contacts' => $contacts];
   }
 
-  protected function display_mobile_header(array $progress, bool $show_in_page_nav): void
+  protected function display_mobile_header(array $progress, bool $show_in_page_nav, array $anchors): void
   {
     ?>
     <header class="gp-page__mobile-header">
@@ -433,13 +354,14 @@ class Page extends Base_Theme
         <div class="gp-page__mobile-header-controls">
           <span class="gp-page__progress-text"><?= esc_html(sprintf(__('%1$d / %2$d', 'groove'), (int) $progress['current'], (int) $progress['total'])) ?></span>
           <?php if ($show_in_page_nav): ?>
-            <button type="button" class="g-folio__theme-page-nav-bar-toggle"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></button>
+            <button type="button" class="g-folio__theme-page-nav-bar-toggle" aria-expanded="false"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></button>
           <?php endif; ?>
         </div>
       </div>
       <div class="gp-page__scroll-progress" aria-hidden="true">
         <span class="gp-page__scroll-progress-bar" style="width: <?= (int) $progress['percent'] ?>%"></span>
       </div>
+      <?php $this->display_mobile_nav($anchors, $show_in_page_nav); ?>
     </header>
     <?php
   }
@@ -450,7 +372,22 @@ class Page extends Base_Theme
       return;
     }
     ?>
-    <nav class="g-folio__theme-page-mobile-nav gp-page__mobile-nav" aria-label="<?= esc_attr__('On this page', 'groove') ?>">
+    <?php /* Rendered inside the sticky mobile header, and positioned absolutely
+             against it, so it hangs from the bar its trigger sits in. In flow at
+             the top of <main> it opened wherever the top of the page was — two
+             screens above the reader, who saw nothing happen — and taking it out
+             of flow is also what keeps opening and closing it from shifting the
+             content underneath.
+
+             No data-groove-nav-toggle="own": this theme ships a closer for this
+             panel but no opener, so the shared toggle handler in groove-main.js
+             is the one that opens it. data-groove-drawer adds the ARIA state,
+             Escape and click-outside that a bare toggle cannot — lock="off"
+             because this is a dropdown, not a full-screen drawer. The theme's
+             own drawer controller is scoped to .g-folio__theme-page-nav and does
+             not touch this pane. */ ?>
+    <nav class="g-folio__theme-page-mobile-nav gp-page__mobile-nav" aria-label="<?= esc_attr__('On this page', 'groove') ?>"
+      data-groove-drawer=".g-folio__theme-page-nav-bar-toggle" data-groove-drawer-lock="off">
       <div class="g-folio__theme-page-mobile-nav-content">
         <div class="g-folio__theme-page-mobile-nav-label"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></div>
         <div class="g-folio__theme-page-mobile-navs">
@@ -460,7 +397,10 @@ class Page extends Base_Theme
             </a>
           <?php endforeach; ?>
         </div>
-        <button type="button" class="g-folio__theme-page-mobile-nav-back" data-g-scroll-target="#gp-page-top">↑ <?= esc_html__('Back to top', 'groove') ?></button>
+        <?php /* No data-g-scroll-target: groove-main.js already scrolls this
+                 button to the top, and binding the theme's smooth scroll to the
+                 same click ran both — an instant jump, then a smooth no-op. */ ?>
+        <button type="button" class="g-folio__theme-page-mobile-nav-back">↑ <?= esc_html__('Back to top', 'groove') ?></button>
       </div>
     </nav>
     <?php
@@ -582,15 +522,15 @@ class Page extends Base_Theme
       data-gp-palette-source-url="<?= esc_url($palette_source_url) ?>"
     >
 
-      <!-- Mobile-only header: nav trigger + title + progress + on-page toggle -->
-      <?php $this->display_mobile_header($progress, $show_in_page_nav); ?>
+      <!-- Mobile-only header: nav trigger + title + progress + on-page toggle,
+           and the on-page panel that hangs beneath it -->
+      <?php $this->display_mobile_header($progress, $show_in_page_nav, $anchors); ?>
 
       <!-- Desktop + mobile layout: [nav sidebar | main content] -->
       <div class="gp-layout">
         <?php $this->display_nav(); ?>
 
         <main class="g-folio__theme-page-main gp-page__main">
-          <?php $this->display_mobile_nav($anchors, $show_in_page_nav); ?>
 
           <div class="g-folio__theme-page-body gp-page__body">
             <div class="g-folio__theme-page-center gp-page__center">

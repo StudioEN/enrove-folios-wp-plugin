@@ -1181,27 +1181,36 @@ jQuery(function () {
     // literal rgba() values as inline styles, which beat the stylesheet on the
     // element itself: the bar ignored --folio-overlay and no theme could
     // restyle either state. It now toggles a class and the colours live in the
-    // theme CSS. The filter leaves this to folio-starter and groove-ebook —
-    // groove-newsletter and groove-proposal paint their own bars.
+    // theme CSS.
+    //
+    // A theme whose own JS paints the bar opts out on the bar itself with
+    //
+    //   data-groove-navbar="own"
+    //
+    // This used to be a hardcoded `.closest('.gn-page, .gp-page')` filter —
+    // shared code naming two themes' private class prefixes, which a sixth
+    // theme could neither join nor leave without editing this file.
     function setNavBarBackgroundColor() {
-      const navBars = jQuery('.g-folio__theme-page-nav-bar').filter(function () {
-        return jQuery(this).closest('.gn-page, .gp-page').length === 0
-      })
-
-      navBars.toggleClass('is-scrolled', window.scrollY > 96)
+      jQuery('.g-folio__theme-page-nav-bar')
+        .not('[data-groove-navbar="own"]')
+        .toggleClass('is-scrolled', window.scrollY > 96)
     }
 
     setNavBarBackgroundColor()
 
-    // Scoped the same way setNavBarBackgroundColor is, and for a sharper
-    // reason: groove-newsletter and groove-proposal bind this same element in
-    // their own theme JS and toggle the same class from its current state. With
-    // both bound, one click toggled twice and the panel never opened. This
-    // handler now leaves those two themes to their own controllers.
+    // The same opt-out, for a sharper reason: a theme that binds this button in
+    // its own JS and toggles `.visible` from its current state would, with both
+    // handlers bound, toggle twice per click and never open the panel. Such a
+    // theme declares
+    //
+    //   data-groove-nav-toggle="own"
+    //
+    // on the button. Opting out is only correct if the theme actually OPENS the
+    // panel itself — groove-proposal was excluded by the old prefix filter while
+    // shipping only a closer, so its "On this page" panel could never open at
+    // all. Silence here means the shared handler does the work.
     jQuery('.g-folio__theme-page-nav-bar-toggle')
-      .filter(function () {
-        return jQuery(this).closest('.gn-page, .gp-page').length === 0
-      })
+      .not('[data-groove-nav-toggle="own"]')
       .click(function () {
         // Class only. aria-expanded is the drawer controller's job — see below.
         jQuery('.g-folio__theme-page-mobile-nav').toggleClass('visible')
@@ -1241,12 +1250,11 @@ jQuery(function () {
     //
     //   data-groove-drawer="<selector of its trigger>"
     //
-    // Opt-in rather than automatic because groove-newsletter and
-    // groove-proposal ship their own drawer controllers and would double-handle
-    // it. A theme that wants the shared behaviour declares one attribute; a
-    // theme that owns its drawers says nothing. Add
-    // data-groove-drawer-lock="off" for a dropdown-style panel that should not
-    // lock the page behind it.
+    // Opt-in rather than automatic because a theme that ships its own drawer
+    // controller would double-handle every event. A theme that wants the shared
+    // behaviour declares one attribute; a theme that owns its drawers says
+    // nothing. Add data-groove-drawer-lock="off" for a dropdown-style panel
+    // that should not lock the page behind it.
     //
     // This was groove-ebook's two missing dismissals and folio-starter's
     // private copy of the same 140 lines. See themes/README.md.
@@ -1285,12 +1293,22 @@ jQuery(function () {
       const focusWhenReady = function (pane, target) {
         let timer = null
 
-        const attempt = function () {
+        const attempt = function (event) {
+          // transitionend bubbles, and the things inside a pane transition too —
+          // a link tinting under the cursor would otherwise count as the pane
+          // having arrived. Only the pane's own transition ends the wait.
+          if (event && event.target !== pane) {
+            return
+          }
+
           pane.removeEventListener('transitionend', attempt)
           clearTimeout(timer)
 
           if (pane.classList.contains('visible')) {
-            target.focus()
+            // A pane that is out of flow is already where the reader is looking;
+            // one that is not would be scrolled to, which is not this function's
+            // job — it moves focus, not the viewport.
+            target.focus({ preventScroll: true })
           }
         }
 

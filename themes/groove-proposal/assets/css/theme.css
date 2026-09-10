@@ -1414,14 +1414,36 @@
   color: var(--gp-warm-mid);
 }
 
-/* Mobile in-page nav */
+/* Mobile in-page nav.
+
+   A dropdown hanging from the sticky mobile header it is rendered inside, not a
+   block in the page flow. In flow it sat at the top of <main>, so opening it two
+   screens down put it above the viewport and nothing appeared to happen; out of
+   flow, opening and closing it also cannot shift the content underneath, which
+   would otherwise land every smooth scroll short by the panel's own height.
+   .gp-page__mobile-header is position: sticky, so it is the containing block. */
 .gp-page__mobile-nav {
   display: none;
-  margin: 0 auto 1.25rem;
-  max-width: 1200px;
+  position: absolute;
+  /* Percentages resolve against the padding box, so a bare 100% would put the
+     panel's opaque background over the header's own bottom border. */
+  top: calc(100% + 1px);
+  left: 0;
+  right: 0;
+  /* The contents list below has its own cap and is the scroller that normally
+     runs; this is the backstop for a short viewport (landscape phone), where the
+     label and back button alone could otherwise overrun the screen. A percentage
+     would resolve against the header's auto height and compute to none, so these
+     are viewport units. */
+  max-height: 70vh;
+  max-height: 70dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--gp-border);
-  border-radius: 3px;
+  border-top: 0;
+  border-radius: 0 0 3px 3px;
   background: var(--gp-surface);
+  box-shadow: var(--folio-shadow);
 }
 
 .gp-page__mobile-nav.visible {
@@ -1447,6 +1469,9 @@
   gap: 0.15rem;
   max-height: min(45vh, 300px);
   overflow-y: auto;
+  /* This is the box that scrolls, so this is where the chain has to stop —
+     the panel opts out of the drawer scroll lock. */
+  overscroll-behavior: contain;
 }
 
 .gp-page__mobile-nav .g-folio__theme-page-mobile-nav-item-link {
@@ -2731,13 +2756,9 @@ a.gp-page__footer-arrow:hover::after {
     justify-content: flex-end;
   }
 
-  .gp-page__mobile-nav {
-    display: none;
-  }
-
-  .gp-page__mobile-nav.visible {
-    display: block;
-  }
+  /* Hiding is handled by the base rule; the sticky header that contains this
+     panel is itself display:none above this breakpoint, so an open panel cannot
+     survive a resize to desktop. */
 }
 
 /* ─── FAQ Accordion ─── */

@@ -10,8 +10,6 @@ if (!defined('ABSPATH')) {
 
 class Page extends Base_Theme
 {
-  public $folio_id;
-  public $folio;
   public $catalog_entries;
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -21,20 +19,6 @@ class Page extends Base_Theme
     parent::__construct();
 
     $this->folio_id = $this->resolve_page_folio_id();
-  }
-
-  function get_folio_data()
-  {
-    $wp_query = $this->get_the_wp_query(array(
-      'post__in' => array($this->folio_id),
-      'post_status' => Utils::get_viewable_post_statuses(),
-      'post_type' => 'groove_folio',
-    ));
-
-    $page = $wp_query->post;
-    $this->folio = $page;
-
-    return $page;
   }
 
   function get_data()
@@ -89,19 +73,6 @@ class Page extends Base_Theme
     return null;
   }
 
-  function to_anchor_name($string)
-  {
-    $dstr = preg_replace_callback('/([A-Z]+)/', function ($matchs) {
-      return '-' . strtolower($matchs[0]);
-    }, $string);
-
-    $dst = preg_replace_callback('/([\s]+)/', function ($matchs) {
-      return '-';
-    }, $dstr);
-
-    return trim(preg_replace('/_{2,}/', '-', $dst), '-');
-  }
-
   function inject_heading_anchor($html, $anchor)
   {
     $doc = $this->load_fragment($html);
@@ -116,13 +87,6 @@ class Page extends Base_Theme
     }
 
     return $doc->saveHTML();
-  }
-
-  function get_html_id($element)
-  {
-    $id = $element->getAttribute('id');
-    $textContent = $element->textContent;
-    return $id ? $id : $this->to_anchor_name($textContent);
   }
 
   /**
@@ -190,49 +154,6 @@ class Page extends Base_Theme
     return $this->apply_embed_processing($results);
   }
 
-  function is_first_page()
-  {
-    return empty($this->pages) ? false : ($this->pages[0]->ID === $this->id);
-  }
-
-  function is_last_page()
-  {
-    return empty($this->pages) ? false : ($this->pages[count($this->pages) - 1]->ID === $this->id);
-  }
-
-  function get_current_index()
-  {
-    $index = 0;
-    foreach ($this->pages as $page) {
-      if ($page->ID == $this->id) {
-        return $index;
-      }
-      $index++;
-    }
-    return -1;
-  }
-
-  function get_prev_page()
-  {
-    $index = $this->get_current_index();
-    if ($index > 0) {
-      return $this->pages[$index - 1];
-    }
-    return null;
-  }
-
-  function get_next_page()
-  {
-    if (empty($this->pages)) {
-      return null;
-    }
-    $index = $this->get_current_index();
-    if ($index > -1 && $index < count($this->pages) - 1) {
-      return $this->pages[$index + 1];
-    }
-    return null;
-  }
-
   function display_navbar()
   {
     ?>
@@ -252,7 +173,6 @@ class Page extends Base_Theme
           <?= esc_html($this->page->post_title ?? __('Page', 'groove')) ?>
         </div>
       </div>
-
 
     </div>
     <?php

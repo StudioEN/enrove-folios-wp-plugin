@@ -15,6 +15,9 @@ abstract class Base_Theme extends Assets
   public $copyright;
   public $page;
   public $pages;
+  /** Page subclasses only: the parent folio, resolved by get_folio_data(). */
+  public $folio;
+  public $folio_id;
   public $theme_id;
   public $theme_name;
   public $theme_cover_url;
@@ -518,6 +521,141 @@ abstract class Base_Theme extends Assets
 
     $q = $this->get_the_wp_query($args);
     $this->pages = $q->posts;
+  }
+
+  // -----------------------------------------------------------------------
+  // Folio page helpers
+  //
+  // Every Page subclass needs the same four things: its parent folio, where it
+  // sits in the folio's page order, its neighbours, and an anchor name for a
+  // heading. These lived as byte-identical copies in all five themes until the
+  // copies drifted — groove-proposal hardened two of them and the fix never
+  // travelled. They are here so the next theme inherits the fixed versions.
+  //
+  // A theme is still free to override any of them; magazine reorders $pages in
+  // get_data() before these ever read it.
+  // -----------------------------------------------------------------------
+
+  /**
+   * Load the parent folio post into $this->folio.
+   *
+   * Page subclasses resolve $this->folio_id in their constructor via
+   * resolve_page_folio_id(), then call this from get_data().
+   *
+   * @return \WP_Post|null
+   */
+  function get_folio_data()
+  {
+    $wp_query = $this->get_the_wp_query(array(
+      'post__in' => array((int) $this->folio_id),
+      'post_status' => Utils::get_viewable_post_statuses(),
+      'post_type' => 'groove_folio',
+    ));
+
+    $folio = $wp_query->post;
+
+    // Direct fallback: WP_Query may miss the folio in some status-filtering
+    // edge cases. Viewability is re-checked by hand because we are bypassing
+    // the post_status arg that would otherwise have enforced it.
+    if (!$folio && (int) $this->folio_id > 0) {
+      $direct = get_post((int) $this->folio_id);
+      if ($direct && $direct->post_type === 'groove_folio' && Utils::can_current_request_view_post($direct)) {
+        $folio = $direct;
+      }
+    }
+
+    $this->folio = $folio;
+
+    return $folio;
+  }
+
+  /**
+   * The page list as an ordered, 0-indexed list.
+   *
+   * A theme is invited to reorder $this->pages in get_data() (groove-magazine
+   * does), and a reorder that filters rather than sorts leaves the original keys
+   * behind. Position and key would then disagree, and prev/next — which step by
+   * one from the current index — would walk to the wrong page or to nothing.
+   * Normalising here means any array a theme hands back works.
+   *
+   * @return array
+   */
+  protected function get_ordered_pages()
+  {
+    return is_array($this->pages) ? array_values($this->pages) : array();
+  }
+
+  /**
+   * This page's position in $this->pages, or -1 when it is not among them
+   * (a preview's fabricated post, or a page whose folio_id went stale).
+   *
+   * @return int
+   */
+  function get_current_index()
+  {
+    foreach ($this->get_ordered_pages() as $index => $page) {
+      if (isset($page->ID) && (int) $page->ID === (int) $this->id) {
+        return $index;
+      }
+    }
+
+    return -1;
+  }
+
+  /**
+   * @return \WP_Post|null The page before this one, or null at the start.
+   */
+  function get_prev_page()
+  {
+    $pages = $this->get_ordered_pages();
+    $index = $this->get_current_index();
+
+    return $index > 0 ? $pages[$index - 1] : null;
+  }
+
+  /**
+   * @return \WP_Post|null The page after this one, or null at the end.
+   */
+  function get_next_page()
+  {
+    $pages = $this->get_ordered_pages();
+    $index = $this->get_current_index();
+
+    return ($index > -1 && $index < count($pages) - 1) ? $pages[$index + 1] : null;
+  }
+
+  /**
+   * Slugify a heading into an anchor name — lowercased, hyphenated.
+   * Consumed by the "On this page" rails and the mobile nav.
+   *
+   * @param string $string
+   * @return string
+   */
+  function to_anchor_name($string)
+  {
+    $dstr = preg_replace_callback('/([A-Z]+)/', function ($matches) {
+      return '-' . strtolower($matches[0]);
+    }, (string) $string);
+
+    $dst = preg_replace_callback('/([\s]+)/', function ($matches) {
+      return '-';
+    }, (string) $dstr);
+
+    return trim((string) preg_replace('/_{2,}/', '-', (string) $dst), '-');
+  }
+
+  /**
+   * A heading's anchor: the author's own id when it has one, else a slug of
+   * its text.
+   *
+   * @param \DOMElement $element
+   * @return string
+   */
+  function get_html_id($element)
+  {
+    $id = $element->getAttribute('id');
+
+    return $id ? $id : $this->to_anchor_name($element->textContent);
   }
 
   /**

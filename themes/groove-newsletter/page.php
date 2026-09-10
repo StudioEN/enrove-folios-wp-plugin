@@ -10,8 +10,6 @@ if (!defined('ABSPATH')) {
 
 class Page extends Base_Theme
 {
-  public $folio_id;
-  public $folio;
 
   protected function get_page_timestamp(): int
   {
@@ -83,20 +81,6 @@ class Page extends Base_Theme
     );
   }
 
-  function get_folio_data()
-  {
-    $wp_query = $this->get_the_wp_query(array(
-      'post__in' => array($this->folio_id),
-      'post_status' => Utils::get_viewable_post_statuses(),
-      'post_type' => 'groove_folio',
-    ));
-
-    $page = $wp_query->post;
-    $this->folio = $page;
-
-    return $page;
-  }
-
   function get_data()
   {
     if ($this->is_preview_mode) { return; }
@@ -126,26 +110,6 @@ class Page extends Base_Theme
     }
 
     return null;
-  }
-
-  function to_anchor_name($string)
-  {
-    $dstr = preg_replace_callback('/([A-Z]+)/', function ($matchs) {
-      return '-' . strtolower($matchs[0]);
-    }, $string);
-
-    $dst = preg_replace_callback('/([\s]+)/', function ($matchs) {
-      return '-';
-    }, $dstr);
-
-    return trim(preg_replace('/_{2,}/', '-', $dst), '-');
-  }
-
-  function get_html_id($element)
-  {
-    $id = $element->getAttribute('id');
-    $textContent = $element->textContent;
-    return $id ? $id : $this->to_anchor_name($textContent);
   }
 
   function display_catalogs()
@@ -196,56 +160,16 @@ class Page extends Base_Theme
     return $this->apply_embed_processing($results);
   }
 
-  function is_first_page()
-  {
-    return empty($this->pages) ? false : ($this->pages[0]->ID === $this->id);
-  }
-
-  function is_last_page()
-  {
-    return empty($this->pages) ? false : ($this->pages[count($this->pages) - 1]->ID === $this->id);
-  }
-
-  function get_current_index()
-  {
-    $index = 0;
-    foreach ($this->pages as $page) {
-      if ($page->ID == $this->id) {
-        return $index;
-      }
-      $index++;
-    }
-    return -1;
-  }
-
-  function get_prev_page()
-  {
-    $index = $this->get_current_index();
-    if ($index > 0) {
-      return $this->pages[$index - 1];
-    }
-    return null;
-  }
-
-  function get_next_page()
-  {
-    if (empty($this->pages)) {
-      return null;
-    }
-    $index = $this->get_current_index();
-    if ($index > -1 && $index < count($this->pages) - 1) {
-      return $this->pages[$index + 1];
-    }
-    return null;
-  }
-
   function display_navbar()
   {
     $prev_page = $this->get_prev_page();
     $next_page = $this->get_next_page();
     $page_nav_count = ($prev_page ? 1 : 0) + ($next_page ? 1 : 0);
     ?>
-    <div class="g-folio__theme-page-nav-bar">
+    <?php /* This theme paints its own bar (gn-page--feature-out) and opens its own
+             sections panel in groove-newsletter.js, so it opts out of both shared
+             handlers rather than being named in a filter inside groove-main.js. */ ?>
+    <div class="g-folio__theme-page-nav-bar" data-groove-navbar="own">
       <div class="g-folio__theme-page-nav-bar-main">
         <button type="button" class="g-folio__theme-page-nav-button gn-nav-trigger gn-nav-trigger--page"
           aria-label="<?= esc_attr__('Open issue navigation', 'groove') ?>">
@@ -280,7 +204,7 @@ class Page extends Base_Theme
           <?php endif; ?>
         </div>
 
-        <button type="button" class="g-folio__theme-page-nav-bar-toggle">
+        <button type="button" class="g-folio__theme-page-nav-bar-toggle" data-groove-nav-toggle="own">
           <?= esc_html__('Sections', 'groove') ?>
         </button>
       </div>

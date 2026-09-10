@@ -351,6 +351,35 @@ Merriweather, Montserrat, Noto Sans, Noto Serif, Nunito Sans, Poppins, Roboto).
   }
   ```
 
+### Page helpers — inherited, not copied
+
+Every `Page` subclass needs the same few things: its parent folio, where it sits in the folio's page
+order, its neighbours, and an anchor name for a heading. All six helpers live on `Base_Theme`. **Do not
+re-implement them** — they were byte-identical copies in four of the five themes, and the fifth had
+hardened two of them without the fix ever travelling back.
+
+| Helper | Returns |
+|--------|---------|
+| `get_folio_data()` | Loads the parent folio into `$this->folio`. Falls back to `get_post()` + an explicit viewability check when `WP_Query` misses it under status filtering |
+| `get_current_index()` | This page's position in `$this->pages`, or `-1` when it is not among them |
+| `get_prev_page()` / `get_next_page()` | The neighbouring `WP_Post`, or `null` at either end |
+| `to_anchor_name($string)` | A heading slugified — lowercased, hyphenated |
+| `get_html_id($element)` | A heading's own `id` when it has one, else `to_anchor_name()` of its text |
+
+`$this->folio` and `$this->folio_id` are declared on `Base_Theme` too; a `Page` subclass should not
+redeclare them.
+
+All of them guard an empty, null or non-array `$this->pages` and an `$this->id` that is not in the list,
+so they are safe under the theme-picker preview's fabricated posts. They are ordinary public methods, so
+a theme with a genuine reason can still override one — `groove-magazine` does not need to, because it
+reorders `$this->pages` in `get_data()` before these ever read it.
+
+**Reordering `$this->pages` is supported, filtering included.** The helpers read the list through
+`get_ordered_pages()`, which runs `array_values()` over it first, so a reorder that leaves
+non-contiguous keys behind — anything built with `array_filter()` — still paginates correctly. Prev and
+next step by one from the current index, so without that normalisation a filtered list would walk to the
+wrong page or off the end.
+
 ---
 
 ## 7. Markup conventions
@@ -366,9 +395,16 @@ Merriweather, Montserrat, Noto Sans, Noto Serif, Nunito Sans, Poppins, Roboto).
    | `.g-folio__theme-nav-button` | opens `.g-folio__theme-nav` (adds `.visible`) |
    | `.g-folio__theme-nav-close` | closes it |
    | `.g-folio__theme-page-nav-button` / `-close` | same pair for `.g-folio__theme-page-nav` |
-   | `.g-folio__theme-page-nav-bar-toggle` | toggles `.g-folio__theme-page-mobile-nav.visible` |
+   | `.g-folio__theme-page-nav-bar-toggle` | toggles `.g-folio__theme-page-mobile-nav.visible` — opt out with `data-groove-nav-toggle="own"` |
+   | `.g-folio__theme-page-nav-bar` | gains `.is-scrolled` past 96px — opt out with `data-groove-navbar="own"` |
    | `.g-folio__theme-page-mobile-nav-back` | scroll to top |
    | `.g-folio__theme-cover` / root ending `-page` | font variable injection target |
+
+   **The two opt-outs are declared on the element, not on a list of theme names inside
+   `groove-main.js`.** Both were a hardcoded `.closest('.gn-page, .gp-page')` filter until a sixth
+   theme would have had to edit shared code to join or leave them. Opt out only when your own JS
+   genuinely does that job — `groove-proposal` sat behind the old filter while shipping a closer for
+   its sections panel and no opener, so the panel could never open at all.
 
    The theme-picker preview additionally neutralises `.g-folio__theme-fields-submit`,
    `.g-folio__theme-page-nav-item-link`, `.g-folio__theme-nav-item-link`, `.g-folio__theme-page-prev a`,
@@ -611,10 +647,11 @@ colours live in the theme:
 .your-page-root .g-folio__theme-page-nav-bar.is-scrolled { background-color: var(--folio-surface); }
 ```
 
-`folio-starter` and `groove-ebook` use it; `groove-newsletter` and `groove-proposal` are filtered out
-of that handler and paint their own bars. Where the runtime is choosing between two states rather than
-computing a value, a class is the better handoff than a property — it leaves both states in CSS, where
-a theme can see and change them.
+Every theme that renders the bar gets this by default. A theme whose own JS paints the bar says
+`data-groove-navbar="own"` on the bar and the shared handler skips it — `groove-newsletter` does,
+because it tracks its masthead with `gn-page--feature-out` instead. Where the runtime is choosing
+between two states rather than computing a value, a class is the better handoff than a property — it
+leaves both states in CSS, where a theme can see and change them.
 
 #### Fewer tones than slots? Point one slot at another
 
@@ -678,6 +715,7 @@ The rail's label is folio-configurable: `Utils::get_folio_on_this_page_label($fo
 default `On this page`. Never hardcode that string.
 
 Prev/next navigation uses `get_current_index()` / `get_prev_page()` / `get_next_page()` over `$this->pages`.
+All three are inherited from `Base_Theme` — see §6.
 
 ---
 
@@ -800,7 +838,10 @@ Consequences for theme code:
 3. `cover.php` — `class Cover extends Base_Theme`; `display_theme()` calls `parent::display_theme()` first;
    root element carries `g-folio__theme-cover`.
 4. `page.php` — `class Page extends Base_Theme`; root `class` attribute ends in `-page`; implement
-   `get_content()` and run output through `apply_embed_processing()`.
+   `get_content()` and run output through `apply_embed_processing()`. Resolve the parent folio with
+   `resolve_page_folio_id()` in the constructor, and take `get_folio_data()`, `get_current_index()`,
+   `get_prev_page()`, `get_next_page()`, `to_anchor_name()` and `get_html_id()` from `Base_Theme` — do
+   not copy them in (§6).
 5. Both files start with `if (!defined('ABSPATH')) { exit; }`.
 6. `assets/css/theme.css` scoped to a theme-private root, consuming `--g-folio-header-font` /
    `--g-folio-body-font` with fallbacks — and loading no font of its own (no `@import`; declare
@@ -834,10 +875,31 @@ Consequences for theme code:
 12. Add accent + background entries to the maps in `includes/folio-preview-template.php` so the password
    gate matches.
 13. Run `php bin/check-theme-contract.php --theme=<theme-id>`. It reports which slots you filled and
-    flags the mistakes that fail silently: a slot aliased *onto* a private token instead of the other
-    way round, display type that adapts at no width, `outline: none` with no ring to replace it, and a
-    theme with no `:hover` or `:focus-visible` rules at all. Unfilled slots are often correct — read
-    the `!` lines, not the counts. `--strict` makes it exit non-zero, for CI.
+    flags the mistakes that fail silently, in the stylesheet **and in the PHP**.
+
+    From the CSS: a slot aliased *onto* a private token instead of the other way round, display type
+    that adapts at no width, `outline: none` with no ring to replace it, a theme with no `:hover` or
+    `:focus-visible` rules at all, `--folio-*` on `:root` with no scheme toggle, an `@import`.
+
+    From the PHP — every one of these renders without an error of any kind when broken: a root element
+    that misses Font_Loader's selector (§6), a `display_theme()` that never calls its parent, a
+    `get_data()` with no `is_preview_mode` guard, a folder name that does not match the ID derived from
+    `setup.php`, a class the registry cannot find or that does not extend `Base_Theme`, a namespace that
+    disagrees with `setup.php`, a missing dependency file, `get_content()` that skips
+    `apply_embed_processing()`, a constructor rolling its own folio lookup, `ensure_script()` overridden
+    in one view but not the other or not calling its parent, a page class re-implementing what
+    `Base_Theme` provides, a font CDN named anywhere in the theme, and a theme absent from the
+    password-gate maps.
+
+    Unfilled slots are often correct — read the `!` lines, not the counts. `--strict` makes it exit
+    non-zero, for CI.
+
+    `php bin/check-theme-contract-selftest.php` is the checker's own test. Each case changes one thing in
+    a throwaway copy of a real theme and asserts what the checker says: either it breaks a contract and
+    the warning must name it, or it writes something unusual but **correct** and the checker must stay
+    quiet. It runs against two subject themes, because the page-root check was once dead on
+    `groove-newsletter` while every case against `folio-starter` reported a tick. Run it if you add a
+    check — a check that never fires looks exactly like a codebase with no bugs.
 14. Verify: theme appears in *Groove → Themes*, the picker preview renders (`?groove_theme_preview=<id>`),
     a published folio cover and page render, a draft folio renders via `?groove_preview=1`, fonts respond
     to the folio's font pickers, and a password-protected folio shows a matching gate.
@@ -858,8 +920,9 @@ Consequences for theme code:
   steps to a flat 36px below 768, which is *under* its clamp's 40px floor, so no single clamp
   reproduces both endpoints. Left as it is on purpose. The two sizes that genuinely adapted at no
   width (`.gm-page__content` h2 and h3) are now fluid.
-- **`--folio-shadow` is filled in themes that never paint it** (`groove-newsletter`,
-  `groove-proposal`). Both authored a considered shadow that no rule currently applies — probably a
-  regression rather than a decision. The slot keeps the value, because a consumer asking "what shadow
-  does this theme use" is better served by the theme's own on-brand answer than by the WordPress admin
-  fallback. Worth deciding separately whether the themes should paint them again.
+- **`--folio-shadow` is filled in a theme that never paints it** (`groove-newsletter`). It authored a
+  considered shadow that no rule applies — probably a regression rather than a decision. The slot keeps
+  the value, because a consumer asking "what shadow does this theme use" is better served by the theme's
+  own on-brand answer than by the WordPress admin fallback. Worth deciding separately whether the theme
+  should paint it again. `groove-proposal` was in this list until its mobile contents dropdown started
+  using the shadow it had been carrying.
