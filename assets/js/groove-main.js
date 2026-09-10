@@ -1257,7 +1257,7 @@ jQuery(function () {
     // that should not lock the page behind it.
     //
     // This was groove-ebook's two missing dismissals and folio-starter's
-    // private copy of the same 140 lines. See themes/README.md.
+    // private copy of the same 139 lines. See themes/README.md.
     const drawers = Array.prototype.slice
       .call(document.querySelectorAll('[data-groove-drawer]'))
       .map(function (pane) {

@@ -458,8 +458,9 @@ function groove_php_warnings(string $dir, string $root): array
         $certain = (bool) preg_match('/^[A-Za-z0-9 _\'\x{2019}-]+$/u', $name);
 
         if ($certain && $derived !== $id) {
-            $warn[] = "folder is '{$id}' but the ID derived from name is '{$derived}' — asset URLs "
-                . 'resolve against the derived ID, so CSS and images 404 while the theme still registers';
+            $warn[] = "folder is '{$id}' but the ID derived from name is '{$derived}' — folios store "
+                . 'the derived ID, so lookups, the picker and migrations key on a value this folder '
+                . 'does not answer to';
         }
     }
 

@@ -161,16 +161,16 @@ function groove_cases(string $subject, string $theme, string $gate): array
 
     return [
         // --- registration ---------------------------------------------------
-        'folder name does not match the derived ID' => ['warn', 'asset URLs', static function () use ($setup) {
+        'folder name does not match the derived ID' => ['warn', 'the ID derived from name', static function () use ($setup) {
             groove_sub($setup, "/'name'\s*=>\s*'[^']*'/", "'name' => 'Totally Different'");
         }],
-        'a name whose WP slug keeps an apostrophe out' => ['absent', 'asset URLs', static function () use ($setup, $theme) {
+        'a name whose WP slug keeps an apostrophe out' => ['absent', 'the ID derived from name', static function () use ($setup, $theme) {
             // WordPress removes the apostrophe rather than making it a separator,
             // so this folder name is correct and must not be reported.
             groove_sub($setup, "/'name'\s*=>\s*'[^']*'/", "'name' => \"Designer's Folio\"");
             rename($theme, dirname($theme) . '/designers-folio');
         }],
-        'an accented name folds to ASCII' => ['absent', 'asset URLs', static function () use ($setup, $theme) {
+        'an accented name folds to ASCII' => ['absent', 'the ID derived from name', static function () use ($setup, $theme) {
             groove_sub($setup, "/'name'\s*=>\s*'[^']*'/", "'name' => 'Café Noir'");
             rename($theme, dirname($theme) . '/cafe-noir');
         }],
