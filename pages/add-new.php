@@ -235,10 +235,10 @@ class Add_New extends Page
       ?>
     <div class="g-folio__sample-toggle<?php echo $is_selected_theme ? '' : ' hidden'; ?>"
       data-add-new-theme-target="<?php echo esc_attr($sample_theme_id); ?>" data-disable-hidden-fields="1">
-      <label for="<?php echo esc_attr($field_id); ?>" class="inline-flex items-center text-sm text-gray-800">
+      <label for="<?php echo esc_attr($field_id); ?>" class="g-folio__sample-label">
         <input type="hidden" name="seed_sample_content" value="0"<?php echo $field_disabled; ?> />
         <input type="checkbox" id="<?php echo esc_attr($field_id); ?>" name="seed_sample_content" value="1"
-          class="mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"<?php echo $field_disabled; ?> />
+          class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"<?php echo $field_disabled; ?> />
         <?php echo esc_html($sample['label']); ?>
       </label>
       <?php if ($sample['description'] !== '') : ?>

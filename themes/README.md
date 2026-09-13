@@ -39,7 +39,7 @@ themes/<theme-id>/
     ├── js/<theme-id>.js   optional — enqueue yourself by overriding ensure_script()
     └── images/
         ├── theme-thumb.png    picker thumbnail
-        ├── theme-cover.png    cover/hero background
+        ├── theme-cover.jpg    cover/hero background
         └── theme-g-logo.png   logo mark
 ```
 
@@ -69,7 +69,7 @@ Returns a plain array. **No side effects** — it is `include`d repeatedly (disc
 return [
     'name'         => 'Groove Newsletter',            // Human name. The theme ID is sanitize_title() of this.
     'thumbnail'    => 'theme-thumb.png',              // Filename only, resolved under assets/images/
-    'cover'        => 'theme-cover.png',
+    'cover'        => 'theme-cover.jpg',
     'logo'         => 'theme-g-logo.png',
     'description'  => 'A modern editorial newsletter…',
     'author'       => 'StudioEN',
@@ -871,7 +871,7 @@ Consequences for theme code:
    breakpoint), give anchored headings a `scroll-margin-top` that clears your fixed bar, and never
    pair `width: 100%` with a horizontal `margin`. Add `@media (pointer: coarse)` for 44px touch
    targets and `@media (prefers-reduced-motion: reduce)` to kill transitions.
-11. `assets/images/theme-thumb.png`, `theme-cover.png`, `theme-g-logo.png`.
+11. `assets/images/theme-thumb.png`, `theme-cover.jpg`, `theme-g-logo.png`.
 12. Add accent + background entries to the maps in `includes/folio-preview-template.php` so the password
    gate matches.
 13. Run `php bin/check-theme-contract.php --theme=<theme-id>`. It reports which slots you filled and

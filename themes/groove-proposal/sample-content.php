@@ -17,10 +17,15 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-$acme_logo_url      = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/acme.svg';
-$nordlight_logo_url = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/nordlight.svg';
-$vale_logo_url      = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/vale.svg';
-$zhou_logo_url      = GROOVE_URL . 'themes/groove-proposal/assets/images/sample-logos/zhou-studio.svg';
+// Resolved from the theme's own folder rather than GROOVE_URL: this file is
+// included from Base_Theme::get_sample_content_data(), so static:: binds to the
+// theme class and the URL follows the theme wherever it lives. A plugin-relative
+// path would 404 for the same theme installed as a package under wp-content.
+$sample_logos_url   = static::resolve_theme_folder_url() . 'assets/images/sample-logos/';
+$acme_logo_url      = $sample_logos_url . 'acme.svg';
+$nordlight_logo_url = $sample_logos_url . 'nordlight.svg';
+$vale_logo_url      = $sample_logos_url . 'vale.svg';
+$zhou_logo_url      = $sample_logos_url . 'zhou-studio.svg';
 
 return array(
   'label'       => __('Create with sample proposal content', 'groove'),

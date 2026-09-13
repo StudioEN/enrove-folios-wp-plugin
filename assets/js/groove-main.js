@@ -183,6 +183,11 @@ jQuery(function () {
       return page === 'groove-folio'
     },
 
+    isThemesPage() {
+      const page = new URLSearchParams(window.location.search).get('page')
+      return page === 'groove-themes'
+    },
+
     isPreview() {
       return !!window.GROOVE_IS_PREVIEW
     }
@@ -1161,13 +1166,6 @@ jQuery(function () {
       }
     })
 
-    // What the sample content actually seeds is a sentence too long to sit in
-    // the footer next to Continue, so it hangs off an info button instead. One
-    // per theme: only the selected theme's row is ever on screen.
-    jQuery('.g-folio__sample-info').each(function () {
-      createAdaptiveTooltip(this)
-    })
-
     const initialSelectedCard = jQuery(themeCardsSelector + '[aria-checked="true"]').first()
     if (initialSelectedCard.length) {
       syncAddNewThemeSpecificFields(initialSelectedCard.data('theme-id'))
@@ -1451,9 +1449,19 @@ jQuery(function () {
     })
   }
 
+  // What the sample content actually seeds is a sentence too long to sit beside
+  // the submit, so it hangs off an info button instead. Initialised page-wide:
+  // the Add New picker and the Themes screen's details dialog both render one
+  // per theme, and only the visible one is ever on screen.
+  jQuery('.g-folio__sample-info').each(function () {
+    createAdaptiveTooltip(this)
+  })
+
   // ── Theme Picker Preview Overlay ────────────────────────────────────────────
 
-  if (Groove.isAddNewPage()) {
+  // Shared by the Add New theme picker and the Themes screen's details dialog —
+  // both offer Preview on a theme, so both get the same overlay.
+  if (Groove.isAddNewPage() || Groove.isThemesPage()) {
     const previewBaseUrl = (settings.themePreviewBaseUrl || '').replace(/\?.*$/, '')
     const previewNonce   = settings.themePreviewNonce || ''
 

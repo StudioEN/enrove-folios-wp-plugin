@@ -879,6 +879,23 @@ body.groove .g-folio__sample-toggle {
   min-width: 0;
 }
 
+/* The label itself, defined once: the Add New picker and the Themes screen's
+   details dialog show the same control, so it reads the same on both. */
+body.groove .g-folio__sample-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--g-gray-90);
+}
+
+body.groove .g-folio__sample-label input[type="checkbox"] {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
 /* Tailwind emits .hidden inside @layer utilities, and an unlayered rule beats a
    layered one whatever the specificity — so the display:flex above would defeat
    the bare .hidden the JS toggles, and every theme's row would show at once.
@@ -1042,37 +1059,6 @@ body.groove .g-folio__sample-info .dashicons {
   padding: 0;
 }
 
-.g-themes-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.g-themes-summary-card {
-  background: var(--g-surface);
-  border: 1px solid var(--g-border);
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  padding: 14px 16px;
-}
-
-.g-themes-summary-label {
-  color: var(--g-text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .03em;
-}
-
-.g-themes-summary-value {
-  color: var(--g-text);
-  font-size: 24px;
-  line-height: 1.2;
-  margin-top: 6px;
-  font-weight: 700;
-}
-
 .g-themes-section {
   background: var(--g-surface);
   border: 1px solid var(--g-border);
@@ -1103,11 +1089,20 @@ body.groove .g-folio__sample-info .dashicons {
 
 .g-themes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 16px;
 }
 
+/* The card is the button that opens the details dialog. It carries a
+   thumbnail and a name only — everything else about a theme lives in the
+   dialog, so the grid reads as one even row rather than ragged columns of
+   description text. */
 .g-themes-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
   border: 1px solid var(--g-border);
   border-radius: 8px;
   overflow: hidden;
@@ -1116,14 +1111,20 @@ body.groove .g-folio__sample-info .dashicons {
 }
 
 .g-themes-card:hover {
-  border-color: var(--g-blue-5);
+  border-color: var(--g-border-strong);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
 }
 
+.g-themes-card:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+}
+
 .g-themes-card-thumb {
+  display: block;
   position: relative;
-  height: 160px;
+  aspect-ratio: 16 / 10;
   background: var(--g-gray-5);
   border-bottom: 1px solid var(--g-gray-5);
 }
@@ -1137,24 +1138,25 @@ body.groove .g-folio__sample-info .dashicons {
 }
 
 .g-themes-card-body {
-  padding: 12px 14px 14px;
-}
-
-.g-themes-card-meta {
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  min-height: 24px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 11px;
 }
 
 .g-themes-card-name {
   color: var(--g-text);
   font-weight: 600;
-  font-size: 14px;
-  line-height: 1.3;
-  flex: 1;
+  font-size: 13px;
+  line-height: 1.35;
+  min-width: 0;
+}
+
+.g-themes-card-count {
+  color: var(--g-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .g-themes-tag {
@@ -1177,18 +1179,10 @@ body.groove .g-folio__sample-info .dashicons {
   color: var(--g-blue-70);
 }
 
-.g-themes-card-id {
+.g-themes-tag--default {
+  background: var(--g-surface);
   color: var(--g-text-muted);
-  font-size: 12px;
-  margin: 0 0 12px;
-  word-break: break-word;
-}
-
-.g-themes-card-id code {
-  background: var(--g-gray-5);
-  border-radius: 4px;
-  padding: 1px 5px;
-  font-size: 11px;
+  border: 1px solid var(--g-border-strong);
 }
 
 .g-themes-delete-btn {
@@ -1310,6 +1304,10 @@ body.groove .g-folio__sample-info .dashicons {
   font-size: 13px;
 }
 
+.g-themes-package-info p:last-child {
+  margin-bottom: 0;
+}
+
 .g-themes-code {
   background: var(--g-gray-100);
   color: var(--g-gray-5);
@@ -1322,12 +1320,264 @@ body.groove .g-folio__sample-info .dashicons {
 }
 
 @media (max-width: 960px) {
-  .g-themes-summary-grid {
-    grid-template-columns: 1fr;
-  }
-
   .g-themes-upload-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Theme Details Dialog ────────────────────────────────────────────── */
+
+/* Scroll lock lives on a class rather than an inline style: the live theme
+   preview overlay stacks above this dialog and clears its own inline lock on
+   close, which would otherwise unlock the page underneath a dialog that is
+   still open. */
+body.g-modal-open {
+  overflow: hidden;
+}
+
+.g-theme-details {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.g-theme-details[hidden] {
+  display: flex !important;
+  visibility: hidden;
+}
+
+.g-theme-details.is-open {
+  visibility: visible;
+}
+
+.g-theme-details__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.g-theme-details.is-open .g-theme-details__backdrop {
+  opacity: 1;
+}
+
+/* Same frame as the Add New pop-up — width, radius and shadow all match, so
+   the two read as one dialog that happens to be showing different things. */
+.g-theme-details__dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 700px;
+  max-width: 100%;
+  max-height: calc(100vh - 60px);
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--g-surface);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.g-theme-details.is-open .g-theme-details__dialog {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.g-theme-details__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px 14px 20px;
+  border-bottom: 1px solid var(--g-border);
+}
+
+.g-theme-details__title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+.g-theme-details__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--g-text-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.g-theme-details__close:hover {
+  background: var(--g-surface-alt);
+  color: var(--g-text);
+}
+
+.g-theme-details__close:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 1px;
+}
+
+.g-theme-details__body {
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.g-theme-details__media {
+  position: relative;
+  aspect-ratio: 21 / 9;
+  overflow: hidden;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  background: var(--g-gray-5);
+}
+
+.g-theme-details__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.g-theme-details__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.g-theme-details__desc {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--g-text-muted);
+}
+
+.g-theme-details__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px 16px;
+  margin: 18px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--g-border);
+}
+
+.g-theme-details__stat dt {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--g-text-muted);
+}
+
+.g-theme-details__stat dd {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--g-text);
+}
+
+.g-theme-details__stat dd code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--g-gray-5);
+  font-size: 11px;
+}
+
+.g-theme-details__muted {
+  color: var(--g-text-muted);
+}
+
+/* Layout comes from .g-folio__theme-button, the Add New picker's footer —
+   this only adds the rule that separates the row from the stats above it. */
+.g-theme-details__actions {
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid var(--g-border);
+}
+
+.g-theme-details .g-theme-details__preview {
+  padding: 8px 2px;
+  font-size: 13px;
+}
+
+/* Removing a theme deletes its files, so it sits apart from the actions that
+   build things and asks once, in place. */
+.g-theme-details__danger {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--g-border);
+}
+
+.g-theme-details__danger-start {
+  padding: 0;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  color: var(--g-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.g-theme-details__danger-start:hover {
+  color: var(--g-red-50);
+}
+
+.g-theme-details__danger-confirm {
+  padding: 12px 14px;
+  border: 1px solid var(--g-red-5);
+  border-radius: 8px;
+  background: var(--g-red-0);
+}
+
+.g-theme-details__danger-confirm p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--g-red-70);
+}
+
+.g-theme-details__danger-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .g-theme-details__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.groove .g-theme-details__actions .g-folio__sample-toggle {
+    margin-right: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-theme-details__backdrop,
+  .g-theme-details__dialog {
+    transition: none;
+  }
+
+  .g-theme-details__dialog {
+    transform: none;
   }
 }
 
