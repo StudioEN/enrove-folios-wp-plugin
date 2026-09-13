@@ -6,7 +6,11 @@ return [
     'cover' => 'theme-cover.jpg',
     'image_set' => 'paper',
     'logo' => 'theme-g-logo.png',
-    'description' => 'A structured reading theme for long-form eBooks: numbered contents, a frosted chapter bar, and a kit of book furniture — epigraphs, plates, section breaks.',
+    'description' => 'A structured reading theme: numbered contents, a frosted chapter bar that holds still while the page turns beneath it, and a kit of seven book blocks — epigraphs, plates, pull quotes, section breaks.',
+    // Capabilities named in the theme picker. Keys from the shared
+    // vocabulary in Themes_Manager::feature_label() are translated; anything
+    // else is shown verbatim. See themes/README.md §3.
+    'features' => ['blocks', 'page-transitions'],
     'author' => 'StudioEN',
     'last_updated' => '2026-09-07',
     'namespace' => 'Groove\Themes\Groove_Ebook',

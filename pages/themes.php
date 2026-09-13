@@ -169,7 +169,13 @@ class Themes extends Page
 							$folio_count = isset($folio_counts[$id]) ? (int) $folio_counts[$id] : 0;
 							?>
 							<button type="button" class="g-themes-card" data-groove-theme-open="<?php echo esc_attr($id); ?>"
-								data-theme-name="<?php echo esc_attr($theme['name']); ?>" aria-haspopup="dialog">
+								data-theme-name="<?php echo esc_attr($theme['name']); ?>"
+								<?php /* The dialog's header wears the same badges this card stands for,
+								         so it takes them from the card rather than re-deriving them. */ ?>
+								data-theme-installed="<?php echo isset($installed_meta[$id]) ? '1' : '0'; ?>"
+								data-theme-badge="<?php echo esc_attr(isset($installed_meta[$id]) ? __('Installed', 'groove') : __('Built-in', 'groove')); ?>"
+								data-theme-default="<?php echo ((string) $id === $default_theme_id) ? '1' : '0'; ?>"
+								aria-haspopup="dialog">
 								<span class="g-themes-card-thumb">
 									<?php /* The name is right beside it — an alt would only repeat it. */ ?>
 									<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
@@ -263,7 +269,7 @@ class Themes extends Page
 			</div>
 		</div>
 
-		<?php $this->display_details_modal($all_themes, $installed_meta, $folio_counts, $default_theme_id); ?>
+		<?php $this->display_details_modal($all_themes, $installed_meta, $folio_counts); ?>
 
 		<script>
 			(function () {
@@ -316,6 +322,9 @@ class Themes extends Page
 				if (!modal) return;
 
 				var titleEl = document.getElementById('g-theme-details-title');
+				var dialogEl = modal.querySelector('.g-theme-details__dialog');
+				var badgeEl = modal.querySelector('[data-groove-theme-badge]');
+				var defaultEl = modal.querySelector('[data-groove-theme-default]');
 				var panels = modal.querySelectorAll('[data-groove-theme-panel]');
 				var lastFocused = null;
 				var hideTimer = null;
@@ -327,7 +336,11 @@ class Themes extends Page
 					if (trigger) trigger.hidden = false;
 				}
 
-				function open(themeId, name) {
+				// The card carries the theme's name and badges, so the header can be
+				// filled from the thing that was clicked rather than from a second copy
+				// of the same facts held in JS.
+				function open(card) {
+					var themeId = card.getAttribute('data-groove-theme-open');
 					var matched = null;
 					Array.prototype.forEach.call(panels, function (panel) {
 						var mine = panel.getAttribute('data-groove-theme-panel') === themeId;
@@ -341,7 +354,15 @@ class Themes extends Page
 
 					window.clearTimeout(hideTimer);
 					lastFocused = document.activeElement;
-					titleEl.textContent = name;
+					titleEl.textContent = card.getAttribute('data-theme-name') || '';
+
+					var badge = card.getAttribute('data-theme-badge') || '';
+					var installed = card.getAttribute('data-theme-installed') === '1';
+					badgeEl.textContent = badge;
+					badgeEl.className = 'g-themes-tag ' + (installed ? 'g-themes-tag--installed' : 'g-themes-tag--builtin');
+					badgeEl.hidden = badge === '';
+					defaultEl.hidden = card.getAttribute('data-theme-default') !== '1';
+
 					modal.hidden = false;
 					// The lock is a class rather than an inline style: the theme
 					// preview overlay stacks above this dialog and clears its own
@@ -351,8 +372,10 @@ class Themes extends Page
 					window.requestAnimationFrame(function () {
 						modal.classList.add('is-open');
 					});
-					modal.querySelector('.g-theme-details__close').focus();
+					// Focus the dialog itself: focusing the close button first paints a
+					// ring on the one control you are least likely to want.
 					modal.querySelector('.g-theme-details__body').scrollTop = 0;
+					dialogEl.focus();
 				}
 
 				function close() {
@@ -383,7 +406,7 @@ class Themes extends Page
 
 					var card = target.closest('[data-groove-theme-open]');
 					if (card) {
-						open(card.getAttribute('data-groove-theme-open'), card.getAttribute('data-theme-name') || '');
+						open(card);
 						return;
 					}
 					if (target.closest('[data-groove-theme-close]')) {
@@ -449,9 +472,8 @@ class Themes extends Page
 	 * @param array  $all_themes       Descriptors keyed by theme ID.
 	 * @param array  $installed_meta   Installed-package meta keyed by theme ID.
 	 * @param array  $folio_counts     Folio count keyed by theme ID.
-	 * @param string $default_theme_id The theme new folios start from.
 	 */
-	private function display_details_modal($all_themes, $installed_meta, $folio_counts, $default_theme_id)
+	private function display_details_modal($all_themes, $installed_meta, $folio_counts)
 	{
 		if (empty($all_themes)) {
 			return;
@@ -463,9 +485,18 @@ class Themes extends Page
 		<div id="g-theme-details-modal" class="g-theme-details" role="dialog" aria-modal="true"
 			aria-labelledby="g-theme-details-title" hidden>
 			<div class="g-theme-details__backdrop" data-groove-theme-close></div>
-			<div class="g-theme-details__dialog">
+			<div class="g-theme-details__dialog" tabindex="-1">
 				<div class="g-theme-details__header">
-					<h2 id="g-theme-details-title" class="g-theme-details__title"></h2>
+					<?php /* Name and badges sit together: what the theme is called and what
+					         kind of theme it is are one fact, and keeping them on the header
+					         line saves the body a row of chrome. Filled in on open. */ ?>
+					<div class="g-theme-details__ident">
+						<h2 id="g-theme-details-title" class="g-theme-details__title"></h2>
+						<span class="g-themes-tag" data-groove-theme-badge hidden></span>
+						<span class="g-themes-tag g-themes-tag--default" data-groove-theme-default hidden>
+							<?php esc_html_e('Default', 'groove'); ?>
+						</span>
+					</div>
 					<button type="button" class="g-theme-details__close" data-groove-theme-close
 						aria-label="<?php esc_attr_e('Close theme details', 'groove'); ?>">
 						<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
@@ -479,63 +510,117 @@ class Themes extends Page
 							? (string) $installed_meta[$id]['version']
 							: '';
 						$sample = Themes_Manager::get_sample_content((string) $id);
+						// setup.php declares last_updated as a bare ISO string. Anything that
+						// parses is shown in the site's date format; anything else is printed
+						// as the theme wrote it.
+						$updated = !empty($theme['last_updated']) ? (string) $theme['last_updated'] : '';
+						$updated_ts = $updated !== '' ? strtotime($updated) : false;
+						$updated_label = $updated_ts ? date_i18n(get_option('date_format'), $updated_ts) : $updated;
 						$folios_url = admin_url('admin.php?page=' . \Groove\Pages\All_Folios::PAGE_ID . '&theme_id=' . $id);
 						?>
 						<div class="g-theme-details__panel" data-groove-theme-panel="<?php echo esc_attr($id); ?>" hidden>
-							<div class="g-theme-details__media">
-								<img src="<?php echo esc_url(!empty($theme['cover_url']) ? $theme['cover_url'] : $theme['thumbnail_url']); ?>"
-									alt="" loading="lazy" />
-							</div>
+							<?php
+							/*
+							 * The picture and the facts share a row rather than stacking. At
+							 * 16/10 a full-width frame stood 400px tall and pushed the actions
+							 * off a laptop screen; beside the facts it stays about the size it
+							 * had on the card, which is the point of showing it at all.
+							 */
+							?>
+							<div class="g-theme-details__top">
+								<?php
+								/*
+								 * The theme's cover photograph fills the frame and the thumbnail
+								 * sits on it: one picture answering both questions — what a new
+								 * folio starts with, and the layout underneath it. The thumbnail
+								 * is the image the card was showing, which is what makes the
+								 * dialog read as that card opening rather than a new screen.
+								 *
+								 * A theme that declares no cover in setup.php gets a URL ending
+								 * at the images directory, so the filename is what is tested; that
+								 * theme shows its thumbnail full-frame and no inset.
+								 */
+								$cover_url = (string) ($theme['cover_url'] ?? '');
+								$has_cover = $cover_url !== '' && substr($cover_url, -1) !== '/';
+								?>
+								<div class="g-theme-details__media<?php echo $has_cover ? ' g-theme-details__media--cover' : ''; ?>">
+									<?php if ($has_cover): ?>
+										<img src="<?php echo esc_url($cover_url); ?>" alt="" loading="lazy" />
+										<span class="g-theme-details__inset">
+											<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
+										</span>
+									<?php else: ?>
+										<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
+									<?php endif; ?>
+								</div>
 
-							<div class="g-theme-details__tags">
-								<span class="g-themes-tag <?php echo $is_installed ? 'g-themes-tag--installed' : 'g-themes-tag--builtin'; ?>">
-									<?php echo $is_installed ? esc_html__('Installed', 'groove') : esc_html__('Built-in', 'groove'); ?>
-								</span>
-								<?php if ((string) $id === $default_theme_id): ?>
-									<span class="g-themes-tag g-themes-tag--default"><?php esc_html_e('Default', 'groove'); ?></span>
-								<?php endif; ?>
-							</div>
+								<div class="g-theme-details__info">
+									<?php if (!empty($theme['description'])): ?>
+										<p class="g-theme-details__desc"><?php echo esc_html($theme['description']); ?></p>
+									<?php endif; ?>
 
-							<?php if (!empty($theme['description'])): ?>
-								<p class="g-theme-details__desc"><?php echo esc_html($theme['description']); ?></p>
-							<?php endif; ?>
+									<?php
+									/*
+									 * What the theme says it can do, in the theme's own setup.php —
+									 * the descriptor is the only source, so an installed package
+									 * carries its list with it and nothing here has to be kept in
+									 * step by hand. A theme that declares nothing shows nothing.
+									 */
+									$features = isset($theme['features']) && is_array($theme['features'])
+										? $theme['features']
+										: array();
+									if (!empty($features)):
+										?>
+										<ul class="g-theme-details__features">
+											<?php foreach ($features as $feature):
+												$feature_label = Themes_Manager::feature_label((string) $feature);
+												if ($feature_label === '') {
+													continue;
+												}
+												?>
+												<li><?php echo esc_html($feature_label); ?></li>
+											<?php endforeach; ?>
+										</ul>
+									<?php endif; ?>
 
-							<dl class="g-theme-details__stats">
-								<div class="g-theme-details__stat">
-									<dt><?php esc_html_e('Folios', 'groove'); ?></dt>
-									<dd>
-										<?php if ($folio_count > 0): ?>
-											<a href="<?php echo esc_url($folios_url); ?>">
-												<?php echo esc_html(number_format_i18n($folio_count)); ?>
-											</a>
-										<?php else: ?>
-											<span class="g-theme-details__muted"><?php esc_html_e('None yet', 'groove'); ?></span>
+									<dl class="g-theme-details__stats">
+										<div class="g-theme-details__stat">
+											<dt><?php esc_html_e('Folios', 'groove'); ?></dt>
+											<dd>
+												<?php if ($folio_count > 0): ?>
+													<a href="<?php echo esc_url($folios_url); ?>">
+														<?php echo esc_html(number_format_i18n($folio_count)); ?>
+													</a>
+												<?php else: ?>
+													<span class="g-theme-details__muted"><?php esc_html_e('None yet', 'groove'); ?></span>
+												<?php endif; ?>
+											</dd>
+										</div>
+										<?php if (!empty($theme['author'])): ?>
+											<div class="g-theme-details__stat">
+												<dt><?php esc_html_e('Author', 'groove'); ?></dt>
+												<dd><?php echo esc_html($theme['author']); ?></dd>
+											</div>
 										<?php endif; ?>
-									</dd>
+										<?php if ($updated_label !== ''): ?>
+											<div class="g-theme-details__stat">
+												<dt><?php esc_html_e('Updated', 'groove'); ?></dt>
+												<dd><?php echo esc_html($updated_label); ?></dd>
+											</div>
+										<?php endif; ?>
+										<?php if ($version !== ''): ?>
+											<div class="g-theme-details__stat">
+												<dt><?php esc_html_e('Version', 'groove'); ?></dt>
+												<dd><?php echo esc_html($version); ?></dd>
+											</div>
+										<?php endif; ?>
+										<div class="g-theme-details__stat">
+											<dt><?php esc_html_e('Theme ID', 'groove'); ?></dt>
+											<dd><code><?php echo esc_html($id); ?></code></dd>
+										</div>
+									</dl>
 								</div>
-								<?php if (!empty($theme['author'])): ?>
-									<div class="g-theme-details__stat">
-										<dt><?php esc_html_e('Author', 'groove'); ?></dt>
-										<dd><?php echo esc_html($theme['author']); ?></dd>
-									</div>
-								<?php endif; ?>
-								<?php if (!empty($theme['last_updated'])): ?>
-									<div class="g-theme-details__stat">
-										<dt><?php esc_html_e('Updated', 'groove'); ?></dt>
-										<dd><?php echo esc_html($theme['last_updated']); ?></dd>
-									</div>
-								<?php endif; ?>
-								<?php if ($version !== ''): ?>
-									<div class="g-theme-details__stat">
-										<dt><?php esc_html_e('Version', 'groove'); ?></dt>
-										<dd><?php echo esc_html($version); ?></dd>
-									</div>
-								<?php endif; ?>
-								<div class="g-theme-details__stat">
-									<dt><?php esc_html_e('Theme ID', 'groove'); ?></dt>
-									<dd><code><?php echo esc_html($id); ?></code></dd>
-								</div>
-							</dl>
+							</div>
 
 							<?php
 							/*

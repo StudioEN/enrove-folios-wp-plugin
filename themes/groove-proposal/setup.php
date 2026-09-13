@@ -6,7 +6,11 @@ return [
   'cover' => 'theme-cover.jpg',
   'image_set' => 'studio',
   'logo' => 'theme-g-logo.png',
-  'description' => 'A calm, structured proposal theme for consultancies and digital agencies.',
+  'description' => 'A calm, structured theme with fourteen content blocks — pricing tables, timelines, case studies, key metrics — a light and a dark mode, and an accent taken from the cover image.',
+  // Capabilities named in the theme picker. Keys from the shared
+  // vocabulary in Themes_Manager::feature_label() are translated; anything
+  // else is shown verbatim. See themes/README.md §3.
+  'features' => ['blocks', 'dynamic-color', 'light-dark'],
   'author' => 'StudioEN',
   'last_updated' => '2026-03-15',
   'namespace' => 'Groove\\Themes\\Groove_Proposal',

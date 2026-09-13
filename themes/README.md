@@ -72,6 +72,7 @@ return [
     'cover'        => 'theme-cover.jpg',
     'logo'         => 'theme-g-logo.png',
     'description'  => 'A modern editorial newsletter…',
+    'features'     => ['dynamic-color', 'page-transitions'],  // Optional, max 4, shown in the theme picker
     'author'       => 'StudioEN',
     'last_updated' => '2026-03-12',
     'namespace'    => 'Groove\Themes\Groove_Newsletter',
@@ -80,6 +81,28 @@ return [
     'dependencies' => ['navigation-pane.php'],        // Optional, relative paths, require_once'd before cover/page
 ];
 ```
+
+`features` is what the picker's details dialog lists under the description, and setup.php is the only
+place it is written — an installed package carries its own list, and nothing in the admin has to be kept
+in step by hand. Keys from the shared vocabulary in `Themes_Manager::feature_label()` are translated:
+
+| Key | Shown as |
+|---|---|
+| `blocks` | Content blocks |
+| `dynamic-color` | Dynamic color |
+| `light-dark` | Light and dark |
+| `page-transitions` | Page transitions |
+
+A key outside that list is shown as the theme wrote it (trimmed, tags stripped, 32 characters), so a theme
+can name something the plugin has never heard of — it just does not get a translation. Two limits are
+enforced in `Base_Theme::get_features()`: at most four, and `blocks` is dropped from a theme that ships no
+`blocks.php`, because a chip promising blocks that are not in the inserter is worse than no chip.
+
+**The description is theme copy, not admin copy.** It is read from setup.php through
+`Base_Theme::get_description()` and rendered nowhere else, so edit the theme file — there is no second copy
+in `pages/` to keep in step. Write it as what the theme *does*: an audience ("for consultancies and digital
+agencies") tells a reader who else it is for, not what they get, and ages badly the first time someone uses
+the theme for something it never named.
 
 **The theme ID is derived, never declared.** `Base_Theme::get_id()` returns `sanitize_title(get_name())`,
 so `'Groove Newsletter'` → `groove-newsletter`. The folder name must match, because
@@ -109,7 +132,7 @@ The registry is a flat map: `theme_id => ['cover_class' => …, 'page_class' => 
 no instantiation, so a theme constructor never runs just to draw the picker. Descriptor shape:
 
 ```php
-['ID', 'name', 'thumbnail_url', 'cover_url', 'logo_url', 'description', 'author', 'last_updated']
+['ID', 'name', 'thumbnail_url', 'cover_url', 'logo_url', 'description', 'features', 'author', 'last_updated']
 ```
 
 Consumers: [pages/themes.php](../pages/themes.php) (manage), [pages/folio.php](../pages/folio.php)

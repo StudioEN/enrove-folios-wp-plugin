@@ -6,7 +6,7 @@ return [
     'cover' => 'theme-cover.jpg',
     'image_set' => 'studio',
     'logo' => 'theme-g-logo.png',
-    'description' => 'A clean, typography-led default theme for Groove Folios.',
+    'description' => 'A clean, typography-led starting point: a generous measure, a contents rail that carries from page to page, and nothing set to compete with the words.',
     'author' => 'StudioEN',
     'last_updated' => '2026-09-01',
     'namespace' => 'Groove\Themes\Folio_Starter',

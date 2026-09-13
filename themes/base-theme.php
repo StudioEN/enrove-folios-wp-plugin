@@ -309,6 +309,78 @@ abstract class Base_Theme extends Assets
   }
 
   /**
+   * The handful of capabilities this theme wants named in the picker.
+   *
+   * Declared in setup.php so a theme's own file is the only place that says
+   * what the theme can do — including an installed package the plugin knows
+   * nothing else about. `Themes_Manager::feature_label()` turns a key from the
+   * shared vocabulary into wording, so five themes cannot invent five phrases
+   * for the same capability; anything outside that vocabulary is shown as the
+   * theme wrote it, so a theme is never limited to the list.
+   *
+   * A claim the plugin can check, it checks: 'blocks' is dropped from a theme
+   * that ships no blocks.php, because a chip promising blocks that are not in
+   * the inserter is worse than no chip. Four is the ceiling — this is a row of
+   * highlights, not a feature matrix, and an installed package does not get to
+   * push the dialog's actions off the screen.
+   *
+   * @return string[] Feature keys, in the order the theme declared them.
+   */
+  public static function get_features(): array
+  {
+    $declared = static::get_setup_data()['features'] ?? [];
+    if (!is_array($declared)) {
+      return [];
+    }
+
+    $features = [];
+    foreach ($declared as $feature) {
+      if (!is_string($feature)) {
+        continue;
+      }
+
+      $feature = trim($feature);
+      if ($feature === '' || in_array($feature, $features, true)) {
+        continue;
+      }
+
+      if ($feature === 'blocks' && !static::ships_blocks()) {
+        continue;
+      }
+
+      $features[] = $feature;
+      if (count($features) === 4) {
+        break;
+      }
+    }
+
+    return $features;
+  }
+
+  /**
+   * Whether this theme registers blocks of its own.
+   *
+   * blocks.php is the file that registers them, and a theme that ships one
+   * must list it in `dependencies` for it to be required at all — so either
+   * answer being yes is enough to believe the theme.
+   *
+   * @return bool
+   */
+  protected static function ships_blocks(): bool
+  {
+    $dependencies = static::get_setup_data()['dependencies'] ?? [];
+    if (is_array($dependencies)) {
+      foreach ($dependencies as $dependency) {
+        if (is_string($dependency) && basename($dependency) === 'blocks.php') {
+          return true;
+        }
+      }
+    }
+
+    return file_exists(static::get_theme_folder_path() . 'blocks.php');
+  }
+
+  /**
    * Title a new folio takes when the site has no explicit default of its own.
    *
    * Lets each theme name its output in its own terms — an issue, a proposal, an
@@ -397,7 +469,7 @@ abstract class Base_Theme extends Assets
    * Build the full descriptor array used by the admin theme picker
    * and Themes_Manager. This is concrete — subclasses do NOT override it.
    *
-   * @return array{ID: string, name: string, thumbnail_url: string, cover_url: string, logo_url: string, description: string, author: string, last_updated: string}
+   * @return array{ID: string, name: string, thumbnail_url: string, cover_url: string, logo_url: string, description: string, features: string[], author: string, last_updated: string}
    */
   final public static function get_theme_descriptor(): array
   {
@@ -410,6 +482,7 @@ abstract class Base_Theme extends Assets
       'cover_url' => $theme_assets_url . 'images/' . static::get_cover_filename(),
       'logo_url' => $theme_assets_url . 'images/' . static::get_logo_filename(),
       'description' => static::get_description(),
+      'features' => static::get_features(),
       'default_title' => static::get_default_folio_title(),
       'image_set' => static::get_image_set(),
       'author' => static::get_author(),

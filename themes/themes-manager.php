@@ -396,6 +396,37 @@ class Themes_Manager extends Assets
     }
 
     /**
+     * Wording for a feature key a theme declared in its setup.php.
+     *
+     * The vocabulary lives here rather than in the themes so that two themes
+     * offering the same thing say the same thing — and so the words are
+     * translatable, which a string inside an installed theme package is not.
+     * A key outside the vocabulary is shown as the theme wrote it, trimmed and
+     * stripped of markup: a theme is free to name something the plugin has
+     * never heard of, it just does not get a translation.
+     *
+     * @param string $key Feature key from Base_Theme::get_features().
+     * @return string  Label to show, or '' if there is nothing to show.
+     */
+    public static function feature_label(string $key): string
+    {
+        $labels = array(
+            'blocks' => __('Content blocks', 'groove'),
+            'dynamic-color' => __('Dynamic color', 'groove'),
+            'light-dark' => __('Light and dark', 'groove'),
+            'page-transitions' => __('Page transitions', 'groove'),
+        );
+
+        if (isset($labels[$key])) {
+            return $labels[$key];
+        }
+
+        $label = trim(wp_strip_all_tags($key));
+
+        return mb_substr($label, 0, 32);
+    }
+
+    /**
      * Absolute path of a curated Pexels placeholder, by manifest slug.
      *
      * @param string $slug

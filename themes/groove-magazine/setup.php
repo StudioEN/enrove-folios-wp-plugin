@@ -6,7 +6,11 @@ return [
     'cover' => 'theme-cover.jpg',
     'image_set' => 'editorial',
     'logo' => 'theme-g-logo.png',
-    'description' => 'A bold editorial theme with adaptive colorways driven by each story\'s feature image. Designed for weekly digital publications.',
+    'description' => 'A bold editorial theme whose colorway is built from each page\'s feature image, contrast-checked as it goes, and which follows light or dark as the reader prefers.',
+    // Capabilities named in the theme picker. Keys from the shared
+    // vocabulary in Themes_Manager::feature_label() are translated; anything
+    // else is shown verbatim. See themes/README.md §3.
+    'features' => ['dynamic-color', 'light-dark'],
     'author' => 'StudioEN',
     'last_updated' => '2026-03-10',
     'namespace' => 'Groove\Themes\Groove_Magazine',

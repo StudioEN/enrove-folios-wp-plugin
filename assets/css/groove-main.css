@@ -1389,6 +1389,10 @@ body.g-modal-open {
   transform: translateY(0) scale(1);
 }
 
+.g-theme-details__dialog:focus {
+  outline: none;
+}
+
 .g-theme-details__header {
   display: flex;
   align-items: center;
@@ -1396,6 +1400,14 @@ body.g-modal-open {
   gap: 16px;
   padding: 14px 16px 14px 20px;
   border-bottom: 1px solid var(--g-border);
+}
+
+.g-theme-details__ident {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
 }
 
 .g-theme-details__title {
@@ -1437,9 +1449,58 @@ body.g-modal-open {
   padding: 20px;
 }
 
+/* The thumbnail keeps roughly the size it had on the card and the facts read
+   beside it, so the dialog opens as one screenful instead of a column that
+   scrolls the actions out of sight. */
+.g-theme-details__top {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.g-theme-details__info {
+  min-width: 0;
+}
+
+/* The theme's cover photograph fills the frame and its thumbnail sits on it,
+   so one picture says both what a new folio starts with and what the layout
+   under that photograph looks like. The thumbnail is the image the card was
+   showing, which is what ties the dialog to the card that opened it. */
+.g-theme-details__media--cover {
+  background: var(--g-gray-20);
+}
+
+/* A wash at the foot of the photograph, so the inset has something to sit on
+   whatever the picture underneath it happens to be doing. It is generated
+   after the photograph and before the inset lifts itself out with z-index. */
+.g-theme-details__media--cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0) 60%);
+  pointer-events: none;
+}
+
+/* The ring is a shadow rather than a border: with aspect-ratio doing the
+   sizing, a border would be counted into the box and shave the picture. */
+.g-theme-details__inset {
+  position: absolute;
+  inset-inline-start: 12px;
+  bottom: 12px;
+  z-index: 1;
+  width: 46%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--g-surface), 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+/* 16/10 is both the grid card's frame and the thumbnail's own proportion, so
+   the image that was clicked opens uncropped rather than sliced to a band. */
 .g-theme-details__media {
   position: relative;
-  aspect-ratio: 21 / 9;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
   border: 1px solid var(--g-border);
   border-radius: 8px;
@@ -1454,27 +1515,49 @@ body.g-modal-open {
   object-fit: cover;
 }
 
-.g-theme-details__tags {
+.g-theme-details__desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--g-text);
+}
+
+/* Two columns, not auto-fit: beside the thumbnail the stats are the column's
+   whole content, and a rule above them would divide a column rather than the
+   dialog. The description is the only thing they need separating from. */
+.g-theme-details__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.g-theme-details__desc + .g-theme-details__stats,
+.g-theme-details__features + .g-theme-details__stats {
+  margin-top: 16px;
+}
+
+/* Quieter than the header's badges on purpose: those say what the theme is,
+   which is identity, and these say what it does, which is a list. Outlined
+   rather than filled so a row of four does not read as four buttons. */
+.g-theme-details__features {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 14px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-.g-theme-details__desc {
-  margin: 10px 0 0;
-  font-size: 13px;
-  line-height: 1.55;
+.g-theme-details__features li {
+  margin: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--g-border);
+  border-radius: 999px;
+  background: var(--g-surface-alt);
+  font-size: 11px;
+  line-height: 1.5;
   color: var(--g-text-muted);
-}
-
-.g-theme-details__stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 12px 16px;
-  margin: 18px 0 0;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--g-border);
 }
 
 .g-theme-details__stat dt {
@@ -1560,6 +1643,11 @@ body.g-modal-open {
 }
 
 @media (max-width: 600px) {
+  .g-theme-details__top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
   .g-theme-details__actions {
     flex-direction: column;
     align-items: stretch;

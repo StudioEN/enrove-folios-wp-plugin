@@ -6,7 +6,11 @@ return [
     'cover' => 'theme-cover.jpg',
     'image_set' => 'daylight',
     'logo' => 'theme-g-logo.png',
-    'description' => 'A modern editorial newsletter with accessible preset color systems and responsive reading layouts.',
+    'description' => 'An editorial theme whose palette is generated from the reader\'s own time of day — dawn amber through evening ink — over a serif reading column that reflows to any width.',
+    // Capabilities named in the theme picker. Keys from the shared
+    // vocabulary in Themes_Manager::feature_label() are translated; anything
+    // else is shown verbatim. See themes/README.md §3.
+    'features' => ['dynamic-color', 'page-transitions'],
     'author' => 'StudioEN',
     'last_updated' => '2026-03-12',
     'namespace' => 'Groove\Themes\Groove_Newsletter',
