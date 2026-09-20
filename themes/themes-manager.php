@@ -796,6 +796,9 @@ class Themes_Manager extends Assets
             $cover_file = $theme_path . 'cover.php';
             $page_file = $theme_path . 'page.php';
             $setup_file = $theme_path . 'setup.php';
+            // Per iteration, not per loop: left outside, one package missing a
+            // dependency would skip every package loaded after it.
+            $missing_dependency = false;
 
             if (!is_readable($cover_file) || !is_readable($page_file)) {
                 continue; // Package deleted from disk — skip silently.
@@ -806,11 +809,19 @@ class Themes_Manager extends Assets
                 if (!empty($setup['dependencies']) && is_array($setup['dependencies'])) {
                     foreach ($setup['dependencies'] as $dep) {
                         $dep_file = $theme_path . $dep;
-                        if (is_readable($dep_file)) {
-                            require_once $dep_file;
+                        if (!is_readable($dep_file)) {
+                            $missing_dependency = true;
+                            break;
                         }
+                        require_once $dep_file;
                     }
                 }
+            }
+
+            // Same reasoning as the built-in loader above: a package missing a
+            // dependency it declares renders as a fatal, not as a broken theme.
+            if ($missing_dependency) {
+                continue;
             }
 
             require_once $cover_file;
@@ -819,9 +830,28 @@ class Themes_Manager extends Assets
             $cover_class = $meta['cover_class'] ?? '';
             $page_class = $meta['page_class'] ?? '';
 
-            if (class_exists($cover_class) && class_exists($page_class)) {
-                static::register($cover_class, $page_class);
+            if (!class_exists($cover_class) || !class_exists($page_class)) {
+                continue;
             }
+
+            // The same guard load_builtin_themes() has always had, and the one
+            // install_theme_from_zip() gained later. Without it this loader
+            // takes the whole site down, not just the theme: register() opens
+            // with $cover_class::get_id(), which a class that does not reach
+            // Base_Theme has no such method for, and the resulting Error is
+            // thrown while the plugin file is still being included — before
+            // plugins_loaded, with nothing above it to catch anything. Front
+            // end, wp-admin, REST and cron go together, so the operator cannot
+            // even reach this screen to remove the package that did it.
+            //
+            // Install validates this now, but that only covers packages
+            // installed since. A package already on disk, or one edited in
+            // place afterwards, arrives here unchecked.
+            if (!is_subclass_of($cover_class, Base_Theme::class) || !is_subclass_of($page_class, Base_Theme::class)) {
+                continue;
+            }
+
+            static::register($cover_class, $page_class);
         }
     }
 
@@ -857,12 +887,26 @@ class Themes_Manager extends Assets
                 continue;
             }
 
+            // A declared dependency that is not on disk used to be skipped in
+            // silence and the theme registered anyway. That is the worst of the
+            // failures here, because it is the only one that does not look like
+            // a failure: dependencies declare functions, not classes, so
+            // cover.php still parses, class_exists() is still true, the theme
+            // still appears in the picker — and the first visitor to a folio
+            // using it gets a fatal on an undefined function. A theme that
+            // cannot render is better left out of the picker than offered.
             if (!empty($setup['dependencies']) && is_array($setup['dependencies'])) {
+                $missing_dependency = false;
                 foreach ($setup['dependencies'] as $dep) {
                     $dep_file = trailingslashit($dir) . $dep;
-                    if (is_readable($dep_file)) {
-                        require_once $dep_file;
+                    if (!is_readable($dep_file)) {
+                        $missing_dependency = true;
+                        break;
                     }
+                    require_once $dep_file;
+                }
+                if ($missing_dependency) {
+                    continue;
                 }
             }
 

@@ -487,8 +487,8 @@ function groove_php_warnings(string $dir, string $root): array
                     $warn[] = 'setup.php dependencies contains an empty or traversing path — install '
                         . 'validation rejects the ZIP, and a built-in theme requires nothing at all';
                 } elseif (!is_readable($dir . '/' . $dep)) {
-                    $warn[] = "setup.php lists dependency '{$dep}', which is not there — the require fails "
-                        . 'and the folder is skipped silently';
+                    $warn[] = "setup.php lists dependency '{$dep}', which is not there — the loaders skip "
+                        . 'the theme rather than register something that cannot render';
                 }
             }
         }
