@@ -13,17 +13,18 @@ $theme = Themes_Manager::create_theme_for_current_request();
   if ($password_post):
     status_header(200);
 
-    // Resolve theme accent color.
+    // Theme colours come from the theme, the way its fonts do. Two hardcoded
+    // ID maps used to live here — plugin source, with no filter to join, so a
+    // theme shipped as a package could never be in them. It was a documented
+    // requirement no third-party theme could satisfy, and the contract check
+    // for it failed permanently for every one of them. A theme declares a gate
+    // block in setup.php now, and the values below are what a theme that
+    // declares nothing falls back to.
     $_pw_theme_id = (string) get_post_meta($password_post->ID, 'theme_id', true);
-    $_pw_accent_map = array(
-      'groove-proposal'   => array('#27498c', '#1a4173'),
-      'groove-magazine'   => array('#2563EB', '#1d4ed8'),
-      'groove-newsletter' => array('#6f3115', '#5a2710'),
-      'groove-ebook'      => array('#1D35B4', '#162a90'),
-      'folio-starter'     => array('#3858E9', '#2c47ba'),
-    );
-    $_pw_accent = isset($_pw_accent_map[$_pw_theme_id]) ? $_pw_accent_map[$_pw_theme_id][0] : '#2271b1';
-    $_pw_accent_hover = isset($_pw_accent_map[$_pw_theme_id]) ? $_pw_accent_map[$_pw_theme_id][1] : '#135e96';
+    $_pw_gate = Themes_Manager::get_theme_gate_colors($_pw_theme_id);
+
+    $_pw_accent = $_pw_gate['accent'] ?? '#2271b1';
+    $_pw_accent_hover = $_pw_gate['accent_hover'] ?? '#135e96';
 
     // Resolve folio fonts through the same resolver the themes use, so the gate
     // is typeset like the folio behind it. This document is rendered before
@@ -38,15 +39,7 @@ $theme = Themes_Manager::create_theme_for_current_request();
     $_pw_heading_stack = $_pw_fonts['header']['css_stack'] ?? $_pw_system_stack;
     $_pw_body_stack = $_pw_fonts['body']['css_stack'] ?? $_pw_system_stack;
 
-    // Resolve theme background color.
-    $_pw_bg_map = array(
-      'groove-proposal'   => '#ededeb',
-      'groove-magazine'   => '#FAFAFA',
-      'groove-newsletter' => '#eee7db',
-      'groove-ebook'      => '#1D35B4',
-      'folio-starter'     => '#F0F6FC',
-    );
-    $_pw_bg = isset($_pw_bg_map[$_pw_theme_id]) ? $_pw_bg_map[$_pw_theme_id] : '#f0f0f1';
+    $_pw_bg = $_pw_gate['background'] ?? '#f0f0f1';
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>

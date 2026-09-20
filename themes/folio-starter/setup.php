@@ -9,6 +9,13 @@ return [
     'description' => 'A clean, typography-led starting point: a generous measure, a contents rail that carries from page to page, and nothing set to compete with the words.',
     'author' => 'StudioEN',
     'last_updated' => '2026-09-01',
+    // Colours the password gate borrows so it looks like the folio behind
+    // it. These used to live in two hardcoded maps in plugin source.
+    'gate' => [
+        'accent' => '#3858E9',
+        'accent_hover' => '#2c47ba',
+        'background' => '#F0F6FC',
+    ],
     'namespace' => 'Groove\Themes\Folio_Starter',
     'cover_class' => 'Groove\Themes\Folio_Starter\Cover',
     'page_class' => 'Groove\Themes\Folio_Starter\Page',

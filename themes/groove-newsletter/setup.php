@@ -13,6 +13,13 @@ return [
     'features' => ['dynamic-color', 'page-transitions'],
     'author' => 'StudioEN',
     'last_updated' => '2026-03-12',
+    // Colours the password gate borrows so it looks like the folio behind
+    // it. These used to live in two hardcoded maps in plugin source.
+    'gate' => [
+        'accent' => '#6f3115',
+        'accent_hover' => '#5a2710',
+        'background' => '#eee7db',
+    ],
     'namespace' => 'Groove\Themes\Groove_Newsletter',
     'cover_class' => 'Groove\Themes\Groove_Newsletter\Cover',
     'page_class' => 'Groove\Themes\Groove_Newsletter\Page',

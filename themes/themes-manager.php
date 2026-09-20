@@ -98,6 +98,25 @@ class Themes_Manager extends Assets
             return false;
         }
 
+        // Two themes claiming one ID. The later one wins, which is the same
+        // answer an upload gets — a package the operator installed deliberately
+        // supersedes what was there — and load order makes "later" mean the
+        // installed package, since built-ins register first. What was missing
+        // was any sign of it: the displaced theme vanished from the picker with
+        // nothing said, and every folio storing that ID quietly rendered as
+        // something else.
+        //
+        // The record is filed against the theme that lost, because that is the
+        // one someone is looking for and cannot find. Install refuses this
+        // collision outright, so reaching here means the two arrived
+        // separately — a plugin update shipping a built-in whose name derives
+        // to an ID some installed package already answers to.
+        if (isset(self::$registry[$theme_id]) && self::$registry[$theme_id]['cover_class'] !== $cover_class) {
+            static::record_skipped_theme($theme_id, 'builtin', 'shadowed', [
+                'class' => self::$registry[$theme_id]['cover_class'],
+            ]);
+        }
+
         self::$registry[$theme_id] = [
             'cover_class' => $cover_class,
             'page_class' => $page_class,
@@ -204,6 +223,11 @@ class Themes_Manager extends Assets
                     sprintf(/* translators: 1: setup.php key, 2: the class name */ __('%1$s names %2$s, which does not extend Base_Theme.', 'groove'), $key, $class),
                     __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove'));
 
+            case 'shadowed':
+                return new \WP_Error($reason,
+                    __('An installed theme package uses this ID and has taken it over.', 'groove'),
+                    __('The built-in theme of that name is not available while the package is installed. Remove the package to get it back, or rename one of the two — the ID is derived from the name.', 'groove'));
+
             case 'package_gone':
                 return new \WP_Error($reason,
                     __('The package files are no longer in wp-content/groove-themes/.', 'groove'),
@@ -272,6 +296,28 @@ class Themes_Manager extends Assets
             $themes[$theme_id] = $cover_class::get_theme_descriptor();
         }
         return $themes;
+    }
+
+    /**
+     * A registered theme's declared password-gate colours.
+     *
+     * Same shape as get_theme_default_fonts() below, and for the same caller:
+     * the gate has a theme ID and no theme instance. An unregistered ID returns
+     * nothing and the gate uses its own defaults, which is also what happens
+     * for a theme that declares no gate block.
+     *
+     * @param string $theme_id
+     * @return array{accent?:string, accent_hover?:string, background?:string}
+     */
+    public static function get_theme_gate_colors(string $theme_id): array
+    {
+        if (!static::has($theme_id)) {
+            return [];
+        }
+
+        $cover_class = self::$registry[$theme_id]['cover_class'];
+
+        return $cover_class::get_gate_colors();
     }
 
     /**

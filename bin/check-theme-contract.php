@@ -658,20 +658,26 @@ function groove_php_warnings(string $dir, string $root): array
         }
     }
 
-    // --- The password gate is keyed off hardcoded theme-ID maps in the plugin.
-    $gate = $root . '/includes/folio-preview-template.php';
-    if (is_readable($gate)) {
-        // Two separate maps — accent and background. Being in one and not the
-        // other is exactly the mismatch this warning describes, so they are
-        // counted rather than OR'd.
-        $gate_src = groove_strip_php_comments(file_get_contents($gate));
-        $entries = preg_match_all('/[\'"]' . preg_quote($id, '/') . '[\'"]\s*=>/', $gate_src);
-
-        if ($entries < 2) {
-            $warn[] = "appears in {$entries} of the 2 password-gate colour maps in "
-                . 'includes/folio-preview-template.php — a password-protected folio on this theme shows a '
-                . 'gate in another theme\'s colours';
+    // --- The password gate borrows the theme's colours, from setup.php.
+    //
+    // This used to check two hardcoded ID maps in the plugin, which a theme
+    // shipped as a package could not join — plugin source, no filter — so the
+    // rule failed permanently for every third-party theme and could only be
+    // satisfied by patching core, which an update then overwrote. It is a
+    // setup.php declaration now, which a package can actually carry.
+    $gate_declared = (array) ($setup['gate'] ?? []);
+    $gate_missing = array_values(array_filter(
+        ['accent', 'accent_hover', 'background'],
+        static function ($slot) use ($gate_declared) {
+            return empty($gate_declared[$slot])
+                || !preg_match('/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i', (string) $gate_declared[$slot]);
         }
+    ));
+
+    if ($gate_missing) {
+        $warn[] = 'setup.php declares no usable gate ' . implode('/', $gate_missing)
+            . ' — a password-protected folio on this theme shows a gate in the plugin\'s default '
+            . 'colours rather than its own. Values must be hex, because they are interpolated into CSS';
     }
 
     return $warn;

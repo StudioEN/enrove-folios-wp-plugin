@@ -74,6 +74,11 @@ return [
     'cover'         => 'theme-cover.jpg',
     'logo'          => 'theme-g-logo.png',
     'image_set'     => 'editorial',                   // Optional. Which curated imagery sample content draws on.
+    'gate'          => [                              // Optional. Colours the password gate borrows.
+        'accent'       => '#2563EB',
+        'accent_hover' => '#1d4ed8',
+        'background'   => '#FAFAFA',
+    ],
     'description'   => 'A modern editorial newsletter…',
     'features'      => ['dynamic-color', 'page-transitions'], // Optional, max 4, shown in the theme picker
     'author'        => 'StudioEN',
@@ -126,6 +131,16 @@ seeding an eBook do not produce the same pictures. The sets and the roles each o
 `sample-content.php` asks for a *role*; the theme's set decides what that role looks like.
 `Themes_Manager::sample_image_slug()` returns `''` for a set or role it does not recognise — silently, so a
 typo here costs you an image with no error to say why. A theme that ships no sample content needs neither key.
+
+`gate` is what the password gate wears, so a protected folio is not answered by a screen in another
+theme's colours. All three values must be hex: they are interpolated straight into the gate's inline CSS,
+and `Base_Theme::get_gate_colors()` runs each through `sanitize_hex_color()` and drops anything else,
+falling back to the plugin's own neutral. A theme that declares nothing gets that neutral throughout.
+
+This used to be two hardcoded ID maps in `includes/folio-preview-template.php`. They were plugin source
+with no filter to join, so a theme shipped as a package could not appear in them — the contract rule for
+it failed permanently for every third-party theme, and the only way to satisfy it was to patch plugin core,
+which the next update overwrote.
 
 **The theme ID is derived, never declared.** `Base_Theme::get_id()` returns `sanitize_title(get_name())`,
 so `'Groove Newsletter'` → `groove-newsletter`. The folder name must match, because
@@ -976,8 +991,8 @@ Consequences for theme code:
     disagrees with `setup.php`, a missing dependency file, `get_content()` that skips
     `apply_embed_processing()`, a constructor rolling its own folio lookup, `ensure_script()` overridden
     in one view but not the other or not calling its parent, a page class re-implementing what
-    `Base_Theme` provides, a font CDN named anywhere in the theme, and a theme absent from the
-    password-gate maps.
+    `Base_Theme` provides, a font CDN named anywhere in the theme, and a `gate` block that is
+    missing or not hex.
 
     Unfilled slots are often correct — read the `!` lines, not the counts. `--strict` makes it exit
     non-zero, for CI.
@@ -997,7 +1012,9 @@ Consequences for theme code:
 ## 13. Known warts
 
 - **`themes/default-themes.php`** is a deprecated shim over `Themes_Manager::get_all_themes()`.
-- **Theme IDs are hardcoded** in the plugin's password-gate colour maps and in folio.php's tab gating.
+- **Theme IDs are hardcoded** in folio.php's tab gating. The password gate no longer hardcodes any: a
+  theme declares a `gate` block in `setup.php` (see §3), which is what made that rule satisfiable by a
+  packaged theme at all — the maps it replaced were plugin source with no filter to join.
 - **`newsletter_theme_preset`** meta is actively deleted on save (pages/folio.php:566); the preset helpers
   in `Utils` are vestigial.
 - **`themes/landing-page.html` and `landing-page-v8 2.html`** in this directory are marketing page drafts,

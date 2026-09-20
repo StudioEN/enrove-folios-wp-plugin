@@ -150,6 +150,46 @@ abstract class Base_Theme extends Assets
   }
 
   /**
+   * Colours the password gate borrows so it looks like the folio behind it.
+   *
+   * Declared in setup.php, like the fonts above, because the gate used to key
+   * off two hardcoded ID maps in includes/folio-preview-template.php. Those
+   * maps were plugin source, with no filter to join, so a theme shipped as a
+   * package could never appear in them: the contract check for it failed
+   * permanently for every third-party theme, and the only fix was to patch
+   * plugin core, which an update then overwrote.
+   *
+   * Every value is run through sanitize_hex_color() because all three are
+   * interpolated straight into the gate's inline CSS, and an installed package
+   * is not trusted input. Anything that is not a hex colour is dropped, and the
+   * gate falls back to its own neutral default for that slot.
+   *
+   * @return array{accent?:string, accent_hover?:string, background?:string}
+   */
+  public static function get_gate_colors(): array
+  {
+    $declared = static::get_setup_data()['gate'] ?? [];
+
+    if (!is_array($declared)) {
+      return [];
+    }
+
+    $out = [];
+    foreach (['accent', 'accent_hover', 'background'] as $slot) {
+      if (empty($declared[$slot])) {
+        continue;
+      }
+
+      $color = sanitize_hex_color((string) $declared[$slot]);
+      if ($color) {
+        $out[$slot] = $color;
+      }
+    }
+
+    return $out;
+  }
+
+  /**
    * Load this render's fonts. Delegates everything — resolution, the single
    * combined request, the preconnect and the CSS variables — to Font_Loader,
    * so themes never enqueue a font stylesheet of their own.

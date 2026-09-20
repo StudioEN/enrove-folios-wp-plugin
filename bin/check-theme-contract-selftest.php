@@ -321,16 +321,23 @@ function groove_cases(string $subject, string $theme, string $gate): array
             unlink($css);
         }],
 
-        // --- plugin-side registration ----------------------------------------
-        'absent from both password-gate maps' => ['warn', 'password-gate colour maps', static function () use ($gate, $subject) {
-            groove_edit($gate, static fn($src) => str_replace("'" . $subject . "'", "'renamed-theme'", $src));
+        // --- password gate ----------------------------------------------------
+        // These used to mutate includes/folio-preview-template.php, back when
+        // the gate keyed off two hardcoded ID maps there. A theme declares its
+        // own gate colours now, so the failures live in setup.php — which is
+        // the point of the change: a packaged theme can reach them.
+        'no gate block at all' => ['warn', 'declares no usable gate', static function () use ($setup) {
+            groove_edit($setup, static fn($src) => preg_replace("/'gate'\s*=>\s*\[.*?\],\n/s", '', $src, 1));
         }],
-        'in one password-gate map but not the other' => ['warn', 'password-gate colour maps', static function () use ($gate, $subject) {
-            // The mismatch the warning actually describes: a gate whose accent
-            // and background come from different themes.
-            groove_edit($gate, static fn($src) => preg_replace(
-                "/'" . preg_quote($subject, '/') . "'/",
-                "'renamed-theme'",
+        'gate block missing one slot' => ['warn', 'declares no usable gate', static function () use ($setup) {
+            groove_edit($setup, static fn($src) => preg_replace("/^\s*'accent_hover'\s*=>.*\n/m", '', $src, 1));
+        }],
+        'gate colour that is not hex' => ['warn', 'declares no usable gate', static function () use ($setup) {
+            // Interpolated straight into the gate's inline CSS, so a value that
+            // is not a colour is the one that matters most to catch.
+            groove_edit($setup, static fn($src) => preg_replace(
+                "/^(\s*'background'\s*=>\s*)'[^']*'/m",
+                "$1'red; } body { display:none'",
                 $src,
                 1
             ));
