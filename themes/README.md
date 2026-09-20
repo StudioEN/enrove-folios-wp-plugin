@@ -142,11 +142,15 @@ so `'Groove Newsletter'` → `groove-newsletter`. The folder name must match, be
 (includes/plugin.php:188) and does three things:
 
 1. **`load_builtin_themes()`** — `glob()`s `themes/*` directories, `natsort()`s them, and for each folder
-   with `setup.php` + `cover.php` + `page.php`: requires `dependencies`, requires cover/page, verifies both
-   classes exist and are `is_subclass_of(Base_Theme::class)`, then `register()`s them.
+   with `setup.php` + `cover.php` + `page.php`: requires every declared `dependency`, requires cover/page,
+   verifies both classes exist and are `is_subclass_of(Base_Theme::class)`, then `register()`s them.
    Any failing check skips the folder **silently** — a theme that does not appear in the picker almost
-   always failed one of these guards.
-2. **`load_installed_themes()`** — same, driven by the `groove_installed_themes` option.
+   always failed one of these guards. A declared dependency that is not on disk skips the theme too: it
+   used to be ignored and the theme registered anyway, which produced a theme that looked healthy in every
+   admin screen and fataled on the first visitor, because dependencies declare functions rather than
+   classes and nothing downstream noticed.
+2. **`load_installed_themes()`** — same, driven by the `groove_installed_themes` option, and running the
+   same two class guards in the same order.
 3. **`run_migrations()`** — one-shot legacy `theme_id` remapping (see §9).
 
 The registry is a flat map: `theme_id => ['cover_class' => …, 'page_class' => …]`.
@@ -162,8 +166,23 @@ Consumers: [pages/themes.php](../pages/themes.php) (manage), [pages/folio.php](.
 (picker + folio panel), [pages/add-new.php](../pages/add-new.php), [pages/settings.php](../pages/settings.php),
 [pages/all-folios.php](../pages/all-folios.php) (theme column).
 
-Ordering matters: **the first registered theme is the fallback** whenever a folio's stored `theme_id`
-is empty or unrecognised (`create_cover_theme()`, `create_page_theme()`, `Base_Theme::get_theme_data()`).
+Ordering matters, but less than it did. `resolve_registered_theme_id()` now separates two cases that used
+to resolve identically. A folio whose `theme_id` is **empty** still falls back — to the theme named in
+*Settings → General* first, and to the first registered theme only if that is unset or unregistered. A
+folio whose `theme_id` is **set but unregistered** resolves to `null`, and the folio 404s with "Theme not
+found" rather than silently rendering as whichever theme happened to sort first.
+
+`register()` refuses a theme whose derived ID is empty — `get_id()` is `sanitize_title(get_name())`, and no
+loader guard checks `name`, so a `setup.php` declaring both classes and no name would otherwise take the
+registry key `''`.
+
+> **The loaders run before `plugins_loaded`.** `Plugin::instance()` is called at file scope, so the whole
+> theme subsystem is parsed and class-loaded while the plugin file is still being included — on every
+> request, front end included. Two consequences worth knowing before you edit a theme on a live site:
+> a **syntax error in any theme's `setup.php`, `cover.php` or `page.php` is a site-wide fatal**, not a
+> skipped theme, and it takes wp-admin down with it, so recovery is FTP. And `__()` does not work in the
+> loaders — the `groove` text domain is loaded on `plugins_loaded`, so a translation call there returns
+> English and trips `_load_textdomain_just_in_time` on WordPress 6.7+.
 
 ---
 

@@ -61,14 +61,30 @@ class Themes_Manager extends Assets
      *
      * @param string $cover_class  Fully-qualified class name for the folio cover.
      * @param string $page_class   Fully-qualified class name for folio inner pages.
+     * @return bool  False when the theme declares no usable ID.
      */
     public static function register($cover_class, $page_class)
     {
         $theme_id = $cover_class::get_id();
+
+        // get_id() is sanitize_title(get_name()), and get_name() falls back to
+        // '' when setup.php declares no name — which no loader guard catches,
+        // because they check cover_class and page_class and not the one key the
+        // ID is derived from. Registering under '' is worse than not
+        // registering: has('') then answers true while
+        // resolve_registered_theme_id() treats '' as "never assigned" and
+        // returns the default, so the two disagree about the same theme, and
+        // get_all_themes() puts a nameless entry in every picker.
+        if ($theme_id === '') {
+            return false;
+        }
+
         self::$registry[$theme_id] = [
             'cover_class' => $cover_class,
             'page_class' => $page_class,
         ];
+
+        return true;
     }
 
     /**
@@ -878,7 +894,13 @@ class Themes_Manager extends Assets
             $cover_file = trailingslashit($dir) . 'cover.php';
             $page_file = trailingslashit($dir) . 'page.php';
 
-            if (!file_exists($setup_file) || !is_readable($cover_file) || !is_readable($page_file)) {
+            // is_readable, not file_exists, for setup.php as well as the two
+            // view files. A setup.php that is present but unreadable passed
+            // this guard, and the include below then emitted a PHP warning on
+            // every request before the is_array() check caught it one line
+            // later. Same outcome, minus the warning — and is_readable already
+            // implies existence, so nothing that used to load stops loading.
+            if (!is_readable($setup_file) || !is_readable($cover_file) || !is_readable($page_file)) {
                 continue;
             }
 
