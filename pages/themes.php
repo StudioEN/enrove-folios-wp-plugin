@@ -39,6 +39,8 @@ class Themes extends Page
 		// Register POST action handlers (both priv — themes require manage_options).
 		$this->add_post_action('groove_install_theme', 'handle_install');
 		$this->add_post_action('groove_uninstall_theme', 'handle_uninstall');
+		$this->add_post_action('groove_replace_theme', 'handle_replace');
+		$this->add_post_action('groove_cancel_replace', 'handle_cancel_replace');
 
 		add_action('groove/menu/register', function (Menu_Manager $menu) {
 			$menu->register(static::PAGE_ID, new Themes_Menu_Item($this));
@@ -75,6 +77,11 @@ class Themes extends Page
 		$result = Themes_Manager::install_theme_from_zip($_FILES['theme_zip']['tmp_name']);
 
 		if (is_wp_error($result)) {
+			if ($result->get_error_code() === 'replace_confirm_required') {
+				$this->park_upload_for_confirmation($_FILES['theme_zip']['tmp_name'], (array) $result->get_error_data());
+				return;
+			}
+
 			$this->redirect_with_failure(
 				$result->get_error_message(),
 				(string) $result->get_error_data(),
@@ -84,6 +91,104 @@ class Themes extends Page
 		}
 
 		$this->redirect_with_notice('success', urlencode($result));
+	}
+
+	/**
+	 * Hold an upload that would replace an installed theme, and ask first.
+	 *
+	 * The zip has to outlive the request to survive the question, and PHP
+	 * deletes the upload's temp file at the end of one — so it is moved
+	 * somewhere of our own and the path kept in a per-user transient. The path
+	 * is generated here and never comes from the request, so nothing the
+	 * browser sends decides what gets unzipped on the way back.
+	 */
+	private function park_upload_for_confirmation($tmp_name, array $context)
+	{
+		// Discard anything the last question left behind. A parked upload is
+		// cleared by either button, but an operator who simply walks away
+		// leaves the zip on disk until the OS gets to it, and uploading again
+		// is the moment we know the old one is not wanted.
+		$key = 'groove_theme_pending_' . get_current_user_id();
+		$stale = get_transient($key);
+		if (!empty($stale['zip'])) {
+			@unlink($stale['zip']);
+		}
+
+		$parked = trailingslashit(get_temp_dir()) . 'groove-pending-' . wp_generate_password(20, false) . '.zip';
+
+		if (!@move_uploaded_file($tmp_name, $parked)) {
+			$this->redirect_with_failure(
+				__('The upload could not be held while you confirmed.', 'groove'),
+				__('Check that PHP can write to the server\'s temporary directory, then try again.', 'groove'),
+				'#groove-theme-submit'
+			);
+			return;
+		}
+
+		set_transient($key, array_merge($context, array('zip' => $parked)), 15 * MINUTE_IN_SECONDS);
+
+		$this->redirect_with_notice('confirm_replace', '');
+	}
+
+	/**
+	 * Complete an upload the operator confirmed should replace what is there.
+	 */
+	public function handle_replace()
+	{
+		check_admin_referer('groove_replace_theme');
+
+		if (!current_user_can('manage_options')) {
+			wp_die(esc_html__('You do not have permission to install themes.', 'groove'));
+		}
+
+		$key = 'groove_theme_pending_' . get_current_user_id();
+		$pending = get_transient($key);
+		delete_transient($key);
+
+		if (empty($pending['zip']) || !is_readable($pending['zip'])) {
+			$this->redirect_with_failure(
+				__('That upload is no longer waiting to be confirmed.', 'groove'),
+				__('It is held for fifteen minutes. Upload the package again.', 'groove'),
+				'#groove-theme-submit'
+			);
+			return;
+		}
+
+		$result = Themes_Manager::install_theme_from_zip($pending['zip'], true);
+		@unlink($pending['zip']);
+
+		if (is_wp_error($result)) {
+			$this->redirect_with_failure(
+				$result->get_error_message(),
+				(string) $result->get_error_data(),
+				'#groove-theme-submit'
+			);
+			return;
+		}
+
+		$this->redirect_with_notice('replaced', urlencode($result));
+	}
+
+	/**
+	 * Discard an upload the operator decided not to go through with.
+	 */
+	public function handle_cancel_replace()
+	{
+		check_admin_referer('groove_cancel_replace');
+
+		if (!current_user_can('manage_options')) {
+			wp_die(esc_html__('You do not have permission to install themes.', 'groove'));
+		}
+
+		$key = 'groove_theme_pending_' . get_current_user_id();
+		$pending = get_transient($key);
+		delete_transient($key);
+
+		if (!empty($pending['zip'])) {
+			@unlink($pending['zip']);
+		}
+
+		$this->redirect_with_notice('replace_cancelled', '');
 	}
 
 	// -----------------------------------------------------------------------
@@ -142,6 +247,7 @@ class Themes extends Page
 
 			<?php $this->queue_notice_toast($notice_type, $notice_value); ?>
 			<?php $this->display_contract_warnings(); ?>
+			<?php $this->display_replace_confirmation($folio_counts); ?>
 
 			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
 				<div>
@@ -812,6 +918,127 @@ class Themes extends Page
 	 * @param string $value Theme name, or an error string.
 	 */
 	/**
+	 * Ask before an upload replaces a theme the site already has.
+	 *
+	 * Rendered server-side and already open, rather than shown by script: the
+	 * upload is parked on the server waiting for an answer, so the question has
+	 * to be answerable whether or not JavaScript ran. Both buttons are real
+	 * form submissions for the same reason, and either one clears the parked
+	 * file — there is no path that leaves it sitting in the temp directory
+	 * because someone walked away, beyond the fifteen minutes the transient
+	 * lives anyway.
+	 *
+	 * @param array $folio_counts Folios per theme ID, already computed for the grid.
+	 */
+	private function display_replace_confirmation(array $folio_counts)
+	{
+		$pending = get_transient('groove_theme_pending_' . get_current_user_id());
+
+		if (empty($pending['theme_id']) || empty($pending['zip'])) {
+			return;
+		}
+
+		$theme_id = (string) $pending['theme_id'];
+		$existing_name = (string) ($pending['existing_name'] ?? $theme_id);
+		$existing_version = (string) ($pending['existing_version'] ?? '');
+		$incoming_name = (string) ($pending['incoming_name'] ?? $existing_name);
+		$incoming_version = (string) ($pending['incoming_version'] ?? '');
+		$folio_count = isset($folio_counts[$theme_id]) ? (int) $folio_counts[$theme_id] : 0;
+		?>
+		<div class="g-theme-details is-open" role="dialog" aria-modal="true"
+			aria-labelledby="g-theme-replace-title">
+			<div class="g-theme-details__backdrop"></div>
+			<div class="g-theme-details__dialog" tabindex="-1">
+				<div class="g-theme-details__header">
+					<div class="g-theme-details__ident">
+						<h2 id="g-theme-replace-title" class="g-theme-details__title">
+							<?php esc_html_e('Replace this theme?', 'groove'); ?>
+						</h2>
+					</div>
+				</div>
+
+				<div class="g-theme-details__body space-y-4">
+					<p class="m-0 text-sm text-gray-700">
+						<?php
+						printf(
+							/* translators: %s: name of the theme already installed, in bold */
+							esc_html__('%s is already installed, and the package you uploaded derives to the same theme ID. Installing it replaces the version that is there.', 'groove'),
+							'<strong>' . esc_html($existing_name) . '</strong>'
+						);
+						?>
+					</p>
+
+					<div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700 space-y-1">
+						<div><?php
+							printf(
+								/* translators: 1: theme name, 2: version, or a dash when it declares none */
+								esc_html__('Installed: %1$s %2$s', 'groove'),
+								esc_html($existing_name),
+								esc_html($existing_version !== '' ? $existing_version : '—')
+							);
+						?></div>
+						<div><?php
+							printf(
+								/* translators: 1: theme name, 2: version, or a dash when it declares none */
+								esc_html__('Uploaded: %1$s %2$s', 'groove'),
+								esc_html($incoming_name),
+								esc_html($incoming_version !== '' ? $incoming_version : '—')
+							);
+						?></div>
+						<div><code><?php echo esc_html($theme_id); ?></code></div>
+					</div>
+
+					<?php if ($folio_count > 0): ?>
+						<p class="m-0 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+							<?php
+							printf(
+								/* translators: %s: number of folios using this theme */
+								esc_html(_n(
+									'%s folio uses this theme and will change appearance.',
+									'%s folios use this theme and will change appearance.',
+									$folio_count,
+									'groove'
+								)),
+								esc_html(number_format_i18n($folio_count))
+							);
+							?>
+							<a href="<?php echo esc_url(admin_url(
+								'admin.php?page=' . \Groove\Pages\All_Folios::PAGE_ID . '&theme_id=' . $theme_id
+							)); ?>"><?php esc_html_e('View them', 'groove'); ?></a>
+						</p>
+					<?php else: ?>
+						<p class="m-0 text-sm text-gray-600">
+							<?php esc_html_e('No folios use this theme yet, so nothing published changes.', 'groove'); ?>
+						</p>
+					<?php endif; ?>
+
+					<p class="m-0 text-sm text-gray-600">
+						<?php esc_html_e('The theme keeps its ID, so folios stay pointed at it. The replacement is live from the next page load.', 'groove'); ?>
+					</p>
+				</div>
+
+				<div class="g-theme-details__actions flex items-center justify-end gap-2">
+					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+						<?php wp_nonce_field('groove_cancel_replace'); ?>
+						<input type="hidden" name="action" value="groove_cancel_replace" />
+						<button type="submit" class="button button-secondary">
+							<?php esc_html_e('Cancel', 'groove'); ?>
+						</button>
+					</form>
+					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+						<?php wp_nonce_field('groove_replace_theme'); ?>
+						<input type="hidden" name="action" value="groove_replace_theme" />
+						<button type="submit" class="button button-primary">
+							<?php esc_html_e('Replace theme', 'groove'); ?>
+						</button>
+					</form>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Report what the contract check found in the package just installed.
 	 *
 	 * An inline notice rather than a toast, which is the rule in CLAUDE.md read
@@ -871,6 +1098,22 @@ class Themes extends Page
 					),
 					$consumed
 				);
+				break;
+			case 'replaced':
+				\Groove\Toast::success(
+					sprintf(
+						/* translators: %s: theme name */
+						__('"%s" replaced. The new version is live from the next page load.', 'groove'),
+						$value
+					),
+					$consumed
+				);
+				break;
+			case 'replace_cancelled':
+				\Groove\Toast::info(__('Upload discarded. Nothing was changed.', 'groove'), $consumed);
+				break;
+			case 'confirm_replace':
+				// The dialog says it all; a toast behind it would only repeat it.
 				break;
 			case 'uninstalled':
 				\Groove\Toast::info(__('Theme removed successfully.', 'groove'), $consumed);
