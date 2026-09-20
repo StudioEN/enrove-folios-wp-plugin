@@ -31,6 +31,7 @@ themes/<theme-id>/
 ├── setup.php              REQUIRED — returns a metadata array (see §3)
 ├── cover.php              REQUIRED — declares class Cover extends Base_Theme
 ├── page.php               REQUIRED — declares class Page  extends Base_Theme
+├── sample-content.php     optional — seeds a folio on Add New (see §9)
 ├── navigation-pane.php    optional — shared nav renderer, loaded via `dependencies`
 ├── blocks.php             optional — theme-specific Gutenberg blocks
 ├── blocks/<block>/        optional — block editor JS/CSS
@@ -67,18 +68,20 @@ Returns a plain array. **No side effects** — it is `include`d repeatedly (disc
 ```php
 <?php
 return [
-    'name'         => 'Groove Newsletter',            // Human name. The theme ID is sanitize_title() of this.
-    'thumbnail'    => 'theme-thumb.png',              // Filename only, resolved under assets/images/
-    'cover'        => 'theme-cover.jpg',
-    'logo'         => 'theme-g-logo.png',
-    'description'  => 'A modern editorial newsletter…',
-    'features'     => ['dynamic-color', 'page-transitions'],  // Optional, max 4, shown in the theme picker
-    'author'       => 'StudioEN',
-    'last_updated' => '2026-03-12',
-    'namespace'    => 'Groove\Themes\Groove_Newsletter',
-    'cover_class'  => 'Groove\Themes\Groove_Newsletter\Cover',
-    'page_class'   => 'Groove\Themes\Groove_Newsletter\Page',
-    'dependencies' => ['navigation-pane.php'],        // Optional, relative paths, require_once'd before cover/page
+    'name'          => 'Groove Newsletter',           // Human name. The theme ID is sanitize_title() of this.
+    'default_title' => 'A new issue',                 // Optional. Title a new folio gets — see below.
+    'thumbnail'     => 'theme-thumb.png',             // Filename only, resolved under assets/images/
+    'cover'         => 'theme-cover.jpg',
+    'logo'          => 'theme-g-logo.png',
+    'image_set'     => 'editorial',                   // Optional. Which curated imagery sample content draws on.
+    'description'   => 'A modern editorial newsletter…',
+    'features'      => ['dynamic-color', 'page-transitions'], // Optional, max 4, shown in the theme picker
+    'author'        => 'StudioEN',
+    'last_updated'  => '2026-03-12',
+    'namespace'     => 'Groove\Themes\Groove_Newsletter',
+    'cover_class'   => 'Groove\Themes\Groove_Newsletter\Cover',
+    'page_class'    => 'Groove\Themes\Groove_Newsletter\Page',
+    'dependencies'  => ['navigation-pane.php'],       // Optional, relative paths, require_once'd before cover/page
 ];
 ```
 
@@ -103,6 +106,26 @@ enforced in `Base_Theme::get_features()`: at most four, and `blocks` is dropped 
 in `pages/` to keep in step. Write it as what the theme *does*: an audience ("for consultancies and digital
 agencies") tells a reader who else it is for, not what they get, and ages badly the first time someone uses
 the theme for something it never named.
+
+`default_title` is the title a folio gets when it is created with this theme — "A new issue" for Magazine,
+"A new proposal" for Proposal. A theme that says nothing falls back to the generic "A New Folio", so a
+third-party theme cannot break the Add New screen by omitting it. An explicit default in
+*Settings → General* wins over all of them.
+
+`image_set` names which curated photography the theme's sample content draws on, so seeding a magazine and
+seeding an eBook do not produce the same pictures. The sets and the roles each one answers to live in
+`pexels/sets.php`:
+
+| Set | Roles |
+|---|---|
+| `studio` | `hero`, `scene`, `detail`, `process`, `texture`, `portrait-a` |
+| `paper` | `hero`, `texture`, `process`, `backdrop` |
+| `editorial` | `hero`, `wide`, `scene`, `process`, `people`, `detail`, `portrait-a`–`portrait-d` |
+| `daylight` | `hero`, `scene`, `people`, `backdrop`, `portrait-a`–`portrait-c` |
+
+`sample-content.php` asks for a *role*; the theme's set decides what that role looks like.
+`Themes_Manager::sample_image_slug()` returns `''` for a set or role it does not recognise — silently, so a
+typo here costs you an image with no error to say why. A theme that ships no sample content needs neither key.
 
 **The theme ID is derived, never declared.** `Base_Theme::get_id()` returns `sanitize_title(get_name())`,
 so `'Groove Newsletter'` → `groove-newsletter`. The folder name must match, because
@@ -504,7 +527,7 @@ silently does nothing.
 
 Leave a slot **unfilled** rather than inventing a value for it: the contract file carries a WordPress
 admin-palette fallback, so an unfilled slot degrades to something recognisably Groove instead of to
-unstyled HTML. A theme is not required to fill all eighteen.
+unstyled HTML. A theme is not required to fill all twenty-two.
 
 #### Light and dark
 
@@ -822,8 +845,28 @@ the same treatment, or every folio using it silently falls back to the first reg
 6. The derived theme ID is not already registered/installed, and neither class is already loaded
    (prevents fatal redeclaration).
 
-Then it copies to `wp-content/groove-themes/<theme-id>/`, requires dependencies → cover → page,
-registers, and only then persists to `groove_installed_themes`. Any failure cleans up the destination.
+Then it copies to `wp-content/groove-themes/<theme-id>/`, requires dependencies → cover → page, and checks:
+
+7. Both classes exist after loading.
+8. **Both reach `Base_Theme`.** `register()` opens with `$cover_class::get_id()`, so a class that does not
+   inherit it has no such method — this check is the difference between an error and a white screen on
+   `admin-post.php`. `load_builtin_themes()` has always had it; the install path only gained it later.
+
+Then it registers, and only then persists to `groove_installed_themes`. Any failure cleans up the
+destination.
+
+Every rejection is a `WP_Error` whose message says what is wrong and whose *data* says what to do about
+it — the admin screen pins the pair to the Install button rather than flashing it past. Keep both halves
+in mind if you add a validation: the message is the fault, the data is the fix.
+
+Once the package is in place, `check_theme_contract()` runs the rules in
+[bin/check-theme-contract.php](../bin/check-theme-contract.php) over it and reports what it finds as a
+notice on the Themes screen. None of that blocks the install — it is the class of mistake that produces no
+error at all, which is the class this document mostly describes. You can run the same rules yourself:
+
+```bash
+php bin/check-theme-contract.php --dir=/path/to/your-theme
+```
 
 `uninstall_theme()` refuses to touch built-in themes — only entries in the option.
 
@@ -886,7 +929,10 @@ Consequences for theme code:
    with the close button outside it. Do not write a drawer script.
 10. Responsive: no fixed `font-size` in px — use `clamp()` or the contract ramp. Degrade progressively
    rather than switching between a desktop and a phone state, and prefer intrinsic sizing
-   (`min()`, `clamp()`, `flex`) to a step wherever one will do the job. Declare a desktop-only
+   (`min()`, `clamp()`, `flex`) to a step wherever one will do the job — but a layout with a *single*
+   breakpoint is reported by the contract checker, and usually rightly: one step means every width
+   between the two gets a layout built for some other size. Intrinsic sizing instead of a step is the
+   goal; one step standing in for a whole range is not. Declare a desktop-only
    component mobile-first — absent by default, added back at a `min-width` — rather than adding it
    everywhere and walking it back down; `groove-ebook`'s contents sidebar is the reference. Size
    full-height boxes in `dvh` with a `vh` fallback, keep the document as the only scroller (a nested

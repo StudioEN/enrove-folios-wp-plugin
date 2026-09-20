@@ -955,7 +955,11 @@ class Themes_Manager extends Assets
 
         if (!$info_file) {
             static::cleanup_dir($tmp_dir);
-            return new \WP_Error('missing_info', 'setup.php not found in the package.');
+            return new \WP_Error(
+                'missing_info',
+                __('No setup.php in the package.', 'groove'),
+                __('It belongs at the top level of the zip, or one folder down. The zip must hold the theme folder, not a loose set of its files.', 'groove')
+            );
         }
 
         $package_root = dirname($info_file) . '/';
@@ -965,12 +969,20 @@ class Themes_Manager extends Assets
 
         if (!is_array($info) || !isset($info['name']) || '' === trim($info['name'])) {
             static::cleanup_dir($tmp_dir);
-            return new \WP_Error('invalid_info', 'setup.php must return an array with a "name" field.');
+            return new \WP_Error(
+                'invalid_info',
+                __('setup.php must return an array with a "name".', 'groove'),
+                __('The name is what the theme is called everywhere, and the ID every folio stores is derived from it.', 'groove')
+            );
         }
 
         if (!file_exists($package_root . 'cover.php') || !file_exists($package_root . 'page.php')) {
             static::cleanup_dir($tmp_dir);
-            return new \WP_Error('missing_files', 'Package must contain cover.php and page.php.');
+            return new \WP_Error(
+                'missing_files',
+                __('No cover.php and page.php beside setup.php.', 'groove'),
+                __('All three files are required, and all three must sit in the same folder.', 'groove')
+            );
         }
 
         // 4. Derive the theme ID from the name.
@@ -983,14 +995,22 @@ class Themes_Manager extends Assets
 
         if (!$cover_class || !$page_class) {
             static::cleanup_dir($tmp_dir);
-            return new \WP_Error('bad_class', 'setup.php must define cover_class and page_class.');
+            return new \WP_Error(
+                'bad_class',
+                __('setup.php must define cover_class and page_class.', 'groove'),
+                __('Each is a fully-qualified class name, namespace included, declared in cover.php and page.php respectively.', 'groove')
+            );
         }
 
         $dependencies = [];
         if (!empty($info['dependencies'])) {
             if (!is_array($info['dependencies'])) {
                 static::cleanup_dir($tmp_dir);
-                return new \WP_Error('bad_dependencies', 'setup.php dependencies must be an array of relative file paths.');
+                return new \WP_Error(
+                    'bad_dependencies',
+                    __('setup.php declares dependencies as something other than an array.', 'groove'),
+                    __('It takes a list of file paths, each relative to the theme folder.', 'groove')
+                );
             }
             $dependencies = $info['dependencies'];
         }
@@ -998,11 +1018,30 @@ class Themes_Manager extends Assets
         // Prevent fatal class redeclarations when uploading a duplicate/built-in package.
         if (static::has($theme_id) || isset(static::get_installed_themes_meta()[$theme_id])) {
             static::cleanup_dir($tmp_dir);
-            return new \WP_Error('theme_exists', 'A theme with this name is already registered.');
+            return new \WP_Error(
+                'theme_exists',
+                sprintf(
+                    /* translators: %s: theme ID derived from the package's name */
+                    __('A theme already answers to the ID "%s", which this package\'s name derives to.', 'groove'),
+                    $theme_id
+                ),
+                __('Uploading is not an update. Remove the installed theme first, or give this one a different name in setup.php — the ID is derived from the name.', 'groove')
+            );
         }
         if (class_exists($cover_class, false) || class_exists($page_class, false)) {
             static::cleanup_dir($tmp_dir);
-            return new \WP_Error('class_conflict', 'This package declares classes that are already loaded.');
+            return new \WP_Error(
+                'class_conflict',
+                sprintf(
+                    /* translators: %s: one or both fully-qualified class names */
+                    __('This package declares %s, which is already loaded on this site.', 'groove'),
+                    implode(', ', array_filter([
+                        class_exists($cover_class, false) ? $cover_class : '',
+                        class_exists($page_class, false) ? $page_class : '',
+                    ]))
+                ),
+                __('Two themes cannot share a class name. Give this one a namespace of its own.', 'groove')
+            );
         }
 
         // 6. Move to the permanent themes directory.
@@ -1020,13 +1059,29 @@ class Themes_Manager extends Assets
             $dep = ltrim((string) $dep, '/\\');
             if ($dep === '' || strpos($dep, '..') !== false) {
                 static::cleanup_dir($dest);
-                return new \WP_Error('bad_dependency_path', 'A dependency path in setup.php is invalid.');
+                return new \WP_Error(
+                    'bad_dependency_path',
+                    sprintf(
+                        /* translators: %s: the offending dependency path */
+                        __('setup.php lists the dependency "%s", which is empty or climbs out of the theme folder.', 'groove'),
+                        $dep
+                    ),
+                    __('Dependency paths are relative to the theme folder and may not contain "..".', 'groove')
+                );
             }
 
             $dep_file = $dest . $dep;
             if (!is_readable($dep_file)) {
                 static::cleanup_dir($dest);
-                return new \WP_Error('missing_dependency', sprintf('Missing dependency file: %s', $dep));
+                return new \WP_Error(
+                    'missing_dependency',
+                    sprintf(
+                        /* translators: %s: the dependency path declared in setup.php */
+                        __('setup.php lists the dependency "%s", which is not in the package.', 'groove'),
+                        $dep
+                    ),
+                    __('Every dependency a theme declares has to ship inside it.', 'groove')
+                );
             }
 
             require_once $dep_file;
@@ -1034,7 +1089,11 @@ class Themes_Manager extends Assets
 
         if (!is_readable($dest . 'cover.php') || !is_readable($dest . 'page.php')) {
             static::cleanup_dir($dest);
-            return new \WP_Error('missing_files', 'Package must contain readable cover.php and page.php files.');
+            return new \WP_Error(
+                'missing_files',
+                __('cover.php and page.php copied across but cannot be read.', 'groove'),
+                __('This is a file-permission problem on the server rather than anything wrong with the package.', 'groove')
+            );
         }
 
         // 7. Register immediately for the current request.
@@ -1043,7 +1102,16 @@ class Themes_Manager extends Assets
 
         if (!class_exists($cover_class, false) || !class_exists($page_class, false)) {
             static::cleanup_dir($dest);
-            return new \WP_Error('class_not_found', 'cover_class/page_class could not be loaded from this package.');
+            return new \WP_Error(
+                'class_not_found',
+                sprintf(
+                    /* translators: 1: cover_class value, 2: page_class value */
+                    __('cover.php and page.php loaded, but do not declare %1$s and %2$s.', 'groove'),
+                    $cover_class,
+                    $page_class
+                ),
+                __('Check the names in setup.php against the classes in those files, including the namespace.', 'groove')
+            );
         }
 
         // load_builtin_themes() has checked this since it was written; the
@@ -1056,7 +1124,13 @@ class Themes_Manager extends Assets
                 static::cleanup_dir($dest);
                 return new \WP_Error(
                     'bad_base_class',
-                    sprintf('%s %s does not extend Base_Theme.', $key, $class)
+                    sprintf(
+                        /* translators: 1: setup.php key (cover_class or page_class), 2: the class name */
+                        __('%1$s names %2$s, which does not extend Base_Theme.', 'groove'),
+                        $key,
+                        $class
+                    ),
+                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove')
                 );
             }
         }
@@ -1110,7 +1184,11 @@ class Themes_Manager extends Assets
         $installed = static::get_installed_themes_meta();
 
         if (!isset($installed[$theme_id])) {
-            return new \WP_Error('not_found', 'That theme is not an installed package.');
+            return new \WP_Error(
+                'not_found',
+                __('That theme is not an installed package.', 'groove'),
+                __('Built-in themes ship with the plugin and cannot be removed from here.', 'groove')
+            );
         }
 
         $theme_dir = static::get_themes_dir() . $theme_id . '/';

@@ -62,14 +62,24 @@ class Themes extends Page
 		}
 
 		if (empty($_FILES['theme_zip']) || $_FILES['theme_zip']['error'] !== UPLOAD_ERR_OK) {
-			$this->redirect_with_notice('error', 'upload_failed');
+			// This used to redirect with the literal string 'upload_failed',
+			// which is what the operator then read in the toast.
+			$this->redirect_with_failure(
+				__('The file did not finish uploading.', 'groove'),
+				__('Check the package is a .zip and is smaller than this server\'s upload limit, then try again.', 'groove'),
+				'#groove-theme-submit'
+			);
 			return;
 		}
 
 		$result = Themes_Manager::install_theme_from_zip($_FILES['theme_zip']['tmp_name']);
 
 		if (is_wp_error($result)) {
-			$this->redirect_with_notice('error', urlencode($result->get_error_message()));
+			$this->redirect_with_failure(
+				$result->get_error_message(),
+				(string) $result->get_error_data(),
+				'#groove-theme-submit'
+			);
 			return;
 		}
 
@@ -95,14 +105,17 @@ class Themes extends Page
 		$theme_id = isset($_POST['theme_id']) ? sanitize_key($_POST['theme_id']) : '';
 
 		if (empty($theme_id)) {
-			$this->redirect_with_notice('error', 'missing_theme_id');
+			$this->redirect_with_failure(
+				__('No theme was named in that request.', 'groove'),
+				__('Open the theme from the grid and use Remove in its details dialog.', 'groove')
+			);
 			return;
 		}
 
 		$result = Themes_Manager::uninstall_theme($theme_id);
 
 		if (is_wp_error($result)) {
-			$this->redirect_with_notice('error', urlencode($result->get_error_message()));
+			$this->redirect_with_failure($result->get_error_message(), (string) $result->get_error_data());
 			return;
 		}
 
@@ -259,14 +272,29 @@ class Themes extends Page
         ├── theme-thumb.png
         ├── theme-cover.jpg
         └── theme-g-logo.png</pre>
+						<?php /* Three paragraphs of contract used to sit here, paraphrasing
+						         themes/README.md. That is how this panel came to describe a
+						         package that would not work: it asked for assets/thumbnail.png
+						         when images resolve from assets/images/, and an author who
+						         followed it exactly got broken pictures and nothing to say why.
+						         What is left is the two facts the tree cannot show and a
+						         packager cannot infer — both enforced in code a few lines
+						         apart, so neither can quietly stop being true — and a pointer
+						         to the spec rather than a retelling of it. */ ?>
 						<p>
-							<?php esc_html_e('setup.php, cover.php and page.php are required; everything under assets/ is optional. setup.php must declare a name, a cover_class and a page_class.', 'groove'); ?>
+							<?php esc_html_e('setup.php, cover.php and page.php are required; everything under assets/ is optional. Image filenames are whatever setup.php declares, and are only ever looked for in assets/images/.', 'groove'); ?>
 						</p>
 						<p>
-							<?php esc_html_e('assets/css/theme.css is enqueued automatically. Image filenames are whatever setup.php declares — they are only ever looked for in assets/images/.', 'groove'); ?>
+							<?php esc_html_e('The theme name in setup.php becomes its ID, so a package cannot be re-uploaded as an update — remove the installed theme first.', 'groove'); ?>
 						</p>
 						<p>
-							<?php esc_html_e('The theme name in setup.php becomes its ID automatically, so uninstall a theme before re-uploading a package with the same name.', 'groove'); ?>
+							<?php
+							printf(
+								/* translators: %s: path to the theme spec, rendered as a code element */
+								esc_html__('The full theme spec ships with this plugin at %s.', 'groove'),
+								'<code>themes/README.md</code>'
+							);
+							?>
 						</p>
 					</div>
 				</div>
@@ -849,12 +877,59 @@ class Themes extends Page
 				break;
 			case 'error':
 			default:
+				// Toast::failure(), not Toast::error(): an install that failed
+				// is something to go and fix, and CLAUDE.md reserves the pinned
+				// toggletip for exactly that. The old plain toast took the
+				// explanation away with it after six seconds, on a screen whose
+				// whole purpose is the action that just failed.
+				$failure_key = 'groove_theme_failure_' . get_current_user_id();
+				$failure = get_transient($failure_key);
+				if (is_array($failure) && !empty($failure['message'])) {
+					delete_transient($failure_key);
+					\Groove\Toast::failure(
+						(string) $failure['message'],
+						isset($failure['hint']) ? (string) $failure['hint'] : '',
+						isset($failure['anchor']) ? (string) $failure['anchor'] : '',
+						$consumed
+					);
+					break;
+				}
+
 				\Groove\Toast::error(
 					!empty($value) ? $value : __('An unknown error occurred.', 'groove'),
 					$consumed
 				);
 				break;
 		}
+	}
+
+	/**
+	 * Redirect back to this screen reporting a failure the operator must act on.
+	 *
+	 * The message and its hint travel in a transient rather than the query
+	 * string. Both are sentences now, not slugs, and a URL is no place for
+	 * them — the old path put the whole error message in ?groove_value= and
+	 * then stripped it on arrival, so it survived exactly one page load and
+	 * could not be re-read by reloading. Keyed per user so two admins working
+	 * at once do not read each other's.
+	 */
+	private function redirect_with_failure($message, $hint = '', $anchor = '')
+	{
+		set_transient(
+			'groove_theme_failure_' . get_current_user_id(),
+			array(
+				'message' => (string) $message,
+				'hint' => (string) $hint,
+				// Empty for an uninstall: the Remove button lives inside the
+				// details dialog, which the redirect has closed, so there is no
+				// control left on screen to point at. The toggletip is skipped
+				// and the toast reports on its own.
+				'anchor' => (string) $anchor,
+			),
+			5 * MINUTE_IN_SECONDS
+		);
+
+		$this->redirect_with_notice('error', '');
 	}
 
 	private function redirect_with_notice($type, $value)
