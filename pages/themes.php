@@ -246,7 +246,7 @@ class Themes extends Page
 		<div class="space-y-4">
 
 			<?php $this->queue_notice_toast($notice_type, $notice_value); ?>
-			<?php $this->display_contract_warnings(); ?>
+			<?php $this->display_theme_problems($folio_counts); ?>
 			<?php $this->display_replace_confirmation($folio_counts); ?>
 
 			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
@@ -281,7 +281,16 @@ class Themes extends Page
 
 				<?php if (empty($all_themes)): ?>
 					<div class="g-themes-empty">
-						<p><?php esc_html_e('No themes installed yet. Upload a theme package below.', 'groove'); ?></p>
+						<?php /* "None installed" is the wrong thing to say when there are
+						         theme folders present that all failed to load — the panel
+						         above is already naming them. */ ?>
+						<p><?php
+							echo esc_html(
+								Themes_Manager::get_skipped_themes()
+									? __('No themes loaded. Every theme folder on this site failed to register — see above.', 'groove')
+									: __('No themes installed yet. Upload a theme package below.', 'groove')
+							);
+						?></p>
 					</div>
 				<?php else: ?>
 					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -1039,44 +1048,137 @@ class Themes extends Page
 	}
 
 	/**
-	 * Report what the contract check found in the package just installed.
+	 * Everything wrong with the themes on this site, in one place.
 	 *
-	 * An inline notice rather than a toast, which is the rule in CLAUDE.md read
-	 * straight: the install already reported its outcome as a toast, and this
-	 * is not an outcome. It is a standing condition — the theme is installed,
-	 * it renders, and it goes on misbehaving in these exact ways until somebody
-	 * edits it. Six seconds is not enough to read a list you are meant to act
-	 * on, and the query string is not somewhere to put one.
+	 * Two halves that answer the same question — why is a theme not behaving?
+	 * Folders that did not register at all, recomputed by the loaders on every
+	 * request; and contract findings on packages that did register but will
+	 * misbehave, stored on the theme's own row when it was installed.
+	 *
+	 * Standing, not a click outcome, which is what CLAUDE.md reserves an inline
+	 * notice for. Nothing here is dismissible: every row is derived from state
+	 * the loaders or the option already hold, so a row disappears the moment
+	 * the thing it describes is fixed, and a dismissal could only hide a true
+	 * statement. It is empty on a healthy site.
+	 *
+	 * @param array $folio_counts Folios per theme ID, already computed for the grid.
 	 */
-	private function display_contract_warnings()
+	private function display_theme_problems(array $folio_counts)
 	{
-		$key = 'groove_theme_contract_' . get_current_user_id();
-		$stored = get_transient($key);
+		$skipped = Themes_Manager::get_skipped_themes();
+		$installed_meta = Themes_Manager::get_installed_themes_meta();
 
-		if (empty($stored['warnings']) || !is_array($stored['warnings'])) {
+		$flawed = array();
+		foreach ($installed_meta as $theme_id => $meta) {
+			if (!empty($meta['contract_warnings']) && is_array($meta['contract_warnings'])) {
+				$flawed[(string) $theme_id] = $meta;
+			}
+		}
+
+		if (empty($skipped) && empty($flawed)) {
 			return;
 		}
-		delete_transient($key);
 		?>
-		<div class="notice notice-warning">
-			<p class="font-semibold">
-				<?php
-				printf(
-					/* translators: %s: theme name */
-					esc_html__('"%s" is installed. The contract check found things worth fixing.', 'groove'),
-					esc_html(isset($stored['theme']) ? (string) $stored['theme'] : '')
-				);
-				?>
-			</p>
-			<ul class="m-0 pl-5 list-disc space-y-1 text-sm">
-				<?php foreach ($stored['warnings'] as $warning): ?>
-					<li><?php echo esc_html((string) $warning); ?></li>
-				<?php endforeach; ?>
+		<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
+
+			<?php if (!empty($skipped)): ?>
+				<div>
+					<h2 class="m-0 text-sm font-semibold text-gray-800">
+						<?php
+						printf(
+							/* translators: %s: number of theme folders that did not load */
+							esc_html(_n(
+								'%s theme folder did not load.',
+								'%s theme folders did not load.',
+								count($skipped),
+								'groove'
+							)),
+							esc_html(number_format_i18n(count($skipped)))
+						);
+						?>
+					</h2>
+					<p class="mt-1 mb-0 text-sm text-gray-600">
+						<?php esc_html_e('They are not in the theme picker. Until now they failed in silence — a theme simply was not there, with nothing to say why.', 'groove'); ?>
+					</p>
+				</div>
+
+				<ul class="m-0 p-0 list-none space-y-3">
+					<?php foreach ($skipped as $record):
+						$described = Themes_Manager::describe_skipped_theme($record);
+						$folder = (string) ($record['folder'] ?? '');
+						$is_installed = ($record['kind'] ?? '') === 'installed';
+						$folio_count = isset($folio_counts[$folder]) ? (int) $folio_counts[$folder] : 0;
+						?>
+						<li class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm space-y-1">
+							<div class="flex items-center gap-2">
+								<code class="text-gray-800"><?php echo esc_html($folder); ?></code>
+								<span class="g-themes-tag <?php echo $is_installed ? 'g-themes-tag--installed' : 'g-themes-tag--builtin'; ?>">
+									<?php echo esc_html($is_installed ? __('Installed', 'groove') : __('Built-in', 'groove')); ?>
+								</span>
+							</div>
+							<div class="text-gray-800"><?php echo esc_html($described->get_error_message()); ?></div>
+							<?php $fix = (string) $described->get_error_data(); ?>
+							<?php if ($fix !== ''): ?>
+								<div class="text-gray-600"><?php echo esc_html($fix); ?></div>
+							<?php endif; ?>
+							<?php if ($folio_count > 0): ?>
+								<div class="text-amber-900">
+									<?php
+									printf(
+										/* translators: %s: number of folios pointing at this theme */
+										esc_html(_n(
+											'%s folio points at this theme and will not open.',
+											'%s folios point at this theme and will not open.',
+											$folio_count,
+											'groove'
+										)),
+										esc_html(number_format_i18n($folio_count))
+									);
+									?>
+									<a href="<?php echo esc_url(admin_url(
+										'admin.php?page=' . \Groove\Pages\All_Folios::PAGE_ID . '&theme_id=' . $folder
+									)); ?>"><?php esc_html_e('View them', 'groove'); ?></a>
+								</div>
+							<?php endif; ?>
+							<?php if ($is_installed): ?>
+								<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="pt-1">
+									<?php wp_nonce_field('groove_uninstall_theme'); ?>
+									<input type="hidden" name="action" value="groove_uninstall_theme" />
+									<input type="hidden" name="theme_id" value="<?php echo esc_attr($folder); ?>" />
+									<?php /* A package whose files are gone has no card, so this row is
+									         the only place its stale entry can be cleared from. */ ?>
+									<button type="submit" class="button button-secondary g-themes-delete-btn">
+										<?php esc_html_e('Remove entry', 'groove'); ?>
+									</button>
+								</form>
+							<?php endif; ?>
+						</li>
+					<?php endforeach; ?>
 			</ul>
-			<p class="text-sm text-gray-600">
-				<?php esc_html_e('None of these stops the theme rendering — they are the mistakes that produce no error when it does. The full spec ships with the plugin at themes/README.md.', 'groove'); ?>
-			</p>
-		</div>
+			<?php endif; ?>
+
+			<?php foreach ($flawed as $theme_id => $meta): ?>
+				<div class="space-y-1">
+					<p class="m-0 text-sm font-semibold text-gray-800">
+						<?php
+						printf(
+							/* translators: %s: theme name */
+							esc_html__('"%s" is installed and renders, but the contract check found things worth fixing.', 'groove'),
+							esc_html((string) ($meta['name'] ?? $theme_id))
+						);
+						?>
+					</p>
+					<ul class="m-0 pl-5 list-disc space-y-1 text-sm text-gray-700">
+						<?php foreach ($meta['contract_warnings'] as $warning): ?>
+							<li><?php echo esc_html((string) $warning); ?></li>
+						<?php endforeach; ?>
+					</ul>
+					<p class="m-0 text-sm text-gray-600">
+						<?php esc_html_e('None of these stops the theme rendering — they are the mistakes that produce no error when it does. The full spec ships with the plugin at themes/README.md.', 'groove'); ?>
+					</p>
+				</div>
+			<?php endforeach; ?>
+		</section>
 		<?php
 	}
 

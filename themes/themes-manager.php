@@ -27,6 +27,25 @@ class Themes_Manager extends Assets
      */
     private static $registry = [];
 
+    /**
+     * Theme folders that did not register this request, and why.
+     *
+     * Request-scoped, because the loaders are. Nothing is persisted: the guards
+     * run on every request anyway, so a cache would be a database read
+     * replacing a free in-memory append, with no honest way to invalidate it —
+     * theme folders are files, and nothing fires a hook when one is edited.
+     *
+     * Records are data, never prose. register_defaults() runs from
+     * Plugin::__construct(), which is called at file scope and therefore before
+     * plugins_loaded — so the 'groove' text domain is not loaded yet, and __()
+     * here would return English and trip _load_textdomain_just_in_time on
+     * WordPress 6.7+, on every request. describe_skipped_theme() builds the
+     * sentences instead, and only admin code calls it.
+     *
+     * @var array[]
+     */
+    private static $skipped = [];
+
     // ── Boot ───────────────────────────────────────────────────────────────
 
     /**
@@ -85,6 +104,137 @@ class Themes_Manager extends Assets
         ];
 
         return true;
+    }
+
+    /**
+     * Note a theme folder that did not register.
+     *
+     * Called at the point of the decision, so the record and the verdict cannot
+     * disagree — which is the reason this is not a second scan the admin screen
+     * runs for itself. Free on a healthy site: the append only happens on a
+     * branch that was already going to skip, and that branch is never taken.
+     *
+     * @param string $folder Folder name, never an absolute path.
+     * @param string $kind   'builtin' or 'installed'.
+     * @param string $reason Stable code; describe_skipped_theme() turns it into words.
+     * @param array  $detail Raw context for the sentence — a class name, a file.
+     */
+    protected static function record_skipped_theme(string $folder, string $kind, string $reason, array $detail = []): void
+    {
+        self::$skipped[] = [
+            'folder' => $folder,
+            'kind' => $kind,
+            'reason' => $reason,
+            'detail' => $detail,
+        ];
+    }
+
+    /**
+     * Every theme folder that did not register this request.
+     *
+     * @param string|null $kind 'builtin', 'installed', or null for both.
+     * @return array[]
+     */
+    public static function get_skipped_themes(?string $kind = null): array
+    {
+        if ($kind === null) {
+            return self::$skipped;
+        }
+
+        return array_values(array_filter(self::$skipped, static function ($record) use ($kind) {
+            return $record['kind'] === $kind;
+        }));
+    }
+
+    /**
+     * Turn one record into the two things a person can act on: what went wrong,
+     * and what to do about it.
+     *
+     * Split the way install_theme_from_zip()'s rejections are — message is the
+     * fault, data is the fix — and where the fault is one the installer already
+     * names, deliberately the same words, so a theme that fails at upload and a
+     * theme that fails at load do not describe one problem two ways.
+     *
+     * Lives here rather than in the loaders because this is where __() is safe.
+     *
+     * @return \WP_Error Code is the reason; message the fault; data the fix.
+     */
+    public static function describe_skipped_theme(array $record): \WP_Error
+    {
+        $reason = (string) ($record['reason'] ?? '');
+        $detail = (array) ($record['detail'] ?? []);
+        $file = (string) ($detail['file'] ?? '');
+        $class = (string) ($detail['class'] ?? '');
+        $key = (string) ($detail['key'] ?? '');
+        $dep = (string) ($detail['dependency'] ?? '');
+
+        switch ($reason) {
+            case 'no_setup':
+                return new \WP_Error($reason,
+                    __('No setup.php in this folder.', 'groove'),
+                    __('A theme needs setup.php, cover.php and page.php side by side. The full spec ships at themes/README.md.', 'groove'));
+
+            case 'unreadable_file':
+                return new \WP_Error($reason,
+                    sprintf(/* translators: %s: a theme file name */ __('%s is missing, or cannot be read.', 'groove'), $file),
+                    __('Restore the file, or check the web server is allowed to read it.', 'groove'));
+
+            case 'setup_not_array':
+                return new \WP_Error($reason,
+                    __('setup.php does not return an array.', 'groove'),
+                    __('It must be a literal return array( … ); with no side effects — it is included more than once per request.', 'groove'));
+
+            case 'no_class_names':
+                return new \WP_Error($reason,
+                    __('setup.php declares no cover_class and page_class.', 'groove'),
+                    __('Each is a fully-qualified class name, namespace included, declared in cover.php and page.php respectively.', 'groove'));
+
+            case 'missing_dependency':
+                return new \WP_Error($reason,
+                    sprintf(/* translators: %s: the dependency path declared in setup.php */ __('setup.php lists the dependency "%s", which is not there.', 'groove'), $dep),
+                    __('Every dependency a theme declares has to ship inside it. The theme is skipped rather than registered, because a dependency that is missing is a fatal on the first folio anyone opens.', 'groove'));
+
+            case 'class_missing':
+                return new \WP_Error($reason,
+                    sprintf(/* translators: 1: a theme file name, 2: the class setup.php names */ __('%1$s declares no class %2$s.', 'groove'), $file, $class),
+                    __('Check the name in setup.php against the class in that file, including the namespace.', 'groove'));
+
+            case 'not_base_theme':
+                return new \WP_Error($reason,
+                    sprintf(/* translators: 1: setup.php key, 2: the class name */ __('%1$s names %2$s, which does not extend Base_Theme.', 'groove'), $key, $class),
+                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove'));
+
+            case 'package_gone':
+                return new \WP_Error($reason,
+                    __('The package files are no longer in wp-content/groove-themes/.', 'groove'),
+                    __('Remove the theme to clear the entry, then install the package again.', 'groove'));
+        }
+
+        return new \WP_Error('unknown', __('This folder did not register.', 'groove'), '');
+    }
+
+    /**
+     * Does this folder claim to be a theme at all?
+     *
+     * Same four markers, and the same reasoning, as groove_check_theme_dir() in
+     * bin/check-theme-contract.php: "does it have a setup.php" cannot be the
+     * test, because a folder missing one is exactly the failure worth naming.
+     * Anything carrying one of the four is making a claim; anything else under
+     * themes/ is not a broken theme, it is not a theme — an unzipped __MACOSX,
+     * a stray node_modules — and reporting it would be noise.
+     *
+     * Four filenames repeated rather than shared: reaching into bin/ from the
+     * boot path, on every request, costs more than the duplication. Change both.
+     */
+    protected static function folder_claims_to_be_a_theme(string $dir): bool
+    {
+        foreach (['setup.php', 'cover.php', 'page.php', 'assets/css/theme.css'] as $marker) {
+            if (is_readable(trailingslashit($dir) . $marker)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -814,10 +964,14 @@ class Themes_Manager extends Assets
             $setup_file = $theme_path . 'setup.php';
             // Per iteration, not per loop: left outside, one package missing a
             // dependency would skip every package loaded after it.
-            $missing_dependency = false;
+            $missing_dependency = '';
 
+            // The row in groove_installed_themes outlives the files, so this
+            // is the one skip that leaves a stale entry behind. The report
+            // offers to clear it.
             if (!is_readable($cover_file) || !is_readable($page_file)) {
-                continue; // Package deleted from disk — skip silently.
+                static::record_skipped_theme((string) $theme_id, 'installed', 'package_gone');
+                continue;
             }
 
             if (is_readable($setup_file)) {
@@ -826,7 +980,7 @@ class Themes_Manager extends Assets
                     foreach ($setup['dependencies'] as $dep) {
                         $dep_file = $theme_path . $dep;
                         if (!is_readable($dep_file)) {
-                            $missing_dependency = true;
+                            $missing_dependency = (string) $dep;
                             break;
                         }
                         require_once $dep_file;
@@ -836,7 +990,8 @@ class Themes_Manager extends Assets
 
             // Same reasoning as the built-in loader above: a package missing a
             // dependency it declares renders as a fatal, not as a broken theme.
-            if ($missing_dependency) {
+            if ($missing_dependency !== '') {
+                static::record_skipped_theme((string) $theme_id, 'installed', 'missing_dependency', ['dependency' => $missing_dependency]);
                 continue;
             }
 
@@ -846,8 +1001,11 @@ class Themes_Manager extends Assets
             $cover_class = $meta['cover_class'] ?? '';
             $page_class = $meta['page_class'] ?? '';
 
-            if (!class_exists($cover_class) || !class_exists($page_class)) {
-                continue;
+            foreach (['cover.php' => $cover_class, 'page.php' => $page_class] as $name => $class) {
+                if (!class_exists($class)) {
+                    static::record_skipped_theme((string) $theme_id, 'installed', 'class_missing', ['file' => $name, 'class' => $class]);
+                    continue 2;
+                }
             }
 
             // The same guard load_builtin_themes() has always had, and the one
@@ -863,8 +1021,11 @@ class Themes_Manager extends Assets
             // Install validates this now, but that only covers packages
             // installed since. A package already on disk, or one edited in
             // place afterwards, arrives here unchecked.
-            if (!is_subclass_of($cover_class, Base_Theme::class) || !is_subclass_of($page_class, Base_Theme::class)) {
-                continue;
+            foreach (['cover_class' => $cover_class, 'page_class' => $page_class] as $key => $class) {
+                if (!is_subclass_of($class, Base_Theme::class)) {
+                    static::record_skipped_theme((string) $theme_id, 'installed', 'not_base_theme', ['key' => $key, 'class' => $class]);
+                    continue 2;
+                }
             }
 
             static::register($cover_class, $page_class);
@@ -894,18 +1055,42 @@ class Themes_Manager extends Assets
             $cover_file = trailingslashit($dir) . 'cover.php';
             $page_file = trailingslashit($dir) . 'page.php';
 
+            $folder = basename($dir);
+
+            // A folder carrying none of a theme's four files is not a broken
+            // theme, it is not a theme — an unzipped __MACOSX, a stray
+            // node_modules. Skipped without a word, because naming it would be
+            // noise in a report about themes that failed.
+            if (!static::folder_claims_to_be_a_theme($dir)) {
+                continue;
+            }
+
             // is_readable, not file_exists, for setup.php as well as the two
             // view files. A setup.php that is present but unreadable passed
             // this guard, and the include below then emitted a PHP warning on
             // every request before the is_array() check caught it one line
             // later. Same outcome, minus the warning — and is_readable already
             // implies existence, so nothing that used to load stops loading.
-            if (!is_readable($setup_file) || !is_readable($cover_file) || !is_readable($page_file)) {
+            //
+            // Tested one file at a time so the report can name which is absent.
+            if (!is_readable($setup_file)) {
+                static::record_skipped_theme($folder, 'builtin', 'no_setup');
                 continue;
+            }
+            foreach (['cover.php' => $cover_file, 'page.php' => $page_file] as $name => $path) {
+                if (!is_readable($path)) {
+                    static::record_skipped_theme($folder, 'builtin', 'unreadable_file', ['file' => $name]);
+                    continue 2;
+                }
             }
 
             $setup = include $setup_file;
-            if (!is_array($setup) || empty($setup['cover_class']) || empty($setup['page_class'])) {
+            if (!is_array($setup)) {
+                static::record_skipped_theme($folder, 'builtin', 'setup_not_array');
+                continue;
+            }
+            if (empty($setup['cover_class']) || empty($setup['page_class'])) {
+                static::record_skipped_theme($folder, 'builtin', 'no_class_names');
                 continue;
             }
 
@@ -918,16 +1103,17 @@ class Themes_Manager extends Assets
             // using it gets a fatal on an undefined function. A theme that
             // cannot render is better left out of the picker than offered.
             if (!empty($setup['dependencies']) && is_array($setup['dependencies'])) {
-                $missing_dependency = false;
+                $missing_dependency = '';
                 foreach ($setup['dependencies'] as $dep) {
                     $dep_file = trailingslashit($dir) . $dep;
                     if (!is_readable($dep_file)) {
-                        $missing_dependency = true;
+                        $missing_dependency = (string) $dep;
                         break;
                     }
                     require_once $dep_file;
                 }
-                if ($missing_dependency) {
+                if ($missing_dependency !== '') {
+                    static::record_skipped_theme($folder, 'builtin', 'missing_dependency', ['dependency' => $missing_dependency]);
                     continue;
                 }
             }
@@ -938,12 +1124,18 @@ class Themes_Manager extends Assets
             $cover_class = $setup['cover_class'];
             $page_class = $setup['page_class'];
 
-            if (!class_exists($cover_class) || !class_exists($page_class)) {
-                continue;
+            foreach (['cover.php' => $cover_class, 'page.php' => $page_class] as $name => $class) {
+                if (!class_exists($class)) {
+                    static::record_skipped_theme($folder, 'builtin', 'class_missing', ['file' => $name, 'class' => $class]);
+                    continue 2;
+                }
             }
 
-            if (!is_subclass_of($cover_class, Base_Theme::class) || !is_subclass_of($page_class, Base_Theme::class)) {
-                continue;
+            foreach (['cover_class' => $cover_class, 'page_class' => $page_class] as $key => $class) {
+                if (!is_subclass_of($class, Base_Theme::class)) {
+                    static::record_skipped_theme($folder, 'builtin', 'not_base_theme', ['key' => $key, 'class' => $class]);
+                    continue 2;
+                }
             }
 
             static::register($cover_class, $page_class);
@@ -1364,10 +1556,9 @@ class Themes_Manager extends Assets
                 'author' => $info['author'] ?? '',
                 'cover_class' => $cover_class,
                 'page_class' => $page_class,
+                'contract_warnings' => static::check_theme_contract($dest),
             );
             update_option('groove_installed_themes', $installed_meta);
-
-            static::store_contract_warnings($theme_name, static::check_theme_contract($dest));
 
             return $theme_name;
         }
@@ -1480,33 +1671,16 @@ class Themes_Manager extends Assets
             'author' => $info['author'] ?? '',
             'cover_class' => $cover_class,
             'page_class' => $page_class,
+            // Stored with the theme rather than handed to the next page load.
+            // These describe the package, not the upload: they stay true until
+            // its files change, and uninstalling clears them with the row. As a
+            // transient they were drained by the first render, so a reload lost
+            // them and a second admin never saw them at all.
+            'contract_warnings' => $contract_warnings,
         ];
         update_option('groove_installed_themes', $installed);
 
-        static::store_contract_warnings($theme_name, $contract_warnings);
-
         return $theme_name;
-    }
-
-    /**
-     * Hand contract findings to the Themes screen.
-     *
-     * Through a transient rather than the query string: the redirect already
-     * carries the success value, and a list of findings is far past what
-     * belongs in a URL. Per-user, so two admins installing at once do not read
-     * each other's.
-     */
-    protected static function store_contract_warnings(string $theme_name, array $warnings): void
-    {
-        if (empty($warnings)) {
-            return;
-        }
-
-        set_transient(
-            'groove_theme_contract_' . get_current_user_id(),
-            array('theme' => $theme_name, 'warnings' => $warnings),
-            5 * MINUTE_IN_SECONDS
-        );
     }
 
     /**
