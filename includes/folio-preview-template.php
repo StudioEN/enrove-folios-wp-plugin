@@ -130,8 +130,14 @@ elseif (!\Groove\Utils\Utils::can_current_request_view_post($_gv_post)) {
     : __('This folio is not published yet. Sign in to preview it, or publish it to share the link.', 'groove');
 }
 else {
-  // Genuinely no usable theme: the folio has no theme_id, or names one that is
-  // not registered on this site.
+  // Genuinely no usable theme: the folio names a theme_id nothing on this site
+  // answers to, or no theme is registered at all. A folio with no theme_id is
+  // not in this branch — that one defaults, in resolve_registered_theme_id().
+  //
+  // This used to be unreachable. create_cover_theme()/create_page_theme() fell
+  // back to the first registered theme for an unrecognised ID as readily as for
+  // an empty one, so a folio whose theme failed to load rendered in a different
+  // theme at HTTP 200 and this notice never ran.
   $_gv_status = 404;
   $_gv_title = __('Theme not found', 'groove');
   $_gv_message = __('This folio points at a theme that is not installed.', 'groove');

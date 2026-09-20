@@ -128,6 +128,7 @@ class Themes extends Page
 		<div class="space-y-4">
 
 			<?php $this->queue_notice_toast($notice_type, $notice_value); ?>
+			<?php $this->display_contract_warnings(); ?>
 
 			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
 				<div>
@@ -782,6 +783,48 @@ class Themes extends Page
 	 * @param string $type  Notice key from the redirect.
 	 * @param string $value Theme name, or an error string.
 	 */
+	/**
+	 * Report what the contract check found in the package just installed.
+	 *
+	 * An inline notice rather than a toast, which is the rule in CLAUDE.md read
+	 * straight: the install already reported its outcome as a toast, and this
+	 * is not an outcome. It is a standing condition — the theme is installed,
+	 * it renders, and it goes on misbehaving in these exact ways until somebody
+	 * edits it. Six seconds is not enough to read a list you are meant to act
+	 * on, and the query string is not somewhere to put one.
+	 */
+	private function display_contract_warnings()
+	{
+		$key = 'groove_theme_contract_' . get_current_user_id();
+		$stored = get_transient($key);
+
+		if (empty($stored['warnings']) || !is_array($stored['warnings'])) {
+			return;
+		}
+		delete_transient($key);
+		?>
+		<div class="notice notice-warning">
+			<p class="font-semibold">
+				<?php
+				printf(
+					/* translators: %s: theme name */
+					esc_html__('"%s" is installed. The contract check found things worth fixing.', 'groove'),
+					esc_html(isset($stored['theme']) ? (string) $stored['theme'] : '')
+				);
+				?>
+			</p>
+			<ul class="m-0 pl-5 list-disc space-y-1 text-sm">
+				<?php foreach ($stored['warnings'] as $warning): ?>
+					<li><?php echo esc_html((string) $warning); ?></li>
+				<?php endforeach; ?>
+			</ul>
+			<p class="text-sm text-gray-600">
+				<?php esc_html_e('None of these stops the theme rendering — they are the mistakes that produce no error when it does. The full spec ships with the plugin at themes/README.md.', 'groove'); ?>
+			</p>
+		</div>
+		<?php
+	}
+
 	private function queue_notice_toast($type, $value)
 	{
 		if (empty($type)) {

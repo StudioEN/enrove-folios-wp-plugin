@@ -17,6 +17,10 @@
  *   --theme=<slug>  Check one theme instead of all of them. (`--theme=` with no
  *                   slug is indistinguishable from omitting the flag, because
  *                   getopt drops it, so it checks everything.)
+ *   --dir=<path>    Check a theme outside this plugin's themes/ folder — an
+ *                   installed package in wp-content/groove-themes/, or a theme
+ *                   being developed anywhere else. Point it at one theme folder
+ *                   or at a folder of them.
  *   --strict        Exit non-zero if any theme has a warning (for CI).
  *   --help          Show this help.
  *
@@ -30,21 +34,31 @@
  * literal array with no side effects.
  */
 
-$root = dirname(__DIR__);
-$opts = getopt('', ['theme::', 'strict', 'help']);
 
-if (isset($opts['help'])) {
-    $doc = file_get_contents(__FILE__);
-    if (preg_match('#/\*\*(.*?)\*/#s', $doc, $m)) {
-        echo trim(preg_replace('/^\s*\* ?/m', '', str_replace('*/', '', $m[1]))), "\n";
+// This file stopped being CLI-only when Themes_Manager began including it to
+// check a package at install time, which puts it on a WordPress request. The
+// rest of the plugin's runtime code uses no PHP 8 function anywhere — it is
+// written to the 7.x floor — and three of them are used below, so on a 7.x host
+// the include would fatal and take the upload with it. Defining them is a
+// smaller price than rewriting the fourteen call sites, and on PHP 8 these
+// cost nothing: function_exists is true and the bodies never run.
+if (!function_exists('str_starts_with')) {
+    function str_starts_with(string $haystack, string $needle): bool
+    {
+        return $needle === '' || strncmp($haystack, $needle, strlen($needle)) === 0;
     }
-    exit(0);
 }
-
-$contract_path = $root . '/assets/css/folio-contract.css';
-if (!is_readable($contract_path)) {
-    fwrite(STDERR, "Cannot read {$contract_path}\n");
-    exit(2);
+if (!function_exists('str_ends_with')) {
+    function str_ends_with(string $haystack, string $needle): bool
+    {
+        return $needle === '' || substr($haystack, -strlen($needle)) === $needle;
+    }
+}
+if (!function_exists('str_contains')) {
+    function str_contains(string $haystack, string $needle): bool
+    {
+        return $needle === '' || strpos($haystack, $needle) !== false;
+    }
 }
 
 /** Strip comments so a slot named only in prose is never counted as declared. */
@@ -663,19 +677,87 @@ function groove_php_warnings(string $dir, string $root): array
     return $warn;
 }
 
+/**
+ * The slots a theme may ignore and still conform: the space and type ramps are
+ * opt-in, so a theme that leaves them alone is conforming, not lacking.
+ */
+function groove_contract_optional_slots(array $slots): array
+{
+    return array_values(array_filter($slots, static function ($s) {
+        return str_starts_with($s, '--folio-space-')
+            || str_starts_with($s, '--folio-text-') && $s !== '--folio-text-muted' && $s !== '--folio-text-subtle'
+            || str_starts_with($s, '--folio-leading-');
+    }));
+}
+
+/**
+ * The colour slots every theme is expected to answer.
+ *
+ * A function rather than two lines at each call site: the CLI and
+ * Themes_Manager::check_theme_contract() both need this split, and a second
+ * copy of the rule is a second thing to keep in step.
+ */
+function groove_contract_core_slots(array $slots): array
+{
+    return array_values(array_diff($slots, groove_contract_optional_slots($slots)));
+}
+
+// ── CLI entry point ──────────────────────────────────────────────────────────
+//
+// Everything above is callable as a library. Themes_Manager includes this file
+// to check a package it has just unpacked, and must not inherit getopt(), the
+// help text, or any of the exits below — so it defines this constant first.
+if (defined('GROOVE_THEME_CONTRACT_LIB')) {
+    return;
+}
+
+$root = dirname(__DIR__);
+$opts = getopt('', ['theme::', 'dir::', 'strict', 'help']);
+
+if (isset($opts['help'])) {
+    $doc = file_get_contents(__FILE__);
+    if (preg_match('#/\*\*(.*?)\*/#s', $doc, $m)) {
+        echo trim(preg_replace('/^\s*\* ?/m', '', str_replace('*/', '', $m[1]))), "\n";
+    }
+    exit(0);
+}
+
+$contract_path = $root . '/assets/css/folio-contract.css';
+if (!is_readable($contract_path)) {
+    fwrite(STDERR, "Cannot read {$contract_path}\n");
+    exit(2);
+}
+
 $contract = file_get_contents($contract_path);
 $slots = groove_contract_slots($contract);
 
-// The colour slots every theme is expected to answer. The space and type
-// ramps are opt-in, so a theme that ignores them is conforming, not lacking.
-$optional = array_values(array_filter($slots, static function ($s) {
-    return str_starts_with($s, '--folio-space-')
-        || str_starts_with($s, '--folio-text-') && $s !== '--folio-text-muted' && $s !== '--folio-text-subtle'
-        || str_starts_with($s, '--folio-leading-');
-}));
-$core = array_values(array_diff($slots, $optional));
+$optional = groove_contract_optional_slots($slots);
+$core = groove_contract_core_slots($slots);
 
-$theme_dirs = glob($root . '/themes/*', GLOB_ONLYDIR) ?: [];
+// --dir points the checker at a theme that is not in this plugin's themes/
+// folder — which is every third-party theme, since an installed package lives
+// in wp-content/groove-themes/. Without it the only tool that knows these rules
+// could never be run against the artefact a theme author actually ships.
+// $root stays the plugin, because the cross-file checks (the password-gate
+// colour maps, Base_Theme's helper list) resolve against plugin source.
+if (isset($opts['dir'])) {
+    if ($opts['dir'] === false || $opts['dir'] === '') {
+        fwrite(STDERR, "--dir needs a path, for example --dir=../my-theme\n");
+        exit(2);
+    }
+    $dir_arg = realpath($opts['dir']);
+    if ($dir_arg === false || !is_dir($dir_arg)) {
+        fwrite(STDERR, "No such directory: {$opts['dir']}\n");
+        exit(2);
+    }
+    // A folder holding theme folders is as useful to point at as one theme.
+    $theme_dirs = is_readable($dir_arg . '/setup.php')
+        ? [$dir_arg]
+        : (glob($dir_arg . '/*', GLOB_ONLYDIR) ?: [$dir_arg]);
+} else {
+    $theme_dirs = glob($root . '/themes/*', GLOB_ONLYDIR) ?: [];
+}
+
 if (isset($opts['theme'])) {
     if ($opts['theme'] === false || $opts['theme'] === '') {
         fwrite(STDERR, "--theme needs a slug, for example --theme=folio-starter\n");
@@ -694,7 +776,23 @@ if (isset($opts['theme'])) {
 $had_warning = false;
 $rows = [];
 
-foreach ($theme_dirs as $dir) {
+/**
+ * Check one theme folder against the contract.
+ *
+ * Extracted from the CLI loop so something other than the CLI can call it:
+ * Themes_Manager::install_theme_from_zip() runs it over a package it has just
+ * unpacked. Before this, every rule here was reachable only by a script
+ * globbing the plugin's own themes/ directory — the one place a third-party
+ * theme never lives.
+ *
+ * @param string $dir  Absolute path to the theme folder.
+ * @param string $root Plugin root; what the cross-file checks resolve against.
+ * @param array  $core Core slot names, from groove_contract_slots().
+ * @return array|null  Row of id/filled/total/missing/warn, or null when the
+ *                     folder carries none of a theme's four marker files.
+ */
+function groove_check_theme_dir(string $dir, string $root, array $core): ?array
+{
     $id = basename($dir);
 
     // "Is this a theme?" cannot be "does it have a setup.php", because a folder
@@ -710,7 +808,7 @@ foreach ($theme_dirs as $dir) {
         }
     }
     if (!$looks_like_theme) {
-        continue;
+        return null;
     }
 
     $warn = groove_php_warnings($dir, $root);
@@ -719,9 +817,7 @@ foreach ($theme_dirs as $dir) {
     if (!is_readable($css)) {
         $warn[] = 'no assets/css/theme.css — Base_Theme enqueues that path by convention, so the theme '
             . 'renders unstyled';
-        $rows[] = ['id' => $id, 'filled' => 0, 'total' => count($core), 'missing' => [], 'warn' => $warn];
-        $had_warning = true;
-        continue;
+        return ['id' => $id, 'filled' => 0, 'total' => count($core), 'missing' => [], 'warn' => $warn];
     }
 
     $src = groove_strip_comments(file_get_contents($css));
@@ -851,14 +947,22 @@ foreach ($theme_dirs as $dir) {
         $warn[] = 'declares --folio-* on :root without a scheme toggle — scope to the theme root instead';
     }
 
-    $rows[] = [
+    return [
         'id'     => $id,
         'filled' => count($filled),
         'total'  => count($core),
         'missing' => array_values(array_diff($core, $filled)),
         'warn'   => $warn,
     ];
-    if ($warn) {
+}
+
+foreach ($theme_dirs as $dir) {
+    $row = groove_check_theme_dir($dir, $root, $core);
+    if ($row === null) {
+        continue;
+    }
+    $rows[] = $row;
+    if ($row['warn']) {
         $had_warning = true;
     }
 }

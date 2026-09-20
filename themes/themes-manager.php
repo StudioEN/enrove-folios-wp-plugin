@@ -555,16 +555,56 @@ class Themes_Manager extends Assets
      */
     public static function create_cover_theme($theme_id)
     {
-        // Fall back to first registered theme when theme_id is empty or unrecognised.
-        if (!$theme_id || !static::has($theme_id)) {
-            reset(self::$registry);
-            $theme_id = key(self::$registry);
-        }
-        if (!$theme_id) {
-            return null; // Registry is empty — no themes installed.
+        $theme_id = static::resolve_registered_theme_id($theme_id);
+        if ($theme_id === null) {
+            return null;
         }
         $class = self::$registry[$theme_id]['cover_class'];
         return new $class();
+    }
+
+    /**
+     * Resolve a stored theme ID to a key the registry answers to, or null.
+     *
+     * Two cases that used to resolve identically, and must not:
+     *
+     * An **empty** ID is a folio that was never assigned one — created by
+     * wp-cli, an import, or anything but the Add New screen. That is a legitimate
+     * state, so it resolves to the configured default and then to whatever
+     * registered first. Preferring the default is new; "first registered" alone
+     * meant the setting was ignored for exactly the folios that had no other
+     * answer.
+     *
+     * An ID that is **set but unregistered** is a broken folio, not a
+     * defaulted one. It used to take the same fallback, so the folio rendered
+     * in whichever theme happened to sort first — HTTP 200, a page that looks
+     * finished, nothing logged, and no way for the author to discover that the
+     * theme they wrote never loaded. Returning null is what lets the
+     * "Theme not found" notice in folio-preview-template.php run at all; with
+     * the fallback in place that branch was unreachable on any site with a
+     * working theme, which is every site, since five ship built in.
+     *
+     * @param string $theme_id
+     * @return string|null
+     */
+    protected static function resolve_registered_theme_id($theme_id)
+    {
+        $theme_id = (string) $theme_id;
+
+        if ($theme_id !== '') {
+            return static::has($theme_id) ? $theme_id : null;
+        }
+
+        $default_id = (string) get_option('groove_default_theme_id', '');
+        if ($default_id !== '' && static::has($default_id)) {
+            return $default_id;
+        }
+
+        reset(self::$registry);
+        $first_id = key(self::$registry);
+
+        // Registry is empty — no themes installed at all.
+        return $first_id !== null ? (string) $first_id : null;
     }
 
     /**
@@ -575,13 +615,9 @@ class Themes_Manager extends Assets
      */
     public static function create_page_theme($theme_id)
     {
-        // Fall back to first registered theme when theme_id is empty or unrecognised.
-        if (!$theme_id || !static::has($theme_id)) {
-            reset(self::$registry);
-            $theme_id = key(self::$registry);
-        }
-        if (!$theme_id) {
-            return null; // Registry is empty.
+        $theme_id = static::resolve_registered_theme_id($theme_id);
+        if ($theme_id === null) {
+            return null;
         }
         $class = self::$registry[$theme_id]['page_class'];
         return new $class();
@@ -849,6 +885,53 @@ class Themes_Manager extends Assets
     }
 
     /**
+     * Run the theme contract checker over an unpacked theme folder.
+     *
+     * bin/check-theme-contract.php is the de-facto spec — its rules are exactly
+     * the ones that break a theme with no error, no warning and no log line.
+     * It was CLI-only and globbed this plugin's own themes/ directory, so it
+     * could never see an installed package: the one kind of theme whose author
+     * is least likely to have a checkout to run it from. Install is the single
+     * moment someone is looking at that package, so it runs here.
+     *
+     * Advisory by design — nothing this returns blocks an install. Two rules
+     * cannot be satisfied by a third-party theme at all (the password-gate
+     * colour maps are literal arrays in plugin source with no filter to join),
+     * and most of the rest describe a theme that works but misbehaves. The hard
+     * requirements are the WP_Errors above; these are things to go and fix.
+     *
+     * @param string $dir Absolute path to the theme folder.
+     * @return string[] Warnings, empty when clean or when the checker is absent.
+     */
+    public static function check_theme_contract(string $dir): array
+    {
+        $root = rtrim(GROOVE_PATH, '/\\');
+        $checker = $root . '/bin/check-theme-contract.php';
+        $contract = $root . '/assets/css/folio-contract.css';
+
+        // Both ship today, because there is no packaging step. If one is ever
+        // added and strips bin/, an install must still succeed — silence here
+        // is the right failure, not a broken upload.
+        if (!is_readable($checker) || !is_readable($contract)) {
+            return [];
+        }
+
+        if (!defined('GROOVE_THEME_CONTRACT_LIB')) {
+            define('GROOVE_THEME_CONTRACT_LIB', true);
+        }
+        require_once $checker;
+
+        if (!function_exists('groove_check_theme_dir') || !function_exists('groove_contract_slots')) {
+            return [];
+        }
+
+        $slots = groove_contract_slots((string) file_get_contents($contract));
+        $row = groove_check_theme_dir(rtrim($dir, '/\\'), $root, groove_contract_core_slots($slots));
+
+        return empty($row['warn']) ? [] : array_values($row['warn']);
+    }
+
+    /**
      * Validate, extract, and install a theme ZIP package.
      *
      * @param string $zip_path  Absolute path to the uploaded temporary ZIP file.
@@ -963,6 +1046,29 @@ class Themes_Manager extends Assets
             return new \WP_Error('class_not_found', 'cover_class/page_class could not be loaded from this package.');
         }
 
+        // load_builtin_themes() has checked this since it was written; the
+        // install path never did. register() opens with $cover_class::get_id(),
+        // which a class that does not reach Base_Theme does not have, so a
+        // package that got this far used to take the whole request down with a
+        // fatal — no toast, no error text, just a white admin-post.php.
+        foreach (['cover_class' => $cover_class, 'page_class' => $page_class] as $key => $class) {
+            if (!is_subclass_of($class, Base_Theme::class)) {
+                static::cleanup_dir($dest);
+                return new \WP_Error(
+                    'bad_base_class',
+                    sprintf('%s %s does not extend Base_Theme.', $key, $class)
+                );
+            }
+        }
+
+        // Everything above is a hard requirement — the package cannot install
+        // without it. The contract check is the opposite: advisory, and run
+        // here because this is the only moment anyone sees the package. Its
+        // rules are the ones that fail in silence, so a theme that trips them
+        // installs, renders, and looks fine while ignoring the folio's fonts or
+        // shipping no stylesheet at all.
+        $contract_warnings = static::check_theme_contract($dest);
+
         static::register($cover_class, $page_class);
 
         // 8. Persist metadata only after successful load/registration.
@@ -976,6 +1082,18 @@ class Themes_Manager extends Assets
             'page_class' => $page_class,
         ];
         update_option('groove_installed_themes', $installed);
+
+        // Handed to the Themes screen through a transient rather than the query
+        // string: the redirect already carries the success value, and a list of
+        // contract warnings is far past what belongs in a URL. Per-user, so two
+        // admins installing at once do not read each other's.
+        if (!empty($contract_warnings)) {
+            set_transient(
+                'groove_theme_contract_' . get_current_user_id(),
+                array('theme' => $theme_name, 'warnings' => $contract_warnings),
+                5 * MINUTE_IN_SECONDS
+            );
+        }
 
         return $theme_name;
     }
