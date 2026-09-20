@@ -125,14 +125,14 @@ class Themes extends Page
 		$notice_type = isset($_GET['groove_notice']) ? sanitize_key($_GET['groove_notice']) : '';
 		$notice_value = isset($_GET['groove_value']) ? sanitize_text_field(urldecode($_GET['groove_value'])) : '';
 		?>
-		<div class="g-themes-page">
+		<div class="space-y-4">
 
 			<?php $this->queue_notice_toast($notice_type, $notice_value); ?>
 
-			<div class="g-themes-section">
-				<div class="g-themes-section-header">
-					<h2 class="g-themes-section-title"><?php esc_html_e('Your Themes', 'groove'); ?></h2>
-					<p class="g-themes-section-desc">
+			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
+				<div>
+					<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Your Themes', 'groove'); ?></h2>
+					<p class="mt-1 mb-0 text-sm text-gray-600">
 						<?php
 						/* The three summary tiles that used to sit above the grid counted
 						   what the grid already shows, so the counts moved into this line
@@ -164,7 +164,7 @@ class Themes extends Page
 						<p><?php esc_html_e('No themes installed yet. Upload a theme package below.', 'groove'); ?></p>
 					</div>
 				<?php else: ?>
-					<div class="g-themes-grid">
+					<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
 						<?php foreach ($all_themes as $id => $theme):
 							$folio_count = isset($folio_counts[$id]) ? (int) $folio_counts[$id] : 0;
 							?>
@@ -200,19 +200,22 @@ class Themes extends Page
 						<?php endforeach; ?>
 					</div>
 				<?php endif; ?>
-			</div>
+			</section>
 
-			<div class="g-themes-section g-themes-upload-section">
-				<div class="g-themes-section-header">
-					<h2 class="g-themes-section-title"><?php esc_html_e('Install a Theme', 'groove'); ?></h2>
-					<p class="g-themes-section-desc">
+			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4 g-themes-upload-section">
+				<div>
+					<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Install a Theme', 'groove'); ?></h2>
+					<p class="mt-1 mb-0 text-sm text-gray-600">
 						<?php esc_html_e('Upload a Groove theme package (.zip) provided by the Groove team or a trusted theme author.', 'groove'); ?>
 					</p>
 				</div>
 
-				<div class="g-themes-upload-grid">
+				<?php /* Settings' thirds grid, with the spans the other way round: there
+				         the form is the narrow column, here it holds the dropzone and the
+				         package notes are the reference beside it. */ ?>
+				<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
 					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
-						enctype="multipart/form-data" class="g-themes-upload-form" id="groove-theme-upload-form">
+						enctype="multipart/form-data" class="g-themes-upload-form xl:col-span-2" id="groove-theme-upload-form">
 						<?php wp_nonce_field('groove_install_theme'); ?>
 						<input type="hidden" name="action" value="groove_install_theme" />
 
@@ -240,7 +243,7 @@ class Themes extends Page
 						</div>
 					</form>
 
-					<div class="g-themes-package-info">
+					<div class="g-themes-package-info xl:col-span-1">
 						<h3><?php esc_html_e('Package format', 'groove'); ?></h3>
 						<p><?php esc_html_e('A valid Groove theme package is a .zip file with this structure:', 'groove'); ?>
 						</p>
@@ -266,7 +269,7 @@ class Themes extends Page
 						</p>
 					</div>
 				</div>
-			</div>
+			</section>
 		</div>
 
 		<?php $this->display_details_modal($all_themes, $installed_meta, $folio_counts); ?>

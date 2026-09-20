@@ -1076,46 +1076,6 @@ body.groove .g-folio__sample-info .dashicons {
 
 /* ── Themes Admin Page ────────────────────────────────────────────────── */
 
-.g-themes-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0;
-}
-
-.g-themes-section {
-  background: var(--g-surface);
-  border: 1px solid var(--g-border);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.g-themes-section-header {
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--g-gray-5);
-  padding-bottom: 12px;
-}
-
-.g-themes-section-title {
-  color: var(--g-text);
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.g-themes-section-desc {
-  color: var(--g-text-muted);
-  margin: 6px 0 0;
-  font-size: 13px;
-}
-
-.g-themes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 16px;
-}
-
 /* The card is the button that opens the details dialog. It carries a
    thumbnail and a name only — everything else about a theme lives in the
    dialog, so the grid reads as one even row rather than ragged columns of
@@ -1238,12 +1198,6 @@ body.groove .g-folio__sample-info .dashicons {
   border-top: 3px solid var(--g-accent);
 }
 
-.g-themes-upload-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 16px;
-}
-
 .g-themes-upload-form {
   margin: 0;
 }
@@ -1340,12 +1294,6 @@ body.groove .g-folio__sample-info .dashicons {
   line-height: 1.55;
   overflow-x: auto;
   margin: 0 0 12px;
-}
-
-@media (max-width: 960px) {
-  .g-themes-upload-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ── Theme Details Dialog ────────────────────────────────────────────── */
