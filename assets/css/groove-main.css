@@ -822,10 +822,33 @@ body.groove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible
   font: inherit;
 }
 
+/* The Add New card is the one theme card that cannot clip its children: the
+   Selected badge hangs off the top-right corner, so overflow:hidden — what the
+   picker modal's card and the Themes grid card both use — would cut it off.
+   Each inner corner is therefore drawn to fit the border by hand. A box with an
+   8px outer radius and a 2px border curves its padding box at 6px, so a child
+   that keeps the card's own 8px bulges past that curve and leaves a white
+   crescent in every corner, loudest on the selected card where the border is
+   the accent colour. Both numbers live here so the inner radius is derived
+   rather than guessed, and stays right if either one moves. */
 .g-folio__theme-option--add-new {
+  --g-theme-card-radius: 8px;
+  --g-theme-card-border-width: 2px;
+  --g-theme-card-inner-radius: calc(var(--g-theme-card-radius) - var(--g-theme-card-border-width));
   width: auto;
   min-width: 0;
   max-width: 100%;
+  border-style: solid;
+  border-width: var(--g-theme-card-border-width);
+  border-radius: var(--g-theme-card-radius);
+}
+
+.g-folio__theme-option--add-new .g-folio__theme-option-thumb {
+  border-radius: var(--g-theme-card-inner-radius) var(--g-theme-card-inner-radius) 0 0;
+}
+
+.g-folio__theme-option--add-new .g-folio__theme-option-name {
+  border-radius: 0 0 var(--g-theme-card-inner-radius) var(--g-theme-card-inner-radius);
 }
 
 .g-folio__theme-option:focus-visible {

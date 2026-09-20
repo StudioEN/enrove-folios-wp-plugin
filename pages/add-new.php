@@ -198,7 +198,10 @@ class Add_New extends Page
     <?php
     foreach ($themes as $id => $theme) {
       $is_first = ($id === $first_theme_id);
-      $card_classes = 'g-folio__theme-option g-folio__theme-option--add-new relative cursor-pointer rounded-lg border-2 transition-all';
+      // Radius and border width are the stylesheet's — the inner corners are
+      // derived from them there. Only the border colour changes per state, and
+      // groove-main.js swaps exactly these classes when the selection moves.
+      $card_classes = 'g-folio__theme-option g-folio__theme-option--add-new relative cursor-pointer transition-all';
       $card_classes .= $is_first ? ' border-indigo-600 ring-1 ring-indigo-600' : ' border-gray-200 hover:border-gray-300';
       echo '<div class="g-folio__theme-card-wrap">';
       echo '<button type="button" class="' . esc_attr($card_classes) . '"
@@ -207,10 +210,10 @@ class Add_New extends Page
                  role="radio"
                  aria-checked="' . ($is_first ? 'true' : 'false') . '"
                  tabindex="' . ($is_first ? '0' : '-1') . '">';
-      echo '<div class="g-folio__theme-option-thumb aspect-w-16 aspect-h-9 overflow-hidden rounded-t-lg rounded-b-none border-b border-gray-200">';
+      echo '<div class="g-folio__theme-option-thumb overflow-hidden border-b border-gray-200">';
       echo '<img src="' . esc_url($theme['thumbnail_url']) . '" alt="' . esc_attr($theme['name']) . '" class="object-cover w-full h-full" loading="lazy" />';
       echo '</div>';
-      echo '<div class="g-folio__theme-option-name p-2 text-center text-sm font-medium text-gray-900 border-t border-gray-100 bg-gray-50/50 rounded-b-lg">';
+      echo '<div class="g-folio__theme-option-name p-2 text-center text-sm font-medium text-gray-900 bg-gray-50/50">';
       echo esc_html($theme['name']);
       echo '</div>';
       echo '<span class="active-badge absolute -top-2 -right-2 inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ring-2 ring-white ' . ($is_first ? '' : 'hidden') . '">';

@@ -963,6 +963,13 @@ class Settings extends Page
    * necessarily realising it: a folio's typefaces are fetched by the visitor's
    * own browser, so Google sees their IP address. Saying "we collect nothing"
    * and stopping there would be true about us and misleading about them.
+   *
+   * There is deliberately no link out to a privacy policy. This panel is the
+   * disclosure, and it stays accurate because it sits beside the code it
+   * describes; a policy on a website does not. The one on studioen.us covers
+   * that site — its comments, cookies and embeds — and not this plugin, so
+   * linking it would answer a question nobody asked here. Add a link back only
+   * when the plugin sends something this panel cannot account for.
    */
   public function display_privacy_fields()
   {
@@ -995,15 +1002,6 @@ class Settings extends Page
           <?php esc_html_e('Pexels — only if you add your own API key on the Imagery tab, and only when you run the image curation script or press the connection test yourself.', 'groove'); ?>
         </li>
       </ul>
-    </div>
-
-    <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3">
-      <p class="m-0 text-sm text-gray-700">
-        <?php esc_html_e('Read our Privacy Policy:', 'groove'); ?>
-        <a href="https://groove.studio/privacy" target="_blank" rel="noopener noreferrer" class="ml-1 text-indigo-600 hover:text-indigo-500">
-          <?php esc_html_e('Open policy', 'groove'); ?>
-        </a>
-      </p>
     </div>
   </section>
 </div>

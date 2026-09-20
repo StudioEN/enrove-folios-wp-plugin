@@ -1115,15 +1115,18 @@ jQuery(function () {
       const selectedName = selected.data('theme-name') || ''
       const selectedThemeId = selected.data('theme-id')
 
+      // hover:border-gray-300 rides along with the resting border colour. It
+      // used to be set in the markup only, so the card the page opened on lost
+      // its hover state for good once the selection moved off it.
       cards
         .removeClass('border-indigo-600 ring-1 ring-indigo-600')
-        .addClass('border-gray-200')
+        .addClass('border-gray-200 hover:border-gray-300')
         .attr('aria-checked', 'false')
         .attr('tabindex', '-1')
       cards.find('.active-badge').addClass('hidden')
 
       selected
-        .removeClass('border-gray-200')
+        .removeClass('border-gray-200 hover:border-gray-300')
         .addClass('border-indigo-600 ring-1 ring-indigo-600')
         .attr('aria-checked', 'true')
         .attr('tabindex', '0')
