@@ -106,11 +106,41 @@ required "Photos provided by Pexels" link. Do not remove these.
 | `assets/` | Compiled/source JS and CSS |
 | `utils/` | Shared PHP utilities |
 | `pexels/` | Pexels API client, key resolution, curator, and credits |
-| `bin/` | Developer CLI scripts (`curate-pexels.php`) |
+| `bin/` | Developer CLI scripts (theme contract checker, Pexels curator) |
+
+## Theme development
+
+Folio themes are self-contained packages under `themes/`. **[themes/README.md](themes/README.md) is the
+authoritative spec** — read it before writing or editing one.
+
+```bash
+php bin/check-theme-contract.php                        # every theme
+php bin/check-theme-contract.php --theme=groove-ebook   # one theme
+php bin/check-theme-contract.php --dir=/path/to/theme   # a package you are about to zip
+php bin/check-theme-contract.php --strict               # non-zero exit on warnings, for CI
+```
+
+The checker reads CSS as text and tokenises PHP rather than executing it, so it runs on a bare checkout
+with no WordPress installed.
+
+> **Lint theme PHP before it reaches a server.** Themes are loaded while the plugin file is still being
+> included, so a broken theme file can white-screen the whole site — wp-admin included, which is where
+> you would have gone to remove it. The contract checker tokenises and will not catch a syntax error the
+> compiler rejects, so run `php -l` as well, and install packaged themes through *Groove → Themes* rather
+> than unzipping into `wp-content/groove-themes/` by hand. [themes/README.md §13](themes/README.md#13-known-warts)
+> sets out exactly which failures are recoverable and which are not.
 
 ## Testing
 
-`folio-embed-regression-checklist.md` documents the manual regression checklist for folio-page embed rendering (Spotify, YouTube, X/Twitter) — run it whenever folio page or theme rendering changes.
+There is no PHP unit-test suite. Two things are automated:
+
+```bash
+php bin/check-theme-contract.php --strict       # theme conformance
+php bin/check-theme-contract-selftest.php       # the checker's own test suite
+```
+
+`folio-embed-regression-checklist.md` documents the **manual** regression checklist for folio-page embed
+rendering (Spotify, YouTube, X/Twitter) — run it whenever folio page or theme rendering changes.
 
 ## Changelog
 

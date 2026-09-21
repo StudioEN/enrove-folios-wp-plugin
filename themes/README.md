@@ -193,11 +193,17 @@ registry key `''`.
 
 > **The loaders run before `plugins_loaded`.** `Plugin::instance()` is called at file scope, so the whole
 > theme subsystem is parsed and class-loaded while the plugin file is still being included — on every
-> request, front end included. Two consequences worth knowing before you edit a theme on a live site:
-> a **syntax error in any theme's `setup.php`, `cover.php` or `page.php` is a site-wide fatal**, not a
-> skipped theme, and it takes wp-admin down with it, so recovery is FTP. And `__()` does not work in the
-> loaders — the `groove` text domain is loaded on `plugins_loaded`, so a translation call there returns
-> English and trips `_load_textdomain_just_in_time` on WordPress 6.7+.
+> request, front end included. Two consequences worth knowing before you edit a theme on a live site.
+>
+> First, **a broken theme file can take the whole site down**, wp-admin with it — which is the part that
+> hurts, because *Groove → Themes* is where you would have removed the theme that did it. Which
+> breakages do that and which are merely skipped is exact rather than intuitive, and not what folklore
+> says: see [§13](#13-known-warts).
+>
+> Second, **`__()` does not work in the loaders.** The `groove` text domain is loaded on `plugins_loaded`,
+> so a translation call here returns English and trips `_load_textdomain_just_in_time` on WordPress 6.7+,
+> on every request. That is why `record_skipped_theme()` stores a reason code plus raw context and
+> `describe_skipped_theme()` turns it into a sentence later, in admin code where translation works.
 
 ---
 
@@ -1016,6 +1022,63 @@ Consequences for theme code:
 ---
 
 ## 13. Known warts
+
+### The structural one: theme files are `require`d with nothing above them to catch anything
+
+`Themes_Manager::register_defaults()` runs from `Plugin::__construct()`, called at **file scope** at the
+bottom of `includes/plugin.php`, which `groove-folios.php` `require_once`s unconditionally. Theme files
+are therefore `require`d while the plugin is still being included — on every request, before any hook has
+fired, with nothing in the call stack that catches anything.
+
+Every guard in the loaders checks whether a file is *there* and whether a class *is what it claims to be*.
+None of them wraps the `require` itself. What that costs depends on how the file is broken:
+
+| What is wrong with the theme file | PHP raises | Could it be caught? | Today |
+|---|---|---|---|
+| Syntax / parse error | `ParseError` | **yes**, since PHP 7.0 | site-wide fatal |
+| Class extends a parent that is not loaded | `Error` | **yes** | site-wide fatal |
+| Undefined function called at file scope | `Error` | **yes** | site-wide fatal |
+| Class name already declared | engine fatal, not a `Throwable` | **no** | site-wide fatal |
+
+The first three are `Throwable`, and have been since PHP 7.0 — this plugin's floor. They bring the site
+down because the loaders do not `try` around the `require`, **not** because they cannot be caught. That
+is worth stating plainly, because "a parse error in an included file is an uncatchable fatal" was true
+before PHP 7 and is repeated as though it still were. Containing those three is a small, local change:
+`try` each `require`, catch `\Throwable`, call the existing `record_skipped_theme()` with a new reason,
+`continue`. The machinery that would then report it to the operator already exists.
+
+One trap if that gets written. A class with no parent is declared at **compile** time, so a file that
+aborts part-way through execution can still leave its class defined — `class_exists()` returns `true` for
+a theme whose file never finished running. The catch must therefore `continue` on its own, never fall
+through to the class guards, or it registers a half-initialised theme.
+
+**The fourth is the genuinely structural one.** `Cannot redeclare class X` is raised by the engine while
+compiling the included file, is not a `Throwable`, and no `try`/`catch` and no `set_error_handler` can
+intercept it. It cannot be contained after the fact, only prevented before it — which is what
+`install_theme_from_zip()`'s collision guards are for, and why they refuse rather than warn:
+
+- a package whose derived ID matches a **built-in** theme is refused outright — the fix is a different
+  `name` in `setup.php`, since the ID is derived from it;
+- a package declaring a `cover_class` or `page_class` already loaded by a **different** theme is refused;
+- a package matching an **installed** package is the safe case: it replaces it, after the operator
+  confirms. The replace path checks the incoming files *statically* — tokenised, never `require`d —
+  precisely because the outgoing version already holds those class names in this request.
+
+Until the first three are wrapped, treat all four the same way operationally:
+
+1. **`php -l` every PHP file in a theme before it reaches a server.** `bin/check-theme-contract.php` will
+   not do this for you: it tokenises rather than executes, which is what lets it run on a bare checkout
+   with no WordPress, and a tokeniser accepts plenty the compiler rejects.
+2. **Install packages through *Groove → Themes*, never by unzipping into `wp-content/groove-themes/`.**
+   The installer requires the files inside an already-booted request, where a failure is a failed install
+   on one screen instead of a white page everywhere. Hand-dropping a folder there does not even get you a
+   broken theme — `load_installed_themes()` is driven by the `groove_installed_themes` option, not a
+   directory scan, so the folder is ignored entirely and the theme simply never appears.
+3. **Edit themes on local or staging.** Ordinary advice everywhere; here the cost of ignoring it is a
+   white screen on every URL of the site, and recovery is FTP or WP-CLI — delete the theme's folder, or
+   rename it so it no longer holds a `setup.php`.
+
+### Smaller ones
 
 - **`themes/default-themes.php`** is a deprecated shim over `Themes_Manager::get_all_themes()`.
 - **Theme IDs are hardcoded** in folio.php's tab gating. The password gate no longer hardcodes any: a
