@@ -702,7 +702,7 @@ Three of the five themes repaint, and all three now write slots:
   from a per-folio extracted accent. Its other four accent names hold literals in `theme.css` and stay
   private; `--gm-hero-overlay` in particular is *not* `--folio-overlay` (a hero scrim and a modal scrim
   are different jobs), so writing the slot there would have repainted the nav.
-- **`groove-newsletter`** — `applyPalette()` sets nine slots for a time-of-day palette. This is the one
+- **`groove-newsletter`** — `applyPalette()` sets ten slots for a time-of-day palette. This is the one
   that shows the coupling to watch for: `--folio-rule` and `--folio-rule-strong` are `color-mix()`
   expressions that used to read `--gn-text` / `--gn-bg` *precisely because* the JS set those inline.
   They now read `var(--folio-text)` / `var(--folio-ground)`. Moving the JS without moving the mixes
@@ -715,6 +715,12 @@ Three of the five themes repaint, and all three now write slots:
 
 Set only the slot, never both — but check first that your private really is an alias. A private
 holding a literal has to be written directly, because nothing points at it.
+
+`bin/check-theme-contract.php` checks this now, and found the tenth slot above by doing so: the JS set
+`--gn-focus`, which `theme.css` declares as `var(--folio-focus)`, so the focus ring rendered in the live
+palette while `--folio-focus` stayed on its stylesheet literal. It flags only aliases — a private the
+CSS declares as `--private: var(--folio-*)` — because a private holding a literal is supposed to be
+written directly, and flagging every private write would be noise rather than a rule.
 
 **And prefer a class to a property.** There is a fourth repaint that is not a palette:
 `setNavBarBackgroundColor()` in `assets/js/groove-main.js` used to write two literal `rgba()` values

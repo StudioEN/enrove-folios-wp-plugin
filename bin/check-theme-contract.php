@@ -658,6 +658,52 @@ function groove_php_warnings(string $dir, string $root): array
         }
     }
 
+    // --- Theme JS that repaints must write the slot, not an alias of it.
+    //
+    // The first rule in this file that reads assets/js at all. README §7 spends
+    // forty-odd lines on this contract and nothing verified it, which is how
+    // groove-newsletter came to set --gn-focus at runtime while --gn-focus is
+    // declared as var(--folio-focus): the ring rendered in the live palette and
+    // --folio-focus stayed on its stylesheet literal, so anything reading the
+    // contract got a colour the page was not showing.
+    //
+    // Only aliases are flagged. A private holding a literal has to be written
+    // directly — nothing points at it — and the themes write plenty of those on
+    // purpose, so flagging every private write would be noise. The test is
+    // whether the theme's own CSS declares the name as `--private: var(--folio-*)`.
+    $js_files = glob($dir . '/assets/js/*.js') ?: [];
+    $theme_css = $dir . '/assets/css/theme.css';
+
+    if ($js_files && is_readable($theme_css)) {
+        // Comments stripped, so an alias shown in prose is never read as one.
+        $css_src = groove_strip_comments((string) file_get_contents($theme_css));
+        $aliases = [];
+        if (preg_match_all('/(--[a-z0-9-]+)\s*:\s*var\(\s*(--folio-[a-z0-9-]+)/i', $css_src, $am, PREG_SET_ORDER)) {
+            foreach ($am as $a) {
+                $aliases[strtolower($a[1])] = strtolower($a[2]);
+            }
+        }
+
+        foreach ($js_files as $js) {
+            $js_src = (string) file_get_contents($js);
+            if (!preg_match_all('/setProperty\(\s*[\'"](--[a-z0-9-]+)/i', $js_src, $wm)) {
+                continue;
+            }
+
+            foreach (array_unique($wm[1]) as $written) {
+                $written = strtolower($written);
+                if (str_starts_with($written, '--folio-') || !isset($aliases[$written])) {
+                    continue;
+                }
+
+                $warn[] = basename($js) . " sets {$written} at runtime, but theme.css declares it as "
+                    . "var({$aliases[$written]}) — an inline value on the alias renders correctly and "
+                    . "leaves the slot on its stylesheet literal, so anything reading the contract gets "
+                    . "a colour the page is not showing. Set {$aliases[$written]} instead";
+            }
+        }
+    }
+
     // --- The password gate borrows the theme's colours, from setup.php.
     //
     // This used to check two hardcoded ID maps in the plugin, which a theme

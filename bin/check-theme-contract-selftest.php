@@ -158,6 +158,7 @@ function groove_cases(string $subject, string $theme, string $gate): array
     $cover = $theme . '/cover.php';
     $setup = $theme . '/setup.php';
     $css   = $theme . '/assets/css/theme.css';
+    $js    = $theme . '/assets/js/repaint.js';
 
     return [
         // --- registration ---------------------------------------------------
@@ -319,6 +320,27 @@ function groove_cases(string $subject, string $theme, string $gate): array
         }],
         'no theme.css at all' => ['warn', 'renders unstyled', static function () use ($css) {
             unlink($css);
+        }],
+
+        // --- runtime repaint --------------------------------------------------
+        // The contract nothing verified until it turned out groove-newsletter
+        // was breaking it: theme JS setting an alias leaves the slot stale.
+        'theme JS sets an alias instead of the slot' => ['warn', 'sets --x-alias at runtime', static function () use ($css, $js) {
+            groove_edit($css, static fn($src) => $src . "\n:root { --x-alias: var(--folio-accent); }\n");
+            @mkdir(dirname($js), 0777, true);
+            file_put_contents($js, "node.style.setProperty('--x-alias', c);\n");
+        }],
+        'theme JS setting the slot itself is fine' => ['absent', 'at runtime, but theme.css declares it', static function () use ($css, $js) {
+            groove_edit($css, static fn($src) => $src . "\n:root { --x-alias: var(--folio-accent); }\n");
+            @mkdir(dirname($js), 0777, true);
+            file_put_contents($js, "node.style.setProperty('--folio-accent', c);\n");
+        }],
+        'theme JS writing a private that holds a literal is fine' => ['absent', 'at runtime, but theme.css declares it', static function () use ($css, $js) {
+            // The case that would make this rule noise if it flagged every
+            // private: nothing points at --x-literal, so JS is its only handle.
+            groove_edit($css, static fn($src) => $src . "\n:root { --x-literal: #abc; }\n");
+            @mkdir(dirname($js), 0777, true);
+            file_put_contents($js, "node.style.setProperty('--x-literal', c);\n");
         }],
 
         // --- password gate ----------------------------------------------------

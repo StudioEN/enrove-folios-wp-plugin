@@ -307,11 +307,14 @@
     node.style.setProperty('--folio-accent', palette.accent);
     node.style.setProperty('--folio-accent-hover', palette.accentStrong);
     node.style.setProperty('--folio-accent-soft', palette.accentSoft);
+    /* theme.css aliases --gn-focus onto this slot, so setting the alias left
+       --folio-focus on its stylesheet literal while the ring rendered in the
+       live palette — the theme looked right and the contract lied. */
+    node.style.setProperty('--folio-focus', palette.focus);
 
     /* Privates with no slot: theme.css holds a literal for each of these, so
        there is nothing to alias onto and the private name is the only handle. */
     node.style.setProperty('--gn-nav-hover', palette.navHover);
-    node.style.setProperty('--gn-focus', palette.focus);
     node.style.setProperty('--gn-cover-scrim', palette.coverScrim);
     node.style.setProperty('--gn-cover-left-bg', palette.coverLeftBg || palette.surface);
     node.style.setProperty('--gn-cover-left-text', palette.coverLeftText || palette.text);
