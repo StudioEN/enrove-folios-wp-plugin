@@ -1569,15 +1569,16 @@ body.g-modal-open {
   font-size: 13px;
 }
 
-/* Removing a theme deletes its files, so it sits apart from the actions that
-   build things and asks once, in place. */
-.g-theme-details__danger {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--g-border);
-}
+/* Removing a theme sits on the leading edge of the action row, opposite the
+   action that builds something — where wp-admin's own theme dialog keeps
+   Delete. It had a divided strip to itself below that row, which spent a
+   second full-width rule on one word and left the dialog ending on the
+   destructive option instead of the one you opened it for.
 
+   Quiet text, not a button: it shares a row with two real buttons and should
+   not read as a third. */
 .g-theme-details__danger-start {
+  margin-right: auto;
   padding: 0;
   cursor: pointer;
   border: 0;
@@ -1592,7 +1593,17 @@ body.g-modal-open {
   color: var(--g-red-50);
 }
 
+/* The toggle only qualifies the primary action, so it travels with it. In the
+   Add New picker it holds the leading edge of the same row, which here
+   belongs to the one control that undoes rather than makes. */
+body.groove .g-theme-details__actions .g-folio__sample-toggle {
+  margin-right: 0;
+}
+
+/* Opens under the row that asked, so it needs the gap the row's own rule
+   above it has — and nothing when it is closed, which is most of the time. */
 .g-theme-details__danger-confirm {
+  margin-top: 14px;
   padding: 12px 14px;
   border: 1px solid var(--g-red-5);
   border-radius: 8px;
@@ -1727,8 +1738,13 @@ body.groove .g-theme-confirm__answers form {
     align-items: stretch;
   }
 
-  body.groove .g-theme-details__actions .g-folio__sample-toggle {
+  /* Stacked, the leading edge becomes the top of the column, and that is no
+     place for the destructive option — it goes to the end, centred with the
+     full-width buttons above it. */
+  .g-theme-details__actions .g-theme-details__danger-start {
+    order: 1;
     margin-right: 0;
+    text-align: center;
   }
 }
 

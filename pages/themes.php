@@ -777,18 +777,25 @@ class Themes extends Page
 
 							<?php
 							/*
-							 * The action row is the Add New picker's footer: the sample-content
-							 * toggle rides the leading edge, the primary action keeps the
-							 * trailing corner, and the sentence explaining what gets seeded
-							 * hangs off the same info button rather than widening the row.
-							 * Same classes, not a lookalike, so the two cannot drift.
+							 * The action row is the Add New picker's footer: the primary action
+							 * keeps the trailing corner, the sample-content toggle sits with it
+							 * because all it does is qualify it, and the sentence explaining what
+							 * gets seeded hangs off the same info button rather than widening the
+							 * row. Same classes, not a lookalike, so the two cannot drift.
 							 *
-							 * The <form> is the row itself — the toggle has to post with it,
-							 * and wrapping it in a flex child of its own would take the
-							 * toggle off the row's leading edge.
+							 * Removing the theme takes the leading edge, opposite the action that
+							 * builds something — the same row rather than a divided strip under
+							 * it, which is where wp-admin's own theme dialog keeps Delete, and
+							 * which leaves the dialog ending on the thing you came here to do.
+							 *
+							 * The <form> is the row itself, because the toggle has to post with
+							 * it. The remove trigger is a plain button inside that form; the box
+							 * it opens is a sibling after the row, since it carries a form of its
+							 * own and forms cannot nest.
 							 */
 							$seed_field_id = 'g-theme-seed-' . sanitize_key($id);
 							$row_classes = 'g-folio__theme-button g-theme-details__actions';
+							$can_remove = ($is_installed && $can_manage);
 							?>
 							<?php if ($can_create): ?>
 								<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
@@ -796,6 +803,8 @@ class Themes extends Page
 									<?php wp_nonce_field('groove_create_folio_action', 'groove_nonce'); ?>
 									<input type="hidden" name="action" value="groove_create_folio" />
 									<input type="hidden" name="themeId" value="<?php echo esc_attr($id); ?>" />
+
+									<?php $this->display_remove_trigger($can_remove); ?>
 
 									<?php if ($sample !== null): ?>
 										<div class="g-folio__sample-toggle">
@@ -828,6 +837,8 @@ class Themes extends Page
 								</form>
 							<?php else: ?>
 								<div class="<?php echo esc_attr($row_classes); ?>">
+									<?php $this->display_remove_trigger($can_remove); ?>
+
 									<button type="button" class="g-theme-preview-btn g-theme-details__preview"
 										data-theme-id="<?php echo esc_attr($id); ?>">
 										<?php esc_html_e('Preview', 'groove'); ?>
@@ -835,48 +846,43 @@ class Themes extends Page
 								</div>
 							<?php endif; ?>
 
-							<?php if ($is_installed && $can_manage): ?>
-								<div class="g-theme-details__danger">
-									<button type="button" class="g-theme-details__danger-start"
-										data-groove-theme-danger-start>
-										<?php esc_html_e('Remove theme', 'groove'); ?>
-									</button>
-									<?php /* Deleting the package files cannot be undone, so this asks in
-									         place rather than firing a browser confirm over the dialog. */ ?>
-									<div class="g-theme-details__danger-confirm" data-groove-theme-danger-confirm hidden>
-										<p>
-											<?php
-											if ($folio_count > 0) {
-												printf(
-													esc_html(
-														_n(
-															'Remove this theme? Its files are deleted permanently, and %s folio still uses it.',
-															'Remove this theme? Its files are deleted permanently, and %s folios still use it.',
-															$folio_count,
-															'groove'
-														)
-													),
-													esc_html(number_format_i18n($folio_count))
-												);
-											} else {
-												esc_html_e('Remove this theme? Its files are deleted permanently.', 'groove');
-											}
-											?>
-										</p>
-										<div class="g-theme-details__danger-buttons">
-											<button type="button" class="button button-secondary"
-												data-groove-theme-danger-cancel>
-												<?php esc_html_e('Keep it', 'groove'); ?>
+							<?php if ($can_remove): ?>
+								<?php /* Deleting the package files cannot be undone, so this asks in
+								         place rather than firing a browser confirm over the dialog. It
+								         opens where the trigger was, under the row that asked. */ ?>
+								<div class="g-theme-details__danger-confirm" data-groove-theme-danger-confirm hidden>
+									<p>
+										<?php
+										if ($folio_count > 0) {
+											printf(
+												esc_html(
+													_n(
+														'Remove this theme? Its files are deleted permanently, and %s folio still uses it.',
+														'Remove this theme? Its files are deleted permanently, and %s folios still use it.',
+														$folio_count,
+														'groove'
+													)
+												),
+												esc_html(number_format_i18n($folio_count))
+											);
+										} else {
+											esc_html_e('Remove this theme? Its files are deleted permanently.', 'groove');
+										}
+										?>
+									</p>
+									<div class="g-theme-details__danger-buttons">
+										<button type="button" class="button button-secondary"
+											data-groove-theme-danger-cancel>
+											<?php esc_html_e('Keep it', 'groove'); ?>
+										</button>
+										<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+											<?php wp_nonce_field('groove_uninstall_theme'); ?>
+											<input type="hidden" name="action" value="groove_uninstall_theme" />
+											<input type="hidden" name="theme_id" value="<?php echo esc_attr($id); ?>" />
+											<button type="submit" class="button button-secondary g-themes-delete-btn">
+												<?php esc_html_e('Remove permanently', 'groove'); ?>
 											</button>
-											<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-												<?php wp_nonce_field('groove_uninstall_theme'); ?>
-												<input type="hidden" name="action" value="groove_uninstall_theme" />
-												<input type="hidden" name="theme_id" value="<?php echo esc_attr($id); ?>" />
-												<button type="submit" class="button button-secondary g-themes-delete-btn">
-													<?php esc_html_e('Remove permanently', 'groove'); ?>
-												</button>
-											</form>
-										</div>
+										</form>
 									</div>
 								</div>
 							<?php endif; ?>
@@ -922,6 +928,29 @@ class Themes extends Page
 	// -----------------------------------------------------------------------
 	// Helpers
 	// -----------------------------------------------------------------------
+
+	/**
+	 * The action row's leading edge: removing the installed package.
+	 *
+	 * Both branches of that row need it — the one that can create a folio and
+	 * the one that can only preview — and it is the same control in each, so it
+	 * lives here rather than in two places that could drift apart. The caller
+	 * passes its own verdict on whether there is anything to remove.
+	 *
+	 * @param bool $can_remove Whether this theme is an installed package the
+	 *                         current user may delete.
+	 */
+	private function display_remove_trigger($can_remove)
+	{
+		if (!$can_remove) {
+			return;
+		}
+		?>
+		<button type="button" class="g-theme-details__danger-start" data-groove-theme-danger-start>
+			<?php esc_html_e('Remove theme', 'groove'); ?>
+		</button>
+		<?php
+	}
 
 	/**
 	 * Ask before an upload replaces a theme the site already has.
