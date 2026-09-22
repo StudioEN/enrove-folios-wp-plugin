@@ -696,15 +696,29 @@ class Themes extends Page
 								$cover_url = (string) ($theme['cover_url'] ?? '');
 								$has_cover = $cover_url !== '' && substr($cover_url, -1) !== '/';
 								?>
-								<div class="g-theme-details__media<?php echo $has_cover ? ' g-theme-details__media--cover' : ''; ?>">
-									<?php if ($has_cover): ?>
-										<img src="<?php echo esc_url($cover_url); ?>" alt="" loading="lazy" />
-										<span class="g-theme-details__inset">
+								<?php /* Thumbnail and its Preview link, in the Add New picker's own wrap:
+								         it is the same control on the same picture, so it reads where the
+								         eye already learned to find it and the action row is left to the
+								         two things that change something. */ ?>
+								<div class="g-folio__theme-card-wrap">
+									<div class="g-theme-details__media<?php echo $has_cover ? ' g-theme-details__media--cover' : ''; ?>">
+										<?php if ($has_cover): ?>
+											<img src="<?php echo esc_url($cover_url); ?>" alt="" loading="lazy" />
+											<span class="g-theme-details__inset">
+												<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
+											</span>
+										<?php else: ?>
 											<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
-										</span>
-									<?php else: ?>
-										<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
-									<?php endif; ?>
+										<?php endif; ?>
+									</div>
+									<button type="button" class="g-theme-preview-btn" data-theme-id="<?php echo esc_attr($id); ?>"
+										aria-label="<?php echo esc_attr(sprintf(
+											/* translators: %s: theme name */
+											__('Preview %s theme', 'groove'),
+											$theme['name']
+										)); ?>">
+										<?php esc_html_e('Preview', 'groove'); ?>
+									</button>
 								</div>
 
 								<div class="g-theme-details__info">
@@ -826,23 +840,13 @@ class Themes extends Page
 										</div>
 									<?php endif; ?>
 
-									<?php /* Same control, same look as the Add New picker's Preview. */ ?>
-									<button type="button" class="g-theme-preview-btn g-theme-details__preview"
-										data-theme-id="<?php echo esc_attr($id); ?>">
-										<?php esc_html_e('Preview', 'groove'); ?>
-									</button>
 									<button type="submit" class="button button-primary">
 										<?php esc_html_e('Create a folio', 'groove'); ?>
 									</button>
 								</form>
-							<?php else: ?>
+							<?php elseif ($can_remove): ?>
 								<div class="<?php echo esc_attr($row_classes); ?>">
 									<?php $this->display_remove_trigger($can_remove); ?>
-
-									<button type="button" class="g-theme-preview-btn g-theme-details__preview"
-										data-theme-id="<?php echo esc_attr($id); ?>">
-										<?php esc_html_e('Preview', 'groove'); ?>
-									</button>
 								</div>
 							<?php endif; ?>
 

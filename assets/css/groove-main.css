@@ -1557,16 +1557,16 @@ body.g-modal-open {
 }
 
 /* Layout comes from .g-folio__theme-button, the Add New picker's footer —
-   this only adds the rule that separates the row from the stats above it. */
+   this only adds the rule that separates the row from the stats above it.
+
+   What the row holds is only what changes something: creating a folio, the
+   toggle that qualifies it, and removing the theme. Preview sits under the
+   thumbnail it previews, where the picker has always kept it, which is one
+   fewer thing competing on this line. */
 .g-theme-details__actions {
   flex-wrap: wrap;
   padding-top: 16px;
   border-top: 1px solid var(--g-border);
-}
-
-.g-theme-details .g-theme-details__preview {
-  padding: 8px 2px;
-  font-size: 13px;
 }
 
 /* Removing a theme sits on the leading edge of the action row, opposite the
