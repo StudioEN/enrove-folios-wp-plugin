@@ -257,9 +257,15 @@ body.groove.groove-folios_page_groove-settings .g-settings-form select {
   max-width: none;
 }
 
-/* Add breathing room between settings tabs and tab content. */
-body.groove.groove-overview_page_groove-settings .nav-tab-wrapper,
-body.groove.groove-folios_page_groove-settings .nav-tab-wrapper {
+/* Breathing room between a tab strip and the panel it switches.
+ *
+ * Every Groove screen with tabs renders the same `.nav-tab-wrapper` from its
+ * own `display_tabs()` — Settings, Folio and Themes — so this is scoped to the
+ * plugin rather than to one page. It was keyed to the Settings page's two body
+ * classes, which is why the card on Themes sat flush under the tabs while the
+ * identical card on Settings did not: not a different card, just a rule that
+ * named one screen. A fourth tabbed screen should not have to find this. */
+body.groove .nav-tab-wrapper {
   margin-bottom: 16px;
 }
 
