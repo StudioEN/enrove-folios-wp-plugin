@@ -3149,7 +3149,13 @@ body.groove .g-docs__toc-title {
   letter-spacing: 0.05em;
 }
 
+/* Flex gap rather than a margin on the item: core admin CSS gives every `li`
+   a bottom margin, so the item needs `margin: 0` to sit still, and that reset
+   would then outrank any spacing rule written on the item itself. */
 body.groove .g-docs__toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
