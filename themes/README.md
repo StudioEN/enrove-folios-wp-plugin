@@ -148,8 +148,10 @@ it failed permanently for every third-party theme, and the only way to satisfy i
 which the next update overwrote.
 
 **The theme ID is derived, never declared.** `Base_Theme::get_id()` returns `sanitize_title(get_name())`,
-so `'Groove Newsletter'` → `groove-newsletter`. The folder name must match, because
-`resolve_theme_folder_url()` falls back to `GROOVE_URL . 'themes/' . get_id() . '/'` for plugin-bundled themes.
+so `'Groove Newsletter'` → `groove-newsletter`. The folder name must match, because the ID is what folios
+store and what the registry, the picker and migrations key on. Asset URLs are not what breaks:
+`resolve_theme_folder_url()` builds them from the class file's real path, and uses
+`GROOVE_URL . 'themes/' . get_id() . '/'` only as a fallback for a plugin installed outside `wp-content`.
 **Renaming `name` renames the ID and orphans every folio that stored the old one** — see §9 for migrations.
 
 `version` is read only for installed packages (stored in the option, not exposed on the descriptor).
@@ -164,8 +166,9 @@ so `'Groove Newsletter'` → `groove-newsletter`. The folder name must match, be
 1. **`load_builtin_themes()`** — `glob()`s `themes/*` directories, `natsort()`s them, and for each folder
    with `setup.php` + `cover.php` + `page.php`: requires every declared `dependency`, requires cover/page,
    verifies both classes exist and are `is_subclass_of(Base_Theme::class)`, then `register()`s them.
-   Any failing check skips the folder **silently** — a theme that does not appear in the picker almost
-   always failed one of these guards. A declared dependency that is not on disk skips the theme too: it
+   Any failing check skips the folder and records why with `record_skipped_theme()`; the problem panel
+   on *Groove → Themes* names the folder and the fault, so a theme missing from the picker is diagnosed
+   there first (the reason codes are tabled in [BUILDING-A-THEME.md](BUILDING-A-THEME.md) §9). A declared dependency that is not on disk skips the theme too: it
    used to be ignored and the theme registered anyway, which produced a theme that looked healthy in every
    admin screen and fataled on the first visitor, because dependencies declare functions rather than
    classes and nothing downstream noticed.
@@ -231,8 +234,7 @@ template_redirect (prio 5) in includes/plugin.php
 
 1. Calls `Themes_Manager::create_theme_for_current_request()`.
 2. If that returns `null`, checks for a password-protected folio and renders a themed password gate
-   (accent + background colour keyed off `theme_id` via hardcoded maps in that file — **add your theme
-   there when you ship one**), otherwise 404s.
+   (colours from the theme's `gate` block in `setup.php` — see §3), otherwise 404s.
 3. Otherwise emits a bare document: `<head>` + `wp_head()`, `<body class="… groove">`, `$theme->display_theme()`,
    `wp_footer()`. **The active WordPress site theme is bypassed entirely.**
 
@@ -318,7 +320,7 @@ public function ensure_script()
 {
     parent::ensure_script();
 
-    $js_path = trailingslashit(GROOVE_PATH) . 'themes/' . static::get_id() . '/assets/js/my-theme.js';
+    $js_path = $this->get_theme_assets_path() . 'js/my-theme.js';
     $version = file_exists($js_path) ? filemtime($js_path) : GROOVE_VERSION;
 
     wp_enqueue_script(
@@ -330,6 +332,10 @@ public function ensure_script()
     );
 }
 ```
+
+Build the `filemtime()` path from `get_theme_assets_path()`, not from `GROOVE_PATH . 'themes/…'`: the
+latter exists only for a bundled theme, so an installed package silently falls back to `GROOVE_VERSION`
+and stops cache-busting its script. The bundled themes still use that older form; do not copy it.
 
 Path helpers available: `get_theme_folder_path()`, `get_theme_folder_url()`, `get_theme_assets_path()`,
 `get_theme_assets_url()`, `get_theme_css_path()`, `get_theme_css_url()` — all resolve correctly for
@@ -646,9 +652,9 @@ in and returned on close — is **opt-in on the pane**:
 
 The attribute's value is the CSS selector of the pane's trigger. Add `data-groove-drawer-lock="off"`
 for a dropdown-style panel that should not lock the page behind it — `groove-ebook`'s mobile "on this
-page" list uses that. It is opt-in rather than automatic because `groove-newsletter` and
-`groove-proposal` ship their own drawer controllers and would otherwise double-handle every event; a
-theme that owns its drawers simply says nothing.
+page" list uses that, and so does `groove-proposal`'s sections panel. It is opt-in rather than
+automatic because `groove-newsletter` ships its own drawer controller and would otherwise
+double-handle every event; a theme that owns its drawers simply says nothing.
 
 Two things your CSS still owns, and both matter:
 
@@ -834,9 +840,10 @@ Themes that need their own fields store them as **post meta on the folio** and a
 - The theme reads them back in `get_data()` into `$this->proposal_meta`.
 - Defaults are declared in [fields/folio-fields.php](../fields/folio-fields.php).
 
-This coupling is deliberate but has a cost: **plugin-side code hardcodes theme IDs.** When adding a theme,
-grep for existing theme IDs to find every place that needs a new entry —
-notably the accent/background maps in `includes/folio-preview-template.php`.
+This coupling is deliberate but has a cost: **plugin-side code hardcodes theme IDs** — notably the tab
+gating in `pages/folio.php`. When renaming or adding a theme with its own settings, grep for existing
+theme IDs to find every place that needs an entry. The password gate is no longer one of them: its
+colours travel with the theme in `setup.php['gate']`.
 
 ### Custom blocks
 
@@ -880,7 +887,8 @@ next theme rather than to this one only.
 
 `Themes_Manager::run_migrations()` remaps legacy `theme_id` meta values directly in `$wpdb->postmeta`,
 guarded by the `groove_theme_migration_v1` option. Changing a theme's `name` (and therefore its ID) needs
-the same treatment, or every folio using it silently falls back to the first registered theme.
+the same treatment, or every folio using it 404s with "Theme not found" — a set `theme_id` that no
+longer resolves is not silently swapped for another theme.
 
 ---
 
@@ -992,8 +1000,8 @@ Consequences for theme code:
    pair `width: 100%` with a horizontal `margin`. Add `@media (pointer: coarse)` for 44px touch
    targets and `@media (prefers-reduced-motion: reduce)` to kill transitions.
 11. `assets/images/theme-thumb.png`, `theme-cover.jpg`, `theme-g-logo.png`.
-12. Add accent + background entries to the maps in `includes/folio-preview-template.php` so the password
-   gate matches.
+12. Declare a `gate` block in `setup.php` (§3) — three hex values — so the password gate wears the
+   theme's colours.
 13. Run `php bin/check-theme-contract.php --theme=<theme-id>`. It reports which slots you filled and
     flags the mistakes that fail silently, in the stylesheet **and in the PHP**.
 
