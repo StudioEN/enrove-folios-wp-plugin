@@ -2,6 +2,11 @@
 
 How a Groove Folio theme is built, registered, resolved, and rendered.
 
+This file is the **spec**, organised by subsystem. If you are actually building a theme rather than
+looking something up, start with [BUILDING-A-THEME.md](BUILDING-A-THEME.md) — the order of work, how
+to get a theme in front of your eyes, what the contract checker catches, and the traps that fail
+silently. It cites the sections here rather than restating them.
+
 ---
 
 ## 1. What a theme is
