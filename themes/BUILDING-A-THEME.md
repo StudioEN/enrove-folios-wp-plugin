@@ -1,12 +1,14 @@
 # Building a Groove Folio Theme — a development playbook
 
-Three documents cover theme work, and they do not overlap:
+Two documents cover theme work, and they do not overlap:
 
 | Read | For |
 |---|---|
 | [README.md](README.md) | **The spec.** What the system is, organised by subsystem — `setup.php` keys, `Base_Theme` lifecycle, the `--folio-*` contract, routing, packaging. Cited below as §N. |
-| `.claude/skills/groove-folios-theme` | **The rules.** The contracts that fail silently, as a checklist. Loaded automatically by Claude Code when the work touches `themes/`. |
-| **This file** | **The order of work, and the traps.** What to do first, how to get the thing in front of your eyes, and the specific mistakes that cost real time. Written from building `groove-docs` end to end. |
+| **This file** | **The order of work, and the traps.** What to do first, how to get the thing in front of your eyes, and the specific mistakes that cost real time. Written from building a theme end to end. |
+
+Everything either one refers to ships with the plugin. Where a claim here can be checked against code,
+the file is named so you can go and read it.
 
 If you read only one thing before starting, make it §13 of README.md — the one about theme files being
 `require`d with nothing above them to catch anything. It changes how you work, not just what you write.
@@ -310,7 +312,7 @@ one sentence and then never break.
 
 ### State the rule first
 
-A worked example, from `groove-docs`:
+A worked example:
 
 > Colour appears in exactly two ways. The gradient paints display type and nothing else. One accent, a
 > rose, means one thing: interactive, or where you are. Everything else is ink.
@@ -341,8 +343,8 @@ tone, and that is where table headers and captions live.
 Body text and anything under ~19px bold needs **4.5:1**. Large text and UI boundaries need **3:1**.
 
 **A gradient cannot back text.** If a fill runs across several hues, no single foreground survives all
-of them — in `groove-docs`, white cleared the violet stop and failed the orange at 2.13:1, while ink
-cleared the orange and failed the violet. This is not fixable by choosing a better foreground. Use a
+of them. In a theme whose gradient ran rose → orange → violet, white cleared the violet stop and
+failed the orange at 2.13:1, while ink cleared the orange and failed the violet. This is not fixable by choosing a better foreground. Use a
 gradient *as* type (`background-clip: text`), where the contrast question does not arise, and never as
 a surface behind a label.
 
@@ -383,7 +385,7 @@ A page that flashes bone before turning to ink is worse than no scheme at all.
 
 ## 7. Traps that cost real time
 
-Every one of these was hit while building `groove-docs`.
+Every one of these was hit building a real theme, and none of them announces itself.
 
 ### CSS
 
@@ -401,10 +403,17 @@ throughout, magazine and proposal not at all. You are picking a side, not follow
 
 ### PHP
 
-**The skill's own `ensure_script()` example is wrong for packages.** `GROOVE_PATH . 'themes/' .
-get_id()` resolves only for a bundled theme and 404s for the same theme installed under
-`wp-content/groove-themes/`. Use the helpers: `get_theme_assets_path()`, `get_theme_assets_url()`,
-`get_theme_folder_url()`.
+**The `ensure_script()` form every bundled theme uses is not portable.** All three themes that ship
+JS — `groove-magazine`, `groove-newsletter`, `groove-proposal` — build the `filemtime()` path as
+`trailingslashit(GROOVE_PATH) . 'themes/' . static::get_id() . '/assets/js/…'` while taking the URL
+from `get_theme_assets_url()`. The URL half is portable; the path half only resolves for a theme
+bundled in the plugin.
+
+Nothing 404s, which is why this survives: for an installed package the path simply does not exist,
+`file_exists()` returns false, and the version silently falls back to `GROOVE_VERSION`. The script
+loads — and then stops cache-busting, so your next edit to it reaches nobody who already has the old
+one. Use `get_theme_assets_path()` for the path, and the helpers generally:
+`get_theme_assets_path()`, `get_theme_assets_url()`, `get_theme_folder_url()`.
 
 **`sample-content.php` is a static context.** It is `include`d from a static method, so there is no
 `$this`. Use `static::resolve_theme_folder_url()`, not the instance helpers.
