@@ -3062,3 +3062,426 @@ body.groove .button[aria-disabled="true"] {
     animation: none;
   }
 }
+/* ── Theme documentation ─────────────────────────────────────────────────
+   The Spec and Playbook tabs on Groove → Themes render `themes/README.md`
+   and `themes/BUILDING-A-THEME.md` through `Groove\Utils\Markdown`.
+
+   All of it is component CSS rather than Tailwind utilities, and not by
+   preference: every element here — p, li, h2..h6, table, td — is one core
+   admin already styles in `wp-admin/css/common.css`, and an unlayered core
+   rule beats a Tailwind utility whatever its specificity, because Tailwind 4
+   compiles utilities into `@layer utilities`. `text-sm` on a paragraph in
+   this panel would do nothing at all.
+   ────────────────────────────────────────────────────────────────────── */
+body.groove .g-docs {
+  max-width: 76rem;
+  padding: 30px 36px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  color: var(--g-text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* The reading measure. Tables and code deliberately sit outside it — a
+   five-column table of CSS selectors is unreadable at 44rem, and wrapping a
+   shell command changes what it says. */
+body.groove .g-docs p,
+body.groove .g-docs ul,
+body.groove .g-docs ol,
+body.groove .g-docs blockquote {
+  max-width: 44rem;
+}
+
+body.groove .g-docs__source {
+  margin: 0 0 22px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--g-border);
+  color: var(--g-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+body.groove .g-docs__p {
+  margin: 0 0 14px;
+}
+
+/* ── Contents rail ────────────────────────────────────────────────────── */
+
+/* Stacked by default and a side rail once there is room for one, measured
+ * with a container query rather than a media query: the admin menu is 160px
+ * wide, or 36px folded, so the viewport is wrong about this screen's width by
+ * the whole menu. The same reasoning as the All Folios table above.
+ *
+ * `align-items: start` is what makes the rail sticky-able — a stretched grid
+ * item is already as tall as the document and has nowhere to stick to. */
+body.groove .g-docs {
+  container-type: inline-size;
+  container-name: g-docs;
+}
+
+body.groove .g-docs__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+body.groove .g-docs__toc {
+  max-height: 40vh;
+  padding: 14px 16px;
+  background: var(--g-surface-alt);
+  border: 1px solid var(--g-border);
+  border-radius: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body.groove .g-docs__toc-title {
+  margin: 0 0 8px;
+  color: var(--g-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+body.groove .g-docs__toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+body.groove .g-docs__toc-item {
+  margin: 0;
+}
+
+body.groove .g-docs__toc-link {
+  display: block;
+  padding: 3px 0 3px 10px;
+  border-left: 2px solid transparent;
+  color: var(--g-gray-70);
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+body.groove .g-docs__toc-link:hover,
+body.groove .g-docs__toc-link:focus {
+  color: var(--g-accent);
+  border-left-color: var(--g-border-strong);
+}
+
+/* Where you are. The rule carries it as much as the colour does, so the
+ * marked entry is still findable for a reader who cannot tell the two
+ * greys apart. */
+body.groove .g-docs__toc-link.is-current {
+  color: var(--g-accent);
+  border-left-color: var(--g-accent);
+  font-weight: 600;
+}
+
+body.groove .g-docs__toc-link:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+/* The query reads the card's *content* box, so this is the width left after
+   36px of padding each side — roughly a 1100px window once the admin menu has
+   taken its 160px. Below it the rail stacks, which is the right answer rather
+   than a fallback: 14rem of rail plus a gap leaves too little for a table. */
+@container g-docs (min-width: 52rem) {
+  body.groove .g-docs__layout {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  body.groove .g-docs__toc {
+    position: sticky;
+    /* Clears the admin bar, and matches the heading scroll-margin so a jumped-to
+       heading and the rail settle on the same line. */
+    top: 48px;
+    max-height: calc(100vh - 96px);
+    padding: 0 0 0 2px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  body.groove .g-docs__toc-title {
+    margin-bottom: 10px;
+  }
+}
+
+/* ── Headings ─────────────────────────────────────────────────────────── */
+
+body.groove .g-docs__h {
+  position: relative;
+  color: var(--g-text);
+  font-weight: 600;
+  /* Clears the fixed admin bar when an anchor is jumped to. */
+  scroll-margin-top: 48px;
+}
+
+body.groove .g-docs__h--2 {
+  margin: 0 0 6px;
+  font-size: 23px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+body.groove .g-docs__h--3 {
+  margin: 34px 0 10px;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+body.groove .g-docs__h--4 {
+  margin: 26px 0 8px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+/* Sentence case, not uppercase: these are real subsection titles rather than
+   labels, several carry a code span, and shouting a heading that reads
+   "Drawers: one attribute, not a script" loses the sentence it is. The step
+   down from h4 is carried by size and colour instead. */
+body.groove .g-docs__h--5,
+body.groove .g-docs__h--6 {
+  margin: 24px 0 8px;
+  color: var(--g-gray-80);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+/* A heading's own link, so a section can be sent to someone. Hidden until the
+   heading is hovered or the link itself is focused — it must stay reachable
+   from the keyboard, which is why this is opacity rather than display. */
+body.groove .g-docs__anchor {
+  position: absolute;
+  left: -0.95em;
+  color: var(--g-gray-30);
+  font-weight: 400;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+body.groove .g-docs__h:hover .g-docs__anchor,
+body.groove .g-docs__anchor:focus-visible {
+  opacity: 1;
+}
+
+body.groove .g-docs__anchor:hover {
+  color: var(--g-accent);
+}
+
+/* ── Lists ────────────────────────────────────────────────────────────── */
+
+body.groove .g-docs__list {
+  margin: 0 0 14px;
+  padding-left: 1.4em;
+  list-style: disc;
+}
+
+body.groove .g-docs ol.g-docs__list {
+  list-style: decimal;
+}
+
+body.groove .g-docs__item {
+  margin: 0 0 6px;
+}
+
+body.groove .g-docs__item > .g-docs__list {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+body.groove .g-docs__item > .g-docs__p:last-child {
+  margin-bottom: 0;
+}
+
+body.groove .g-docs__item--task {
+  list-style: none;
+}
+
+body.groove .g-docs__checkbox {
+  margin: 0 6px 0 0;
+  vertical-align: -2px;
+}
+
+/* ── Rules and quotes ─────────────────────────────────────────────────── */
+
+body.groove .g-docs__rule {
+  margin: 32px 0;
+  border: 0;
+  border-top: 1px solid var(--g-border);
+}
+
+body.groove .g-docs__quote {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  background: var(--g-surface-alt);
+  border-left: 3px solid var(--g-border-strong);
+  border-radius: 0 6px 6px 0;
+}
+
+body.groove .g-docs__quote > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Code ─────────────────────────────────────────────────────────────── */
+
+/* Tight horizontal padding on purpose: these documents write `require`d and
+   `--folio-*`s, and a roomy chip splits the word it is part of. */
+body.groove .g-docs__code {
+  padding: 1px 3px;
+  background: var(--g-gray-5);
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+}
+
+/* A path to a file in the repository, not a link — there is nothing in
+   wp-admin to open. Set without the chip so a page dense with them does not
+   read as a wall of buttons, and muted so it does not invite a click. */
+body.groove .g-docs__code--path {
+  padding: 0;
+  background: none;
+  color: var(--g-text-muted);
+}
+
+body.groove .g-docs__pre {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  background: var(--g-gray-100);
+  color: var(--g-gray-5);
+  border-radius: 6px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+body.groove .g-docs__pre code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* ── Tables ───────────────────────────────────────────────────────────── */
+
+/* The wrapper scrolls, never the page — these tables run to five columns. */
+body.groove .g-docs__table-wrap {
+  margin: 0 0 18px;
+  overflow-x: auto;
+}
+
+body.groove .g-docs__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+body.groove .g-docs__table th {
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--g-border-strong);
+  color: var(--g-text);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+body.groove .g-docs__table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--g-border);
+  vertical-align: top;
+}
+
+body.groove .g-docs__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+body.groove .g-docs__cell--center {
+  text-align: center;
+}
+
+body.groove .g-docs__cell--right {
+  text-align: right;
+}
+
+/* ── Links ────────────────────────────────────────────────────────────── */
+
+/* Hover and focus add affordance rather than removing it, which is the rule
+   these documents spend a section on. */
+body.groove .g-docs__link {
+  color: var(--g-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+body.groove .g-docs__link:hover,
+body.groove .g-docs__link:focus {
+  color: var(--g-accent-hover);
+  text-decoration-thickness: 2px;
+}
+
+body.groove .g-docs__link--external::after {
+  content: "\2197";
+  margin-left: 0.15em;
+  font-size: 0.85em;
+}
+
+body.groove .g-docs a:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────── */
+
+body.groove .g-docs__missing {
+  margin: 0;
+  color: var(--g-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ── Narrow ───────────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 782px) {
+  body.groove .g-docs {
+    padding: 20px;
+  }
+
+  /* The measure is already the column width here, and a heading anchor hung
+     in the left margin would sit outside the card. */
+  body.groove .g-docs p,
+  body.groove .g-docs ul,
+  body.groove .g-docs ol,
+  body.groove .g-docs blockquote {
+    max-width: none;
+  }
+
+  body.groove .g-docs__anchor {
+    display: none;
+  }
+
+  /* A floor rather than a fixed width: without it a three-column table of
+     prose collapses to five-character columns instead of scrolling, and the
+     wrapper's overflow never engages because the table is still "fitting". */
+  body.groove .g-docs__table {
+    min-width: 26rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.groove .g-docs__anchor {
+    transition: none;
+  }
+}

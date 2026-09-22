@@ -6,6 +6,8 @@ use Groove\Pages\Overview;
 use Groove\Menu\Menu_Manager;
 use Groove\Menu\Themes_Menu_Item;
 use Groove\Themes\Themes_Manager;
+use Groove\Utils\Markdown;
+use Groove\Utils\Theme_Docs;
 
 if (!defined('ABSPATH')) {
 	exit;
@@ -24,14 +26,50 @@ class Themes extends Page
 {
 	const PAGE_ID = 'groove-themes';
 
+	/**
+	 * The tab holding the theme grid. Every other tab key names a document in
+	 * `Theme_Docs::DOCS`, which is what keeps a request parameter from ever
+	 * reaching the filesystem as a path.
+	 */
+	const TAB_THEMES = 'themes';
+
 	public function get_title()
 	{
 		return esc_html__('Themes', 'groove');
 	}
 
+	/**
+	 * The theme grid, then the two documents that describe how to build one.
+	 *
+	 * The docs are tabs here rather than a screen of their own because this is
+	 * where someone already is when they need them: the install panel, the
+	 * contract warnings and the list of folders that did not load all describe
+	 * a contract that, until now, only existed as a file path in a sentence.
+	 */
 	public function create_tabs()
 	{
-		return [];
+		return [
+			self::TAB_THEMES => ['label' => esc_html__('Themes', 'groove')],
+			'spec' => ['label' => esc_html__('Spec', 'groove')],
+			'playbook' => ['label' => esc_html__('Playbook', 'groove')],
+		];
+	}
+
+	/**
+	 * Build a URL onto one of this screen's tabs.
+	 *
+	 * @param string $tab_key Tab to land on.
+	 * @param string $anchor  Optional heading anchor within a document.
+	 * @return string
+	 */
+	public function tab_url($tab_key, $anchor = '')
+	{
+		$url = add_query_arg(
+			['page' => static::PAGE_ID, 'tab_key' => $tab_key],
+			admin_url('admin.php')
+		);
+
+		return $anchor === '' ? $url : $url . '#' . $anchor;
 	}
 
 	public function __construct()
@@ -231,7 +269,275 @@ class Themes extends Page
 	// Display
 	// -----------------------------------------------------------------------
 
+	/**
+	 * Which tab the request is asking for, falling back to the theme grid.
+	 *
+	 * Resolved once and read by both `display_tabs()` and `display_content()`,
+	 * so the strip cannot highlight one tab while the page renders another. An
+	 * unrecognised or empty `tab_key` lands on the grid *and* lights the Themes
+	 * tab, rather than rendering the grid under a strip with nothing marked.
+	 *
+	 * @return string
+	 */
+	private function current_tab()
+	{
+		$tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : '';
+
+		return Theme_Docs::exists($tab_key) ? $tab_key : self::TAB_THEMES;
+	}
+
 	public function display_content()
+	{
+		$tab_key = $this->current_tab();
+
+		if ($tab_key !== self::TAB_THEMES) {
+			$this->display_tab_doc($tab_key);
+
+			return;
+		}
+
+		$this->display_tab_themes();
+	}
+
+	public function display_tabs()
+	{
+		$tabs = $this->get_tabs();
+		$tab_key = $this->current_tab();
+		$query = $this->parse_query();
+
+		// An outcome already reported once does not get reported again just
+		// because someone opened the spec — these are click outcomes, and
+		// carrying them across a tab switch would re-fire the toast.
+		unset($query['groove_notice'], $query['groove_value']);
+		?>
+		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Themes tabs', 'groove'); ?>">
+			<?php
+			foreach ($tabs as $tab_id => $tab) {
+				$active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
+				$query['tab_key'] = $tab_id;
+				$tab_url = add_query_arg($query, admin_url('admin.php'));
+				echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . $active_class . '">'
+					. esc_html($tab['label']) . '</a>';
+			}
+			?>
+		</nav>
+		<?php
+	}
+
+	/**
+	 * Render one of the documents that ship with the plugin.
+	 *
+	 * The file is the only copy — there is no second version of this text in
+	 * `pages/` for an edit to miss, which is the same reason a theme's
+	 * description is read from its own `setup.php`. What the screen adds is a
+	 * path to the file, because the next thing someone who disagrees with it
+	 * wants to know is where to change it.
+	 *
+	 * @param string $doc_key A key in Theme_Docs::DOCS, already validated.
+	 */
+	private function display_tab_doc($doc_key)
+	{
+		$markdown = Theme_Docs::read($doc_key);
+		$relative = Theme_Docs::DOCS[$doc_key];
+		?>
+			<section class="g-docs">
+				<?php if ($markdown === ''): ?>
+					<p class="g-docs__missing">
+						<?php
+						printf(
+							/* translators: %s: path to the documentation file, relative to the plugin folder */
+							esc_html__('This document is not on disk. It ships with the plugin at %s, and a deployment that copies only PHP files leaves this tab with nothing to render.', 'groove'),
+							'<code>' . esc_html($relative) . '</code>'
+						);
+						?>
+					</p>
+				<?php else: ?>
+					<p class="g-docs__source">
+						<?php
+						printf(
+							/* translators: %s: path to the documentation file, relative to the plugin folder */
+							esc_html__('Rendered from %s, which ships with the plugin. Edit that file to change this page.', 'groove'),
+							'<code>' . esc_html($relative) . '</code>'
+						);
+						?>
+					</p>
+					<?php
+					/* One $args for both passes. `outline()` re-reads the source rather
+					   than watching `render()` work, so they agree only while they are
+					   given the same options — bin/check-docs.php asserts they do. */
+					$args = ['doc_links' => $this->doc_link_map()];
+					?>
+					<div class="g-docs__layout">
+						<?php $this->display_doc_contents(Markdown::outline($markdown, $args)); ?>
+						<div class="g-docs__body">
+							<?php
+							/* Markdown::render() escapes every value at the point it becomes
+							   text and emits a fixed, closed tag vocabulary — no branch in it
+							   passes source through as markup — so the result is echoed rather
+							   than run through wp_kses_post(), which would strip the heading
+							   ids every anchor on this page depends on. */
+							echo Markdown::render($markdown, $args);
+							?>
+						</div>
+					</div>
+				<?php endif; ?>
+			</section>
+		<?php
+		if ($markdown !== '') {
+			$this->display_doc_script();
+		}
+	}
+
+	/**
+	 * The contents rail: the document's top-level sections, and nothing else.
+	 *
+	 * Only the `##` headings. Adding the `###` subsections under them took the
+	 * playbook's rail from eleven entries to thirty-five, which is a second copy
+	 * of the document rather than a way to find your place in it — and a list you
+	 * have to scan is not doing the job a contents list exists to do. The
+	 * subsections are still headings on the page, still anchored, still linkable.
+	 *
+	 * The level is the rendered one, already demoted by `heading_offset`, which
+	 * is why a `##` section is h3 here rather than h2.
+	 *
+	 * @param array $outline From Markdown::outline().
+	 */
+	private function display_doc_contents(array $outline)
+	{
+		$entries = array_values(array_filter($outline, function ($heading) {
+			return $heading['level'] === 3;
+		}));
+
+		if (count($entries) < 2) {
+			// One section is not a contents list, and none at all is not a document.
+			return;
+		}
+		?>
+		<?php /* Named by the heading it already shows rather than by an aria-label
+		         repeating the same word, so a screen reader announces the rail once. */ ?>
+		<nav class="g-docs__toc" aria-labelledby="g-docs-toc-title">
+			<p class="g-docs__toc-title" id="g-docs-toc-title"><?php esc_html_e('Contents', 'groove'); ?></p>
+			<ul class="g-docs__toc-list">
+				<?php foreach ($entries as $entry): ?>
+					<li class="g-docs__toc-item">
+						<a class="g-docs__toc-link" href="#<?php echo esc_attr($entry['anchor']); ?>">
+							<?php echo esc_html($entry['text']); ?>
+						</a>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+		</nav>
+		<?php
+	}
+
+	/**
+	 * Mark the section being read in the contents rail.
+	 *
+	 * Inline, like the dropzone and the details dialog on this screen, because it
+	 * runs on one tab of one page and nothing else can use it. Everything it adds
+	 * is an enhancement: with no JavaScript the rail is still a list of links to
+	 * anchors that exist, which is the part that makes the document navigable.
+	 */
+	private function display_doc_script()
+	{
+		?>
+		<script>
+			(function () {
+				var toc = document.querySelector('.g-docs__toc');
+				if (!toc || !window.IntersectionObserver) return;
+
+				var links = Array.prototype.slice.call(toc.querySelectorAll('.g-docs__toc-link'));
+				var headings = [];
+				var linkFor = {};
+
+				links.forEach(function (link) {
+					var id = decodeURIComponent(link.hash.slice(1));
+					var heading = id && document.getElementById(id);
+					if (!heading) return;
+					linkFor[id] = link;
+					headings.push(heading);
+				});
+
+				if (!headings.length) return;
+
+				var current = null;
+
+				function mark(heading) {
+					if (current === heading) return;
+					current = heading;
+
+					links.forEach(function (link) {
+						link.classList.remove('is-current');
+						link.removeAttribute('aria-current');
+					});
+
+					var link = linkFor[heading.id];
+					if (!link) return;
+
+					link.classList.add('is-current');
+					link.setAttribute('aria-current', 'true');
+
+					// Keep the marked entry inside the rail's own scroll box. Never
+					// scrollIntoView(): that scrolls the page as well, which would
+					// fight the scrolling that triggered this in the first place.
+					var entry = link.getBoundingClientRect();
+					var frame = toc.getBoundingClientRect();
+					if (entry.top < frame.top || entry.bottom > frame.bottom) {
+						toc.scrollTop += (entry.top - frame.top) - (frame.height / 3);
+					}
+				}
+
+				// A band across the top of the viewport. The section being read is the
+				// topmost heading inside it; when the band is empty — which is most of
+				// a long section — the last mark stands rather than clearing.
+				var inBand = [];
+				var observer = new IntersectionObserver(function (entries) {
+					entries.forEach(function (record) {
+						var at = inBand.indexOf(record.target);
+						if (record.isIntersecting && at === -1) {
+							inBand.push(record.target);
+						} else if (!record.isIntersecting && at !== -1) {
+							inBand.splice(at, 1);
+						}
+					});
+
+					if (!inBand.length) return;
+
+					inBand.sort(function (a, b) {
+						return headings.indexOf(a) - headings.indexOf(b);
+					});
+
+					mark(inBand[0]);
+				}, { rootMargin: '-52px 0px -72% 0px' });
+
+				headings.forEach(function (heading) {
+					observer.observe(heading);
+				});
+
+				// Before the first heading crosses the band, the reader is in the
+				// opening section, so say so rather than showing nothing marked.
+				mark(headings[0]);
+			})();
+		</script>
+		<?php
+	}
+
+	/**
+	 * Filename => URL, so the cross-references the two documents already make to
+	 * each other become links between the two tabs instead of dead file paths.
+	 */
+	private function doc_link_map()
+	{
+		$map = [];
+
+		foreach (Theme_Docs::DOCS as $key => $relative) {
+			$map[basename($relative)] = $this->tab_url($key);
+		}
+
+		return $map;
+	}
+
+	private function display_tab_themes()
 	{
 		$all_themes = Themes_Manager::get_all_themes();
 		$installed_meta = Themes_Manager::get_installed_themes_meta();
@@ -1211,6 +1517,14 @@ class Themes extends Page
 					</h2>
 					<p class="mt-1 mb-0 text-sm text-gray-600">
 						<?php esc_html_e('They are not in the theme picker. Until now they failed in silence — a theme simply was not there, with nothing to say why.', 'groove'); ?>
+						<?php /* Each row below names a fault and a fix in a sentence. The
+						         playbook's section 9 is a table of every fault a loader can
+						         record, which is the thing to read when the sentence is not
+						         enough — so it is linked once here rather than repeated on
+						         nine rows that would all point at the same table. */ ?>
+						<a class="g-docs__link" href="<?php echo esc_url(
+							$this->tab_url(Theme_Docs::SKIPPED_THEME_DOC, Theme_Docs::SKIPPED_THEME_ANCHOR)
+						); ?>"><?php esc_html_e('What each fault means', 'groove'); ?></a>
 					</p>
 				</div>
 

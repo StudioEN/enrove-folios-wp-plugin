@@ -16,11 +16,15 @@ npm run build          # → assets/build/ + .vite/manifest.json (commit the bui
 php bin/check-theme-contract.php            # conformance check for every theme's CSS + PHP contract
 php bin/check-theme-contract.php --theme=groove-ebook --strict    # --strict exits non-zero on warnings (CI)
 php bin/check-theme-contract-selftest.php   # the checker's own test suite (37 cases × 2 subject themes)
+php bin/check-docs.php                      # the two theme docs render cleanly and their anchors resolve
+php bin/check-docs.php --verbose            # ...and show the offending line for each problem
 
 php bin/curate-pexels.php --help            # build-time image curation; needs a Pexels key (see README)
 ```
 
-There is no PHP unit-test suite. `check-theme-contract-selftest.php` is the only automated test; run it after touching `check-theme-contract.php`. [folio-embed-regression-checklist.md](folio-embed-regression-checklist.md) is a **manual** checklist to run whenever folio page or theme rendering changes.
+There is no PHP unit-test suite. `check-theme-contract-selftest.php` is the only automated test; run it after touching `check-theme-contract.php`.
+
+**[themes/README.md](themes/README.md) and [themes/BUILDING-A-THEME.md](themes/BUILDING-A-THEME.md) are rendered in wp-admin** (Groove → Themes → *Spec* / *Playbook*), by `Groove\Utils\Markdown` ([utils/markdown.php](utils/markdown.php)) — a renderer for the Markdown those two files use, not Markdown in general. Syntax it does not implement renders as literal asterisks and pipes rather than raising anything, so **run `php bin/check-docs.php` after editing either file**. It rejects images, footnotes, reference links, strikethrough, raw HTML, autolinks, HTML entities, `_underscore emphasis_` and setext headings, and it verifies that every anchor linked to — inside a document, and from [pages/themes.php](pages/themes.php) via `Groove\Utils\Theme_Docs` — still names a heading that exists. [folio-embed-regression-checklist.md](folio-embed-regression-checklist.md) is a **manual** checklist to run whenever folio page or theme rendering changes.
 
 ## Architecture
 
