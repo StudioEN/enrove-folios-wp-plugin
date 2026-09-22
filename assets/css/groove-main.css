@@ -1613,10 +1613,113 @@ body.g-modal-open {
   gap: 8px;
 }
 
+/* ── Replace-theme confirmation ─────────────────────────────────────────────
+   Borrows the details dialog's frame — and its header, its action row and the
+   inset rule above it — so the only thing it adds is body copy that stands on
+   its own.
+
+   It has to stand on its own. Tailwind's utilities compile into
+   @layer utilities, and core admin's `p { font-size: 13px; margin: 1em 0 }`
+   is unlayered — an unlayered rule outranks every layered one whatever its
+   specificity — so `text-sm`, `m-0` and `space-y-4` all lose on this screen
+   and the dialog falls back to core's paragraph rhythm. Anything the spacing
+   or the type of a dialog depends on belongs here, not in a utility.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* The answers are .g-theme-details__actions, the details dialog's own row, so
+   the rule above them is inset by the body's padding like every other line in
+   this frame. Only the row's margin goes: the confirm body is a flex column
+   whose gap already spaces the row off the copy above it. */
+.g-theme-confirm__answers {
+  margin-top: 0;
+}
+
+/* Each answer is its own form, so the forms are the flex children. */
+body.groove .g-theme-confirm__answers form {
+  margin: 0;
+}
+
+/* A column with a gap rather than margins on the children. Core admin's
+   p{margin:1em 0} has to be answered with `margin: 0` on the paragraphs, and
+   that reset outranks any `* + *` rule this block could write — a flex gap is
+   the one form of separation the reset cannot eat. */
+.g-theme-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.g-theme-confirm p,
+.g-theme-confirm dl {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--g-text);
+}
+
+/* Same inset as the danger confirm below it, because it is the same kind of
+   thing: the facts the answer turns on, held apart from the prose. */
+.g-theme-confirm__facts {
+  padding: 12px 14px;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  background: var(--g-surface-alt);
+}
+
+/* Under the version, not beside it: the two are different facts about the
+   same package, and on one line they read as a single value. */
+.g-theme-confirm__fact-name {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--g-text-muted);
+}
+
+/* The ID is why the two collide and what every folio stores, so it sits with
+   the versions rather than inside the sentence, where a code chip breaks a
+   line mid-token. It gets the full width because it belongs to both sides. */
+.g-theme-confirm__fact--id {
+  grid-column: 1 / -1;
+}
+
+/* Qualified, like the warning below it: the block's own `.g-theme-confirm p`
+   rule sets a colour, and a single class would lose to it. */
+.g-theme-confirm p.g-theme-confirm__note {
+  color: var(--g-text-muted);
+}
+
+/* The one line on this screen that reports a consequence rather than a fact,
+   so it is the one line that carries a tint. */
+.g-theme-confirm p.g-theme-confirm__warning {
+  padding: 10px 12px;
+  border: 1px solid var(--g-yellow-30);
+  border-radius: 8px;
+  background: var(--g-yellow-0);
+  color: var(--g-yellow-70);
+}
+
+.g-theme-confirm__warning a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 @media (max-width: 600px) {
   .g-theme-details__top {
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
+  }
+
+  /* The row stacks by the .g-theme-details__actions rule further down, which
+     leaves the primary answer nearest the thumb. Stretching the forms is not
+     enough to widen the buttons inside them, though. */
+  body.groove .g-theme-confirm__answers .button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .g-theme-details__stats.g-theme-confirm__facts {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .g-theme-details__actions {

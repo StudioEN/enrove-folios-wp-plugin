@@ -487,6 +487,12 @@ class Themes extends Page
 				// filled from the thing that was clicked rather than from a second copy
 				// of the same facts held in JS.
 				function open(card) {
+					// The replace confirmation is a question the upload is parked on, and
+					// it renders before this modal in the DOM — a card reached by keyboard
+					// behind it would open above the question, then clear the scroll lock
+					// on close and leave the page scrolling under a dialog still open.
+					if (document.body.classList.contains('g-theme-replace-open')) return;
+
 					var themeId = card.getAttribute('data-groove-theme-open');
 					var matched = null;
 					Array.prototype.forEach.call(panels, function (panel) {
@@ -918,15 +924,6 @@ class Themes extends Page
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Report an install or removal as a toast.
-	 *
-	 * The theme grid is the point of this screen, so the outcome of the last
-	 * upload is reported over it rather than pushing every card down the page.
-	 *
-	 * @param string $type  Notice key from the redirect.
-	 * @param string $value Theme name, or an error string.
-	 */
-	/**
 	 * Ask before an upload replaces a theme the site already has.
 	 *
 	 * Rendered server-side and already open, rather than shown by script: the
@@ -964,10 +961,18 @@ class Themes extends Page
 							<?php esc_html_e('Replace this theme?', 'groove'); ?>
 						</h2>
 					</div>
+					<?php /* Closing this dialog is cancelling, so the corner button submits the
+					         Cancel form rather than being a second, vaguer way to say it. It is
+					         the details dialog's button, which is also what stops this header
+					         standing shorter than that one. */ ?>
+					<button type="submit" form="g-theme-replace-cancel" class="g-theme-details__close"
+						aria-label="<?php esc_attr_e('Cancel replacing this theme', 'groove'); ?>">
+						<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+					</button>
 				</div>
 
-				<div class="g-theme-details__body space-y-4">
-					<p class="m-0 text-sm text-gray-700">
+				<div class="g-theme-details__body g-theme-confirm">
+					<p>
 						<?php
 						printf(
 							/* translators: %s: name of the theme already installed, in bold */
@@ -977,28 +982,43 @@ class Themes extends Page
 						?>
 					</p>
 
-					<div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700 space-y-1">
-						<div><?php
-							printf(
-								/* translators: 1: theme name, 2: version, or a dash when it declares none */
-								esc_html__('Installed: %1$s %2$s', 'groove'),
-								esc_html($existing_name),
-								esc_html($existing_version !== '' ? $existing_version : '—')
-							);
-						?></div>
-						<div><?php
-							printf(
-								/* translators: 1: theme name, 2: version, or a dash when it declares none */
-								esc_html__('Uploaded: %1$s %2$s', 'groove'),
-								esc_html($incoming_name),
-								esc_html($incoming_version !== '' ? $incoming_version : '—')
-							);
-						?></div>
-						<div><code><?php echo esc_html($theme_id); ?></code></div>
-					</div>
+					<?php
+					/*
+					 * Versions are the comparison, so they are the values. The names
+					 * are only worth the room when the two packages disagree about
+					 * them — they usually cannot, since matching IDs means the names
+					 * sanitise alike, and the sentence above has already said it.
+					 */
+					$names_differ = ($existing_name !== $incoming_name);
+					$no_version = __('No version declared', 'groove');
+					?>
+					<dl class="g-theme-details__stats g-theme-confirm__facts">
+						<div class="g-theme-details__stat">
+							<dt><?php esc_html_e('Installed', 'groove'); ?></dt>
+							<dd>
+								<?php echo esc_html($existing_version !== '' ? $existing_version : $no_version); ?>
+								<?php if ($names_differ): ?>
+									<span class="g-theme-confirm__fact-name"><?php echo esc_html($existing_name); ?></span>
+								<?php endif; ?>
+							</dd>
+						</div>
+						<div class="g-theme-details__stat">
+							<dt><?php esc_html_e('Uploaded', 'groove'); ?></dt>
+							<dd>
+								<?php echo esc_html($incoming_version !== '' ? $incoming_version : $no_version); ?>
+								<?php if ($names_differ): ?>
+									<span class="g-theme-confirm__fact-name"><?php echo esc_html($incoming_name); ?></span>
+								<?php endif; ?>
+							</dd>
+						</div>
+						<div class="g-theme-details__stat g-theme-confirm__fact--id">
+							<dt><?php esc_html_e('Theme ID', 'groove'); ?></dt>
+							<dd><code><?php echo esc_html($theme_id); ?></code></dd>
+						</div>
+					</dl>
 
 					<?php if ($folio_count > 0): ?>
-						<p class="m-0 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+						<p class="g-theme-confirm__warning">
 							<?php
 							printf(
 								/* translators: %s: number of folios using this theme */
@@ -1016,34 +1036,93 @@ class Themes extends Page
 							)); ?>"><?php esc_html_e('View them', 'groove'); ?></a>
 						</p>
 					<?php else: ?>
-						<p class="m-0 text-sm text-gray-600">
+						<p class="g-theme-confirm__note">
 							<?php esc_html_e('No folios use this theme yet, so nothing published changes.', 'groove'); ?>
 						</p>
 					<?php endif; ?>
 
-					<p class="m-0 text-sm text-gray-600">
+					<p class="g-theme-confirm__note">
 						<?php esc_html_e('The theme keeps its ID, so folios stay pointed at it. The replacement is live from the next page load.', 'groove'); ?>
 					</p>
-				</div>
 
-				<div class="g-theme-details__actions flex items-center justify-end gap-2">
-					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-						<?php wp_nonce_field('groove_cancel_replace'); ?>
-						<input type="hidden" name="action" value="groove_cancel_replace" />
-						<button type="submit" class="button button-secondary">
-							<?php esc_html_e('Cancel', 'groove'); ?>
-						</button>
-					</form>
-					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-						<?php wp_nonce_field('groove_replace_theme'); ?>
-						<input type="hidden" name="action" value="groove_replace_theme" />
-						<button type="submit" class="button button-primary">
-							<?php esc_html_e('Replace theme', 'groove'); ?>
-						</button>
-					</form>
+					<?php
+					/*
+					 * The answers ride the rule the details dialog draws above its own action
+					 * row, in the body and inset by its padding — the same class, so the two
+					 * cannot drift. A footer outside the body would rule the full width of
+					 * the dialog, and the header's is the only edge-to-edge line in here.
+					 *
+					 * The Cancel form carries an ID because the header's close button submits
+					 * it from outside: both exits stay plain form posts, so the question is
+					 * still answerable with no JavaScript at all.
+					 */
+					?>
+					<div class="g-folio__theme-button g-theme-details__actions g-theme-confirm__answers">
+						<form id="g-theme-replace-cancel" method="post"
+							action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+							<?php wp_nonce_field('groove_cancel_replace'); ?>
+							<input type="hidden" name="action" value="groove_cancel_replace" />
+							<button type="submit" class="button button-secondary">
+								<?php esc_html_e('Cancel', 'groove'); ?>
+							</button>
+						</form>
+						<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+							<?php wp_nonce_field('groove_replace_theme'); ?>
+							<input type="hidden" name="action" value="groove_replace_theme" />
+							<button type="submit" class="button button-primary">
+								<?php esc_html_e('Replace theme', 'groove'); ?>
+							</button>
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>
+
+		<script>
+			// The dialog is already open in the HTML — this only adds what markup
+			// cannot: the page behind it stops scrolling, the dialog takes focus so
+			// the question is what a keyboard lands on, and Escape answers it the way
+			// Escape answers the other dialogs on this screen. Every exit is still a
+			// form post, so none of this is load-bearing.
+			//
+			// A click on the backdrop is deliberately not an exit: Cancel here throws
+			// away an upload that has to be made again, which is more than a stray
+			// click outside a dialog should be able to decide.
+			(function () {
+				var dialog = document.querySelector('.g-theme-details.is-open .g-theme-details__dialog');
+				if (!dialog) return;
+
+				document.body.classList.add('g-modal-open', 'g-theme-replace-open');
+				dialog.focus();
+
+				document.addEventListener('keydown', function (e) {
+					if (e.key !== 'Escape' && e.key !== 'Esc') return;
+
+					var cancel = document.getElementById('g-theme-replace-cancel');
+					if (cancel) cancel.submit();
+				});
+
+				// Tab stays in here, like the details dialog: the grid behind this one
+				// is full of cards that open a dialog, and none of them is an answer.
+				dialog.addEventListener('keydown', function (e) {
+					if (e.key !== 'Tab') return;
+
+					var items = dialog.querySelectorAll('button, a[href]');
+					if (!items.length) return;
+
+					var first = items[0];
+					var last = items[items.length - 1];
+
+					if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+						e.preventDefault();
+						last.focus();
+					} else if (!e.shiftKey && document.activeElement === last) {
+						e.preventDefault();
+						first.focus();
+					}
+				});
+			})();
+		</script>
 		<?php
 	}
 
