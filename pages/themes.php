@@ -462,6 +462,19 @@ class Themes extends Page
 
 				var current = null;
 
+				// Raised while a click is scrolling the page. The observer keeps its
+				// bookkeeping up to date but stops marking, so the rail does not strobe
+				// through every section the scroll passes on its way down.
+				var travelling = false;
+				var settle = null;
+
+				function arrive() {
+					window.clearTimeout(settle);
+					settle = window.setTimeout(function () {
+						travelling = false;
+					}, 120);
+				}
+
 				function mark(heading) {
 					if (current === heading) return;
 					current = heading;
@@ -501,7 +514,7 @@ class Themes extends Page
 						}
 					});
 
-					if (!inBand.length) return;
+					if (travelling || !inBand.length) return;
 
 					inBand.sort(function (a, b) {
 						return headings.indexOf(a) - headings.indexOf(b);
@@ -517,6 +530,62 @@ class Themes extends Page
 				// Before the first heading crosses the band, the reader is in the
 				// opening section, so say so rather than showing nothing marked.
 				mark(headings[0]);
+
+				// Glide to the section instead of cutting to it, so the reader keeps
+				// their bearings in a document this long. Delegated from the section
+				// rather than bound to the rail: a cross-reference in the prose is the
+				// same gesture and should not behave differently. Only bare '#anchor'
+				// hrefs are taken — a link to the other tab carries a query string and
+				// must navigate normally.
+				var docs = document.querySelector('.g-docs');
+				if (!docs || !document.body.closest) return;
+
+				docs.addEventListener('click', function (event) {
+					if (event.defaultPrevented || event.button !== 0) return;
+					if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+					var link = event.target.closest('a');
+					if (!link || !docs.contains(link)) return;
+
+					var href = link.getAttribute('href') || '';
+					if (href.charAt(0) !== '#' || href === '#') return;
+
+					var target = document.getElementById(decodeURIComponent(href.slice(1)));
+					if (!target) return;
+
+					event.preventDefault();
+
+					// Honoured live rather than read once, so turning the system setting
+					// on takes effect without a reload.
+					var still = window.matchMedia &&
+						window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+					travelling = true;
+					arrive();
+					mark(target);
+
+					target.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+
+					// preventDefault() dropped the browser's own hash update along with
+					// its jump, and the address bar is how a reader copies a link to a
+					// section. replaceState, not pushState: Back should leave the
+					// document, not walk every section the reader visited inside it.
+					if (window.history && history.replaceState) {
+						history.replaceState(null, '', href);
+					}
+
+					// The jump moved the viewport but not the keyboard, which would
+					// otherwise resume from the rail. Headings are not focusable on
+					// their own, hence the tabindex.
+					if (!target.hasAttribute('tabindex')) {
+						target.setAttribute('tabindex', '-1');
+					}
+					target.focus({ preventScroll: true });
+				});
+
+				window.addEventListener('scroll', function () {
+					if (travelling) arrive();
+				}, true);
 			})();
 		</script>
 		<?php
