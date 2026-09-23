@@ -4,7 +4,7 @@ Tags: ebook, newsletter, portfolio, publishing, documents
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 7.1
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -76,13 +76,18 @@ Under a base path, `/folio/` by default. You can change it on Groove → Setting
 
 == Changelog ==
 
-= 0.3.0 =
-* First release on WordPress.org. CHANGELOG.md in the plugin folder has the full history.
+= 0.4.0 =
+* First release on WordPress.org.
+* Sample photos are downloaded on request (Settings → Imagery) instead of being bundled.
+* Published folios are served with HTTP 200 instead of 404.
+* Security: headings in the eBook, Magazine and Newsletter themes can no longer inject markup.
+* Sample content works on PHP 7.1 and 7.2.
+* CHANGELOG.md in the plugin folder has the full history.
 
 == Upgrade Notice ==
 
-= 0.3.0 =
-First release on WordPress.org.
+= 0.4.0 =
+Security fix for headings in the eBook, Magazine and Newsletter themes, and published folios now return HTTP 200. Sample photos must be downloaded once from Settings → Imagery.
 
 == Credits and licences ==
 
