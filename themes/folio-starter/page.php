@@ -159,7 +159,7 @@ class Page extends Base_Theme
     ?>
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
-        <button type="button" class="g-folio__theme-page-nav-button" aria-label="<?= esc_attr__('Open navigation', 'groove-folios') ?>"
+        <button type="button" class="g-folio__theme-page-nav-button" aria-label="<?php echo esc_attr__('Open navigation', 'groove-folios'); ?>"
           aria-expanded="false">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -168,9 +168,9 @@ class Page extends Base_Theme
           </svg>
         </button>
         <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
-            <?= esc_html(isset($this->folio->post_title) ? $this->folio->post_title : '') ?> |
+            <?php echo esc_html(isset($this->folio->post_title) ? $this->folio->post_title : ''); ?> |
           </span>
-          <?= esc_html($this->page->post_title ?? __('Page', 'groove-folios')) ?>
+          <?php echo esc_html($this->page->post_title ?? __('Page', 'groove-folios')); ?>
         </div>
       </div>
 
@@ -194,15 +194,15 @@ class Page extends Base_Theme
     ?>
     <details class="g-folio__theme-page-contents">
       <summary class="g-folio__theme-page-contents-summary">
-        <span class="g-folio__theme-page-contents-label"><?= esc_html($on_this_page_label) ?></span>
+        <span class="g-folio__theme-page-contents-label"><?php echo esc_html($on_this_page_label); ?></span>
         <svg class="g-folio__theme-page-contents-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </summary>
       <div class="g-folio__theme-page-contents-list">
         <?php foreach ($entries as $entry): ?>
-          <a class="g-folio__theme-page-contents-link" href="<?= esc_attr('#' . $entry[0]) ?>">
-            <?= esc_html($entry[1]) ?>
+          <a class="g-folio__theme-page-contents-link" href="<?php echo esc_attr('#' . $entry[0]); ?>">
+            <?php echo esc_html($entry[1]); ?>
           </a>
         <?php endforeach; ?>
       </div>
@@ -228,11 +228,11 @@ class Page extends Base_Theme
       $folio_url = Utils::get_folio_permalink_by_id($folio->ID);
     }
     ?>
-    <nav class="g-folio__theme-page-nav" aria-label="<?= esc_attr__('Folio contents', 'groove-folios') ?>"
+    <nav class="g-folio__theme-page-nav" aria-label="<?php echo esc_attr__('Folio contents', 'groove-folios'); ?>"
       data-groove-drawer=".g-folio__theme-page-nav-button">
       <?php // Outside the -content box, which is the scroller: the close button
         // used to scroll away with a long contents list. ?>
-      <button type="button" class="g-folio__theme-page-nav-close" aria-label="<?= esc_attr__('Close navigation', 'groove-folios') ?>">
+      <button type="button" class="g-folio__theme-page-nav-close" aria-label="<?php echo esc_attr__('Close navigation', 'groove-folios'); ?>">
         <svg class="g-folio__theme-close-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <line x1="6" y1="6" x2="18" y2="18"></line>
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -241,14 +241,14 @@ class Page extends Base_Theme
       <div class="g-folio__theme-page-nav-content">
         <h3 class="g-folio__theme-page-nav-name">
           <?php if (!empty($folio_url)): ?>
-            <a href="<?= esc_url($folio_url) ?>">
-              <?= esc_html($folio_title) ?>
+            <a href="<?php echo esc_url($folio_url); ?>">
+              <?php echo esc_html($folio_title); ?>
             </a>
           <?php else: ?>
-            <?= esc_html($folio_title) ?>
+            <?php echo esc_html($folio_title); ?>
           <?php endif; ?>
         </h3>
-        <p class="g-folio__theme-page-nav-label"><?= esc_html__('Contents', 'groove-folios') ?></p>
+        <p class="g-folio__theme-page-nav-label"><?php echo esc_html__('Contents', 'groove-folios'); ?></p>
         <div class="g-folio__theme-page-navs">
           <?php
           $index = 1;
@@ -257,11 +257,11 @@ class Page extends Base_Theme
             // the pane could not say where you already were.
             $is_current = ((int) $page->ID === (int) $this->id);
             ?>
-            <a class="g-folio__theme-page-nav-item-link" href="<?= esc_url(Utils::get_folio_permalink_by_id($page->ID)) ?>"
-              <?= $is_current ? 'aria-current="page"' : '' ?>>
+            <a class="g-folio__theme-page-nav-item-link" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page->ID)); ?>"
+              <?php echo $is_current ? 'aria-current="page"' : ''; ?>>
               <div class="g-folio__theme-page-nav-item">
-                <i class="g-folio__theme-page-nav-item-order"><?= $index ?></i>
-                <?= esc_html($page->post_title) ?>
+                <i class="g-folio__theme-page-nav-item-order"><?php echo $index; ?></i>
+                <?php echo esc_html($page->post_title); ?>
               </div>
             </a>
             <?php
@@ -287,21 +287,21 @@ class Page extends Base_Theme
           <svg class="g-folio__theme-page-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <polyline points="9 6 15 12 9 18"></polyline>
           </svg>
-          <a href="<?= esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)) ?>">
-            <?= esc_html($prev_page->post_title) ?></a>
+          <a href="<?php echo esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)); ?>">
+            <?php echo esc_html($prev_page->post_title); ?></a>
           <?php
         }
         ?>
       </div>
 
-      <div class="g-folio__theme-page-powerby"><?= esc_html__('Powered by Groove Folios', 'groove-folios') ?></div>
+      <div class="g-folio__theme-page-powerby"><?php echo esc_html__('Powered by Groove Folios', 'groove-folios'); ?></div>
 
       <div class="g-folio__theme-page-next">
         <?php
         if ($next_page) {
           ?>
-          <a href="<?= esc_url(Utils::get_folio_permalink_by_id($next_page->ID)) ?>">
-            <?= esc_html($next_page->post_title) ?></a>
+          <a href="<?php echo esc_url(Utils::get_folio_permalink_by_id($next_page->ID)); ?>">
+            <?php echo esc_html($next_page->post_title); ?></a>
           <svg class="g-folio__theme-page-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <polyline points="9 6 15 12 9 18"></polyline>
           </svg>
@@ -327,17 +327,17 @@ class Page extends Base_Theme
         <div class="g-folio__theme-page-body">
           <div class="g-folio__theme-page-center">
             <div class="g-folio__theme-page-container">
-              <h1 class="g-folio__theme-page-title"><?= esc_html($this->title) ?></h1>
+              <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
               <?php $this->display_contents() ?>
               <div class="g-folio__theme-page-content">
-                <?= $this->get_content() ?>
+                <?php echo $this->get_content(); ?>
               </div>
               <?php $this->display_footer() ?>
             </div>
             <?php if ($this->get_catalog_entries()): ?>
               <div class="g-folio__theme-page-sidebar">
                 <div class="g-folio__theme-page-catalogs">
-                  <p class="g-folio__theme-page-catalogs-label"><?= esc_html($on_this_page_label) ?></p>
+                  <p class="g-folio__theme-page-catalogs-label"><?php echo esc_html($on_this_page_label); ?></p>
                   <?php $this->display_catalogs(); ?>
                 </div>
               </div>

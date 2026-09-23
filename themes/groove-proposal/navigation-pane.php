@@ -85,35 +85,35 @@ function display_proposal_navigation_pane(array $args = []): void
   $item_class = $class_prefix . '-item';
   $item_order_class = $class_prefix . '-item-order';
   ?>
-  <nav class="<?= esc_attr($nav_class) ?>" aria-label="<?= esc_attr($aria_label) ?>">
-    <div class="<?= esc_attr($content_class) ?>">
+  <nav class="<?php echo esc_attr($nav_class); ?>" aria-label="<?php echo esc_attr($aria_label); ?>">
+    <div class="<?php echo esc_attr($content_class); ?>">
 
       <!-- Header: title + close -->
       <div class="gp-nav__panel-header">
         <div class="gp-nav__panel-title-area">
-          <p class="gp-nav__eyebrow"><?= esc_html($label) ?></p>
-          <h3 class="<?= esc_attr($name_class) ?>">
+          <p class="gp-nav__eyebrow"><?php echo esc_html($label); ?></p>
+          <h3 class="<?php echo esc_attr($name_class); ?>">
             <?php if ($title_url !== ''): ?>
-              <a href="<?= esc_url($title_url) ?>"><?= esc_html($title) ?></a>
+              <a href="<?php echo esc_url($title_url); ?>"><?php echo esc_html($title); ?></a>
             <?php else: ?>
-              <?= esc_html($title) ?>
+              <?php echo esc_html($title); ?>
             <?php endif; ?>
           </h3>
         </div>
-        <button type="button" class="<?= esc_attr($close_class) ?>"
-          aria-label="<?= esc_attr__('Close navigation', 'groove-folios') ?>"></button>
+        <button type="button" class="<?php echo esc_attr($close_class); ?>"
+          aria-label="<?php echo esc_attr__('Close navigation', 'groove-folios'); ?>"></button>
       </div>
 
       <!-- Progress indicator -->
       <div class="gp-nav__progress">
-        <p class="gp-nav__progress-label"><?= esc_html__('Progress', 'groove-folios') ?></p>
+        <p class="gp-nav__progress-label"><?php echo esc_html__('Progress', 'groove-folios'); ?></p>
         <div class="gp-nav__progress-track" aria-hidden="true">
-          <span class="gp-nav__progress-value" style="width: <?= (int) $progress_percent ?>%"></span>
+          <span class="gp-nav__progress-value" style="width: <?php echo (int) $progress_percent; ?>%"></span>
         </div>
       </div>
 
       <!-- Section list -->
-      <div class="<?= esc_attr($list_class) ?>">
+      <div class="<?php echo esc_attr($list_class); ?>">
         <?php foreach ($valid_pages as $index => $page): ?>
           <?php
           $page_id = (int) $page->ID;
@@ -129,15 +129,15 @@ function display_proposal_navigation_pane(array $args = []): void
             $item_link_classes .= ' ' . $item_link_class . '--past';
           }
           ?>
-          <a class="<?= esc_attr($item_link_classes) ?>" href="<?= esc_url(Utils::get_folio_permalink_by_id($page_id)) ?>"
-            <?= $is_current ? 'aria-current="page"' : '' ?>>
-            <div class="<?= esc_attr($item_class) ?>">
+          <a class="<?php echo esc_attr($item_link_classes); ?>" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page_id)); ?>"
+            <?php echo $is_current ? 'aria-current="page"' : ''; ?>>
+            <div class="<?php echo esc_attr($item_class); ?>">
               <i
-                class="<?= esc_attr($item_order_class) ?>"><?= esc_html(str_pad((string) $ordinal, 2, '0', STR_PAD_LEFT)) ?></i>
+                class="<?php echo esc_attr($item_order_class); ?>"><?php echo esc_html(str_pad((string) $ordinal, 2, '0', STR_PAD_LEFT)); ?></i>
               <div class="gp-nav__item-copy">
-                <span class="gp-nav__item-meta"><?= esc_html(sprintf(__('Section %d', 'groove-folios'), $ordinal)) ?></span>
+                <span class="gp-nav__item-meta"><?php echo esc_html(sprintf(__('Section %d', 'groove-folios'), $ordinal)); ?></span>
                 <span
-                  class="<?= $is_current ? 'gp-nav__item-title' : 'gp-nav__item-title' ?>"><?= esc_html($page->post_title ?? '') ?></span>
+                  class="<?php echo $is_current ? 'gp-nav__item-title' : 'gp-nav__item-title'; ?>"><?php echo esc_html($page->post_title ?? ''); ?></span>
               </div>
             </div>
           </a>
@@ -148,28 +148,28 @@ function display_proposal_navigation_pane(array $args = []): void
       <div class="gp-nav__footer">
         <div class="gp-nav__info" data-gp-nav-info>
           <button type="button" class="gp-nav__info-trigger" data-gp-nav-info-toggle aria-expanded="false"
-            aria-controls="<?= esc_attr($info_panel_id) ?>">
-            <span data-gp-nav-info-label-collapsed><?= esc_html__('Show more', 'groove-folios') ?></span>
-            <span data-gp-nav-info-label-expanded hidden><?= esc_html__('Show less', 'groove-folios') ?></span>
+            aria-controls="<?php echo esc_attr($info_panel_id); ?>">
+            <span data-gp-nav-info-label-collapsed><?php echo esc_html__('Show more', 'groove-folios'); ?></span>
+            <span data-gp-nav-info-label-expanded hidden><?php echo esc_html__('Show less', 'groove-folios'); ?></span>
             <svg class="gp-nav__info-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"
               focusable="false">
               <polyline points="3 5 6 8 9 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
                 stroke-linejoin="round" />
             </svg>
           </button>
-          <div id="<?= esc_attr($info_panel_id) ?>" class="gp-nav__info-panel" hidden>
+          <div id="<?php echo esc_attr($info_panel_id); ?>" class="gp-nav__info-panel" hidden>
             <?php if ($has_meta_data): ?>
               <div class="gp-nav__info-group">
                 <?php if ($info_version !== ''): ?>
                   <div class="gp-nav__info-row">
-                    <span class="gp-nav__info-label"><?= esc_html__('Version', 'groove-folios') ?></span>
-                    <span class="gp-nav__info-value"><?= esc_html($info_version) ?></span>
+                    <span class="gp-nav__info-label"><?php echo esc_html__('Version', 'groove-folios'); ?></span>
+                    <span class="gp-nav__info-value"><?php echo esc_html($info_version); ?></span>
                   </div>
                 <?php endif; ?>
                 <?php if ($info_date !== ''): ?>
                   <div class="gp-nav__info-row">
-                    <span class="gp-nav__info-label"><?= esc_html__('Date', 'groove-folios') ?></span>
-                    <span class="gp-nav__info-value"><?= esc_html($info_date) ?></span>
+                    <span class="gp-nav__info-label"><?php echo esc_html__('Date', 'groove-folios'); ?></span>
+                    <span class="gp-nav__info-value"><?php echo esc_html($info_date); ?></span>
                   </div>
                 <?php endif; ?>
               </div>
@@ -177,21 +177,21 @@ function display_proposal_navigation_pane(array $args = []): void
 
             <?php if ($has_contact_data): ?>
               <div class="gp-nav__info-group">
-                <span class="gp-nav__info-group-label"><?= esc_html__('Contact', 'groove-folios') ?></span>
+                <span class="gp-nav__info-group-label"><?php echo esc_html__('Contact', 'groove-folios'); ?></span>
                 <?php foreach ($normalized_contacts as $contact): ?>
                   <div class="gp-nav__info-contact">
                     <?php if ($contact['name'] !== ''): ?>
-                      <span class="gp-nav__info-contact-name"><?= esc_html($contact['name']) ?></span>
+                      <span class="gp-nav__info-contact-name"><?php echo esc_html($contact['name']); ?></span>
                     <?php endif; ?>
                     <?php if ($contact['role'] !== ''): ?>
-                      <span class="gp-nav__info-contact-role"><?= esc_html($contact['role']) ?></span>
+                      <span class="gp-nav__info-contact-role"><?php echo esc_html($contact['role']); ?></span>
                     <?php endif; ?>
                     <?php if ($contact['email'] !== ''): ?>
                       <a class="gp-nav__info-contact-link"
-                        href="mailto:<?= esc_attr($contact['email']) ?>"><?= esc_html($contact['email']) ?></a>
+                        href="mailto:<?php echo esc_attr($contact['email']); ?>"><?php echo esc_html($contact['email']); ?></a>
                     <?php endif; ?>
                     <?php if ($contact['phone'] !== ''): ?>
-                      <span class="gp-nav__info-contact-detail"><?= esc_html($contact['phone']) ?></span>
+                      <span class="gp-nav__info-contact-detail"><?php echo esc_html($contact['phone']); ?></span>
                     <?php endif; ?>
                   </div>
                 <?php endforeach; ?>
@@ -199,12 +199,12 @@ function display_proposal_navigation_pane(array $args = []): void
             <?php endif; ?>
 
             <?php if (!$has_info_data): ?>
-              <p class="gp-nav__info-empty"><?= esc_html__('No metadata or contacts added yet.', 'groove-folios') ?></p>
+              <p class="gp-nav__info-empty"><?php echo esc_html__('No metadata or contacts added yet.', 'groove-folios'); ?></p>
             <?php endif; ?>
 
             <div class="gp-nav__info-group gp-nav__info-group--mode">
               <button type="button" class="gp-theme-toggle gp-theme-toggle--nav" data-gp-theme-toggle
-                aria-label="<?= esc_attr__('Switch colour mode', 'groove-folios') ?>"></button>
+                aria-label="<?php echo esc_attr__('Switch colour mode', 'groove-folios'); ?>"></button>
             </div>
           </div>
         </div>

@@ -172,32 +172,32 @@ class Page extends Base_Theme
     <div class="g-folio__theme-page-nav-bar" data-groove-navbar="own">
       <div class="g-folio__theme-page-nav-bar-main">
         <button type="button" class="g-folio__theme-page-nav-button gn-nav-trigger gn-nav-trigger--page"
-          aria-label="<?= esc_attr__('Open issue navigation', 'groove-folios') ?>">
+          aria-label="<?php echo esc_attr__('Open issue navigation', 'groove-folios'); ?>">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-          <span class="gn-nav-trigger__label"><?= esc_html__('Contents', 'groove-folios') ?></span>
+          <span class="gn-nav-trigger__label"><?php echo esc_html__('Contents', 'groove-folios'); ?></span>
         </button>
 
         <div class="gn-page__masthead-copy">
           <?php if ($page_nav_count > 0): ?>
-            <nav class="gn-page__story-switcher<?= $page_nav_count === 1 ? ' gn-page__story-switcher--single' : '' ?>"
-              aria-label="<?= esc_attr__('Page navigation', 'groove-folios') ?>">
+            <nav class="gn-page__story-switcher<?php echo $page_nav_count === 1 ? ' gn-page__story-switcher--single' : ''; ?>"
+              aria-label="<?php echo esc_attr__('Page navigation', 'groove-folios'); ?>">
               <?php if ($prev_page): ?>
                 <a class="gn-page__story-link gn-page__story-link--prev"
-                  href="<?= esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)) ?>">
-                  <span class="gn-page__story-link-direction"><?= esc_html__('Previous page', 'groove-folios') ?></span>
-                  <span class="gn-page__story-link-title"><?= esc_html($prev_page->post_title) ?></span>
+                  href="<?php echo esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)); ?>">
+                  <span class="gn-page__story-link-direction"><?php echo esc_html__('Previous page', 'groove-folios'); ?></span>
+                  <span class="gn-page__story-link-title"><?php echo esc_html($prev_page->post_title); ?></span>
                 </a>
               <?php endif; ?>
 
               <?php if ($next_page): ?>
                 <a class="gn-page__story-link gn-page__story-link--next"
-                  href="<?= esc_url(Utils::get_folio_permalink_by_id($next_page->ID)) ?>">
-                  <span class="gn-page__story-link-direction"><?= esc_html__('Next page', 'groove-folios') ?></span>
-                  <span class="gn-page__story-link-title"><?= esc_html($next_page->post_title) ?></span>
+                  href="<?php echo esc_url(Utils::get_folio_permalink_by_id($next_page->ID)); ?>">
+                  <span class="gn-page__story-link-direction"><?php echo esc_html__('Next page', 'groove-folios'); ?></span>
+                  <span class="gn-page__story-link-title"><?php echo esc_html($next_page->post_title); ?></span>
                 </a>
               <?php endif; ?>
             </nav>
@@ -205,7 +205,7 @@ class Page extends Base_Theme
         </div>
 
         <button type="button" class="g-folio__theme-page-nav-bar-toggle" data-groove-nav-toggle="own">
-          <?= esc_html__('Sections', 'groove-folios') ?>
+          <?php echo esc_html__('Sections', 'groove-folios'); ?>
         </button>
       </div>
 
@@ -221,7 +221,7 @@ class Page extends Base_Theme
     ?>
     <nav class="g-folio__theme-page-mobile-nav">
       <div class="g-folio__theme-page-mobile-nav-content">
-        <div class="g-folio__theme-page-mobile-nav-label"><?= esc_html($on_this_page_label) ?></div>
+        <div class="g-folio__theme-page-mobile-nav-label"><?php echo esc_html($on_this_page_label); ?></div>
         <div class="g-folio__theme-page-mobile-navs">
           <?php
           foreach ($blocks as $block) {
@@ -233,9 +233,9 @@ class Page extends Base_Theme
               }
               $anchor = $this->to_anchor_name($html[1]);
               ?>
-              <a class="g-folio__theme-page-mobile-nav-item-link" data-g-scroll-target="<?= '#' . $anchor ?>"
-                href="<?= '#' . $anchor ?>">
-                <div class="g-folio__theme-page-mobile-nav-item"><?= esc_html($html[1]) ?></div>
+              <a class="g-folio__theme-page-mobile-nav-item-link" data-g-scroll-target="<?php echo '#' . $anchor; ?>"
+                href="<?php echo '#' . $anchor; ?>">
+                <div class="g-folio__theme-page-mobile-nav-item"><?php echo esc_html($html[1]); ?></div>
               </a>
               <?php
             }
@@ -243,7 +243,7 @@ class Page extends Base_Theme
           ?>
         </div>
         <button type="button" class="g-folio__theme-page-mobile-nav-back" data-g-scroll-target="#gn-page-top">↑
-          <?= esc_html__('Back to top', 'groove-folios') ?></button>
+          <?php echo esc_html__('Back to top', 'groove-folios'); ?></button>
       </div>
     </nav>
     <?php
@@ -288,8 +288,8 @@ class Page extends Base_Theme
         if ($prev_page) {
           ?>
           <i class="g-folio__theme-page-arrow"></i>
-          <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID) ?>" title="<?= esc_attr($prev_page->post_title) ?>">
-            <?= esc_html($prev_page->post_title) ?></a>
+          <a href="<?php echo Utils::get_folio_permalink_by_id($prev_page->ID); ?>" title="<?php echo esc_attr($prev_page->post_title); ?>">
+            <?php echo esc_html($prev_page->post_title); ?></a>
           <?php
         }
         ?>
@@ -301,8 +301,8 @@ class Page extends Base_Theme
         <?php
         if ($next_page) {
           ?>
-          <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID) ?>" title="<?= esc_attr($next_page->post_title) ?>">
-            <?= esc_html($next_page->post_title) ?></a>
+          <a href="<?php echo Utils::get_folio_permalink_by_id($next_page->ID); ?>" title="<?php echo esc_attr($next_page->post_title); ?>">
+            <?php echo esc_html($next_page->post_title); ?></a>
           <i class="g-folio__theme-page-arrow"></i>
           <?php
         }
@@ -317,23 +317,23 @@ class Page extends Base_Theme
     $feature_thumb_url = $this->get_feature_image_thumb_url();
     $read_time_label = $this->get_read_time_label();
     ?>
-    <aside class="gn-page__meta-rail" aria-label="<?= esc_attr__('Page tools', 'groove-folios') ?>">
+    <aside class="gn-page__meta-rail" aria-label="<?php echo esc_attr__('Page tools', 'groove-folios'); ?>">
       <div class="gn-page__meta-group">
-        <div class="gn-page__meta-label"><?= esc_html__('Read time', 'groove-folios') ?></div>
-        <div class="gn-page__meta-value"><?= esc_html($read_time_label) ?></div>
+        <div class="gn-page__meta-label"><?php echo esc_html__('Read time', 'groove-folios'); ?></div>
+        <div class="gn-page__meta-value"><?php echo esc_html($read_time_label); ?></div>
       </div>
 
       <?php if ($feature_thumb_url !== ''): ?>
         <a class="gn-page__feature-peek" data-g-scroll-target="#gn-page-feature" href="#gn-page-feature"
-          aria-label="<?= esc_attr__('Jump to feature image', 'groove-folios') ?>">
+          aria-label="<?php echo esc_attr__('Jump to feature image', 'groove-folios'); ?>">
           <span class="gn-page__feature-peek-frame">
-            <img class="gn-page__feature-peek-image" src="<?= esc_url($feature_thumb_url) ?>" alt="" loading="lazy" />
+            <img class="gn-page__feature-peek-image" src="<?php echo esc_url($feature_thumb_url); ?>" alt="" loading="lazy" />
           </span>
         </a>
       <?php endif; ?>
 
       <button type="button" class="gn-page__back-to-top" data-g-scroll-target="#gn-page-top">
-        <?= esc_html__('Back to top', 'groove-folios') ?>
+        <?php echo esc_html__('Back to top', 'groove-folios'); ?>
       </button>
     </aside>
     <?php
@@ -361,18 +361,18 @@ class Page extends Base_Theme
             <div class="g-folio__theme-page-container">
               <header class="gn-page__header">
                 <?php if ($page_date_label !== ''): ?>
-                  <p class="gn-page__dateline"><?= esc_html($page_date_label) ?></p>
+                  <p class="gn-page__dateline"><?php echo esc_html($page_date_label); ?></p>
                 <?php endif; ?>
-                <h1 class="g-folio__theme-page-title"><?= esc_html($this->title) ?></h1>
+                <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
               </header>
               <article class="g-folio__theme-page-content">
-                <?= $this->get_content() ?>
+                <?php echo $this->get_content(); ?>
               </article>
               <?php $this->display_footer() ?>
             </div>
             <div class="g-folio__theme-page-sidebar">
               <div class="g-folio__theme-page-catalogs">
-                <label class="g-folio__theme-page-catalogs-label"><?= esc_html($on_this_page_label) ?></label>
+                <label class="g-folio__theme-page-catalogs-label"><?php echo esc_html($on_this_page_label); ?></label>
                 <?php $this->display_catalogs(); ?>
               </div>
             </div>

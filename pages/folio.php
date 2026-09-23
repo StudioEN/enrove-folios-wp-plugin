@@ -1224,32 +1224,32 @@ class Folio extends Page
         <div class="g-folio__media-row">
           <div class="g-folio__media-col">
             <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">FEATURE IMAGE</label>
-            <input value="<?= $feature_image instanceof \WP_Post ? (int) $feature_image->ID : '' ?>" type="hidden"
+            <input value="<?php echo $feature_image instanceof \WP_Post ? (int) $feature_image->ID : ''; ?>" type="hidden"
               name="feature_image_id" id="feature-media-id">
             <div class="flex items-start space-x-4">
               <div
                 class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2">
-                <img id="feature-preview" class="g-folio__media-preview-image" src="<?= esc_url($feature_image_src) ?>" />
+                <img id="feature-preview" class="g-folio__media-preview-image" src="<?php echo esc_url($feature_image_src); ?>" />
               </div>
               <div class="flex flex-col space-y-2">
                 <button type="button" id="feature-image" class="button button-secondary">Replace image</button>
-                <button type="button" data-default-url="<?= esc_url($theme_cover_url) ?>" id="use-default-image"
+                <button type="button" data-default-url="<?php echo esc_url($theme_cover_url); ?>" id="use-default-image"
                   class="button-link">Use default</button>
               </div>
             </div>
           </div>
           <div class="g-folio__media-col">
             <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">LOGO</label>
-            <input value="<?= $logo instanceof \WP_Post ? (int) $logo->ID : '' ?>" type="hidden" name="logo_id"
+            <input value="<?php echo $logo instanceof \WP_Post ? (int) $logo->ID : ''; ?>" type="hidden" name="logo_id"
               id="logo-media-id">
             <div class="flex items-start space-x-4">
               <div
                 class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2">
-                <img id="logo-preview" class="g-folio__media-preview-image" src="<?= esc_url($logo_image_src) ?>" />
+                <img id="logo-preview" class="g-folio__media-preview-image" src="<?php echo esc_url($logo_image_src); ?>" />
               </div>
               <div class="flex flex-col space-y-2">
                 <button type="button" id="logo-image" class="button button-secondary">Replace image</button>
-                <button type="button" data-default-url="<?= esc_url($theme_logo_url) ?>" id="use-default-logo"
+                <button type="button" data-default-url="<?php echo esc_url($theme_logo_url); ?>" id="use-default-logo"
                   class="button-link">Use default</button>
               </div>
             </div>

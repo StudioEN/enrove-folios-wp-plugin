@@ -340,26 +340,26 @@ class Page extends Base_Theme
     ?>
     <header class="gp-page__mobile-header">
       <div class="gp-page__mobile-header-main">
-        <button type="button" class="g-folio__theme-page-nav-button gp-nav-trigger" aria-label="<?= esc_attr__('Open proposal navigation', 'groove-folios') ?>">
+        <button type="button" class="g-folio__theme-page-nav-button gp-nav-trigger" aria-label="<?php echo esc_attr__('Open proposal navigation', 'groove-folios'); ?>">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-          <span><?= esc_html__('Contents', 'groove-folios') ?></span>
+          <span><?php echo esc_html__('Contents', 'groove-folios'); ?></span>
         </button>
 
-        <div class="gp-page__mobile-header-title"><?= esc_html($this->page->post_title ?? '') ?></div>
+        <div class="gp-page__mobile-header-title"><?php echo esc_html($this->page->post_title ?? ''); ?></div>
 
         <div class="gp-page__mobile-header-controls">
-          <span class="gp-page__progress-text"><?= esc_html(sprintf(__('%1$d / %2$d', 'groove-folios'), (int) $progress['current'], (int) $progress['total'])) ?></span>
+          <span class="gp-page__progress-text"><?php echo esc_html(sprintf(__('%1$d / %2$d', 'groove-folios'), (int) $progress['current'], (int) $progress['total'])); ?></span>
           <?php if ($show_in_page_nav): ?>
-            <button type="button" class="g-folio__theme-page-nav-bar-toggle" aria-expanded="false"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></button>
+            <button type="button" class="g-folio__theme-page-nav-bar-toggle" aria-expanded="false"><?php echo esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)); ?></button>
           <?php endif; ?>
         </div>
       </div>
       <div class="gp-page__scroll-progress" aria-hidden="true">
-        <span class="gp-page__scroll-progress-bar" style="width: <?= (int) $progress['percent'] ?>%"></span>
+        <span class="gp-page__scroll-progress-bar" style="width: <?php echo (int) $progress['percent']; ?>%"></span>
       </div>
       <?php $this->display_mobile_nav($anchors, $show_in_page_nav); ?>
     </header>
@@ -386,21 +386,21 @@ class Page extends Base_Theme
              because this is a dropdown, not a full-screen drawer. The theme's
              own drawer controller is scoped to .g-folio__theme-page-nav and does
              not touch this pane. */ ?>
-    <nav class="g-folio__theme-page-mobile-nav gp-page__mobile-nav" aria-label="<?= esc_attr__('On this page', 'groove-folios') ?>"
+    <nav class="g-folio__theme-page-mobile-nav gp-page__mobile-nav" aria-label="<?php echo esc_attr__('On this page', 'groove-folios'); ?>"
       data-groove-drawer=".g-folio__theme-page-nav-bar-toggle" data-groove-drawer-lock="off">
       <div class="g-folio__theme-page-mobile-nav-content">
-        <div class="g-folio__theme-page-mobile-nav-label"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></div>
+        <div class="g-folio__theme-page-mobile-nav-label"><?php echo esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)); ?></div>
         <div class="g-folio__theme-page-mobile-navs">
           <?php foreach ($anchors as $anchor): ?>
-            <a class="g-folio__theme-page-mobile-nav-item-link" data-g-scroll-target="#<?= esc_attr($anchor['anchor']) ?>" href="#<?= esc_attr($anchor['anchor']) ?>">
-              <div class="g-folio__theme-page-mobile-nav-item"><?= esc_html($anchor['title']) ?></div>
+            <a class="g-folio__theme-page-mobile-nav-item-link" data-g-scroll-target="#<?php echo esc_attr($anchor['anchor']); ?>" href="#<?php echo esc_attr($anchor['anchor']); ?>">
+              <div class="g-folio__theme-page-mobile-nav-item"><?php echo esc_html($anchor['title']); ?></div>
             </a>
           <?php endforeach; ?>
         </div>
         <?php /* No data-g-scroll-target: groove-main.js already scrolls this
                  button to the top, and binding the theme's smooth scroll to the
                  same click ran both — an instant jump, then a smooth no-op. */ ?>
-        <button type="button" class="g-folio__theme-page-mobile-nav-back">↑ <?= esc_html__('Back to top', 'groove-folios') ?></button>
+        <button type="button" class="g-folio__theme-page-mobile-nav-back">↑ <?php echo esc_html__('Back to top', 'groove-folios'); ?></button>
       </div>
     </nav>
     <?php
@@ -429,18 +429,18 @@ class Page extends Base_Theme
     <div class="gp-page__sidebar">
       <?php if ($ordinal !== ''): ?>
         <div class="gp-page__locator" aria-hidden="true">
-          <span class="gp-page__locator-ordinal"><?= esc_html($ordinal) ?></span>
+          <span class="gp-page__locator-ordinal"><?php echo esc_html($ordinal); ?></span>
         </div>
       <?php endif; ?>
 
       <?php if ($show_in_page_nav): ?>
-        <nav class="gp-page__toc" aria-label="<?= esc_attr(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?>">
-          <label class="g-folio__theme-page-catalogs-label"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></label>
+        <nav class="gp-page__toc" aria-label="<?php echo esc_attr(Utils::get_folio_on_this_page_label((int) $this->folio_id)); ?>">
+          <label class="g-folio__theme-page-catalogs-label"><?php echo esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)); ?></label>
           <div class="g-folio__theme-page-catalogs-content">
             <?php foreach ($anchors as $anchor): ?>
               <div class="g-folio__theme-page-catalog">
-                <a class="g-folio__theme-page-catalog-link" data-g-scroll-target="#<?= esc_attr($anchor['anchor']) ?>" href="#<?= esc_attr($anchor['anchor']) ?>">
-                  <?= esc_html($anchor['title']) ?>
+                <a class="g-folio__theme-page-catalog-link" data-g-scroll-target="#<?php echo esc_attr($anchor['anchor']); ?>" href="#<?php echo esc_attr($anchor['anchor']); ?>">
+                  <?php echo esc_html($anchor['title']); ?>
                 </a>
               </div>
             <?php endforeach; ?>
@@ -475,9 +475,9 @@ class Page extends Base_Theme
     $next_page = $this->get_next_page();
     ?>
     <footer class="g-folio__theme-page-footer gp-page__footer">
-      <nav class="gp-page__footer-nav" aria-label="<?= esc_attr__('Page navigation', 'groove-folios') ?>">
+      <nav class="gp-page__footer-nav" aria-label="<?php echo esc_attr__('Page navigation', 'groove-folios'); ?>">
         <?php if ($prev_page): ?>
-          <a class="gp-page__footer-arrow g-folio__theme-page-prev" href="<?= esc_url(Utils::get_folio_permalink_by_id((int) $prev_page->ID)) ?>" data-tooltip="<?= esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)) ?>" aria-label="<?= esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)) ?>">
+          <a class="gp-page__footer-arrow g-folio__theme-page-prev" href="<?php echo esc_url(Utils::get_folio_permalink_by_id((int) $prev_page->ID)); ?>" data-tooltip="<?php echo esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)); ?>" aria-label="<?php echo esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)); ?>">
             <span aria-hidden="true">&larr;</span>
           </a>
         <?php else: ?>
@@ -485,7 +485,7 @@ class Page extends Base_Theme
         <?php endif; ?>
 
         <?php if ($next_page): ?>
-          <a class="gp-page__footer-arrow g-folio__theme-page-next" href="<?= esc_url(Utils::get_folio_permalink_by_id((int) $next_page->ID)) ?>" data-tooltip="<?= esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)) ?>" aria-label="<?= esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)) ?>">
+          <a class="gp-page__footer-arrow g-folio__theme-page-next" href="<?php echo esc_url(Utils::get_folio_permalink_by_id((int) $next_page->ID)); ?>" data-tooltip="<?php echo esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)); ?>" aria-label="<?php echo esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)); ?>">
             <span aria-hidden="true">&rarr;</span>
           </a>
         <?php else: ?>
@@ -518,8 +518,8 @@ class Page extends Base_Theme
     <div
       class="gp gp-page g-folio__theme-page"
       id="gp-page-top"
-      data-gp-color-scheme="<?= esc_attr($proposal_color_scheme) ?>"
-      data-gp-palette-source-url="<?= esc_url($palette_source_url) ?>"
+      data-gp-color-scheme="<?php echo esc_attr($proposal_color_scheme); ?>"
+      data-gp-palette-source-url="<?php echo esc_url($palette_source_url); ?>"
     >
 
       <!-- Mobile-only header: nav trigger + title + progress + on-page toggle,
@@ -534,13 +534,13 @@ class Page extends Base_Theme
 
           <div class="g-folio__theme-page-body gp-page__body">
             <div class="g-folio__theme-page-center gp-page__center">
-              <article class="g-folio__theme-page-container gp-page__container<?= esc_attr($container_role_class) ?>">
+              <article class="g-folio__theme-page-container gp-page__container<?php echo esc_attr($container_role_class); ?>">
                 <?php if ($page_role['label'] !== ''): ?>
-                  <p class="gp-page__role"><?= esc_html($page_role['label']) ?></p>
+                  <p class="gp-page__role"><?php echo esc_html($page_role['label']); ?></p>
                 <?php endif; ?>
-                <h1 class="g-folio__theme-page-title gp-page__title"><?= esc_html($this->title) ?></h1>
+                <h1 class="g-folio__theme-page-title gp-page__title"><?php echo esc_html($this->title); ?></h1>
                 <div class="g-folio__theme-page-content gp-page__content">
-                  <?= $this->get_content() ?>
+                  <?php echo $this->get_content(); ?>
                 </div>
                 <?php $this->display_footer(); ?>
               </article>

@@ -118,41 +118,41 @@ function display_magazine_navigation_pane(array $args = [])
             $nav_image_url = $thumb_url ?: '';
         }
         ?>
-        <a class="<?= esc_attr($link_class) ?>" href="<?= esc_url(Utils::get_folio_permalink_by_id($page_id)) ?>"<?=
-              !empty($nav_image_url) ? ' data-gm-nav-image="' . esc_attr($nav_image_url) . '"' : '' ?>>
-            <div class="gm-nav__item<?= $is_featured ? ' gm-nav__item--featured' : ' gm-nav__item--recent' ?>">
+        <a class="<?php echo esc_attr($link_class); ?>" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page_id)); ?>"<?php echo
+              !empty($nav_image_url) ? ' data-gm-nav-image="' . esc_attr($nav_image_url) . '"' : ''; ?>>
+            <div class="gm-nav__item<?php echo $is_featured ? ' gm-nav__item--featured' : ' gm-nav__item--recent'; ?>">
                 <?php if ($thumb_url): ?>
-                    <img class="gm-nav__item-thumb<?= $is_featured ? ' gm-nav__item-thumb--featured' : ' gm-nav__item-thumb--recent' ?>"
-                        src="<?= esc_url($thumb_url) ?>" alt="" loading="lazy" />
+                    <img class="gm-nav__item-thumb<?php echo $is_featured ? ' gm-nav__item-thumb--featured' : ' gm-nav__item-thumb--recent'; ?>"
+                        src="<?php echo esc_url($thumb_url); ?>" alt="" loading="lazy" />
                 <?php else: ?>
                     <span
-                        class="gm-nav__item-index<?= $is_featured ? ' gm-nav__item-index--featured' : ' gm-nav__item-index--recent' ?>"><?= (int) $index ?></span>
+                        class="gm-nav__item-index<?php echo $is_featured ? ' gm-nav__item-index--featured' : ' gm-nav__item-index--recent'; ?>"><?php echo (int) $index; ?></span>
                 <?php endif; ?>
-                <span class="gm-nav__item-title<?= $is_featured ? ' gm-nav__item-title--featured' : ' gm-nav__item-title--recent' ?>">
-                    <?= esc_html($page->post_title ?? '') ?>
+                <span class="gm-nav__item-title<?php echo $is_featured ? ' gm-nav__item-title--featured' : ' gm-nav__item-title--recent'; ?>">
+                    <?php echo esc_html($page->post_title ?? ''); ?>
                 </span>
             </div>
         </a>
         <?php
     };
     ?>
-    <nav class="gm-nav" aria-label="<?= esc_attr($aria_label) ?>">
+    <nav class="gm-nav" aria-label="<?php echo esc_attr($aria_label); ?>">
         <div class="gm-nav__content">
             <button class="gm-nav__close" aria-label="Close navigation" data-tooltip="Close"></button>
             <h3 class="gm-nav__title">
                 <?php if (!empty($title_url)): ?>
-                    <a href="<?= esc_url($title_url) ?>">
-                        <?= esc_html($title) ?>
+                    <a href="<?php echo esc_url($title_url); ?>">
+                        <?php echo esc_html($title); ?>
                     </a>
                 <?php else: ?>
-                    <?= esc_html($title) ?>
+                    <?php echo esc_html($title); ?>
                 <?php endif; ?>
             </h3>
             <div class="gm-nav__meta">
-                <span class="gm-nav__meta-label"><?= esc_html($latest_label) ?></span>
+                <span class="gm-nav__meta-label"><?php echo esc_html($latest_label); ?></span>
                 <?php if (!empty($latest_date)): ?>
                     <span class="gm-nav__meta-separator" aria-hidden="true">|</span>
-                    <time class="gm-nav__meta-date" datetime="<?= esc_attr($latest_datetime) ?>"><?= esc_html($latest_date) ?></time>
+                    <time class="gm-nav__meta-date" datetime="<?php echo esc_attr($latest_datetime); ?>"><?php echo esc_html($latest_date); ?></time>
                 <?php endif; ?>
             </div>
 

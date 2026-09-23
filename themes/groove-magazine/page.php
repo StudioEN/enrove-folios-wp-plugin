@@ -129,8 +129,8 @@ class Page extends Base_Theme
             return;
         }
         ?>
-        <div class="gm-page__hero" data-gm-feature-image="<?= esc_url($feature_image_url) ?>">
-            <div class="gm-page__hero-bg" style="background-image: url(<?= esc_url($feature_image_url) ?>)"></div>
+        <div class="gm-page__hero" data-gm-feature-image="<?php echo esc_url($feature_image_url); ?>">
+            <div class="gm-page__hero-bg" style="background-image: url(<?php echo esc_url($feature_image_url); ?>)"></div>
             <div class="gm-page__hero-overlay"></div>
         </div>
         <?php
@@ -153,11 +153,11 @@ class Page extends Base_Theme
                 </button>
                 <div class="gm-page__navbar-title">
                     <span class="gm-page__navbar-story">
-                        <?= esc_html($this->page->post_title ?? 'Page') ?>
+                        <?php echo esc_html($this->page->post_title ?? 'Page'); ?>
                     </span>
                 </div>
                 <div class="gm-page__navbar-progress-label">
-                    <?= esc_html__('SECTIONS', 'groove-folios') ?>
+                    <?php echo esc_html__('SECTIONS', 'groove-folios'); ?>
                 </div>
             </div>
         </header>
@@ -173,7 +173,7 @@ class Page extends Base_Theme
         <nav class="gm-page__mobile-nav" aria-label="On this page">
             <div class="gm-page__mobile-nav-content">
                 <div class="gm-page__mobile-nav-label">
-                    <?= esc_html($on_this_page_label) ?>
+                    <?php echo esc_html($on_this_page_label); ?>
                 </div>
                 <div class="gm-page__mobile-nav-items">
                     <?php
@@ -186,9 +186,9 @@ class Page extends Base_Theme
                             }
                             $anchor = $this->to_anchor_name($html[1]);
                             ?>
-                            <a class="gm-page__mobile-nav-link" href="<?= '#' . $anchor ?>">
+                            <a class="gm-page__mobile-nav-link" href="<?php echo '#' . $anchor; ?>">
                                 <div class="gm-page__mobile-nav-item">
-                                    <?= esc_html($html[1]) ?>
+                                    <?php echo esc_html($html[1]); ?>
                                 </div>
                             </a>
                             <?php
@@ -225,10 +225,10 @@ class Page extends Base_Theme
         <nav class="gm-page__footer" aria-label="Story navigation">
             <div class="gm-page__footer-prev">
                 <?php if ($prev_page): ?>
-                    <a class="gm-page__footer-link" href="<?= esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)) ?>">
+                    <a class="gm-page__footer-link" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)); ?>">
                         <span class="gm-page__footer-direction">← Previous</span>
-                        <span class="gm-page__footer-title" title="<?= esc_attr($prev_page->post_title) ?>">
-                            <?= esc_html($prev_page->post_title) ?>
+                        <span class="gm-page__footer-title" title="<?php echo esc_attr($prev_page->post_title); ?>">
+                            <?php echo esc_html($prev_page->post_title); ?>
                         </span>
                     </a>
                 <?php endif; ?>
@@ -236,10 +236,10 @@ class Page extends Base_Theme
 
             <div class="gm-page__footer-next">
                 <?php if ($next_page): ?>
-                    <a class="gm-page__footer-link" href="<?= esc_url(Utils::get_folio_permalink_by_id($next_page->ID)) ?>">
+                    <a class="gm-page__footer-link" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($next_page->ID)); ?>">
                         <span class="gm-page__footer-direction">Next →</span>
-                        <span class="gm-page__footer-title" title="<?= esc_attr($next_page->post_title) ?>">
-                            <?= esc_html($next_page->post_title) ?>
+                        <span class="gm-page__footer-title" title="<?php echo esc_attr($next_page->post_title); ?>">
+                            <?php echo esc_html($next_page->post_title); ?>
                         </span>
                     </a>
                 <?php endif; ?>
@@ -278,17 +278,17 @@ class Page extends Base_Theme
                     <div class="gm-page__center">
                         <article class="gm-page__container">
                             <h1 class="gm-page__title">
-                                <?= esc_html($this->title) ?>
+                                <?php echo esc_html($this->title); ?>
                             </h1>
                             <div class="gm-page__content">
-                                <?= $this->get_content() ?>
+                                <?php echo $this->get_content(); ?>
                             </div>
                             <?php $this->display_footer() ?>
                         </article>
                         <aside class="gm-page__sidebar">
                             <div class="gm-page__catalogs">
                                 <label class="gm-page__catalogs-label">
-                                    <?= esc_html($on_this_page_label) ?>
+                                    <?php echo esc_html($on_this_page_label); ?>
                                 </label>
                                 <?php $this->display_catalogs(); ?>
                             </div>

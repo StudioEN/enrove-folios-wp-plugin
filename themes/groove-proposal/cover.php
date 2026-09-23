@@ -231,8 +231,8 @@ class Cover extends Base_Theme
     }
     ?>
     <div class="gp-cover__meta-item">
-      <span class="gp-cover__meta-label"><?= esc_html($label) ?></span>
-      <span class="gp-cover__meta-value"><?= esc_html($value) ?></span>
+      <span class="gp-cover__meta-label"><?php echo esc_html($label); ?></span>
+      <span class="gp-cover__meta-value"><?php echo esc_html($value); ?></span>
     </div>
     <?php
   }
@@ -250,18 +250,18 @@ class Cover extends Base_Theme
     <div class="gp-cover__contact">
       <div class="gp-cover__contact-person">
         <?php if ($name !== ''): ?>
-          <p class="gp-cover__contact-name"><?= esc_html($name) ?></p>
+          <p class="gp-cover__contact-name"><?php echo esc_html($name); ?></p>
         <?php endif; ?>
         <?php if ($role !== ''): ?>
-          <p class="gp-cover__contact-role"><?= esc_html($role) ?></p>
+          <p class="gp-cover__contact-role"><?php echo esc_html($role); ?></p>
         <?php endif; ?>
       </div>
       <div class="gp-cover__contact-details">
         <?php if ($email !== ''): ?>
-          <p class="gp-cover__contact-detail"><a href="mailto:<?= esc_attr($email) ?>"><?= esc_html($email) ?></a></p>
+          <p class="gp-cover__contact-detail"><a href="mailto:<?php echo esc_attr($email); ?>"><?php echo esc_html($email); ?></a></p>
         <?php endif; ?>
         <?php if ($phone !== ''): ?>
-          <p class="gp-cover__contact-detail"><?= esc_html($phone) ?></p>
+          <p class="gp-cover__contact-detail"><?php echo esc_html($phone); ?></p>
         <?php endif; ?>
       </div>
     </div>
@@ -290,19 +290,19 @@ class Cover extends Base_Theme
     <?php $this->display_theme_bootstrap_script(); ?>
     <div
       class="gp gp-cover g-folio__theme-cover"
-      data-gp-color-scheme="<?= esc_attr($proposal_color_scheme) ?>"
-      data-gp-palette-source-url="<?= esc_url($palette_source_url) ?>"
+      data-gp-color-scheme="<?php echo esc_attr($proposal_color_scheme); ?>"
+      data-gp-palette-source-url="<?php echo esc_url($palette_source_url); ?>"
     >
 
       <!-- Mobile-only header: nav trigger only -->
       <header class="gp-cover__mobile-header">
-        <button type="button" class="g-folio__theme-nav-button gp-nav-trigger" aria-label="<?= esc_attr__('Open proposal navigation', 'groove-folios') ?>">
+        <button type="button" class="g-folio__theme-nav-button gp-nav-trigger" aria-label="<?php echo esc_attr__('Open proposal navigation', 'groove-folios'); ?>">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-          <span><?= esc_html__('Contents', 'groove-folios') ?></span>
+          <span><?php echo esc_html__('Contents', 'groove-folios'); ?></span>
         </button>
       </header>
 
@@ -317,7 +317,7 @@ class Cover extends Base_Theme
             <div class="gp-cover__identity">
               <?php if ($client_logo_url !== ''): ?>
                 <i class="gp-cover__identity-logo">
-                  <img src="<?= esc_url($client_logo_url) ?>" alt="<?= esc_attr($client_name !== '' ? $client_name : __('Client logo', 'groove-folios')) ?>" />
+                  <img src="<?php echo esc_url($client_logo_url); ?>" alt="<?php echo esc_attr($client_name !== '' ? $client_name : __('Client logo', 'groove-folios')); ?>" />
                 </i>
               <?php endif; ?>
               <?php if ($client_logo_url !== '' && !empty($this->theme_logo_url)): ?>
@@ -325,7 +325,7 @@ class Cover extends Base_Theme
               <?php endif; ?>
               <?php if (!empty($this->theme_logo_url)): ?>
                 <i class="gp-cover__identity-logo">
-                  <img src="<?= esc_url($this->theme_logo_url) ?>" alt="<?= esc_attr($this->theme_name) ?>" />
+                  <img src="<?php echo esc_url($this->theme_logo_url); ?>" alt="<?php echo esc_attr($this->theme_name); ?>" />
                 </i>
               <?php endif; ?>
             </div>
@@ -335,12 +335,12 @@ class Cover extends Base_Theme
             <!-- Title block: the dominant element -->
             <section class="gp-cover__title-section">
               <?php if ($this->subtitle !== ''): ?>
-                <p class="gp-cover__engagement"><?= esc_html($this->subtitle) ?></p>
+                <p class="gp-cover__engagement"><?php echo esc_html($this->subtitle); ?></p>
               <?php endif; ?>
-              <h1 class="gp-cover__title"><?= esc_html($this->title) ?></h1>
+              <h1 class="gp-cover__title"><?php echo esc_html($this->title); ?></h1>
               <?php if ($client_name !== ''): ?>
                 <p class="gp-cover__client-line">
-                  <?= esc_html(sprintf(__('Prepared for %s', 'groove-folios'), $client_name)) ?>
+                  <?php echo esc_html(sprintf(__('Prepared for %s', 'groove-folios'), $client_name)); ?>
                 </p>
               <?php endif; ?>
             </section>
@@ -351,7 +351,7 @@ class Cover extends Base_Theme
               <div class="gp-cover__lower-info">
                 <!-- Document control: flat row -->
                 <?php if ($has_meta): ?>
-                  <div class="gp-cover__meta-row" aria-label="<?= esc_attr__('Document control', 'groove-folios') ?>">
+                  <div class="gp-cover__meta-row" aria-label="<?php echo esc_attr__('Document control', 'groove-folios'); ?>">
                     <?php $this->display_meta_item(__('Version', 'groove-folios'), $version); ?>
                     <?php $this->display_meta_item(__('Date', 'groove-folios'), $date); ?>
                     <?php $this->display_meta_item(__('Status', 'groove-folios'), $status); ?>
@@ -361,7 +361,7 @@ class Cover extends Base_Theme
                 <!-- Contact details -->
                 <?php if (!empty($contacts)): ?>
                   <div class="gp-cover__contacts-section">
-                    <p class="gp-cover__contacts-label"><?= esc_html__('Contact', 'groove-folios') ?></p>
+                    <p class="gp-cover__contacts-label"><?php echo esc_html__('Contact', 'groove-folios'); ?></p>
                     <div class="gp-cover__contacts">
                       <?php foreach ($contacts as $contact): ?>
                         <?php $this->display_contact_item($contact); ?>
@@ -373,8 +373,8 @@ class Cover extends Base_Theme
 
               <?php if ($first_page_url !== ''): ?>
                 <div class="gp-cover__lower-cta">
-                  <a class="gp-cover__cta" href="<?= esc_url($first_page_url) ?>">
-                    <?= esc_html($cta_text) ?> &rarr;
+                  <a class="gp-cover__cta" href="<?php echo esc_url($first_page_url); ?>">
+                    <?php echo esc_html($cta_text); ?> &rarr;
                   </a>
                 </div>
               <?php endif; ?>
@@ -387,13 +387,13 @@ class Cover extends Base_Theme
           <?php if ($cover_image_url !== ''): ?>
             <figure class="gp-cover__hero" data-gp-hero-contrast>
               <img
-                src="<?= esc_url($cover_image_url) ?>"
+                src="<?php echo esc_url($cover_image_url); ?>"
                 alt=""
                 class="gp-cover__hero-image"
                 crossorigin="anonymous"
               />
               <figcaption class="gp-cover__hero-credit">
-                <?= esc_html__('Powered by Groove Folios', 'groove-folios') ?>
+                <?php echo esc_html__('Powered by Groove Folios', 'groove-folios'); ?>
               </figcaption>
             </figure>
           <?php endif; ?>
@@ -401,10 +401,10 @@ class Cover extends Base_Theme
           <?php if (!empty($this->copyright) || $cover_image_url === ''): ?>
             <footer class="gp-cover__footer">
               <?php if (!empty($this->copyright)): ?>
-                <span><?= esc_html($this->copyright) ?></span>
+                <span><?php echo esc_html($this->copyright); ?></span>
               <?php endif; ?>
               <?php if ($cover_image_url === ''): ?>
-                <span><?= esc_html__('Powered by Groove Folios', 'groove-folios') ?></span>
+                <span><?php echo esc_html__('Powered by Groove Folios', 'groove-folios'); ?></span>
               <?php endif; ?>
             </footer>
           <?php endif; ?>

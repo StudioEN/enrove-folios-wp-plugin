@@ -22,15 +22,15 @@ class Cover extends Base_Theme
   function display_nav()
   {
     ?>
-    <nav class="g-folio__theme-nav" aria-label="<?= esc_attr__('Folio contents', 'groove-folios') ?>"
+    <nav class="g-folio__theme-nav" aria-label="<?php echo esc_attr__('Folio contents', 'groove-folios'); ?>"
       data-groove-drawer=".g-folio__theme-nav-button">
       <?php // Outside .g-folio__theme-nav-content, which is the scrolling box: a
         // long contents list used to carry the close button off the top of the pane. ?>
       <button type="button" class="g-folio__theme-nav-close"
-        aria-label="<?= esc_attr__('Close navigation', 'groove-folios') ?>"></button>
+        aria-label="<?php echo esc_attr__('Close navigation', 'groove-folios'); ?>"></button>
       <div class="g-folio__theme-nav-content">
         <h3 class="g-folio__theme-nav-name">
-          <?= $this->theme_name ?>
+          <?php echo $this->theme_name; ?>
         </h3>
         <label class="g-folio__theme-nav-label">CONTENTS</label>
         <div class="g-folio__theme-navs">
@@ -38,12 +38,12 @@ class Cover extends Base_Theme
           $index = 1;
           foreach ($this->pages as $page) {
             ?>
-            <a class="g-folio__theme-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID) ?>">
+            <a class="g-folio__theme-nav-item-link" href="<?php echo Utils::get_folio_permalink_by_id($page->ID); ?>">
               <div class="g-folio__theme-nav-item">
                 <i class="g-folio__theme-nav-item-order">
-                  <?= $index ?>
+                  <?php echo $index; ?>
                 </i>
-                <?= esc_html($page->post_title) ?>
+                <?php echo esc_html($page->post_title); ?>
               </div>
             </a>
             <?php
@@ -63,31 +63,31 @@ class Cover extends Base_Theme
     <div class="g-folio__theme-brief">
       <?php if (!empty($this->theme_logo_url)): ?>
         <i class="g-folio__theme-logo">
-          <img src="<?= esc_url($this->theme_logo_url) ?>" />
+          <img src="<?php echo esc_url($this->theme_logo_url); ?>" />
         </i>
       <?php endif; ?>
       <h1 class="g-folio__theme-title">
-        <?= esc_html($this->title) ?>
+        <?php echo esc_html($this->title); ?>
       </h1>
       <h2 class="g-folio__theme-subtitle">
-        <?= esc_html($this->subtitle) ?>
+        <?php echo esc_html($this->subtitle); ?>
       </h2>
       <?php if (!empty($this->author)): ?>
         <p class="g-folio__theme-author">By
-          <?= esc_html($this->author) ?>
+          <?php echo esc_html($this->author); ?>
         </p>
       <?php endif; ?>
 
       <div class="g-folio__theme-fields g-folio__theme-password-form">
         <?php if (!empty($this->pages) && $page): ?>
-          <a class="g-folio__theme-fields-submit" href="<?= Utils::get_folio_permalink_by_id($page->ID) ?>">
+          <a class="g-folio__theme-fields-submit" href="<?php echo Utils::get_folio_permalink_by_id($page->ID); ?>">
             Open folio
           </a>
         <?php endif; ?>
       </div>
       <?php if (!empty($this->copyright)): ?>
         <div class="g-folio__theme-copyright">
-          <?= esc_html($this->copyright) ?>
+          <?php echo esc_html($this->copyright); ?>
         </div>
       <?php endif; ?>
     </div>
@@ -100,9 +100,9 @@ class Cover extends Base_Theme
       return;
     }
     ?>
-    <div class="g-folio__theme-2 g-folio__theme-cover" style="background: url(<?= esc_url($this->theme_cover_url) ?>)">
+    <div class="g-folio__theme-2 g-folio__theme-cover" style="background: url(<?php echo esc_url($this->theme_cover_url); ?>)">
       <button type="button" class="g-folio__theme-nav-button"
-        aria-label="<?= esc_attr__('Open navigation', 'groove-folios') ?>" aria-expanded="false">
+        aria-label="<?php echo esc_attr__('Open navigation', 'groove-folios'); ?>" aria-expanded="false">
         <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <line x1="3" y1="6" x2="21" y2="6"></line>
           <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -114,7 +114,7 @@ class Cover extends Base_Theme
         <?php $this->display_brief() ?>
       </div>
       <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site"
-          href="/"><?= esc_html(static::get_author()) ?></a></div>
+          href="/"><?php echo esc_html(static::get_author()); ?></a></div>
     </div>
     <?php
   }

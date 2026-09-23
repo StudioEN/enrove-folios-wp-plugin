@@ -103,7 +103,7 @@ class Page extends Base_Theme
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
         <button type="button" class="g-folio__theme-page-nav-button"
-          aria-label="<?= esc_attr__('Open navigation', 'groove-folios') ?>" aria-expanded="false">
+          aria-label="<?php echo esc_attr__('Open navigation', 'groove-folios'); ?>" aria-expanded="false">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -111,14 +111,14 @@ class Page extends Base_Theme
           </svg>
         </button>
         <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
-            <?= esc_html(isset($this->folio->post_title) ? $this->folio->post_title : '') ?> |
+            <?php echo esc_html(isset($this->folio->post_title) ? $this->folio->post_title : ''); ?> |
           </span>
-          <?= esc_html($this->page->post_title ?? 'Page') ?>
+          <?php echo esc_html($this->page->post_title ?? 'Page'); ?>
         </div>
       </div>
 
       <button type="button" class="g-folio__theme-page-nav-bar-toggle"
-        aria-label="<?= esc_attr__('Toggle contents', 'groove-folios') ?>" aria-expanded="false"></button>
+        aria-label="<?php echo esc_attr__('Toggle contents', 'groove-folios'); ?>" aria-expanded="false"></button>
 
     </div>
     <?php $this->display_mobile_nav() ?>
@@ -130,10 +130,10 @@ class Page extends Base_Theme
     $on_this_page_label = Utils::get_folio_on_this_page_label((int) $this->folio_id);
     $blocks = parse_blocks($this->content);
     ?>
-    <nav class="g-folio__theme-page-mobile-nav" aria-label="<?= esc_attr__('On this page', 'groove-folios') ?>"
+    <nav class="g-folio__theme-page-mobile-nav" aria-label="<?php echo esc_attr__('On this page', 'groove-folios'); ?>"
       data-groove-drawer=".g-folio__theme-page-nav-bar-toggle" data-groove-drawer-lock="off">
       <div class="g-folio__theme-page-mobile-nav-content">
-        <div class="g-folio__theme-page-mobile-nav-label"><?= esc_html($on_this_page_label) ?></div>
+        <div class="g-folio__theme-page-mobile-nav-label"><?php echo esc_html($on_this_page_label); ?></div>
         <div class="g-folio__theme-page-mobile-navs">
           <?php
           foreach ($blocks as $block) {
@@ -145,8 +145,8 @@ class Page extends Base_Theme
               }
               $anchor = $this->to_anchor_name($html[1]);
               ?>
-              <a class="g-folio__theme-page-mobile-nav-item-link" href="<?= '#' . $anchor ?>">
-                <div class="g-folio__theme-page-mobile-nav-item"><?= esc_html($html[1]) ?></div>
+              <a class="g-folio__theme-page-mobile-nav-item-link" href="<?php echo '#' . $anchor; ?>">
+                <div class="g-folio__theme-page-mobile-nav-item"><?php echo esc_html($html[1]); ?></div>
               </a>
               <?php
             }
@@ -177,19 +177,19 @@ class Page extends Base_Theme
       $folio_url = Utils::get_folio_permalink_by_id($folio->ID);
     }
     ?>
-    <nav class="g-folio__theme-page-nav" aria-label="<?= esc_attr__('Folio contents', 'groove-folios') ?>"
+    <nav class="g-folio__theme-page-nav" aria-label="<?php echo esc_attr__('Folio contents', 'groove-folios'); ?>"
       data-groove-drawer=".g-folio__theme-page-nav-button">
       <?php // Outside .g-folio__theme-page-nav-content, which is the scrolling box. ?>
       <button type="button" class="g-folio__theme-page-nav-close"
-        aria-label="<?= esc_attr__('Close navigation', 'groove-folios') ?>"></button>
+        aria-label="<?php echo esc_attr__('Close navigation', 'groove-folios'); ?>"></button>
       <div class="g-folio__theme-page-nav-content">
         <h3 class="g-folio__theme-page-nav-name">
           <?php if (!empty($folio_url)): ?>
-            <a href="<?= esc_url($folio_url) ?>">
-              <?= esc_html($folio_title) ?>
+            <a href="<?php echo esc_url($folio_url); ?>">
+              <?php echo esc_html($folio_title); ?>
             </a>
           <?php else: ?>
-            <?= esc_html($folio_title) ?>
+            <?php echo esc_html($folio_title); ?>
           <?php endif; ?>
         </h3>
         <label class="g-folio__theme-page-nav-label">CONTENTS</label>
@@ -198,10 +198,10 @@ class Page extends Base_Theme
           $index = 1;
           foreach ($this->pages as $page) {
             ?>
-            <a class="g-folio__theme-page-nav-item-link" href="<?= Utils::get_folio_permalink_by_id($page->ID) ?>">
+            <a class="g-folio__theme-page-nav-item-link" href="<?php echo Utils::get_folio_permalink_by_id($page->ID); ?>">
               <div class="g-folio__theme-page-nav-item">
-                <i class="g-folio__theme-page-nav-item-order"><?= $index ?></i>
-                <?= esc_html($page->post_title) ?>
+                <i class="g-folio__theme-page-nav-item-order"><?php echo $index; ?></i>
+                <?php echo esc_html($page->post_title); ?>
               </div>
             </a>
             <?php
@@ -225,8 +225,8 @@ class Page extends Base_Theme
         if ($prev_page) {
           ?>
           <i class="g-folio__theme-page-arrow"></i>
-          <a href="<?= Utils::get_folio_permalink_by_id($prev_page->ID) ?>" title="<?= esc_attr($prev_page->post_title) ?>">
-            <?= esc_html($prev_page->post_title) ?></a>
+          <a href="<?php echo Utils::get_folio_permalink_by_id($prev_page->ID); ?>" title="<?php echo esc_attr($prev_page->post_title); ?>">
+            <?php echo esc_html($prev_page->post_title); ?></a>
           <?php
         }
         ?>
@@ -238,8 +238,8 @@ class Page extends Base_Theme
         <?php
         if ($next_page) {
           ?>
-          <a href="<?= Utils::get_folio_permalink_by_id($next_page->ID) ?>" title="<?= esc_attr($next_page->post_title) ?>">
-            <?= esc_html($next_page->post_title) ?></a>
+          <a href="<?php echo Utils::get_folio_permalink_by_id($next_page->ID); ?>" title="<?php echo esc_attr($next_page->post_title); ?>">
+            <?php echo esc_html($next_page->post_title); ?></a>
           <i class="g-folio__theme-page-arrow"></i>
           <?php
         }
@@ -263,15 +263,15 @@ class Page extends Base_Theme
         <div class="g-folio__theme-page-body">
           <div class="g-folio__theme-page-center">
             <div class="g-folio__theme-page-container">
-              <h1 class="g-folio__theme-page-title"><?= esc_html($this->title) ?></h1>
+              <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
               <div class="g-folio__theme-page-content">
-                <?= $this->get_content() ?>
+                <?php echo $this->get_content(); ?>
               </div>
               <?php $this->display_footer() ?>
             </div>
             <div class="g-folio__theme-page-sidebar">
               <div class="g-folio__theme-page-catalogs">
-                <label class="g-folio__theme-page-catalogs-label"><?= esc_html($on_this_page_label) ?></label>
+                <label class="g-folio__theme-page-catalogs-label"><?php echo esc_html($on_this_page_label); ?></label>
                 <?php $this->display_catalogs(); ?>
               </div>
             </div>

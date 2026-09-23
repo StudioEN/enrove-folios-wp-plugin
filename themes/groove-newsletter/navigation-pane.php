@@ -69,37 +69,37 @@ function display_recent_navigation_pane($theme, array $args = []): void
   $item_meta_class = $class_prefix . '-item-meta';
   $item_state_class = $class_prefix . '-item-state';
   ?>
-  <nav class="<?= esc_attr($class_prefix) ?>" aria-label="<?= esc_attr__('Issue navigation', 'groove-folios') ?>">
-    <div class="<?= esc_attr($content_class) ?>">
-      <button class="<?= esc_attr($close_class) ?>" aria-label="<?= esc_attr__('Close navigation', 'groove-folios') ?>"></button>
-      <div class="<?= esc_attr($eyebrow_class) ?>"><?= esc_html__('Contents', 'groove-folios') ?></div>
-      <h3 class="<?= esc_attr($name_class) ?>">
+  <nav class="<?php echo esc_attr($class_prefix); ?>" aria-label="<?php echo esc_attr__('Issue navigation', 'groove-folios'); ?>">
+    <div class="<?php echo esc_attr($content_class); ?>">
+      <button class="<?php echo esc_attr($close_class); ?>" aria-label="<?php echo esc_attr__('Close navigation', 'groove-folios'); ?>"></button>
+      <div class="<?php echo esc_attr($eyebrow_class); ?>"><?php echo esc_html__('Contents', 'groove-folios'); ?></div>
+      <h3 class="<?php echo esc_attr($name_class); ?>">
         <?php if (!empty($title_url)): ?>
-          <a href="<?= esc_url($title_url) ?>">
-            <?= esc_html($title) ?>
+          <a href="<?php echo esc_url($title_url); ?>">
+            <?php echo esc_html($title); ?>
           </a>
         <?php else: ?>
-          <?= esc_html($title) ?>
+          <?php echo esc_html($title); ?>
         <?php endif; ?>
       </h3>
-      <div class="<?= esc_attr($stats_class) ?>">
+      <div class="<?php echo esc_attr($stats_class); ?>">
         <?php if ($latest_date !== ''): ?>
-          <div class="<?= esc_attr($stat_class) ?>">
-            <span><?= esc_html__('Updated', 'groove-folios') ?></span>
-            <time datetime="<?= esc_attr(gmdate('c', $latest_timestamp)) ?>"><?= esc_html($latest_date) ?></time>
+          <div class="<?php echo esc_attr($stat_class); ?>">
+            <span><?php echo esc_html__('Updated', 'groove-folios'); ?></span>
+            <time datetime="<?php echo esc_attr(gmdate('c', $latest_timestamp)); ?>"><?php echo esc_html($latest_date); ?></time>
           </div>
         <?php endif; ?>
         <?php if ($label !== ''): ?>
-          <div class="<?= esc_attr($stat_class) ?>">
-            <span><?= esc_html__('Showing', 'groove-folios') ?></span>
-            <span><?= esc_html($label) ?></span>
+          <div class="<?php echo esc_attr($stat_class); ?>">
+            <span><?php echo esc_html__('Showing', 'groove-folios'); ?></span>
+            <span><?php echo esc_html($label); ?></span>
           </div>
         <?php endif; ?>
       </div>
       <?php if ($label !== ''): ?>
-        <label class="<?= esc_attr($label_class) ?>"><?= esc_html($label) ?></label>
+        <label class="<?php echo esc_attr($label_class); ?>"><?php echo esc_html($label); ?></label>
       <?php endif; ?>
-      <div class="<?= esc_attr($list_class) ?>">
+      <div class="<?php echo esc_attr($list_class); ?>">
         <?php foreach ($items as $index => $page): ?>
           <?php
           $page_url = Utils::get_folio_permalink_by_id($page->ID);
@@ -111,20 +111,20 @@ function display_recent_navigation_pane($theme, array $args = []): void
           $is_current = $current_page_id > 0 && (int) $page->ID === $current_page_id;
           $item_link_classes = $item_link_class . ($is_current ? ' ' . $item_link_class . '--current' : '');
           ?>
-          <a class="<?= esc_attr($item_link_classes) ?>" href="<?= esc_url($page_url) ?>" <?= $is_current ? ' aria-current="page"' : '' ?>>
-            <div class="<?= esc_attr($item_class) ?>">
+          <a class="<?php echo esc_attr($item_link_classes); ?>" href="<?php echo esc_url($page_url); ?>" <?php echo $is_current ? ' aria-current="page"' : ''; ?>>
+            <div class="<?php echo esc_attr($item_class); ?>">
               <i
-                class="<?= esc_attr($item_order_class) ?>"><?= esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)) ?></i>
-              <div class="<?= esc_attr($item_body_class) ?>">
-                <div class="<?= esc_attr($item_title_class) ?>"><?= esc_html($page->post_title) ?></div>
+                class="<?php echo esc_attr($item_order_class); ?>"><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></i>
+              <div class="<?php echo esc_attr($item_body_class); ?>">
+                <div class="<?php echo esc_attr($item_title_class); ?>"><?php echo esc_html($page->post_title); ?></div>
                 <?php if ($page_date !== ''): ?>
-                  <time class="<?= esc_attr($item_meta_class) ?>" datetime="<?= esc_attr(gmdate('c', $page_timestamp)) ?>">
-                    <?= esc_html($page_date) ?>
+                  <time class="<?php echo esc_attr($item_meta_class); ?>" datetime="<?php echo esc_attr(gmdate('c', $page_timestamp)); ?>">
+                    <?php echo esc_html($page_date); ?>
                   </time>
                 <?php endif; ?>
               </div>
               <?php if ($is_current): ?>
-                <span class="<?= esc_attr($item_state_class) ?>"><?= esc_html__('Current', 'groove-folios') ?></span>
+                <span class="<?php echo esc_attr($item_state_class); ?>"><?php echo esc_html__('Current', 'groove-folios'); ?></span>
               <?php endif; ?>
             </div>
           </a>

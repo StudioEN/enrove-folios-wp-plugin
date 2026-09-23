@@ -142,13 +142,13 @@ class Cover extends Base_Theme
         $featured = $recent_stories[0] ?? null;
         $more_stories = array_slice($recent_stories, 1, 3);
         ?>
-        <div class="gm-cover__hero" data-gm-hero-image="<?= esc_url($slideshow_images[0]['url'] ?? '') ?>">
+        <div class="gm-cover__hero" data-gm-hero-image="<?php echo esc_url($slideshow_images[0]['url'] ?? ''); ?>">
 
             <!-- Slideshow layers -->
             <div class="gm-cover__slideshow">
                 <?php foreach ($slideshow_images as $i => $img): ?>
-                    <div class="gm-cover__slide<?= $i === 0 ? ' gm-cover__slide--active' : '' ?>" data-gm-slide-index="<?= $i ?>"
-                        style="background-image: url(<?= esc_url($img['url']) ?>)">
+                    <div class="gm-cover__slide<?php echo $i === 0 ? ' gm-cover__slide--active' : ''; ?>" data-gm-slide-index="<?php echo $i; ?>"
+                        style="background-image: url(<?php echo esc_url($img['url']); ?>)">
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -166,19 +166,19 @@ class Cover extends Base_Theme
                     </button>
                     <?php if (!empty($this->theme_logo_url)): ?>
                         <i class="gm-cover__logo">
-                            <img src="<?= esc_url($this->theme_logo_url) ?>" alt="<?= esc_attr($this->theme_name) ?>" />
+                            <img src="<?php echo esc_url($this->theme_logo_url); ?>" alt="<?php echo esc_attr($this->theme_name); ?>" />
                         </i>
                     <?php endif; ?>
                     <div style="flex: 1;"></div>
                 </div>
 
                 <div class="gm-cover__meta">
-                    <h1 class="gm-cover__title"><?= esc_html($this->title) ?></h1>
+                    <h1 class="gm-cover__title"><?php echo esc_html($this->title); ?></h1>
                     <?php if (!empty($this->subtitle)): ?>
-                        <h2 class="gm-cover__subtitle"><?= esc_html($this->subtitle) ?></h2>
+                        <h2 class="gm-cover__subtitle"><?php echo esc_html($this->subtitle); ?></h2>
                     <?php endif; ?>
                     <?php if (!empty($this->author)): ?>
-                        <p class="gm-cover__author">By <?= esc_html($this->author) ?></p>
+                        <p class="gm-cover__author">By <?php echo esc_html($this->author); ?></p>
                     <?php endif; ?>
                 </div>
 
@@ -187,9 +187,9 @@ class Cover extends Base_Theme
                     <?php if ($featured): ?>
                         <div class="gm-cover__featured">
                             <span class="gm-cover__stories-label">LATEST</span>
-                            <a class="gm-cover__featured-link" href="<?= esc_url($featured['url']) ?>"
-                                data-gm-story-image="<?= esc_url($featured['feature_url']) ?>">
-                                <span class="gm-cover__featured-title"><?= esc_html($featured['title']) ?></span>
+                            <a class="gm-cover__featured-link" href="<?php echo esc_url($featured['url']); ?>"
+                                data-gm-story-image="<?php echo esc_url($featured['feature_url']); ?>">
+                                <span class="gm-cover__featured-title"><?php echo esc_html($featured['title']); ?></span>
                                 <span class="gm-cover__featured-arrow">→</span>
                             </a>
                         </div>
@@ -199,9 +199,9 @@ class Cover extends Base_Theme
                         <div class="gm-cover__more">
                             <span class="gm-cover__stories-label">RECENT</span>
                             <?php foreach ($more_stories as $story): ?>
-                                <a class="gm-cover__more-link" href="<?= esc_url($story['url']) ?>"
-                                    data-gm-story-image="<?= esc_url($story['feature_url']) ?>">
-                                    <?= esc_html($story['title']) ?>
+                                <a class="gm-cover__more-link" href="<?php echo esc_url($story['url']); ?>"
+                                    data-gm-story-image="<?php echo esc_url($story['feature_url']); ?>">
+                                    <?php echo esc_html($story['title']); ?>
                                 </a>
                             <?php endforeach; ?>
                         </div>
@@ -211,7 +211,7 @@ class Cover extends Base_Theme
                 <div class="gm-cover__footer">
                     <?php if (!empty($this->copyright)): ?>
                         <span class="gm-cover__copyright">
-                            <?= esc_html($this->copyright) ?>
+                            <?php echo esc_html($this->copyright); ?>
                         </span>
                     <?php else: ?>
                         <span class="gm-cover__copyright" aria-hidden="true"></span>
@@ -219,7 +219,7 @@ class Cover extends Base_Theme
                     <span class="gm-cover__powerby">Powered by Groove Folios</span>
                     <?php if (!empty($latest_pages_date)): ?>
                         <span class="gm-cover__updated">
-                            <?= esc_html(sprintf(__('Updated %s', 'groove-folios'), $latest_pages_date)) ?>
+                            <?php echo esc_html(sprintf(__('Updated %s', 'groove-folios'), $latest_pages_date)); ?>
                         </span>
                     <?php else: ?>
                         <span class="gm-cover__updated" aria-hidden="true"></span>
