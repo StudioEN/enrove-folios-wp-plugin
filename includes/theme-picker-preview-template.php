@@ -13,6 +13,8 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Required from inside a closure (Plugin's template_redirect handler), so these variables are local to it, not globals.
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 if (!current_user_can('edit_posts')) {
@@ -20,7 +22,7 @@ if (!current_user_can('edit_posts')) {
   exit;
 }
 
-$nonce = isset($_GET['_wpnonce']) ? (string) wp_unslash($_GET['_wpnonce']) : '';
+$nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
 if (!wp_verify_nonce($nonce, 'groove_theme_preview')) {
   status_header(403);
   exit;
@@ -35,7 +37,7 @@ if (empty($theme_id) || !Themes_Manager::has($theme_id)) {
 }
 
 $view       = isset($_GET['groove_preview_view']) ? sanitize_key(wp_unslash($_GET['groove_preview_view'])) : 'cover';
-$page_index = isset($_GET['groove_preview_page']) ? (int) wp_unslash($_GET['groove_preview_page']) : 0;
+$page_index = isset($_GET['groove_preview_page']) ? intval(wp_unslash($_GET['groove_preview_page'])) : 0;
 $page_index = max(0, min(1, $page_index));
 
 // ── Dummy data ────────────────────────────────────────────────────────────────

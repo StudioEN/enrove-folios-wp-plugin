@@ -25,6 +25,8 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Not globals: Base_Theme::get_sample_content_data() includes this file inside a static method, so these variables are local to it.
+
 // Placeholder imagery is asked for by role, not by filename. `image_set` in
 // this theme's setup.php decides which photographic register those roles
 // resolve to, so two themes can seed the same layout with different pictures.
@@ -53,8 +55,7 @@ return array(
     array(
       'title' => __('What We Shipped', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'hero'),
-      'content' => (string) <<<HTML
-<!-- wp:paragraph -->
+      'content' => '<!-- wp:paragraph -->
 <p>A short issue this fortnight. One large thing landed, two small ones, and we finally deleted something.</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"level":2} -->
@@ -67,7 +68,7 @@ return array(
 <p>Existing manual exports are untouched. If you want one on a schedule, open it and pick a cadence — everything else carries over.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_hero}" alt="A desk with two screens showing an export running"/>{$cap_hero}</figure>
+<figure class="wp-block-image size-large"><img src="' . $img_hero . '" alt="A desk with two screens showing an export running"/>' . $cap_hero . '</figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>Smaller changes</h2>
@@ -85,15 +86,13 @@ return array(
 <h2>What we removed</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
-<p>The dashboard's activity sparkline is gone. Six people had used it in the previous ninety days, and four of those were us. If you were one of the other two, reply and tell us what it was doing for you — we will build something better rather than putting it back.</p>
-<!-- /wp:paragraph -->
-HTML,
+<p>The dashboard\'s activity sparkline is gone. Six people had used it in the previous ninety days, and four of those were us. If you were one of the other two, reply and tell us what it was doing for you — we will build something better rather than putting it back.</p>
+<!-- /wp:paragraph -->',
     ),
     array(
       'title' => __('Three Things Worth Reading', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'scene'),
-      'content' => (string) <<<HTML
-<!-- wp:paragraph -->
+      'content' => '<!-- wp:paragraph -->
 <p>What the team passed around this fortnight, with a line on why each one stuck.</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"level":2} -->
@@ -120,15 +119,13 @@ HTML,
 <p>A claim that estimation is not merely inaccurate but actively harmful, because the act of producing a number commits people to defending it. Two of us found it obviously correct and two found it obviously wrong, which is usually a sign that something is worth reading.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_scene}" alt="A stack of printed articles with margin notes"/>{$cap_scene}</figure>
-<!-- /wp:image -->
-HTML,
+<figure class="wp-block-image size-large"><img src="' . $img_scene . '" alt="A stack of printed articles with margin notes"/>' . $cap_scene . '</figure>
+<!-- /wp:image -->',
     ),
     array(
       'title' => __('Team Notes', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'people'),
-      'content' => (string) <<<HTML
-<!-- wp:paragraph -->
+      'content' => '<!-- wp:paragraph -->
 <p>Three changes to how we work, one of which will affect you.</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"level":2} -->
@@ -138,7 +135,7 @@ HTML,
 <p>From the first of next month, live support runs 09:00–17:00 in two timezones rather than one, which closes the gap that has been swallowing Asia-Pacific tickets overnight. Response times outside those hours stay as they are: one working day, and we have hit that ninety-six per cent of the time this year.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_people}" alt="Four people around a table reviewing a printed schedule"/></figure>
+<figure class="wp-block-image size-large"><img src="' . $img_people . '" alt="Four people around a table reviewing a printed schedule"/></figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>Two people joined</h2>
@@ -146,7 +143,7 @@ HTML,
 <!-- wp:columns -->
 <div class="wp-block-columns"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_portrait_b}" alt="Portrait of Noor Haddad"/></figure>
+<figure class="wp-block-image size-large"><img src="' . $img_portrait_b . '" alt="Portrait of Noor Haddad"/></figure>
 <!-- /wp:image -->
 <!-- wp:paragraph -->
 <p><strong>Noor Haddad</strong> joins support after four years doing the same job somewhere with considerably worse tooling, and has already filed eleven bug reports.</p>
@@ -154,7 +151,7 @@ HTML,
 <!-- /wp:column -->
 <!-- wp:column -->
 <div class="wp-block-column"><!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_portrait_c}" alt="Portrait of Dan Okafor"/></figure>
+<figure class="wp-block-image size-large"><img src="' . $img_portrait_c . '" alt="Portrait of Dan Okafor"/></figure>
 <!-- /wp:image -->
 <!-- wp:paragraph -->
 <p><strong>Dan Okafor</strong> is our first dedicated infrastructure hire and spent his first week reading logs rather than writing code, which we took as a very good sign.</p>
@@ -165,17 +162,15 @@ HTML,
 <h2>One person left</h2>
 <!-- /wp:heading -->
 <!-- wp:media-text {"mediaType":"image","mediaWidth":32} -->
-<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:32% auto"><figure class="wp-block-media-text__media"><img src="{$img_portrait_a}" alt="Portrait of Petra Lindqvist"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
+<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:32% auto"><figure class="wp-block-media-text__media"><img src="' . $img_portrait_a . '" alt="Portrait of Petra Lindqvist"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
 <p>Petra Lindqvist has gone back to teaching after five years here. She wrote most of the import pipeline, named every table in it after a river, and left better documentation than anyone has any right to expect.</p>
 <!-- /wp:paragraph --></div></div>
-<!-- /wp:media-text -->
-HTML,
+<!-- /wp:media-text -->',
     ),
     array(
       'title' => __('What Comes Next', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'backdrop'),
-      'content' => (string) <<<HTML
-<!-- wp:paragraph -->
+      'content' => '<!-- wp:paragraph -->
 <p>The next two months, stated plainly enough that you can hold us to it.</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"level":2} -->
@@ -203,15 +198,14 @@ HTML,
 <p>Mobile apps, this year or next. The site works on a phone and we would rather it worked well than have a second thing to keep in step with the first.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_backdrop}" alt="A soft, low-contrast surface closing the issue"/>{$cap_backdrop}</figure>
+<figure class="wp-block-image size-large"><img src="' . $img_backdrop . '" alt="A soft, low-contrast surface closing the issue"/>' . $cap_backdrop . '</figure>
 <!-- /wp:image -->
 <!-- wp:separator -->
 <hr class="wp-block-separator has-alpha-channel-opacity"/>
 <!-- /wp:separator -->
 <!-- wp:paragraph -->
 <p>Replies reach a person. If something here was wrong, or you want more of one section and less of another, say so — this issue is shorter than the last one because three of you asked.</p>
-<!-- /wp:paragraph -->
-HTML,
+<!-- /wp:paragraph -->',
     ),
   ),
 );

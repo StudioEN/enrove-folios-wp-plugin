@@ -18,8 +18,8 @@ class Folio_Page_List_Table extends List_Table
 
   public function edit_post_link($link, $post_id, $context)
   {
-    if ($context === 'display' && isset($_REQUEST['folio_id'])) {
-      $link = $link . '&folio_id=' . (int) $_REQUEST['folio_id'];
+    if ($context === 'display' && isset($_REQUEST['folio_id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are listed.
+      $link = $link . '&folio_id=' . (int) $_REQUEST['folio_id']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are listed.
     }
     return $link;
   }
@@ -88,41 +88,43 @@ class Folio_Page_List_Table extends List_Table
       if ($lock_holder) {
         $lock_holder = get_userdata($lock_holder);
         $locked_avatar = get_avatar($lock_holder->ID, 18);
-        $locked_text = esc_html(sprintf(__('%s is currently editing', 'groove-folios'), $lock_holder->display_name));
+        /* translators: %s: Display name of the user editing the page. */
+        $locked_text = sprintf(__('%s is currently editing', 'groove-folios'), $lock_holder->display_name);
       } else {
         $locked_avatar = '';
         $locked_text = '';
       }
 
-      echo '<div class="locked-info"><span class="locked-avatar">' . $locked_avatar . '</span> <span class="locked-text">' . $locked_text . "</span></div>\n";
+      // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $locked_avatar is get_avatar() markup, which escapes its own attributes; kses would requote them.
+      echo '<div class="locked-info"><span class="locked-avatar">' . $locked_avatar . '</span> <span class="locked-text">' . esc_html($locked_text) . "</span></div>\n";
     }
 
     $pad = str_repeat('&#8212; ', $this->current_level);
     echo '<strong class="g-folio__title-wrap">';
 
     $title = (string) $post->post_title;
-    $title_tooltip = esc_attr($title);
     if ($title === '') {
-      $title_display = esc_html__('(no title)', 'groove-folios');
+      $title_display = __('(no title)', 'groove-folios');
     } else {
-      $title_display = esc_html($title);
+      $title_display = $title;
     }
 
     if ($can_edit_post && 'trash' !== $post->post_status) {
       printf(
         '<a class="row-title g-folio__truncate-text" href="%s" aria-label="%s" title="%s">%s%s</a>',
-        get_edit_post_link($post->ID),
+        esc_url(get_edit_post_link($post->ID)),
+        /* translators: %s: Page title. */
         esc_attr(sprintf(__('&#8220;%s&#8221; (Edit)', 'groove-folios'), $title !== '' ? $title : __('(no title)', 'groove-folios'))),
-        $title_tooltip,
-        $pad,
-        $title_display
+        esc_attr($title),
+        esc_html($pad),
+        esc_html($title_display)
       );
     } else {
       printf(
         '<span class="g-folio__truncate-text" title="%s">%s%s</span>',
-        $title_tooltip,
-        $pad,
-        $title_display
+        esc_attr($title),
+        esc_html($pad),
+        esc_html($title_display)
       );
     }
 
@@ -135,11 +137,12 @@ class Folio_Page_List_Table extends List_Table
   {
     $args = parent::get_query_args();
 
-    if (isset($_REQUEST['folio_id'])) {
+    if (isset($_REQUEST['folio_id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are listed.
+      // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- A page belongs to its folio only through folio_id post meta, so filtering by folio needs a meta query.
       $args['meta_query'] = array(
         array(
           'key' => 'folio_id',
-          'value' => $_REQUEST['folio_id'],
+          'value' => absint(wp_unslash($_REQUEST['folio_id'])), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are listed.
           'compare' => '=',
           'type' => 'NUMERIC'
         )

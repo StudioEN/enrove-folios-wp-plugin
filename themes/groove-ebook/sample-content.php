@@ -33,6 +33,8 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Not globals: Base_Theme::get_sample_content_data() includes this file inside a static method, so these variables are local to that call.
+
 // Placeholder imagery is asked for by role, not by filename. `image_set` in
 // this theme's setup.php decides which photographic register those roles
 // resolve to, so two themes can seed the same layout with different pictures.
@@ -120,8 +122,7 @@ return array(
   'pages'       => array(
     array(
       'title' => __('Foreword', 'groove-folios'),
-      'content' => (string) <<<HTML
-{$plate_front}
+      'content' => (string) ($plate_front . '
 <!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">This book began as a complaint. I had spent a decade being paid to make things faster and had started to notice that almost nothing I was proud of had been made quickly. What follows is an attempt to work out whether that was sentiment or evidence.</p>
 <!-- /wp:paragraph -->
@@ -140,13 +141,11 @@ return array(
 <!-- wp:groove-ebook/ornament {"mark":"asterism"} /-->
 <!-- wp:paragraph -->
 <p>Replace this page with your own front matter — a foreword, a dedication, or simply a summary of what the reader is about to get.</p>
-<!-- /wp:paragraph -->
-HTML,
+<!-- /wp:paragraph -->'),
     ),
     array(
       'title' => __('One: The Material of Attention', 'groove-folios'),
-      'content' => (string) <<<HTML
-<!-- wp:groove-ebook/epigraph {"text":"The hand is the window on to the mind.","attribution":"Immanuel Kant"} /-->
+      'content' => (string) ('<!-- wp:groove-ebook/epigraph {"text":"The hand is the window on to the mind.","attribution":"Immanuel Kant"} /-->
 <!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">A bookbinder I know can tell, by the sound a signature makes when it is folded, whether the grain is running the right way. She has never explained this to me in a way I could act on. She has simply done it, several thousand times, until the knowledge moved out of her head and into her hands.</p>
 <!-- /wp:paragraph -->
@@ -166,7 +165,7 @@ HTML,
 <!-- wp:paragraph -->
 <p>Consider what happens when we optimise a workshop. The offcuts go, the false starts go, the practice pieces go. Each of those is waste by any reasonable measure, and each of them was the only place a beginner could be wrong without consequence. We did not remove the learning deliberately. We removed the conditions and the learning left with them.</p>
 <!-- /wp:paragraph -->
-{$plate_one}
+' . $plate_one . '
 <!-- wp:heading {"level":2} -->
 <h2>What this costs</h2>
 <!-- /wp:heading -->
@@ -182,13 +181,11 @@ HTML,
 <!-- wp:paragraph -->
 <p>The third is the one that decides whether the other two were worth spending.</p>
 <!-- /wp:paragraph -->
-<!-- wp:groove-ebook/summary {"title":"What this chapter argued","points":["Skill leaves the head and moves into the hands, and only repetition moves it.","The offcuts and the practice pieces were the learning, not the waste.","Tolerance for visible failure is the scarce resource — not time, and not material."]} /-->
-HTML,
+<!-- wp:groove-ebook/summary {"title":"What this chapter argued","points":["Skill leaves the head and moves into the hands, and only repetition moves it.","The offcuts and the practice pieces were the learning, not the waste.","Tolerance for visible failure is the scarce resource — not time, and not material."]} /-->'),
     ),
     array(
       'title' => __('Two: Working in Public', 'groove-folios'),
-      'content' => (string) <<<HTML
-<!-- wp:paragraph {"dropCap":true} -->
+      'content' => (string) ('<!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">The second half of the argument is less comfortable, because it asks something of the people around the work rather than the person doing it. If mistakes have to be visible, somebody has to agree to look at them without flinching.</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"level":2} -->
@@ -218,19 +215,17 @@ HTML,
 <li>Keep the rejected versions somewhere you will see them. They are the only record of why the final thing looks the way it does.</li>
 <!-- /wp:list-item --></ol>
 <!-- /wp:list -->
-{$plate_two}
+' . $plate_two . '
 <!-- wp:heading {"level":2} -->
 <h2>Where this leaves us</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
 <p>Not with a method. Methods are the thing organisations reach for when they want the result without the conditions. What is on offer here is smaller and harder: a set of conditions, maintained deliberately, inside which people get better at things. Everything else in this book is an argument for paying that price.</p>
-<!-- /wp:paragraph -->
-HTML,
+<!-- /wp:paragraph -->'),
     ),
     array(
       'title' => __('Colophon', 'groove-folios'),
-      'content' => (string) <<<HTML
-<!-- wp:paragraph -->
+      'content' => (string) ('<!-- wp:paragraph -->
 <p>This edition was set for the screen and is intended to be read in one or two sittings.</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"level":2} -->
@@ -256,13 +251,12 @@ HTML,
 <p>To everyone who read a draft and said the structure was wrong, particularly the two who were right. To the bindery that let me stand in the corner for a week. And to the reader who gets this far — the argument only works if somebody finishes it.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_backdrop}" alt="A soft, near-monochrome surface used as a closing plate"/>{$cap_backdrop}</figure>
+<figure class="wp-block-image size-large"><img src="' . $img_backdrop . '" alt="A soft, near-monochrome surface used as a closing plate"/>' . $cap_backdrop . '</figure>
 <!-- /wp:image -->
 <!-- wp:groove-ebook/ornament {"mark":"rule"} /-->
 <!-- wp:paragraph -->
 <p>Replace this page with your own colophon: edition details, sources, permissions and thanks.</p>
-<!-- /wp:paragraph -->
-HTML,
+<!-- /wp:paragraph -->'),
     ),
   ),
 );

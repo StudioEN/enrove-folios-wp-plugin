@@ -88,7 +88,7 @@ class Page extends Base_Theme
                     continue;
                 }
                 $anchor = $this->to_anchor_name($html[1]);
-                echo '<div class="gm-page__catalog"><a href="' . ($anchor ? ('#' . $anchor) : '') . '">' . esc_html($html[1]) . '</a></div>';
+                echo '<div class="gm-page__catalog"><a href="' . esc_attr($anchor ? ('#' . $anchor) : '') . '">' . esc_html($html[1]) . '</a></div>';
             }
         }
 
@@ -108,7 +108,7 @@ class Page extends Base_Theme
                 $html = $this->get_html($title);
                 if ($html) {
                     $anchor = $this->to_anchor_name($html[1]);
-                    $block['innerContent'][0] = '<' . $html[2] . ' id="' . $anchor . '">' . $html[1] . '</' . $html[2] . '>';
+                    $block['innerContent'][0] = '<' . $html[2] . ' id="' . esc_attr($anchor) . '">' . esc_html($html[1]) . '</' . $html[2] . '>';
                 }
             }
 
@@ -186,7 +186,7 @@ class Page extends Base_Theme
                             }
                             $anchor = $this->to_anchor_name($html[1]);
                             ?>
-                            <a class="gm-page__mobile-nav-link" href="<?php echo '#' . $anchor; ?>">
+                            <a class="gm-page__mobile-nav-link" href="<?php echo esc_attr('#' . $anchor); ?>">
                                 <div class="gm-page__mobile-nav-item">
                                     <?php echo esc_html($html[1]); ?>
                                 </div>
@@ -281,7 +281,7 @@ class Page extends Base_Theme
                                 <?php echo esc_html($this->title); ?>
                             </h1>
                             <div class="gm-page__content">
-                                <?php echo $this->get_content(); ?>
+                                <?php echo $this->get_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block-rendered post content, escaped by core; kses would strip embed iframes. ?>
                             </div>
                             <?php $this->display_footer() ?>
                         </article>

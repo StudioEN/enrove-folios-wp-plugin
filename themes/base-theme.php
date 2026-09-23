@@ -13,6 +13,9 @@ abstract class Base_Theme extends Assets
   public $id;
   public $post_type;
   public $title;
+  /** Every cover declares its own; declared here too so the theme picker's
+   *  preview can set it on a page class without a PHP 8.2 dynamic-property deprecation. */
+  public $subtitle;
   public $content;
   public $feature_image;
   public $author;
@@ -139,7 +142,8 @@ abstract class Base_Theme extends Assets
       }
     }
 
-    return isset($_REQUEST['folio_id']) ? (int) wp_unslash($_REQUEST['folio_id']) : 0;
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio to render; nothing is changed, and get_folio_data() only loads a folio this visitor may view.
+    return isset($_REQUEST['folio_id']) ? intval(wp_unslash($_REQUEST['folio_id'])) : 0;
   }
 
   /**
@@ -656,7 +660,7 @@ abstract class Base_Theme extends Assets
       'orderby' => 'menu_order',
       'order' => 'ASC',
       'post_status' => Utils::get_viewable_post_statuses(),
-      'meta_query' => array(
+      'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the only link from a page to its folio; the query is bounded to one folio's pages.
         array(
           'key' => 'folio_id',
           'value' => $id,

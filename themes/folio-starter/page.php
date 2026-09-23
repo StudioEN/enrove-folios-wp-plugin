@@ -135,6 +135,7 @@ class Page extends Base_Theme
     $content = $this->content;
     $blocks = parse_blocks($content);
 
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_the_post_thumbnail() markup, escaped by core; kses would strip its srcset/sizes/decoding attributes.
     echo $this->feature_image;
 
     $results = '';
@@ -260,7 +261,7 @@ class Page extends Base_Theme
             <a class="g-folio__theme-page-nav-item-link" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page->ID)); ?>"
               <?php echo $is_current ? 'aria-current="page"' : ''; ?>>
               <div class="g-folio__theme-page-nav-item">
-                <i class="g-folio__theme-page-nav-item-order"><?php echo $index; ?></i>
+                <i class="g-folio__theme-page-nav-item-order"><?php echo (int) $index; ?></i>
                 <?php echo esc_html($page->post_title); ?>
               </div>
             </a>
@@ -330,7 +331,7 @@ class Page extends Base_Theme
               <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
               <?php $this->display_contents() ?>
               <div class="g-folio__theme-page-content">
-                <?php echo $this->get_content(); ?>
+                <?php echo $this->get_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block-rendered post content, escaped by core; kses would strip embed iframes. ?>
               </div>
               <?php $this->display_footer() ?>
             </div>

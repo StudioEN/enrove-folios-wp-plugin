@@ -288,7 +288,8 @@ class Credits
   }
 
   /**
-   * Create a directory, preferring WordPress's helper when it is loaded.
+   * Create a directory. This class only runs with WordPress loaded (the CLI
+   * curator bootstraps wp-load.php), so wp_mkdir_p() is always there.
    *
    * @param string $dir
    *
@@ -296,10 +297,6 @@ class Credits
    */
   private static function mkdir(string $dir): bool
   {
-    if (function_exists('wp_mkdir_p')) {
-      return (bool) wp_mkdir_p($dir);
-    }
-
-    return is_dir($dir) || mkdir($dir, 0775, true);
+    return (bool) wp_mkdir_p($dir);
   }
 }

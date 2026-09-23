@@ -40,7 +40,7 @@
 // file directly gets nothing. The shell defines ABSPATH for itself (as
 // bin/check-docs.php does) so the guard can be the plain form Plugin Check reads.
 if (PHP_SAPI === 'cli' && !defined('ABSPATH')) {
-    define('ABSPATH', dirname(__DIR__) . '/');
+    define('ABSPATH', dirname(__DIR__) . '/'); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress's own constant, defined only in a shell where WordPress is not loaded.
 }
 if (!defined('ABSPATH')) {
     exit;
@@ -774,6 +774,8 @@ if (defined('GROOVE_THEME_CONTRACT_LIB')) {
     return;
 }
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound, WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- CLI-only code (a WordPress include returns above): shell-script globals, plain-text terminal output and STDERR messages, with no WordPress loaded to escape or write through.
+
 $root = dirname(__DIR__);
 $opts = getopt('', ['theme::', 'dir::', 'strict', 'help']);
 
@@ -838,6 +840,9 @@ if (isset($opts['theme'])) {
 
 $had_warning = false;
 $rows = [];
+
+// groove_check_theme_dir() is library code that also runs on WordPress requests.
+// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound, WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
 
 /**
  * Check one theme folder against the contract.
@@ -1018,6 +1023,8 @@ function groove_check_theme_dir(string $dir, string $root, array $core): ?array
         'warn'   => $warn,
     ];
 }
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound, WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- CLI-only code (a WordPress include returns above): shell-script globals, plain-text terminal output and STDERR messages, with no WordPress loaded to escape or write through.
 
 foreach ($theme_dirs as $dir) {
     $row = groove_check_theme_dir($dir, $root, $core);

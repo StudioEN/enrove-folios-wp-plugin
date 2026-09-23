@@ -135,7 +135,7 @@ function display_proposal_navigation_pane(array $args = []): void
               <i
                 class="<?php echo esc_attr($item_order_class); ?>"><?php echo esc_html(str_pad((string) $ordinal, 2, '0', STR_PAD_LEFT)); ?></i>
               <div class="gp-nav__item-copy">
-                <span class="gp-nav__item-meta"><?php echo esc_html(sprintf(__('Section %d', 'groove-folios'), $ordinal)); ?></span>
+                <span class="gp-nav__item-meta"><?php /* translators: %d: section number */ echo esc_html(sprintf(__('Section %d', 'groove-folios'), $ordinal)); ?></span>
                 <span
                   class="<?php echo $is_current ? 'gp-nav__item-title' : 'gp-nav__item-title'; ?>"><?php echo esc_html($page->post_title ?? ''); ?></span>
               </div>

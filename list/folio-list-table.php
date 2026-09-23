@@ -92,6 +92,7 @@ class Folio_List_Table extends List_Table {
 
       case 'page_count':
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Page count for one folio row; core has no API that counts posts by meta value, and the count must be fresh after each edit.
         $count = (int) $wpdb->get_var($wpdb->prepare(
           "SELECT COUNT(*)
            FROM {$wpdb->posts} p
@@ -161,12 +162,14 @@ class Folio_List_Table extends List_Table {
       $actions['edit'] = sprintf(
         '<a href="%s" aria-label="%s">%s</a>',
         get_edit_post_link($post_id),
+        /* translators: %s: Folio title. */
         esc_attr(sprintf(__('Edit &#8220;%s&#8221;', 'groove-folios'), $title)),
         __('Edit', 'groove-folios')
       );
 
       $actions['inline hide-if-no-js'] = sprintf(
         '<button type="button" class="button-link editinline" aria-label="%s" aria-expanded="false">%s</button>',
+        /* translators: %s: Folio title. */
         esc_attr(sprintf(__('Quick edit &#8220;%s&#8221; inline', 'groove-folios'), $title)),
         __('Quick&nbsp;Edit', 'groove-folios')
       );
@@ -201,6 +204,7 @@ class Folio_List_Table extends List_Table {
         $actions['untrash'] = sprintf(
           '<a href="%s" aria-label="%s">%s</a>',
           wp_nonce_url(admin_url(sprintf($post_type_object->_edit_link . '&amp;action=untrash', $post_id)), 'untrash-post_' . $post_id),
+          /* translators: %s: Folio title. */
           esc_attr(sprintf(__('Restore &#8220;%s&#8221; from the Trash', 'groove-folios'), $title)),
           __('Restore', 'groove-folios')
         );
@@ -208,6 +212,7 @@ class Folio_List_Table extends List_Table {
         $actions['trash'] = sprintf(
           '<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
           get_delete_post_link($post_id),
+          /* translators: %s: Folio title. */
           esc_attr(sprintf(__('Move &#8220;%s&#8221; to the Trash', 'groove-folios'), $title)),
           _x('Trash', 'verb', 'groove-folios')
         );
@@ -217,6 +222,7 @@ class Folio_List_Table extends List_Table {
         $actions['delete'] = sprintf(
           '<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
           get_delete_post_link($post_id, '', true),
+          /* translators: %s: Folio title. */
           esc_attr(sprintf(__('Delete &#8220;%s&#8221; permanently', 'groove-folios'), $title)),
           __('Delete Permanently', 'groove-folios')
         );
@@ -232,6 +238,7 @@ class Folio_List_Table extends List_Table {
           $actions['view'] = sprintf(
             '<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
             esc_url($view_url),
+            /* translators: %s: Folio title. */
             esc_attr(sprintf(__('Preview &#8220;%s&#8221;', 'groove-folios'), $title)),
             __('Preview', 'groove-folios')
           );
@@ -244,13 +251,14 @@ class Folio_List_Table extends List_Table {
         $actions['view'] = sprintf(
           '<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
           esc_url($view_url),
+          /* translators: %s: Folio title. */
           esc_attr(sprintf(__('View &#8220;%s&#8221;', 'groove-folios'), $title)),
           __('View', 'groove-folios')
         );
       }
     }
 
-    $actions = apply_filters('post_row_actions', $actions, $post);
+    $actions = apply_filters('post_row_actions', $actions, $post); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core's Posts list-table hook, applied deliberately so other plugins' row actions reach this posts list.
 
     return $this->row_actions($actions);
   }

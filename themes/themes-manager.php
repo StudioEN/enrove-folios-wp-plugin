@@ -1229,7 +1229,11 @@ class Themes_Manager extends Assets
 
         $outgoing = $themes_dir . $theme_id . '.outgoing-' . uniqid() . '/';
 
-        if (!@rename(untrailingslashit($dest), untrailingslashit($outgoing))) {
+        // move() is rename() for a directory: both targets are known not to
+        // exist, so it neither overwrites nor falls back to a copy.
+        $fs = static::local_filesystem();
+
+        if (!$fs->move(untrailingslashit($dest), untrailingslashit($outgoing))) {
             static::cleanup_dir($staging);
             return new \WP_Error(
                 'replace_failed',
@@ -1238,9 +1242,9 @@ class Themes_Manager extends Assets
             );
         }
 
-        if (!@rename(untrailingslashit($staging), untrailingslashit($dest))) {
+        if (!$fs->move(untrailingslashit($staging), untrailingslashit($dest))) {
             // Put the working theme back before reporting anything.
-            @rename(untrailingslashit($outgoing), untrailingslashit($dest));
+            $fs->move(untrailingslashit($outgoing), untrailingslashit($dest));
             static::cleanup_dir($staging);
             return new \WP_Error(
                 'replace_failed',
@@ -1780,6 +1784,7 @@ class Themes_Manager extends Assets
             'theme-2' => 'groove-ebook',
         ];
 
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- One-time bulk rewrite of legacy theme_id meta values across all posts, guarded by the option above; core has no API for it and there is nothing to cache.
         foreach ($mapping as $old_id => $new_id) {
             $wpdb->update(
                 $wpdb->postmeta,
@@ -1790,6 +1795,7 @@ class Themes_Manager extends Assets
                 ]
             );
         }
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
         update_option('groove_theme_migration_v1', time());
     }
@@ -1823,13 +1829,26 @@ class Themes_Manager extends Assets
         if (!is_dir($dir)) {
             return;
         }
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-        foreach ($files as $file) {
-            $file->isDir() ? rmdir($file->getRealPath()) : unlink($file->getRealPath());
-        }
-        rmdir($dir);
+        static::local_filesystem()->delete($dir, true);
+    }
+
+    /**
+     * WordPress's direct filesystem, for the local directories this class
+     * stages, swaps and deletes (the temp dir and wp-content/groove-themes/).
+     *
+     * Deliberately the direct class rather than the global $wp_filesystem:
+     * uninstall_theme() never initialises that, and on a site configured for
+     * FTP it would route these local paths through a connection that may need
+     * credentials. The direct methods are the same unlink/rmdir/rename calls
+     * this class made itself before.
+     *
+     * @return \WP_Filesystem_Direct
+     */
+    private static function local_filesystem(): \WP_Filesystem_Direct
+    {
+        require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+        require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
+
+        return new \WP_Filesystem_Direct(null);
     }
 }

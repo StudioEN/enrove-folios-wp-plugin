@@ -26,7 +26,7 @@ class Add_New extends Page
     }, Overview::MENU_PRIORITY + 20);
 
     add_action('admin_init', function () {
-      if (!isset($_GET['page']) || sanitize_key(wp_unslash($_GET['page'])) !== static::PAGE_ID) {
+      if (!isset($_GET['page']) || sanitize_key(wp_unslash($_GET['page'])) !== static::PAGE_ID) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only: only decides whether to redirect this retired screen to All Folios.
         return;
       }
       wp_safe_redirect(admin_url('admin.php?page=groove-all-folios&open_add_new=1'));
@@ -178,8 +178,8 @@ class Add_New extends Page
 ?>
 <p class="g-folio__themes-desc">
   <?php
-  /* translators: %s: number of available themes */
   $themes_help_text = sprintf(
+    /* translators: %s: number of available themes */
     _n('Choose a theme to get started. %s theme available.', 'Choose a theme to get started. %s themes available.', $theme_count, 'groove-folios'),
     number_format_i18n($theme_count)
   );
@@ -220,6 +220,7 @@ class Add_New extends Page
       echo esc_html__('Selected', 'groove-folios');
       echo '</span>';
       echo '</button>';
+      /* translators: %s: theme name */
       echo '<button type="button" class="g-theme-preview-btn" data-theme-id="' . esc_attr($id) . '" aria-label="' . esc_attr(sprintf(__('Preview %s theme', 'groove-folios'), $theme['name'])) . '">';
       echo esc_html__('Preview', 'groove-folios');
       echo '</button>';
@@ -242,15 +243,15 @@ class Add_New extends Page
       }
       // Fields in a hidden section start disabled so a no-JS submit cannot seed
       // the wrong theme's content; groove-main.js re-enables the visible one.
-      $field_disabled = $is_selected_theme ? '' : ' disabled="disabled"';
+      $field_disabled = !$is_selected_theme;
       $field_id = 'seed_sample_content_' . sanitize_key($sample_theme_id);
       ?>
     <div class="g-folio__sample-toggle<?php echo $is_selected_theme ? '' : ' hidden'; ?>"
       data-add-new-theme-target="<?php echo esc_attr($sample_theme_id); ?>" data-disable-hidden-fields="1">
       <label for="<?php echo esc_attr($field_id); ?>" class="g-folio__sample-label">
-        <input type="hidden" name="seed_sample_content" value="0"<?php echo $field_disabled; ?> />
+        <input type="hidden" name="seed_sample_content" value="0"<?php echo $field_disabled ? ' disabled="disabled"' : ''; ?> />
         <input type="checkbox" id="<?php echo esc_attr($field_id); ?>" name="seed_sample_content" value="1"
-          class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"<?php echo $field_disabled; ?> />
+          class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"<?php echo $field_disabled ? ' disabled="disabled"' : ''; ?> />
         <?php echo esc_html($sample['label']); ?>
       </label>
       <?php if ($sample['description'] !== '') : ?>
@@ -259,7 +260,7 @@ class Add_New extends Page
                description survives even when the tooltip script has not run. */ ?>
       <button type="button" class="g-folio__sample-info g-tooltip-button g-tooltip-button--wrap"
         aria-label="<?php echo esc_attr($sample['description']); ?>"
-        data-tooltip-text="<?php echo esc_attr($sample['description']); ?>"<?php echo $field_disabled; ?>>
+        data-tooltip-text="<?php echo esc_attr($sample['description']); ?>"<?php echo $field_disabled ? ' disabled="disabled"' : ''; ?>>
         <span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
       </button>
       <?php endif; ?>
@@ -284,15 +285,17 @@ class Add_New extends Page
    */
   private function is_sample_seed_requested(): bool
   {
+    // phpcs:disable WordPress.Security.NonceVerification.Missing -- Only called from create_folio(), after check_admin_referer('groove_create_folio_action', 'groove_nonce') and the edit_posts check.
     foreach (array('seed_sample_content', 'seed_proposal_sample') as $field) {
       if (!isset($_POST[$field])) {
         continue;
       }
       // The paired hidden input means '0' arrives when the box is unticked.
-      if ((string) wp_unslash($_POST[$field]) === '1') {
+      if ('1' === $_POST[$field]) {
         return true;
       }
     }
+    // phpcs:enable WordPress.Security.NonceVerification.Missing
 
     return false;
   }
@@ -368,8 +371,8 @@ class Add_New extends Page
       'posts_per_page' => 1,
       'fields' => 'ids',
       'no_found_rows' => true,
-      'meta_key' => '_groove_pexels_slug',
-      'meta_value' => $slug,
+      'meta_key' => '_groove_pexels_slug', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- One-row lookup of an imported sample image, run only while seeding a new folio.
+      'meta_value' => $slug, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- As above.
     ));
     if (!empty($existing)) {
       $resolved[$slug] = (int) $existing[0];
@@ -435,7 +438,7 @@ class Add_New extends Page
         <div class="g-folio__postbox-header-right">
           <div class="g-folio__postbox-close">
             <?php
-            $from = isset($_GET['from']) ? sanitize_key(wp_unslash($_GET['from'])) : 'groove-overview';
+            $from = isset($_GET['from']) ? sanitize_key(wp_unslash($_GET['from'])) : 'groove-overview'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter, checked against an allow-list below; picks the close link's target.
             $allowed_from = array('groove-overview', 'groove-all-folios');
             if (!in_array($from, $allowed_from, true)) {
               $from = 'groove-overview';

@@ -124,12 +124,13 @@ class Folio extends Page
     }, Overview::MENU_PRIORITY + 20);
 
     add_action('current_screen', function () {
+      // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only view parameters: which admin screen and which folio to open; nothing is written.
       $current_page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
       if ($current_page !== static::PAGE_ID) {
         return;
       }
 
-      $folio_id = isset($_GET['folio_id']) ? (int) wp_unslash($_GET['folio_id']) : 0;
+      $folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0;
 
       if (!isset($_GET['folio_id'])) {
         $this->redirect_to_all_folios();
@@ -138,6 +139,7 @@ class Folio extends Page
       } else {
         $this->get_folio_fields();
       }
+      // phpcs:enable WordPress.Security.NonceVerification.Recommended
     });
   }
 
@@ -147,21 +149,21 @@ class Folio extends Page
 
     check_ajax_referer('inlineeditnonce', '_inline_edit');
 
-    if (!isset($_POST['post_ID']) || !(int) wp_unslash($_POST['post_ID'])) {
+    if (!isset($_POST['post_ID']) || !intval(wp_unslash($_POST['post_ID']))) {
       wp_die();
     }
 
-    $post_id = (int) wp_unslash($_POST['post_ID']);
+    $post_id = intval(wp_unslash($_POST['post_ID']));
 
 
     $post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : '';
     if ('page' === $post_type) {
       if (!current_user_can('edit_page', $post_id)) {
-        wp_die(__('Sorry, you are not allowed to edit this page.', 'groove-folios'));
+        wp_die(esc_html__('Sorry, you are not allowed to edit this page.', 'groove-folios'));
       }
     } else {
       if (!current_user_can('edit_post', $post_id)) {
-        wp_die(__('Sorry, you are not allowed to edit this post.', 'groove-folios'));
+        wp_die(esc_html__('Sorry, you are not allowed to edit this post.', 'groove-folios'));
       }
     }
 
@@ -178,7 +180,7 @@ class Folio extends Page
         $msg_template = __('Saving is disabled: %s is currently editing this page.', 'groove-folios');
       }
 
-      printf($msg_template, esc_html($last_user_name));
+      printf(esc_html($msg_template), esc_html($last_user_name));
       wp_die();
     }
 
@@ -219,6 +221,7 @@ class Folio extends Page
       foreach ($data['tax_input'] as $taxonomy => $terms) {
         $tax_object = get_taxonomy($taxonomy);
         /** This filter is documented in wp-admin/includes/class-wp-posts-list-table.php */
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core's own Quick Edit filter, applied exactly as wp_ajax_inline_save() does so other plugins' settings are honoured.
         if (!apply_filters('quick_edit_show_taxonomy', $tax_object->show_in_quick_edit, $taxonomy, $post['post_type'])) {
           unset($data['tax_input'][$taxonomy]);
         }
@@ -273,12 +276,14 @@ class Folio extends Page
         return;
       }
       $folio_id = get_post_meta($post_id, 'folio_id', true);
+      // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended -- save_post fires either inside a save whose request verified its own nonce (post.php's update-post_{ID}, Quick Edit's inlineeditnonce) or on core's auto-draft when post-new.php opens (a screen load core runs without a nonce); edit_post is checked above, and the int must name a groove_folio. It only links the page to that folio.
       if (!$folio_id && isset($_POST['folio_id'])) {
-        $folio_id = (int) wp_unslash($_POST['folio_id']);
+        $folio_id = intval(wp_unslash($_POST['folio_id']));
       }
       if (!$folio_id && isset($_GET['folio_id'])) {
-        $folio_id = (int) wp_unslash($_GET['folio_id']);
+        $folio_id = intval(wp_unslash($_GET['folio_id']));
       }
+      // phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended
       if ($folio_id && 'groove_folio' !== get_post_type($folio_id)) {
         return;
       }
@@ -294,8 +299,8 @@ class Folio extends Page
   public function get_folio_fields()
   {
     if ($this->folio == null) {
-      if (isset($_GET['folio_id'])) {
-        $id = (int) wp_unslash($_GET['folio_id']);
+      if (isset($_GET['folio_id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the folio this screen edits.
+        $id = intval(wp_unslash($_GET['folio_id'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- As above.
         if (!$id) {
           $this->redirect_to_all_folios();
         }
@@ -343,13 +348,15 @@ class Folio extends Page
 
   public function save_folio_manual()
   {
-    $id = isset($_POST['folio_id']) ? (int) wp_unslash($_POST['folio_id']) : 0;
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only reads the folio's current status; save_folio() runs check_admin_referer('groove_save_folio', 'groove_nonce') before anything is written.
+    $id = isset($_POST['folio_id']) ? intval(wp_unslash($_POST['folio_id'])) : 0;
     $this->save_folio($this->get_current_folio_status($id, 'draft'));
   }
 
   public function auto_save_folio()
   {
-    $id = isset($_POST['folio_id']) ? (int) wp_unslash($_POST['folio_id']) : 0;
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only reads the folio's current status; save_folio() runs check_admin_referer('groove_save_folio', 'groove_nonce') before anything is written.
+    $id = isset($_POST['folio_id']) ? intval(wp_unslash($_POST['folio_id'])) : 0;
     $this->save_folio($this->get_current_folio_status($id, 'draft'));
   }
 
@@ -386,7 +393,7 @@ class Folio extends Page
       return;
     }
 
-    $id = (int) wp_unslash($_POST['folio_id']);
+    $id = intval(wp_unslash($_POST['folio_id']));
 
     if (!current_user_can('edit_post', $id)) {
       wp_send_json(array('code' => 403, 'message' => 'Forbidden'));
@@ -404,7 +411,7 @@ class Folio extends Page
     $post_title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : $fields->title;
     $post_author = $fields->author;
     $subtitle = isset($_POST['subtitle']) ? sanitize_text_field(wp_unslash($_POST['subtitle'])) : $fields->subtitle;
-    $byline = isset($_POST['byline']) ? (int) wp_unslash($_POST['byline']) : (int) $fields->byline;
+    $byline = isset($_POST['byline']) ? intval(wp_unslash($_POST['byline'])) : (int) $fields->byline;
     if ($byline <= 0) {
       $byline = 0;
       $show_byline = '0';
@@ -415,16 +422,16 @@ class Folio extends Page
       $show_byline = '1';
     }
     $copyright = isset($_POST['copyright']) ? sanitize_text_field(wp_unslash($_POST['copyright'])) : $fields->copyright;
-    $use_folio = isset($_POST['use_folio']) ? (string) wp_unslash($_POST['use_folio']) : $fields->use_folio;
+    $use_folio = isset($_POST['use_folio']) ? sanitize_key(wp_unslash($_POST['use_folio'])) : $fields->use_folio;
     $use_folio = $use_folio === '1' ? '1' : '0';
-    $show_logo = isset($_POST['show_logo']) ? (string) wp_unslash($_POST['show_logo']) : $fields->show_logo;
+    $show_logo = isset($_POST['show_logo']) ? sanitize_key(wp_unslash($_POST['show_logo'])) : $fields->show_logo;
     $show_logo = $show_logo === '1' ? '1' : '0';
     $theme_id = isset($_POST['theme_id']) ? sanitize_key(wp_unslash($_POST['theme_id'])) : $fields->theme_id;
-    $header_font = isset($_POST['header_font']) ? (string) wp_unslash($_POST['header_font']) : $fields->header_font;
+    $header_font = isset($_POST['header_font']) ? sanitize_key(wp_unslash($_POST['header_font'])) : $fields->header_font;
     $header_font = Utils::normalize_primary_font_key($header_font);
-    $body_font = isset($_POST['body_font']) ? (string) wp_unslash($_POST['body_font']) : $fields->body_font;
+    $body_font = isset($_POST['body_font']) ? sanitize_key(wp_unslash($_POST['body_font'])) : $fields->body_font;
     $body_font = Utils::normalize_primary_font_key($body_font);
-    $on_this_page_label = isset($_POST['on_this_page_label']) ? (string) wp_unslash($_POST['on_this_page_label']) : $fields->on_this_page_label;
+    $on_this_page_label = isset($_POST['on_this_page_label']) ? sanitize_text_field(wp_unslash($_POST['on_this_page_label'])) : $fields->on_this_page_label;
     $on_this_page_label = Utils::sanitize_on_this_page_label($on_this_page_label);
     $proposal_version = isset($_POST['proposal_version']) ? sanitize_text_field(wp_unslash($_POST['proposal_version'])) : (string) ($fields->proposal_version ?? '');
 
@@ -450,9 +457,9 @@ class Folio extends Page
     if (!preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $proposal_date)) {
       $proposal_date = '';
     }
-    $proposal_show_in_page_nav = isset($_POST['proposal_show_in_page_nav']) ? (string) wp_unslash($_POST['proposal_show_in_page_nav']) : (string) ($fields->proposal_show_in_page_nav ?? '1');
+    $proposal_show_in_page_nav = isset($_POST['proposal_show_in_page_nav']) ? sanitize_key(wp_unslash($_POST['proposal_show_in_page_nav'])) : (string) ($fields->proposal_show_in_page_nav ?? '1');
     $proposal_show_in_page_nav = $proposal_show_in_page_nav === '0' ? '0' : '1';
-    $proposal_color_scheme = isset($_POST['proposal_color_scheme']) ? (string) wp_unslash($_POST['proposal_color_scheme']) : (string) ($fields->proposal_color_scheme ?? 'default');
+    $proposal_color_scheme = isset($_POST['proposal_color_scheme']) ? sanitize_key(wp_unslash($_POST['proposal_color_scheme'])) : (string) ($fields->proposal_color_scheme ?? 'default');
     $proposal_color_scheme = $proposal_color_scheme === 'dynamic' ? 'dynamic' : 'default';
     $proposal_open_text = isset($_POST['proposal_open_text']) ? sanitize_text_field(wp_unslash($_POST['proposal_open_text'])) : (string) ($fields->proposal_open_text ?? '');
     $collection_tags_raw = isset($_POST['collection_tags']) ? sanitize_text_field(wp_unslash($_POST['collection_tags'])) : '';
@@ -460,8 +467,8 @@ class Folio extends Page
 
     // feature_image_id: empty-string means 'clear image', positive int means 'set image'.
     // A missing or null field means 'keep existing' — we do NOT delete in that case.
-    $feature_image_id = isset($_POST['feature_image_id']) ? (int) wp_unslash($_POST['feature_image_id']) : -1;
-    $logo_id = isset($_POST['logo_id']) ? (int) wp_unslash($_POST['logo_id']) : -1;
+    $feature_image_id = isset($_POST['feature_image_id']) ? intval(wp_unslash($_POST['feature_image_id'])) : -1;
+    $logo_id = isset($_POST['logo_id']) ? intval(wp_unslash($_POST['logo_id'])) : -1;
 
     // Derive slug from title and ensure it is unique for this post.
     $desired_slug = sanitize_title($post_title);
@@ -569,7 +576,7 @@ class Folio extends Page
       $pages_query = new \WP_Query(array(
         'post_type' => 'groove_folio_page',
         'post_status' => 'any',
-        'meta_query' => array(
+        'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the page-to-folio link; this fetches one folio's pages to publish them with it.
           array(
             'key' => 'folio_id',
             'value' => $id,
@@ -655,7 +662,7 @@ class Folio extends Page
   public function display_content()
   {
     $tabs = $this->get_tabs();
-    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup';
+    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tab to show.
     ?>
     <div class="g-top-bar-tabs-content">
       <?php
@@ -666,9 +673,7 @@ class Folio extends Page
           $style = 'display: block';
         }
 
-        $sanitized_tab_id = esc_attr($tab_id);
-
-        echo '<div data-tab-content-id="' . $sanitized_tab_id . '" style="' . $style . '">';
+        echo '<div data-tab-content-id="' . esc_attr($tab_id) . '" style="' . esc_attr($style) . '">';
 
         if ('setup' === $tab_id) {
           $this->display_tab_fields();
@@ -784,8 +789,8 @@ class Folio extends Page
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Logo', 'groove-folios'); ?></label>
               <?php
-                $default_client_logo_url = esc_url(GROOVE_URL . 'themes/groove-proposal/assets/images/theme-g-logo.png');
-                $client_logo_preview = $proposal_client_logo_url !== '' ? esc_url($proposal_client_logo_url) : '';
+                $default_client_logo_url = GROOVE_URL . 'themes/groove-proposal/assets/images/theme-g-logo.png';
+                $client_logo_preview = $proposal_client_logo_url !== '' ? esc_url_raw($proposal_client_logo_url) : '';
               ?>
               <input type="hidden" id="proposal_client_logo_url" name="proposal_client_logo_url"
                 value="<?php echo esc_attr($proposal_client_logo_url); ?>" />
@@ -793,11 +798,11 @@ class Folio extends Page
                 <div class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"
                   id="g-client-logo-preview-frame">
                   <img id="g-client-logo-preview" class="g-folio__media-preview-image"
-                    src="<?php echo $client_logo_preview !== '' ? $client_logo_preview : $default_client_logo_url; ?>" />
+                    src="<?php echo esc_url($client_logo_preview !== '' ? $client_logo_preview : $default_client_logo_url); ?>" />
                 </div>
                 <div class="flex flex-col space-y-2">
                   <button type="button" id="g-client-logo-select" class="button button-secondary"><?php echo $client_logo_preview !== '' ? esc_html__('Replace logo', 'groove-folios') : esc_html__('Select logo', 'groove-folios'); ?></button>
-                  <button type="button" id="g-client-logo-default" data-default-url="<?php echo $default_client_logo_url; ?>"
+                  <button type="button" id="g-client-logo-default" data-default-url="<?php echo esc_url($default_client_logo_url); ?>"
                     class="button-link <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Use default', 'groove-folios'); ?></button>
                   <button type="button" id="g-client-logo-remove"
                     class="button-link text-red-600 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Remove', 'groove-folios'); ?></button>
@@ -976,19 +981,19 @@ class Folio extends Page
             <tbody>
               <?php foreach ($revision_log as $i => $entry) :
                 $hidden = $i >= $visible_limit && $total > $visible_limit;
-                $version = esc_html($entry['version'] ?? '');
-                $status = esc_html($entry['status'] ?? '');
+                $version = $entry['version'] ?? '';
+                $status = $entry['status'] ?? '';
                 $date_raw = $entry['date'] ?? '';
-                $date_display = $date_raw ? esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($date_raw))) : '';
-                $user = esc_html($entry['user'] ?? '');
-                $note = esc_html($entry['note'] ?? '');
+                $date_display = $date_raw ? wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($date_raw)) : '';
+                $user = $entry['user'] ?? '';
+                $note = $entry['note'] ?? '';
               ?>
                 <tr class="border-b border-gray-100 <?php echo $hidden ? 'g-revision-row-hidden hidden' : ''; ?>">
-                  <td class="py-1.5 pr-3 font-medium text-gray-800"><?php echo $version; ?></td>
-                  <td class="py-1.5 pr-3 text-gray-600"><?php echo $status; ?></td>
-                  <td class="py-1.5 pr-3 text-gray-500 whitespace-nowrap"><?php echo $date_display; ?></td>
-                  <td class="py-1.5 pr-3 text-gray-500"><?php echo $user; ?></td>
-                  <td class="py-1.5 text-gray-500"><?php echo $note; ?></td>
+                  <td class="py-1.5 pr-3 font-medium text-gray-800"><?php echo esc_html($version); ?></td>
+                  <td class="py-1.5 pr-3 text-gray-600"><?php echo esc_html($status); ?></td>
+                  <td class="py-1.5 pr-3 text-gray-500 whitespace-nowrap"><?php echo esc_html($date_display); ?></td>
+                  <td class="py-1.5 pr-3 text-gray-500"><?php echo esc_html($user); ?></td>
+                  <td class="py-1.5 text-gray-500"><?php echo esc_html($note); ?></td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -1370,7 +1375,7 @@ class Folio extends Page
   public function display_tabs()
   {
     $tabs = $this->get_tabs();
-    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup';
+    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tab to highlight.
 
     $q = $this->parse_query();
     ?>
@@ -1379,7 +1384,6 @@ class Folio extends Page
       foreach ($tabs as $tab_id => $tab) {
         $active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
         $q['tab_key'] = $tab_id;
-        $sanitized_tab_label = esc_html($tab['label']);
         $tab_url = add_query_arg($q, admin_url('admin.php'));
         $extra_attrs = '';
       if (!empty($tab['attrs']) && is_array($tab['attrs'])) {
@@ -1387,7 +1391,7 @@ class Folio extends Page
           $extra_attrs .= ' ' . esc_attr($attr_name) . '="' . esc_attr($attr_val) . '"';
         }
       }
-      echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . $active_class . '"' . $extra_attrs . '>' . $sanitized_tab_label . '</a>';
+      echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . esc_attr($active_class) . '"' . $extra_attrs . '>' . esc_html($tab['label']) . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $extra_attrs is built just above from esc_attr()-escaped names and values.
       }
       ?>
     </nav>
@@ -1396,7 +1400,7 @@ class Folio extends Page
 
   private function get_pages_tab_current_status()
   {
-    $status = isset($_GET['post_status']) ? sanitize_key(wp_unslash($_GET['post_status'])) : 'all';
+    $status = isset($_GET['post_status']) ? sanitize_key(wp_unslash($_GET['post_status'])) : 'all'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
     $allowed_statuses = array('all', 'publish', 'draft', 'pending', 'private', 'trash');
 
     if (!in_array($status, $allowed_statuses, true)) {
@@ -1408,17 +1412,17 @@ class Folio extends Page
 
   private function get_pages_tab_search_term()
   {
-    return isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+    return isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
   }
 
   private function get_pages_tab_current_paged()
   {
-    return max(1, isset($_GET['paged']) ? (int) wp_unslash($_GET['paged']) : 1);
+    return max(1, isset($_GET['paged']) ? intval(wp_unslash($_GET['paged'])) : 1); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
   }
 
   private function get_pages_tab_current_orderby()
   {
-    $orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash($_GET['orderby'])) : 'modified';
+    $orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash($_GET['orderby'])) : 'modified'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
     $allowed_orderby = array('title', 'menu_order', 'modified');
 
     if (!in_array($orderby, $allowed_orderby, true)) {
@@ -1430,7 +1434,7 @@ class Folio extends Page
 
   private function get_pages_tab_current_order()
   {
-    $order = isset($_GET['order']) ? strtoupper(sanitize_key(wp_unslash($_GET['order']))) : 'DESC';
+    $order = isset($_GET['order']) ? strtoupper(sanitize_key(wp_unslash($_GET['order']))) : 'DESC'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
     return $order === 'ASC' ? 'ASC' : 'DESC';
   }
 
@@ -1507,6 +1511,7 @@ class Folio extends Page
       );
     }
 
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Per-status page counts for one folio, which no WP API provides (wp_count_posts() cannot filter by meta); prepared, and must reflect pages changed a moment ago.
     $rows = $wpdb->get_results(
       $wpdb->prepare(
         "SELECT p.post_status, COUNT(*) AS num_posts
@@ -1559,7 +1564,7 @@ class Folio extends Page
       'posts_per_page' => $per_page,
       'paged' => $paged,
       'order' => $order,
-      'meta_query' => array(
+      'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the page-to-folio link; the Pages tab lists one folio's pages.
         array(
           'key' => 'folio_id',
           'value' => (int) $folio_id,
@@ -1626,8 +1631,10 @@ class Folio extends Page
 
   private function get_pages_tab_current_bulk_action()
   {
+    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Only reads which bulk action was chosen; process_pages_tab_bulk_action() runs check_admin_referer('groove_bulk_pages_action') before acting on it.
     $action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '-1';
     $action2 = isset($_REQUEST['action2']) ? sanitize_key(wp_unslash($_REQUEST['action2'])) : '-1';
+    // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
     if ($action !== '-1') {
       return $action;
@@ -1653,8 +1660,8 @@ class Folio extends Page
 
     check_admin_referer('groove_bulk_pages_action', '_groove_bulk_nonce');
 
-    $post_ids = isset($_REQUEST['post']) ? (array) wp_unslash($_REQUEST['post']) : array();
-    $post_ids = array_values(array_filter(array_map('intval', $post_ids)));
+    $post_ids = isset($_REQUEST['post']) ? array_map('intval', (array) wp_unslash($_REQUEST['post'])) : array();
+    $post_ids = array_values(array_filter($post_ids));
     if (empty($post_ids)) {
       return;
     }
@@ -1717,12 +1724,14 @@ class Folio extends Page
    */
   private function queue_pages_tab_bulk_toast()
   {
+    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only outcome parameters set by this page's own redirect after a nonce-checked bulk action; they only choose the toast.
     if (!isset($_GET['bulk_action']) || !isset($_GET['bulk_count'])) {
       return;
     }
 
     $action = sanitize_key(wp_unslash($_GET['bulk_action']));
-    $count = (int) wp_unslash($_GET['bulk_count']);
+    $count = intval(wp_unslash($_GET['bulk_count']));
+    // phpcs:enable WordPress.Security.NonceVerification.Recommended
     if ($count < 1) {
       return;
     }
@@ -1779,7 +1788,7 @@ class Folio extends Page
 
   public function display_tab_pages()
   {
-    $folio_id = isset($_GET['folio_id']) ? (int) wp_unslash($_GET['folio_id']) : 0;
+    $folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the folio whose pages are listed.
     $status = $this->get_pages_tab_current_status();
     $search = $this->get_pages_tab_search_term();
     $paged = $this->get_pages_tab_current_paged();
@@ -2160,7 +2169,7 @@ class Folio extends Page
 
   public function display_page()
   {
-    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup';
+    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tab to show.
 
     if ($tab_key === 'pages') {
       $original_right_buttons = $this->right_button_items;
@@ -2177,7 +2186,7 @@ class Folio extends Page
       return;
     }
 
-    $folio_id = isset($_GET['folio_id']) ? (int) wp_unslash($_GET['folio_id']) : 0;
+    $folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the folio this form edits; the save handler checks the groove_save_folio nonce.
     ?>
     <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
       <?php wp_nonce_field('groove_save_folio', 'groove_nonce'); ?>

@@ -101,7 +101,7 @@ class Themes extends Page
 			wp_die(esc_html__('You do not have permission to install themes.', 'groove-folios'));
 		}
 
-		if (empty($_FILES['theme_zip']) || $_FILES['theme_zip']['error'] !== UPLOAD_ERR_OK) {
+		if (empty($_FILES['theme_zip']) || !isset($_FILES['theme_zip']['error'], $_FILES['theme_zip']['tmp_name']) || $_FILES['theme_zip']['error'] !== UPLOAD_ERR_OK) {
 			// This used to redirect with the literal string 'upload_failed',
 			// which is what the operator then read in the toast.
 			$this->redirect_with_failure(
@@ -112,11 +112,13 @@ class Themes extends Page
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- tmp_name is the path PHP gave the upload, not browser input; wp_unslash() would break a Windows path, and unzip_file() only reads it.
 		$result = Themes_Manager::install_theme_from_zip($_FILES['theme_zip']['tmp_name']);
 
 		if (is_wp_error($result)) {
 			if ($result->get_error_code() === 'replace_confirm_required') {
-				$this->park_upload_for_confirmation($_FILES['theme_zip']['tmp_name'], (array) $result->get_error_data());
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The $_FILES entry goes whole to wp_handle_upload(), which validates it (is_uploaded_file(), zip type) and sanitizes the name.
+				$this->park_upload_for_confirmation($_FILES['theme_zip'], (array) $result->get_error_data());
 				return;
 			}
 
@@ -139,8 +141,11 @@ class Themes extends Page
 	 * somewhere of our own and the path kept in a per-user transient. The path
 	 * is generated here and never comes from the request, so nothing the
 	 * browser sends decides what gets unzipped on the way back.
+	 *
+	 * @param array $upload  The upload's $_FILES entry.
+	 * @param array $context Replace-confirmation details from Themes_Manager.
 	 */
-	private function park_upload_for_confirmation($tmp_name, array $context)
+	private function park_upload_for_confirmation(array $upload, array $context)
 	{
 		// Discard anything the last question left behind. A parked upload is
 		// cleared by either button, but an operator who simply walks away
@@ -149,12 +154,45 @@ class Themes extends Page
 		$key = 'groove_theme_pending_' . get_current_user_id();
 		$stale = get_transient($key);
 		if (!empty($stale['zip'])) {
-			@unlink($stale['zip']);
+			wp_delete_file($stale['zip']);
 		}
 
-		$parked = trailingslashit(get_temp_dir()) . 'groove-pending-' . wp_generate_password(20, false) . '.zip';
+		// wp_handle_upload() moves the file into the uploads folder under the
+		// name the browser sent. Point it at the temp directory and a random
+		// name instead, as before: a theme package waiting on a question does
+		// not belong in a public, guessable URL.
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		$temp_dir = untrailingslashit(get_temp_dir());
+		$to_temp_dir = function ($uploads) use ($temp_dir) {
+			$uploads['path'] = $temp_dir;
+			$uploads['url'] = '';
+			$uploads['subdir'] = '';
+			$uploads['error'] = false;
+			return $uploads;
+		};
+		add_filter('upload_dir', $to_temp_dir);
+		$moved = wp_handle_upload($upload, array(
+			'test_form' => false,
+			'mimes' => array('zip' => 'application/zip'),
+			'unique_filename_callback' => function () {
+				return 'groove-pending-' . wp_generate_password(20, false) . '.zip';
+			},
+		));
+		remove_filter('upload_dir', $to_temp_dir);
 
-		if (!@move_uploaded_file($tmp_name, $parked)) {
+		$parked = isset($moved['file']) && empty($moved['error']) ? $moved['file'] : '';
+
+		if ($parked !== '') {
+			// wp_handle_upload() gives the file its directory's permissions, which
+			// in a shared temp directory means world-writable. Nobody else gets
+			// to swap the package between the question and the answer.
+			global $wp_filesystem;
+			if ($wp_filesystem) {
+				$wp_filesystem->chmod($parked, 0600);
+			}
+		}
+
+		if ($parked === '') {
 			$this->redirect_with_failure(
 				__('The upload could not be held while you confirmed.', 'groove-folios'),
 				__('Check that PHP can write to the server\'s temporary directory, then try again.', 'groove-folios'),
@@ -193,7 +231,7 @@ class Themes extends Page
 		}
 
 		$result = Themes_Manager::install_theme_from_zip($pending['zip'], true);
-		@unlink($pending['zip']);
+		wp_delete_file($pending['zip']);
 
 		if (is_wp_error($result)) {
 			$this->redirect_with_failure(
@@ -223,7 +261,7 @@ class Themes extends Page
 		delete_transient($key);
 
 		if (!empty($pending['zip'])) {
-			@unlink($pending['zip']);
+			wp_delete_file($pending['zip']);
 		}
 
 		$this->redirect_with_notice('replace_cancelled', '');
@@ -281,7 +319,7 @@ class Themes extends Page
 	 */
 	private function current_tab()
 	{
-		$tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : '';
+		$tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: picks which tab to show.
 
 		return Theme_Docs::exists($tab_key) ? $tab_key : self::TAB_THEMES;
 	}
@@ -316,7 +354,7 @@ class Themes extends Page
 				$active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
 				$query['tab_key'] = $tab_id;
 				$tab_url = add_query_arg($query, admin_url('admin.php'));
-				echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . $active_class . '">'
+				echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . esc_attr($active_class) . '">'
 					. esc_html($tab['label']) . '</a>';
 			}
 			?>
@@ -376,7 +414,7 @@ class Themes extends Page
 							   passes source through as markup — so the result is echoed rather
 							   than run through wp_kses_post(), which would strip the heading
 							   ids every anchor on this page depends on. */
-							echo Markdown::render($markdown, $args);
+							echo Markdown::render($markdown, $args); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markdown::render() escapes every value itself and emits a fixed tag set; see the comment above.
 							?>
 						</div>
 					</div>
@@ -615,8 +653,10 @@ class Themes extends Page
 		$installed_count = count($installed_meta);
 		$builtin_count = max(0, $total_themes - $installed_count);
 		$default_theme_id = (string) get_option('groove_default_theme_id', '');
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only outcome parameters set by this page's own redirect after a nonce-checked action; they only choose which toast to show.
 		$notice_type = isset($_GET['groove_notice']) ? sanitize_key($_GET['groove_notice']) : '';
-		$notice_value = isset($_GET['groove_value']) ? sanitize_text_field(urldecode($_GET['groove_value'])) : '';
+		$notice_value = isset($_GET['groove_value']) ? sanitize_text_field(urldecode(wp_unslash($_GET['groove_value']))) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_text_field() runs on the urldecode()d value; running it first would strip the %-encoded octets urldecode() needs.
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		?>
 		<div class="space-y-4">
 
@@ -636,8 +676,8 @@ class Themes extends Page
 							esc_html_e('No themes are available yet.', 'groove-folios');
 						} else {
 							printf(
-								/* translators: 1: total theme count, 2: built-in count, 3: installed package count */
 								esc_html(
+									/* translators: 1: total theme count, 2: built-in count, 3: installed package count */
 									_n(
 										'%1$s theme available — %2$s built-in, %3$s installed. Select one for details.',
 										'%1$s themes available — %2$s built-in, %3$s installed. Select one for details.',
@@ -1235,6 +1275,7 @@ class Themes extends Page
 										if ($folio_count > 0) {
 											printf(
 												esc_html(
+													/* translators: %s: number of folios using this theme */
 													_n(
 														'Remove this theme? Its files are deleted permanently, and %s folio still uses it.',
 														'Remove this theme? Its files are deleted permanently, and %s folios still use it.',
@@ -1285,6 +1326,7 @@ class Themes extends Page
 	{
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A GROUP BY count no WP API provides; fixed SQL with no input, run once per Themes screen view, and it must reflect installs and removals immediately.
 		$rows = $wpdb->get_results(
 			"SELECT pm.meta_value AS theme_id, COUNT(*) AS total
 			   FROM {$wpdb->postmeta} pm

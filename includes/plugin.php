@@ -46,8 +46,8 @@ class Plugin
 	{
 		_doing_it_wrong(
 			__FUNCTION__,
-			sprintf('Cloning instances of the singleton "%s" class is forbidden.', get_class($this)), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			GROOVE_VERSION
+			sprintf('Cloning instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
+			esc_html(GROOVE_VERSION)
 		);
 	}
 
@@ -55,8 +55,8 @@ class Plugin
 	{
 		_doing_it_wrong(
 			__FUNCTION__,
-			sprintf('Unserializing instances of the singleton "%s" class is forbidden.', get_class($this)), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			GROOVE_VERSION
+			sprintf('Unserializing instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
+			esc_html(GROOVE_VERSION)
 		);
 	}
 
@@ -239,7 +239,7 @@ class Plugin
 		// "helpfully" redirecting 404s (drafts) to the homepage.
 		add_action('template_redirect', function () {
 			// Theme picker preview — admin-only, nonce verified inside the template.
-			if (isset($_GET['groove_theme_preview'])) {
+			if (isset($_GET['groove_theme_preview'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Routing check only; theme-picker-preview-template.php verifies the nonce and capability before rendering.
 				require_once plugin_dir_path(__FILE__) . 'theme-picker-preview-template.php';
 				exit;
 			}
@@ -247,9 +247,11 @@ class Plugin
 			$current_path = Utils::get_current_path();
 			$base_slug = Utils::get_folio_base_slug();
 			$pattern = '#^/' . preg_quote($base_slug, '#') . '/#';
-			$is_query_preview = isset($_GET['groove_preview']) && '1' === (string) wp_unslash($_GET['groove_preview']);
-			$query_folio_id = isset($_GET['folio_id']) ? (int) wp_unslash($_GET['folio_id']) : 0;
-			$query_post_id = isset($_GET['p']) ? (int) wp_unslash($_GET['p']) : 0;
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only front-end routing: public query vars that pick which folio to render, like core's ?p=; nothing is written.
+			$is_query_preview = isset($_GET['groove_preview']) && '1' === $_GET['groove_preview'];
+			$query_folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0;
+			$query_post_id = isset($_GET['p']) ? intval(wp_unslash($_GET['p'])) : 0;
+			// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 			$is_query_groove_context = false;
 			if ($query_folio_id && get_post_type($query_folio_id) === 'groove_folio') {
@@ -280,8 +282,10 @@ class Plugin
 
 			// Sync slug to the post title whenever a folio page is saved
 			// via the classic editor (REST-based block editor is handled separately below).
-				if (isset($_POST['post_title']) && '' !== trim((string) wp_unslash($_POST['post_title']))) {
+				// phpcs:disable WordPress.Security.NonceVerification.Missing -- post_title only arrives from a classic-editor or Quick Edit save, and both requests verify their nonce (update-post_{ID}, inlineeditnonce) before save_post fires; edit_post is checked above.
+				if (isset($_POST['post_title']) && '' !== sanitize_text_field(wp_unslash($_POST['post_title']))) {
 					$title = sanitize_text_field(wp_unslash($_POST['post_title']));
+				// phpcs:enable WordPress.Security.NonceVerification.Missing
 					$new_slug = wp_unique_post_slug(
 						sanitize_title($title),
 					$post_id,
@@ -333,12 +337,14 @@ class Plugin
 				}
 
 				// Classic editor passes folio_id in the URL / POST.
+				// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- A first save is either core's auto-draft on opening post-new.php (a screen load core runs without a nonce) or a save whose request verified its own nonce; edit_post is checked above, and the int must name a groove_folio. It only links the new page to that folio.
 				$folio_id = 0;
 				if (!empty($_GET['folio_id'])) {
-					$folio_id = (int) wp_unslash($_GET['folio_id']);
+					$folio_id = intval(wp_unslash($_GET['folio_id']));
 				} elseif (!empty($_POST['folio_id'])) {
-					$folio_id = (int) wp_unslash($_POST['folio_id']);
+					$folio_id = intval(wp_unslash($_POST['folio_id']));
 				}
+				// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing
 
 			if ($folio_id && get_post_type($folio_id) === 'groove_folio') {
 				update_post_meta($post_id, 'folio_id', $folio_id);

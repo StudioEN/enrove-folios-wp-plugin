@@ -197,13 +197,13 @@ class Curator
     // destination — a half-written or HTML error page never gets committed.
     $size = @getimagesize($temp);
     if (!is_array($size) || empty($size[0]) || empty($size[1])) {
-      @unlink($temp);
+      wp_delete_file($temp);
 
       return $this->result($slug, 'failed', $destination, __('The downloaded file is not a valid image.', 'groove-folios'), $meta);
     }
 
     if (!$this->move($temp, $destination)) {
-      @unlink($temp);
+      wp_delete_file($temp);
 
       return $this->result($slug, 'failed', $destination, sprintf(
         /* translators: %s: file path. */
@@ -432,7 +432,7 @@ class Curator
     }
 
     if (false === file_put_contents($temp, $body)) {
-      @unlink($temp);
+      wp_delete_file($temp);
 
       return new \WP_Error('groove_pexels_temp_failed', __('Could not write the temporary download file.', 'groove-folios'));
     }
@@ -451,23 +451,29 @@ class Curator
    */
   private function move(string $temp, string $destination): bool
   {
-    $moved = @rename($temp, $destination);
+    require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+    require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
+
+    // The direct filesystem, not the global $wp_filesystem: both paths are
+    // local, and the CLI curator never sets up FTP credentials. Its move()
+    // is rename() with a copy fallback, overwriting a previous curation.
+    $fs = new \WP_Filesystem_Direct(null);
+    $mode = defined('FS_CHMOD_FILE') ? FS_CHMOD_FILE : 0644;
+
+    $moved = $fs->move($temp, $destination, true);
 
     if (!$moved) {
-      $moved = @copy($temp, $destination);
-      @unlink($temp);
-    }
+      wp_delete_file($temp);
 
-    if (!$moved) {
       // Never leave a partial file behind.
       if (file_exists($destination) && 0 === filesize($destination)) {
-        @unlink($destination);
+        wp_delete_file($destination);
       }
 
       return false;
     }
 
-    @chmod($destination, defined('FS_CHMOD_FILE') ? FS_CHMOD_FILE : 0644);
+    $fs->chmod($destination, $mode);
 
     return true;
   }

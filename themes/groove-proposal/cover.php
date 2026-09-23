@@ -340,7 +340,9 @@ class Cover extends Base_Theme
               <h1 class="gp-cover__title"><?php echo esc_html($this->title); ?></h1>
               <?php if ($client_name !== ''): ?>
                 <p class="gp-cover__client-line">
-                  <?php echo esc_html(sprintf(__('Prepared for %s', 'groove-folios'), $client_name)); ?>
+                  <?php
+                  /* translators: %s: client name */
+                  echo esc_html(sprintf(__('Prepared for %s', 'groove-folios'), $client_name)); ?>
                 </p>
               <?php endif; ?>
             </section>

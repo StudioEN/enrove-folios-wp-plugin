@@ -236,8 +236,10 @@ class Font_Loader
     $url = self::build_url($resolved);
 
     if ($url !== '') {
-      // No version on a CDN URL: the query string is the version.
-      wp_enqueue_style(self::HANDLE, $url, [], null);
+      // No version on a CDN URL: the query string is the version. Adding one is
+      // not harmless either: before WordPress 7.0 the `ver` goes on through
+      // add_query_arg(), which keeps only the last repeated `family=` parameter.
+      wp_enqueue_style(self::HANDLE, $url, [], null); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- CDN URL whose query string is the version; a `ver` drops families on WP < 7.0.
       self::add_preconnect();
     }
 

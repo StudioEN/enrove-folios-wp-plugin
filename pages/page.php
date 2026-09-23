@@ -23,7 +23,7 @@ abstract class Page extends Assets
 
 	final public static function parse_query()
 	{
-		$query_string = isset($_SERVER['QUERY_STRING']) ? wp_unslash($_SERVER['QUERY_STRING']) : '';
+		$query_string = isset($_SERVER['QUERY_STRING']) ? wp_unslash($_SERVER['QUERY_STRING']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Parsed into an array that callers only pass back through add_query_arg() and esc_url() to rebuild the current admin URL with another tab; sanitize_text_field() would strip %-encoded values before parse_str() decodes them.
 		$query = array();
 		parse_str($query_string, $query);
 
@@ -37,8 +37,8 @@ abstract class Page extends Assets
 
 	public function __construct()
 	{
-		$option_page = isset($_POST['option_page']) ? sanitize_key(wp_unslash($_POST['option_page'])) : '';
-		if (!empty($option_page) && static::PAGE_ID === $option_page) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$option_page = isset($_POST['option_page']) ? sanitize_key(wp_unslash($_POST['option_page'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only decides whether to register this page's settings fields; wp-admin/options.php verifies the {$option_page}-options nonce before saving anything.
+		if (!empty($option_page) && static::PAGE_ID === $option_page) {
 			add_action('admin_init', [$this, 'register_fields']);
 		}
 	}
@@ -166,13 +166,13 @@ abstract class Page extends Assets
 					}
 
 					if (isset($button_item['link'])) {
-						echo '<a href="' . esc_url($button_item['link']) . '" class="' . esc_attr($wp_classes) . '"' . $attributes . '>' . $content . '</a>';
+						echo '<a href="' . esc_url($button_item['link']) . '" class="' . esc_attr($wp_classes) . '"' . $attributes . '>' . $content . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $attributes and $content are assembled above from esc_attr()/esc_html()-escaped parts only.
 					} else if (isset($button_item['action'])) {
 						$button_type = 'submit';
 						if (isset($button_item['button_type']) && in_array($button_item['button_type'], array('submit', 'button'), true)) {
 							$button_type = $button_item['button_type'];
 						}
-						echo '<button type="' . esc_attr($button_type) . '" name="action" value="' . esc_attr($button_item['action']) . '" class="' . esc_attr($wp_classes) . '"' . $attributes . '>' . $content . '</button>';
+						echo '<button type="' . esc_attr($button_type) . '" name="action" value="' . esc_attr($button_item['action']) . '" class="' . esc_attr($wp_classes) . '"' . $attributes . '>' . $content . '</button>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $attributes and $content are assembled above from esc_attr()/esc_html()-escaped parts only.
 					}
 					continue;
 				}
@@ -186,13 +186,13 @@ abstract class Page extends Assets
 				}
 
 					if (isset($button_item['link'])) {
-						echo '<a href="' . esc_url($button_item['link']) . '" class="g-tailwind-link-reset ' . $classes . '"' . $attributes . '>' . $content . '</a>';
+						echo '<a href="' . esc_url($button_item['link']) . '" class="g-tailwind-link-reset ' . esc_attr($classes) . '"' . $attributes . '>' . $content . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $attributes and $content are assembled above from esc_attr()/esc_html()-escaped parts only.
 					} else if (isset($button_item['action'])) {
 						$button_type = 'submit';
 						if (isset($button_item['button_type']) && in_array($button_item['button_type'], array('submit', 'button'), true)) {
 							$button_type = $button_item['button_type'];
 						}
-						echo '<button type="' . esc_attr($button_type) . '" name="action" value="' . esc_attr($button_item['action']) . '" class="' . $classes . '"' . $attributes . '>' . $content . '</button>';
+						echo '<button type="' . esc_attr($button_type) . '" name="action" value="' . esc_attr($button_item['action']) . '" class="' . esc_attr($classes) . '"' . $attributes . '>' . $content . '</button>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $attributes and $content are assembled above from esc_attr()/esc_html()-escaped parts only.
 					}
 			}
 			echo '</div>';

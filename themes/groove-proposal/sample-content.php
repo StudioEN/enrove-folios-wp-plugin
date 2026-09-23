@@ -17,6 +17,8 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Not globals: Base_Theme::get_sample_content_data() includes this file inside a static method, so these variables are local to it.
+
 // Resolved from the theme's own folder rather than GROOVE_URL: this file is
 // included from Base_Theme::get_sample_content_data(), so static:: binds to the
 // theme class and the URL follows the theme wherever it lives. A plugin-relative
@@ -46,17 +48,16 @@ return array(
   'pages'       => array(
       array(
         'title' => __('Executive Summary', 'groove-folios'),
-        'content' => (string) <<<HTML
-<!-- wp:heading {"level":2} -->
+        'content' => '<!-- wp:heading {"level":2} -->
 <h2>Context</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
 <p>Your team is preparing to scale delivery while improving positioning in a more competitive market. This proposal outlines a focused engagement to align strategy, service narrative, and execution priorities in one practical roadmap.</p>
 <!-- /wp:paragraph -->
 <!-- wp:paragraph -->
-<p>We've partnered with organizations facing a similar inflection point, from early-stage teams to established players resetting their story for a new market.</p>
+<p>We\'ve partnered with organizations facing a similar inflection point, from early-stage teams to established players resetting their story for a new market.</p>
 <!-- /wp:paragraph -->
-<!-- wp:groove-proposal/logo-strip {"logos":[{"url":"{$acme_logo_url}","name":"Acme Inc.","link":""},{"url":"{$nordlight_logo_url}","name":"Nordlight Group","link":""},{"url":"{$vale_logo_url}","name":"Vale & Co.","link":""},{"url":"{$zhou_logo_url}","name":"Zhou Studio","link":""}]} /-->
+<!-- wp:groove-proposal/logo-strip {"logos":[{"url":"' . $acme_logo_url . '","name":"Acme Inc.","link":""},{"url":"' . $nordlight_logo_url . '","name":"Nordlight Group","link":""},{"url":"' . $vale_logo_url . '","name":"Vale & Co.","link":""},{"url":"' . $zhou_logo_url . '","name":"Zhou Studio","link":""}]} /-->
 <!-- wp:heading {"level":2} -->
 <h2>Engagement goals</h2>
 <!-- /wp:heading -->
@@ -69,13 +70,11 @@ return array(
 <!-- wp:list -->
 <ul><li>Sharper positioning and value communication.</li><li>Prioritized delivery plan with ownership.</li><li>Clear implementation milestones for the next 90 days.</li></ul>
 <!-- /wp:list -->
-<!-- wp:groove-proposal/key-metrics /-->
-HTML,
+<!-- wp:groove-proposal/key-metrics /-->',
       ),
       array(
         'title' => __('Scope and Approach', 'groove-folios'),
-        'content' => (string) <<<HTML
-<!-- wp:heading {"level":2} -->
+        'content' => '<!-- wp:heading {"level":2} -->
 <h2>Workstreams</h2>
 <!-- /wp:heading -->
 <!-- wp:list -->
@@ -93,21 +92,19 @@ HTML,
 <h2>Deliverables</h2>
 <!-- /wp:heading -->
 <!-- wp:groove-proposal/deliverables /-->
-<!-- wp:groove-proposal/callout-box {"title":"A note on scope","body":"This proposal assumes access to existing brand assets and a single point of contact on your side. If either isn't available yet, we'll adjust the Phase 1 timeline together.","style":"important"} /-->
-HTML,
+<!-- wp:groove-proposal/callout-box {"title":"A note on scope","body":"This proposal assumes access to existing brand assets and a single point of contact on your side. If either isn\'t available yet, we\'ll adjust the Phase 1 timeline together.","style":"important"} /-->',
       ),
       array(
         'title' => __('Case Studies', 'groove-folios'),
-        'content' => (string) <<<HTML
-<!-- wp:paragraph -->
-<p>The clearest way to evaluate a partner is to see how they've handled a comparable challenge. Here's a recent engagement with a client in a similar position.</p>
+        'content' => '<!-- wp:paragraph -->
+<p>The clearest way to evaluate a partner is to see how they\'ve handled a comparable challenge. Here\'s a recent engagement with a client in a similar position.</p>
 <!-- /wp:paragraph -->
-<!-- wp:groove-proposal/case-study {"clientName":"Nordlight Group","clientLogo":"{$nordlight_logo_url}","projectTitle":"Repositioning Nordlight for a category shift","tagsText":"Brand, Positioning, Web","stats":[{"value":"3.2x","label":"Qualified pipeline growth"},{"value":"6 weeks","label":"Kickoff to launch"}],"layout":"spotlight"} -->
+<!-- wp:groove-proposal/case-study {"clientName":"Nordlight Group","clientLogo":"' . $nordlight_logo_url . '","projectTitle":"Repositioning Nordlight for a category shift","tagsText":"Brand, Positioning, Web","stats":[{"value":"3.2x","label":"Qualified pipeline growth"},{"value":"6 weeks","label":"Kickoff to launch"}],"layout":"spotlight"} -->
 <!-- wp:heading {"level":3} -->
 <h3>The Challenge</h3>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
-<p>Nordlight had outgrown the positioning that took them to their first major revenue milestone. Every proposal was competing on price because prospects couldn't tell them apart from larger, better-funded competitors.</p>
+<p>Nordlight had outgrown the positioning that took them to their first major revenue milestone. Every proposal was competing on price because prospects couldn\'t tell them apart from larger, better-funded competitors.</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"level":3} -->
 <h3>Our Approach</h3>
@@ -124,13 +121,11 @@ HTML,
 <!-- wp:groove-proposal/key-metrics {"items":[{"value":"41%","label":"Shorter sales cycle"},{"value":"9","label":"New logos in Q1"}]} /-->
 <!-- /wp:groove-proposal/case-study -->
 <!-- wp:groove-proposal/testimonial-grid /-->
-<!-- wp:groove-proposal/pull-quote /-->
-HTML,
+<!-- wp:groove-proposal/pull-quote /-->',
       ),
       array(
         'title' => __('Timeline and Investment', 'groove-folios'),
-        'content' => (string) <<<HTML
-<!-- wp:heading {"level":2} -->
+        'content' => '<!-- wp:heading {"level":2} -->
 <h2>Timeline</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
@@ -148,20 +143,17 @@ HTML,
 <h2>Package options</h2>
 <!-- /wp:heading -->
 <!-- wp:paragraph -->
-<p>If a broader or lighter-touch engagement suits your team better, here's how the tiers compare.</p>
+<p>If a broader or lighter-touch engagement suits your team better, here\'s how the tiers compare.</p>
 <!-- /wp:paragraph -->
-<!-- wp:groove-proposal/comparison-columns /-->
-HTML,
+<!-- wp:groove-proposal/comparison-columns /-->',
       ),
       array(
         'title' => __('Next Steps', 'groove-folios'),
-        'content' => (string) <<<HTML
-<!-- wp:paragraph -->
-<p>Here's what happens once you're ready to move forward, along with answers to the questions we hear most often at this stage.</p>
+        'content' => '<!-- wp:paragraph -->
+<p>Here\'s what happens once you\'re ready to move forward, along with answers to the questions we hear most often at this stage.</p>
 <!-- /wp:paragraph -->
 <!-- wp:groove-proposal/faq /-->
-<!-- wp:groove-proposal/cta /-->
-HTML,
+<!-- wp:groove-proposal/cta /-->',
       ),
   ),
 );

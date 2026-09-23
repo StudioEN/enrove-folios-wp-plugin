@@ -348,7 +348,7 @@ class Utils
       'post_type' => 'groove_folio_page',
       'posts_per_page' => 1,
       'post_status' => Utils::get_viewable_post_statuses(),
-      'meta_query' => array(
+      'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the page-to-folio link; the query is limited to one folio's pages.
         array(
           'key' => 'folio_id',
           'value' => $folio_id,
@@ -386,6 +386,17 @@ class Utils
     return Utils::is_groove_folio_post($post) || Utils::is_groove_folio_page_post($post);
   }
 
+  /**
+   * Public URL of a folio or folio page, or '' when there is none.
+   *
+   * '' rather than null: nearly every caller hands the result straight to
+   * esc_url(), and theme previews render sample pages that have no post
+   * behind them, so null reached ltrim() inside esc_url() and raised a PHP 8.1
+   * deprecation on every preview. Callers only ever test the result for truth.
+   *
+   * @param int $post_id
+   * @return string
+   */
   static function get_folio_permalink_by_id($post_id)
   {
     if (is_admin()) {
@@ -394,7 +405,7 @@ class Utils
 
     $post = get_post($post_id);
     if (!$post) {
-      return null;
+      return '';
     }
 
     // Resolve the parent folio for folio pages.
@@ -422,7 +433,7 @@ class Utils
   {
     $post = get_post($post_id);
     if (!$post || !Utils::is_groove_post($post)) {
-      return null;
+      return '';
     }
 
     $query_args = array(
@@ -482,11 +493,11 @@ class Utils
 
   static function get_current_path()
   {
-    $home_path = parse_url(home_url(), PHP_URL_PATH) ?? '/';
+    $home_path = wp_parse_url(home_url(), PHP_URL_PATH) ?? '/';
     $home_path = rtrim($home_path, '/');
 
-    $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
-    $url_parts = parse_url($request_uri);
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only the path is taken from it, and only to regex-match against the folio base slug; it is never output or stored, and sanitize_text_field() would strip %-encoded octets from the path.
+    $url_parts = wp_parse_url($request_uri);
     $current_path = isset($url_parts['path']) ? $url_parts['path'] : '/';
 
     if ($home_path && strpos($current_path, $home_path) === 0) {
@@ -547,7 +558,7 @@ class Utils
       }
     }
     else {
-      return isset($_GET['post_type']) ? sanitize_key(wp_unslash($_GET['post_type'])) : 'groove_folio';
+      return isset($_GET['post_type']) ? sanitize_key(wp_unslash($_GET['post_type'])) : 'groove_folio'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only front-end routing parameter; nothing is written.
     }
   }
 
@@ -555,13 +566,15 @@ class Utils
   {
     // Prefer explicit ID params over slug-based lookup so ?folio_id=N URLs
     // work reliably for drafts (which have no post_name in the DB).
+    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only front-end routing: public query vars that pick which folio to render, like core's ?p=; nothing is written.
     if (!empty($_GET['folio_id'])) {
-      return (int) wp_unslash($_GET['folio_id']);
+      return intval(wp_unslash($_GET['folio_id']));
     }
 
     if (!empty($_GET['p'])) {
-      return (int) wp_unslash($_GET['p']);
+      return intval(wp_unslash($_GET['p']));
     }
+    // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
     if (Utils::is_groove_post_name_url()) {
       $post = Utils::get_groove_post_by_post_type_and_post_name();
@@ -613,7 +626,7 @@ class Utils
     if ($post_type === 'groove_folio_page') {
       $scoped_folio_id = Utils::get_folio_id_from_current_path();
       if ($scoped_folio_id > 0) {
-        $query_args['meta_query'] = array(
+        $query_args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the page-to-folio link; the query is limited to one folio's pages.
           array(
             'key' => 'folio_id',
             'value' => $scoped_folio_id,
@@ -642,7 +655,7 @@ class Utils
         'post_type' => $post_type,
         'posts_per_page' => -1,
         'post_status' => $fallback_statuses,
-        'meta_query' => $scoped_folio_id > 0
+        'meta_query' => $scoped_folio_id > 0 // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the page-to-folio link; the query is limited to one folio's pages.
           ? array(
             array(
               'key' => 'folio_id',

@@ -105,7 +105,9 @@ class Cover extends Base_Theme
         </h1>
         <?php if (!empty($this->author)): ?>
           <p class="g-folio__theme-author">
-            <?php echo esc_html(sprintf(__('By %s', 'groove-folios'), $this->author)); ?>
+            <?php
+            /* translators: %s: author name */
+            echo esc_html(sprintf(__('By %s', 'groove-folios'), $this->author)); ?>
           </p>
         <?php endif; ?>
 

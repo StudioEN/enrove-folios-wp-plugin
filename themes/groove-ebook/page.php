@@ -64,7 +64,7 @@ class Page extends Base_Theme
         $html = $this->get_html($title);
         if ($html) {
           $anchor = $this->to_anchor_name($html[1]);
-          echo '<div class="g-folio__theme-page-catalog"><a href="' . ($anchor ? ('#' . $anchor) : '') . '">' . esc_html($html[1]) . '</a></div>';
+          echo '<div class="g-folio__theme-page-catalog"><a href="' . esc_attr($anchor ? ('#' . $anchor) : '') . '">' . esc_html($html[1]) . '</a></div>';
         }
       }
     }
@@ -77,6 +77,7 @@ class Page extends Base_Theme
     $content = $this->content;
     $blocks = parse_blocks($content);
 
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_the_post_thumbnail() markup, escaped by core; kses would strip its srcset/sizes/decoding attributes.
     echo $this->feature_image;
     $results = '';
 
@@ -87,7 +88,7 @@ class Page extends Base_Theme
         $html = $this->get_html($title);
         if ($html) {
           $anchor = $this->to_anchor_name($html[1]);
-          $block['innerContent'][0] = '<' . $html[2] . ' id="' . $anchor . '">' . $html[1] . '</' . $html[2] . '>';
+          $block['innerContent'][0] = '<' . $html[2] . ' id="' . esc_attr($anchor) . '">' . esc_html($html[1]) . '</' . $html[2] . '>';
         }
       }
 
@@ -145,7 +146,7 @@ class Page extends Base_Theme
               }
               $anchor = $this->to_anchor_name($html[1]);
               ?>
-              <a class="g-folio__theme-page-mobile-nav-item-link" href="<?php echo '#' . $anchor; ?>">
+              <a class="g-folio__theme-page-mobile-nav-item-link" href="<?php echo esc_attr('#' . $anchor); ?>">
                 <div class="g-folio__theme-page-mobile-nav-item"><?php echo esc_html($html[1]); ?></div>
               </a>
               <?php
@@ -198,9 +199,9 @@ class Page extends Base_Theme
           $index = 1;
           foreach ($this->pages as $page) {
             ?>
-            <a class="g-folio__theme-page-nav-item-link" href="<?php echo Utils::get_folio_permalink_by_id($page->ID); ?>">
+            <a class="g-folio__theme-page-nav-item-link" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page->ID)); ?>">
               <div class="g-folio__theme-page-nav-item">
-                <i class="g-folio__theme-page-nav-item-order"><?php echo $index; ?></i>
+                <i class="g-folio__theme-page-nav-item-order"><?php echo (int) $index; ?></i>
                 <?php echo esc_html($page->post_title); ?>
               </div>
             </a>
@@ -225,7 +226,7 @@ class Page extends Base_Theme
         if ($prev_page) {
           ?>
           <i class="g-folio__theme-page-arrow"></i>
-          <a href="<?php echo Utils::get_folio_permalink_by_id($prev_page->ID); ?>" title="<?php echo esc_attr($prev_page->post_title); ?>">
+          <a href="<?php echo esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)); ?>" title="<?php echo esc_attr($prev_page->post_title); ?>">
             <?php echo esc_html($prev_page->post_title); ?></a>
           <?php
         }
@@ -238,7 +239,7 @@ class Page extends Base_Theme
         <?php
         if ($next_page) {
           ?>
-          <a href="<?php echo Utils::get_folio_permalink_by_id($next_page->ID); ?>" title="<?php echo esc_attr($next_page->post_title); ?>">
+          <a href="<?php echo esc_url(Utils::get_folio_permalink_by_id($next_page->ID)); ?>" title="<?php echo esc_attr($next_page->post_title); ?>">
             <?php echo esc_html($next_page->post_title); ?></a>
           <i class="g-folio__theme-page-arrow"></i>
           <?php
@@ -265,7 +266,7 @@ class Page extends Base_Theme
             <div class="g-folio__theme-page-container">
               <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
               <div class="g-folio__theme-page-content">
-                <?php echo $this->get_content(); ?>
+                <?php echo $this->get_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block-rendered post content, escaped by core; kses would strip embed iframes. ?>
               </div>
               <?php $this->display_footer() ?>
             </div>

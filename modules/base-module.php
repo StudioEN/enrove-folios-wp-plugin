@@ -36,8 +36,8 @@ abstract class BaseModule extends Assets
 	{
 		_doing_it_wrong(
 			__FUNCTION__,
-			sprintf('Cloning instances of the singleton "%s" class is forbidden.', get_class($this)), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			GROOVE_VERSION
+			sprintf('Cloning instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
+			esc_html(GROOVE_VERSION)
 		);
 	}
 
@@ -45,8 +45,8 @@ abstract class BaseModule extends Assets
 	{
 		_doing_it_wrong(
 			__FUNCTION__,
-			sprintf('Unserializing instances of the singleton "%s" class is forbidden.', get_class($this)), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			GROOVE_VERSION
+			sprintf('Unserializing instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
+			esc_html(GROOVE_VERSION)
 		);
 	}
 }

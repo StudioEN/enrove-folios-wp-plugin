@@ -30,7 +30,7 @@ class Cover extends Base_Theme
         aria-label="<?php echo esc_attr__('Close navigation', 'groove-folios'); ?>"></button>
       <div class="g-folio__theme-nav-content">
         <h3 class="g-folio__theme-nav-name">
-          <?php echo $this->theme_name; ?>
+          <?php echo esc_html($this->theme_name); ?>
         </h3>
         <label class="g-folio__theme-nav-label">CONTENTS</label>
         <div class="g-folio__theme-navs">
@@ -38,10 +38,10 @@ class Cover extends Base_Theme
           $index = 1;
           foreach ($this->pages as $page) {
             ?>
-            <a class="g-folio__theme-nav-item-link" href="<?php echo Utils::get_folio_permalink_by_id($page->ID); ?>">
+            <a class="g-folio__theme-nav-item-link" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page->ID)); ?>">
               <div class="g-folio__theme-nav-item">
                 <i class="g-folio__theme-nav-item-order">
-                  <?php echo $index; ?>
+                  <?php echo (int) $index; ?>
                 </i>
                 <?php echo esc_html($page->post_title); ?>
               </div>
@@ -80,7 +80,7 @@ class Cover extends Base_Theme
 
       <div class="g-folio__theme-fields g-folio__theme-password-form">
         <?php if (!empty($this->pages) && $page): ?>
-          <a class="g-folio__theme-fields-submit" href="<?php echo Utils::get_folio_permalink_by_id($page->ID); ?>">
+          <a class="g-folio__theme-fields-submit" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page->ID)); ?>">
             Open folio
           </a>
         <?php endif; ?>

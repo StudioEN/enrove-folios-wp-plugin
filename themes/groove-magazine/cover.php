@@ -147,7 +147,7 @@ class Cover extends Base_Theme
             <!-- Slideshow layers -->
             <div class="gm-cover__slideshow">
                 <?php foreach ($slideshow_images as $i => $img): ?>
-                    <div class="gm-cover__slide<?php echo $i === 0 ? ' gm-cover__slide--active' : ''; ?>" data-gm-slide-index="<?php echo $i; ?>"
+                    <div class="gm-cover__slide<?php echo $i === 0 ? ' gm-cover__slide--active' : ''; ?>" data-gm-slide-index="<?php echo (int) $i; ?>"
                         style="background-image: url(<?php echo esc_url($img['url']); ?>)">
                     </div>
                 <?php endforeach; ?>
@@ -219,7 +219,10 @@ class Cover extends Base_Theme
                     <span class="gm-cover__powerby">Powered by Groove Folios</span>
                     <?php if (!empty($latest_pages_date)): ?>
                         <span class="gm-cover__updated">
-                            <?php echo esc_html(sprintf(__('Updated %s', 'groove-folios'), $latest_pages_date)); ?>
+                            <?php
+                            /* translators: %s: date the most recent story was published or updated. */
+                            echo esc_html(sprintf(__('Updated %s', 'groove-folios'), $latest_pages_date));
+                            ?>
                         </span>
                     <?php else: ?>
                         <span class="gm-cover__updated" aria-hidden="true"></span>

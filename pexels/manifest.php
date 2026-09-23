@@ -37,7 +37,7 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-$slots = [
+$groove_manifest_slots = [
 
   // ── Theme covers ─────────────────────────────────────────────────────────
   // themes/<theme>/assets/images/theme-cover.jpg — landscape, large2x.
@@ -324,32 +324,32 @@ $slots = [
 // existed have those URLs written into post_content, so removing the files
 // would break imagery in content that is already saved.
 
-$sets = require __DIR__ . '/sets.php';
+$groove_manifest_sets = require __DIR__ . '/sets.php';
 
-foreach ($sets as $set_slug => $set) {
-  if (empty($set['roles']) || !is_array($set['roles'])) {
+foreach ($groove_manifest_sets as $groove_manifest_set_slug => $groove_manifest_set) {
+  if (empty($groove_manifest_set['roles']) || !is_array($groove_manifest_set['roles'])) {
     continue;
   }
 
-  foreach ($set['roles'] as $role => $role_def) {
-    $slug = $set_slug . '-' . $role;
+  foreach ($groove_manifest_set['roles'] as $groove_manifest_role => $groove_manifest_role_def) {
+    $groove_manifest_slug = $groove_manifest_set_slug . '-' . $groove_manifest_role;
 
-    $slots[$slug] = [
-      'slug'           => $slug,
+    $groove_manifest_slots[$groove_manifest_slug] = [
+      'slug'           => $groove_manifest_slug,
       'kind'           => 'placeholder',
       'theme'          => '',
-      'set'            => $set_slug,
-      'role'           => $role,
-      'path'           => 'assets/images/pexels/' . $slug . '.jpg',
-      'query'          => isset($role_def['query']) ? (string) $role_def['query'] : '',
-      'fallback_query' => isset($role_def['fallback_query']) ? (string) $role_def['fallback_query'] : '',
-      'orientation'    => isset($role_def['orientation']) ? (string) $role_def['orientation'] : 'landscape',
-      'src_size'       => isset($role_def['src_size']) ? (string) $role_def['src_size'] : 'large',
-      'color'          => isset($role_def['color']) ? (string) $role_def['color'] : '',
-      'ratio'          => isset($role_def['ratio']) ? (array) $role_def['ratio'] : [1.2, 2.2],
-      'note'           => isset($role_def['note']) ? (string) $role_def['note'] : '',
+      'set'            => $groove_manifest_set_slug,
+      'role'           => $groove_manifest_role,
+      'path'           => 'assets/images/pexels/' . $groove_manifest_slug . '.jpg',
+      'query'          => isset($groove_manifest_role_def['query']) ? (string) $groove_manifest_role_def['query'] : '',
+      'fallback_query' => isset($groove_manifest_role_def['fallback_query']) ? (string) $groove_manifest_role_def['fallback_query'] : '',
+      'orientation'    => isset($groove_manifest_role_def['orientation']) ? (string) $groove_manifest_role_def['orientation'] : 'landscape',
+      'src_size'       => isset($groove_manifest_role_def['src_size']) ? (string) $groove_manifest_role_def['src_size'] : 'large',
+      'color'          => isset($groove_manifest_role_def['color']) ? (string) $groove_manifest_role_def['color'] : '',
+      'ratio'          => isset($groove_manifest_role_def['ratio']) ? (array) $groove_manifest_role_def['ratio'] : [1.2, 2.2],
+      'note'           => isset($groove_manifest_role_def['note']) ? (string) $groove_manifest_role_def['note'] : '',
     ];
   }
 }
 
-return $slots;
+return $groove_manifest_slots;

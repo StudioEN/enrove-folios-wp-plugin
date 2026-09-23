@@ -3,6 +3,8 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Required from inside a closure (Plugin's template_redirect handler), so these variables are local to it, not globals.
+
 use Groove\Themes\Font_Loader;
 use Groove\Themes\Themes_Manager;
 
@@ -32,7 +34,7 @@ $theme = Themes_Manager::create_theme_for_current_request();
 
     // Resolve folio fonts through the same resolver the themes use, so the gate
     // is typeset like the folio behind it. This document is rendered before
-    // wp_head(), so the one combined stylesheet is linked by hand below.
+    // wp_head(), so the one combined stylesheet is printed on its own below.
     $_pw_system_stack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     $_pw_fonts = Font_Loader::resolve(
       (int) $password_post->ID,
@@ -54,12 +56,17 @@ $theme = Themes_Manager::create_theme_for_current_request();
   <?php if ($_pw_fonts_url !== ''): ?>
     <link rel="preconnect" href="<?php echo esc_url(Font_Loader::API_HOST); ?>" />
     <link rel="preconnect" href="<?php echo esc_url(Font_Loader::FILE_HOST); ?>" crossorigin />
-    <link rel="stylesheet" href="<?php echo esc_url($_pw_fonts_url); ?>" />
+    <?php
+      // No version: on WordPress before 7.0 a `ver` is added with add_query_arg(),
+      // which keeps only the last of the css2 URL's repeated `family=` parameters.
+      wp_enqueue_style(Font_Loader::HANDLE, $_pw_fonts_url, [], null); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- CDN URL whose query string is the version; a `ver` drops families on WP < 7.0.
+      wp_print_styles(Font_Loader::HANDLE);
+    ?>
   <?php endif; ?>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: <?php echo $_pw_body_stack; ?>;
+      font-family: <?php echo $_pw_body_stack; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS in a <style> element, where entities are not decoded; the stack is from the fixed font list or Font_Loader::sanitize_css_stack() (letters, digits, space , ' - _ . only). ?>;
       color: #1d2327;
       display: flex; align-items: center; justify-content: center;
       min-height: 100vh; padding: 20px;
@@ -71,7 +78,7 @@ $theme = Themes_Manager::create_theme_for_current_request();
       box-shadow: 0 1px 3px rgba(0,0,0,.1);
       padding: 40px; max-width: 420px; width: 100%; text-align: left;
     }
-    .groove-password-wrap h1 { font-family: <?php echo $_pw_heading_stack; ?>; font-size: 20px; font-weight: 600; margin-bottom: 24px; }
+    .groove-password-wrap h1 { font-family: <?php echo $_pw_heading_stack; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS in a <style> element, where entities are not decoded; the stack is from the fixed font list or Font_Loader::sanitize_css_stack() (letters, digits, space , ' - _ . only). ?>; font-size: 20px; font-weight: 600; margin-bottom: 24px; }
     .groove-password-wrap p { font-size: 14px; color: #646970; margin-bottom: 24px; }
     .groove-password-wrap label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
     .groove-password-wrap input[type="password"] { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #8c8f94; border-radius: 4px; margin-bottom: 16px; }
@@ -85,13 +92,13 @@ $theme = Themes_Manager::create_theme_for_current_request();
     <h1><?php echo esc_html($password_post->post_title); ?></h1>
     <?php
       // Replace WordPress's default password form with cleaner copy.
-      $_pw_post_id = $password_post->ID;
-      $_pw_action_url = esc_url(site_url('wp-login.php?action=postpass', 'login_post'));
+      $_pw_post_id = (int) $password_post->ID;
+      $_pw_action_url = site_url('wp-login.php?action=postpass', 'login_post');
     ?>
-    <form action="<?php echo $_pw_action_url; ?>" class="post-password-form" method="post">
+    <form action="<?php echo esc_url($_pw_action_url); ?>" class="post-password-form" method="post">
       <p><?php echo esc_html__('Enter the password to view this folio.', 'groove-folios'); ?></p>
-      <label for="pwbox-<?php echo $_pw_post_id; ?>"><?php echo esc_html__('Password', 'groove-folios'); ?></label>
-      <input name="post_password" id="pwbox-<?php echo $_pw_post_id; ?>" type="password" spellcheck="false" />
+      <label for="pwbox-<?php echo (int) $_pw_post_id; ?>"><?php echo esc_html__('Password', 'groove-folios'); ?></label>
+      <input name="post_password" id="pwbox-<?php echo (int) $_pw_post_id; ?>" type="password" spellcheck="false" />
       <input type="submit" name="Submit" value="<?php echo esc_attr__('Unlock', 'groove-folios'); ?>" />
     </form>
   </div>

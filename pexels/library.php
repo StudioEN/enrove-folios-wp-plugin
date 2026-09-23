@@ -211,10 +211,6 @@ class Library
       return $result;
     }
 
-    if (function_exists('set_time_limit') && false === strpos((string) ini_get('disable_functions'), 'set_time_limit')) {
-      set_time_limit(max(60, count($status['missing']) * 5));
-    }
-
     foreach ($status['missing'] as $slug) {
       $error = static::download($slug);
       if ($error === '') {

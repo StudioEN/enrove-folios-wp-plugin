@@ -204,7 +204,7 @@ class Key
     $value = getenv(self::ENV_VAR);
 
     if (false === $value && isset($_SERVER[self::ENV_VAR])) {
-      $value = $_SERVER[self::ENV_VAR];
+      $value = sanitize_text_field(wp_unslash($_SERVER[self::ENV_VAR]));
     }
 
     return is_string($value) ? trim($value) : '';

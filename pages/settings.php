@@ -131,7 +131,7 @@ class Settings extends Page
 
   private function get_collection_tag_edit_term()
   {
-    $term_id = isset($_GET['edit_collection_tag']) ? (int) wp_unslash($_GET['edit_collection_tag']) : 0;
+    $term_id = isset($_GET['edit_collection_tag']) ? intval(wp_unslash($_GET['edit_collection_tag'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tag to open in the edit form; saving it is nonce-checked in handle_collection_tag_save().
     if ($term_id <= 0) {
       return null;
     }
@@ -258,7 +258,7 @@ class Settings extends Page
 
       delete_option('groove_default_allow_pdf_download');
     } elseif ('routing' === $tab) {
-      $raw_slug = isset($_POST['folio_base_slug']) ? trim((string) wp_unslash($_POST['folio_base_slug'])) : '';
+      $raw_slug = isset($_POST['folio_base_slug']) ? trim((string) wp_unslash($_POST['folio_base_slug'])) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only tested for emptiness here; sanitize_title() below sanitizes it before anything is stored, and the two checks give different messages.
 
       // Reported rather than corrected. Silently substituting "folio" would
       // send every published folio to a different URL than the operator asked
@@ -292,7 +292,7 @@ class Settings extends Page
 
     $term_name = isset($_POST['collection_tag_name']) ? sanitize_text_field(wp_unslash($_POST['collection_tag_name'])) : '';
     $term_slug = isset($_POST['collection_tag_slug']) ? sanitize_title(wp_unslash($_POST['collection_tag_slug'])) : '';
-    $term_id = isset($_POST['collection_tag_id']) ? (int) wp_unslash($_POST['collection_tag_id']) : 0;
+    $term_id = isset($_POST['collection_tag_id']) ? intval(wp_unslash($_POST['collection_tag_id'])) : 0;
 
     if ($term_name === '') {
       $redirect_args = array('message' => 'collection_tag_empty');
@@ -343,7 +343,7 @@ class Settings extends Page
       wp_die(esc_html__('You do not have permission to manage collection tags.', 'groove-folios'));
     }
 
-    $term_id = isset($_POST['collection_tag_id']) ? (int) wp_unslash($_POST['collection_tag_id']) : 0;
+    $term_id = isset($_POST['collection_tag_id']) ? intval(wp_unslash($_POST['collection_tag_id'])) : 0;
     if ($term_id <= 0) {
       $this->redirect_to_collections_tab(array('message' => 'collection_tag_error'));
     }
@@ -1277,9 +1277,11 @@ class Settings extends Page
 
   public function display_content()
   {
+    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only view parameters: the tab to show and the outcome code this page's own redirect set after a nonce-checked save.
     $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'general';
     $message = isset($_GET['message']) ? sanitize_key(wp_unslash($_GET['message'])) : '';
     $error_code = isset($_GET['error_code']) ? sanitize_key(wp_unslash($_GET['error_code'])) : '';
+    // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
     $this->toast_message($message, $error_code);
     ?>
@@ -1302,7 +1304,7 @@ class Settings extends Page
   public function display_tabs()
   {
     $tabs = $this->get_tabs();
-    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'general';
+    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tab to highlight.
     $q = $this->parse_query();
     ?>
 <nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Settings tabs', 'groove-folios'); ?>">
@@ -1310,9 +1312,8 @@ class Settings extends Page
     foreach ($tabs as $tab_id => $tab) {
       $active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
       $q['tab_key'] = $tab_id;
-      $sanitized_tab_label = esc_html($tab['label']);
       $tab_url = add_query_arg($q, admin_url('admin.php'));
-      echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . $active_class . '">' . $sanitized_tab_label . '</a>';
+      echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . esc_attr($active_class) . '">' . esc_html($tab['label']) . '</a>';
     }
     ?>
 </nav>

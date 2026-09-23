@@ -19,6 +19,7 @@ function get_recent_navigation_pages($theme, int $folio_id, int $limit = 10): ar
     'orderby' => 'date',
     'order' => 'DESC',
     'post_status' => Utils::get_viewable_post_statuses(),
+    // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- A page belongs to its folio only through folio_id post meta, and the query is capped at $limit rows.
     'meta_query' => array(
       array(
         'key' => 'folio_id',

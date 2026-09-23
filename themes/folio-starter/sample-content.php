@@ -23,6 +23,8 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Not globals: Base_Theme::get_sample_content_data() includes this file inside a static method, so these variables are local to that call.
+
 // Placeholder imagery is asked for by role, not by filename. `image_set` in
 // this theme's setup.php decides which photographic register those roles
 // resolve to, so two themes can seed the same layout with different pictures.
@@ -49,12 +51,11 @@ return array(
   'pages'       => array(
     array(
       'title' => __('Introduction', 'groove-folios'),
-      'content' => (string) <<<HTML
-<!-- wp:paragraph {"dropCap":true} -->
+      'content' => (string) ('<!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">This folio collects four years of work made mostly in quiet: identity systems, publications, and the occasional building sign. It is not a complete record. It is the part I would want to talk about if we sat down together.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_hero}" alt="A working desk with layout proofs, a scale rule and a cold cup of coffee"/>{$cap_hero}</figure>
+<figure class="wp-block-image size-large"><img src="' . $img_hero . '" alt="A working desk with layout proofs, a scale rule and a cold cup of coffee"/>' . $cap_hero . '</figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>What I do</h2>
@@ -79,20 +80,18 @@ return array(
 <!-- /wp:separator -->
 <!-- wp:paragraph -->
 <p>Replace this page with your own introduction. Two or three short paragraphs is usually enough; the work on the following pages will do the rest.</p>
-<!-- /wp:paragraph -->
-HTML,
+<!-- /wp:paragraph -->'),
     ),
     array(
       'title' => __('Selected Work', 'groove-folios'),
-      'content' => (string) <<<HTML
-<!-- wp:paragraph -->
+      'content' => (string) ('<!-- wp:paragraph -->
 <p>Three projects, chosen because each one solved a different kind of problem.</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"level":2} -->
 <h2>Ravensgate Civic Archive</h2>
 <!-- /wp:heading -->
 <!-- wp:media-text {"mediaType":"image","mediaWidth":48} -->
-<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:48% auto"><figure class="wp-block-media-text__media"><img src="{$img_scene}" alt="Concrete stair and handrail casting a long diagonal shadow"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
+<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:48% auto"><figure class="wp-block-media-text__media"><img src="' . $img_scene . '" alt="Concrete stair and handrail casting a long diagonal shadow"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
 <p>A hundred and forty years of planning records, most of them handwritten, needed a reading interface that did not feel like a database. We built the whole thing around a single wide measure and a strict four-step type scale, then spent the remaining time on the index.</p>
 <!-- /wp:paragraph -->
 <!-- wp:paragraph -->
@@ -106,7 +105,7 @@ HTML,
 <p>A three-person poetry press printing runs of four hundred. They needed a catalogue that could be reset in an afternoon and a spine treatment that made a shelf of their books legible from across a room. The answer was a fixed grid, one weight of one typeface, and a colour reserved entirely for the year of publication.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_detail}" alt="A single bound book photographed flat against a plain surface"/>{$cap_detail}</figure>
+<figure class="wp-block-image size-large"><img src="' . $img_detail . '" alt="A single bound book photographed flat against a plain surface"/>' . $cap_detail . '</figure>
 <!-- /wp:image -->
 <!-- wp:heading {"level":2} -->
 <h2>Kilnwork Ceramics</h2>
@@ -115,14 +114,12 @@ HTML,
 <p>A studio that had been trading on word of mouth for eleven years and wanted to keep it that way while selling online. We wrote the labels before we designed anything, which turned out to be the whole project.</p>
 <!-- /wp:paragraph -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_process}" alt="Hands at a workbench, tools and unfinished pieces laid out in rows"/>{$cap_process}</figure>
-<!-- /wp:image -->
-HTML,
+<figure class="wp-block-image size-large"><img src="' . $img_process . '" alt="Hands at a workbench, tools and unfinished pieces laid out in rows"/>' . $cap_process . '</figure>
+<!-- /wp:image -->'),
     ),
     array(
       'title' => __('How I Work', 'groove-folios'),
-      'content' => (string) <<<HTML
-<!-- wp:paragraph -->
+      'content' => (string) ('<!-- wp:paragraph -->
 <p>Every project runs the same four steps, whether it lasts three weeks or two years. The steps do not change; how long each one takes does.</p>
 <!-- /wp:paragraph -->
 <!-- wp:heading {"level":2} -->
@@ -173,18 +170,16 @@ HTML,
 <!-- /wp:paragraph --></blockquote>
 <!-- /wp:quote -->
 <!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
-<figure class="wp-block-image size-large"><img src="{$img_texture}" alt="Close texture of uncoated paper stock in raking light"/>{$cap_texture}</figure>
-<!-- /wp:image -->
-HTML,
+<figure class="wp-block-image size-large"><img src="' . $img_texture . '" alt="Close texture of uncoated paper stock in raking light"/>' . $cap_texture . '</figure>
+<!-- /wp:image -->'),
     ),
     array(
       'title' => __('About and Contact', 'groove-folios'),
-      'content' => (string) <<<HTML
-<!-- wp:heading {"level":2} -->
+      'content' => (string) ('<!-- wp:heading {"level":2} -->
 <h2>About</h2>
 <!-- /wp:heading -->
 <!-- wp:media-text {"mediaType":"image","mediaWidth":38} -->
-<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:38% auto"><figure class="wp-block-media-text__media"><img src="{$img_portrait_a}" alt="Portrait of the studio's founder against a plain wall"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
+<div class="wp-block-media-text is-stacked-on-mobile" style="grid-template-columns:38% auto"><figure class="wp-block-media-text__media"><img src="' . $img_portrait_a . '" alt="Portrait of the studio\'s founder against a plain wall"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph -->
 <p>I trained as a printer before I trained as a designer, which is the reason I care so much about what a thing costs to produce. I have worked alone since 2019, from a room above a bakery, and I take on roughly six projects a year.</p>
 <!-- /wp:paragraph -->
 <!-- wp:paragraph -->
@@ -211,8 +206,7 @@ HTML,
 <!-- /wp:list -->
 <!-- wp:paragraph -->
 <p>The most useful first message is one paragraph: what the thing is, when you need it, and roughly what you can spend. I reply to everything within two working days.</p>
-<!-- /wp:paragraph -->
-HTML,
+<!-- /wp:paragraph -->'),
     ),
   ),
 );

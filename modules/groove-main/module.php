@@ -28,13 +28,15 @@ class Module extends BaseModule
 			return false;
 		}
 
+		$request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
+
 		// Check if it's a new post/page in the block editor
-		if (strpos($_SERVER['REQUEST_URI'], 'post-new.php') !== false) {
+		if (strpos($request_uri, 'post-new.php') !== false) {
 			return true;
 		}
 
 		// Check if it's an existing post/page being edited in the block editor
-		if (isset($_GET['post']) && strpos($_SERVER['REQUEST_URI'], 'post.php') !== false) {
+		if (isset($_GET['post']) && strpos($request_uri, 'post.php') !== false) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Presence check only, to detect the post editor screen; the value is not used.
 			return true;
 		}
 
@@ -51,36 +53,34 @@ class Module extends BaseModule
 
 		// Probe for the Vite dev server only on a local or development site
 		// (WP_ENVIRONMENT_TYPE; Studio sets 'local'). A production install never
-		// opens a socket or enqueues anything from localhost — it reads the
+		// makes a request or enqueues anything from localhost — it reads the
 		// committed manifest below. The probe fails gracefully when Vite is down.
 		$remote_addr = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
 		if (in_array(wp_get_environment_type(), ['local', 'development'], true) && in_array($remote_addr, ['127.0.0.1', '::1'], true)) {
-			$connection = @fsockopen('localhost', $vite_port, $errno, $errstr, 0.1);
-			if (is_resource($connection)) {
-				fclose($connection);
-				
-				// Verify it's actually Vite responding, not another local app holding the port
-				$response = wp_remote_head('http://localhost:' . $vite_port . '/@vite/client', ['timeout' => 0.5]);
-				if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-					$is_vite_dev = true;
-				}
+			// A 200 from /@vite/client means it is Vite on the port, not another local
+			// app holding it; a refused connection fails fast, well inside the timeout.
+			$response = wp_remote_head('http://localhost:' . $vite_port . '/@vite/client', ['timeout' => 0.5]);
+			if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+				$is_vite_dev = true;
 			}
 		}
 
 		if ($is_vite_dev) {
-			// Enqueue Vite client for HMR
-			wp_enqueue_script('vite-client', 'http://localhost:' . $vite_port . '/@vite/client', [], null, true);
+			// Enqueue Vite client for HMR. No version on either dev-server script: Vite
+			// serves them uncached, and a ?ver= query would change the module URL HMR tracks.
+			wp_enqueue_script('vite-client', 'http://localhost:' . $vite_port . '/@vite/client', [], null, true); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Local Vite dev server (development environments only); see comment above.
 
-			// Add type="module" to vite-client
+			// Add type="module" to the tags WordPress printed for the two dev-server scripts
 			add_filter('script_loader_tag', function ($tag, $handle, $src) {
 				if ($handle === 'vite-client' || $handle === 'groove-tailwind-vite') {
-					return '<script type="module" src="' . esc_url($src) . '"></script>';
+					$tag = preg_replace('/ type=([\'"])text\/javascript\1/', '', $tag);
+					return preg_replace('/ src=/', ' type="module" src=', $tag, 1);
 				}
 				return $tag;
 			}, 10, 3);
 
 			// Enqueue our tailwind entry directly from the Vite dev server
-			wp_enqueue_script('groove-tailwind-vite', 'http://localhost:' . $vite_port . '/assets/css/tailwind.css', [], null, true);
+			wp_enqueue_script('groove-tailwind-vite', 'http://localhost:' . $vite_port . '/assets/css/tailwind.css', [], null, true); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Local Vite dev server (development environments only); see comment above.
 		} else {
 			// Production mode: try to read the manifest.json
 			$manifest_path = plugin_dir_path(dirname(__DIR__)) . 'assets/build/.vite/manifest.json';
@@ -120,8 +120,9 @@ class Module extends BaseModule
 		$folio_setup_url = '';
 		$editor_theme_color_source_url = '';
 		$post = get_post();
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only admin view parameters (the post being edited, the admin page); they only choose what settings to hand the page's JS.
 		if (!$post && !empty($_GET['post'])) {
-			$post = get_post((int) $_GET['post']);
+			$post = get_post(intval(wp_unslash($_GET['post'])));
 		}
 
 		if ($post && $post->post_type === 'groove_folio_page') {
@@ -135,7 +136,7 @@ class Module extends BaseModule
 
 			$folio_id = get_post_meta($post->ID, 'folio_id', true);
 			if (!$folio_id && !empty($_GET['folio_id'])) {
-				$folio_id = (int) wp_unslash($_GET['folio_id']);
+				$folio_id = intval(wp_unslash($_GET['folio_id']));
 			}
 			if ($folio_id) {
 				$folio_post = get_post($folio_id);
@@ -166,6 +167,7 @@ class Module extends BaseModule
 		if ($current_page === 'groove-all-folios' && !empty($_GET['open_add_new'])) {
 			$open_add_new_modal = true;
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$settings = array(
 			'screenId' => $this->get_scrren_id() ?? '',

@@ -85,7 +85,8 @@ Use `\Groove\Toast` ([includes/toast.php](includes/toast.php)) for action outcom
 ## Conventions
 
 - Tabs for indentation in PHP in most files (the repo is mixed; match the file you're in). `.editorconfig` covers JSON/YAML/Markdown only.
-- Every PHP file starts with an `if (!defined('ABSPATH')) exit;` guard.
+- Every PHP file starts with an `if (!defined('ABSPATH')) exit;` guard. The one exception is theme `setup.php`: the contract requires a literal array with no calls, and a direct request to one prints nothing.
+- Code must pass WordPress.org's Plugin Check. That means no `<?=` short echo tags (write `<?php echo …; ?>`), no heredoc/nowdoc, output escaped late in the right context, `/* translators: */` comments on placeholder strings, and `wp_unslash()` plus sanitising on every `$_GET`/`$_POST` read. Folio page body content is the exception to escaping: it is block-rendered by core, and `wp_kses_post` would strip the embed iframes. A `phpcs:ignore` must name the exact sniff and give a true reason. The local `.claude/scripts/pcp-lint.sh FILE…` runs the same sniffs in seconds (when present; it is not tracked).
 - Text domain is `groove-folios` (it must equal the WordPress.org slug) for all i18n, including strings copied from core. Translations load just in time; there is no `load_plugin_textdomain()` call.
 - Managers and singletons follow the same `instance()` / `__clone()` / `__wakeup()` shape — copy an existing one when adding a module or content type.
 - `CHANGELOG.md` is kept in prose-heavy Keep-a-Changelog form under `## [Unreleased]`; add entries there for user-visible changes.

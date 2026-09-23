@@ -45,7 +45,7 @@ class Cover extends Base_Theme
             <a class="g-folio__theme-nav-item-link" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page->ID)); ?>">
               <div class="g-folio__theme-nav-item">
                 <i class="g-folio__theme-nav-item-order">
-                  <?php echo $index; ?>
+                  <?php echo (int) $index; ?>
                 </i>
                 <?php echo esc_html($page->post_title); ?>
               </div>
@@ -94,7 +94,10 @@ class Cover extends Base_Theme
           </h2>
           <?php if (!empty($this->author)): ?>
             <p class="g-folio__theme-author">
-              <?php echo esc_html(sprintf(__('By %s', 'groove-folios'), $this->author)); ?>
+              <?php
+              /* translators: %s: folio author name. */
+              echo esc_html(sprintf(__('By %s', 'groove-folios'), $this->author));
+              ?>
             </p>
           <?php endif; ?>
 
@@ -113,11 +116,10 @@ class Cover extends Base_Theme
             <?php endif; ?>
             <div class="g-folio__theme-powerby">
               <?php
-              $author_link = '<a class="g-folio__theme-site" href="/">' . esc_html(static::get_author()) . '</a>';
               printf(
                 /* translators: %s: theme author, rendered as a link. */
                 esc_html__('Powered by Groove Folios. Theme designed by %s', 'groove-folios'),
-                $author_link
+                '<a class="g-folio__theme-site" href="/">' . esc_html(static::get_author()) . '</a>'
               );
               ?>
             </div>

@@ -51,6 +51,7 @@ class Page extends Base_Theme
     $minutes = max(1, (int) ceil($word_count / 220));
 
     return sprintf(
+      /* translators: %d: estimated reading time in minutes */
       _n('%d min read', '%d min read', $minutes, 'groove-folios'),
       $minutes
     );
@@ -125,7 +126,7 @@ class Page extends Base_Theme
         $html = $this->get_html($title);
         if ($html) {
           $anchor = $this->to_anchor_name($html[1]);
-          echo '<div class="g-folio__theme-page-catalog"><a class="g-folio__theme-page-catalog-link" data-g-scroll-target="' . esc_attr($anchor ? ('#' . $anchor) : '#') . '" href="' . ($anchor ? ('#' . $anchor) : '') . '">' . esc_html($html[1]) . '</a></div>';
+          echo '<div class="g-folio__theme-page-catalog"><a class="g-folio__theme-page-catalog-link" data-g-scroll-target="' . esc_attr($anchor ? ('#' . $anchor) : '#') . '" href="' . esc_attr($anchor ? ('#' . $anchor) : '') . '">' . esc_html($html[1]) . '</a></div>';
         }
       }
     }
@@ -150,7 +151,7 @@ class Page extends Base_Theme
         $html = $this->get_html($title);
         if ($html) {
           $anchor = $this->to_anchor_name($html[1]);
-          $block['innerContent'][0] = '<' . $html[2] . ' id="' . $anchor . '">' . $html[1] . '</' . $html[2] . '>';
+          $block['innerContent'][0] = '<' . $html[2] . ' id="' . esc_attr($anchor) . '">' . esc_html($html[1]) . '</' . $html[2] . '>';
         }
       }
 
@@ -233,8 +234,8 @@ class Page extends Base_Theme
               }
               $anchor = $this->to_anchor_name($html[1]);
               ?>
-              <a class="g-folio__theme-page-mobile-nav-item-link" data-g-scroll-target="<?php echo '#' . $anchor; ?>"
-                href="<?php echo '#' . $anchor; ?>">
+              <a class="g-folio__theme-page-mobile-nav-item-link" data-g-scroll-target="<?php echo esc_attr('#' . $anchor); ?>"
+                href="<?php echo esc_attr('#' . $anchor); ?>">
                 <div class="g-folio__theme-page-mobile-nav-item"><?php echo esc_html($html[1]); ?></div>
               </a>
               <?php
@@ -288,7 +289,7 @@ class Page extends Base_Theme
         if ($prev_page) {
           ?>
           <i class="g-folio__theme-page-arrow"></i>
-          <a href="<?php echo Utils::get_folio_permalink_by_id($prev_page->ID); ?>" title="<?php echo esc_attr($prev_page->post_title); ?>">
+          <a href="<?php echo esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)); ?>" title="<?php echo esc_attr($prev_page->post_title); ?>">
             <?php echo esc_html($prev_page->post_title); ?></a>
           <?php
         }
@@ -301,7 +302,7 @@ class Page extends Base_Theme
         <?php
         if ($next_page) {
           ?>
-          <a href="<?php echo Utils::get_folio_permalink_by_id($next_page->ID); ?>" title="<?php echo esc_attr($next_page->post_title); ?>">
+          <a href="<?php echo esc_url(Utils::get_folio_permalink_by_id($next_page->ID)); ?>" title="<?php echo esc_attr($next_page->post_title); ?>">
             <?php echo esc_html($next_page->post_title); ?></a>
           <i class="g-folio__theme-page-arrow"></i>
           <?php
@@ -366,7 +367,7 @@ class Page extends Base_Theme
                 <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
               </header>
               <article class="g-folio__theme-page-content">
-                <?php echo $this->get_content(); ?>
+                <?php echo $this->get_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block-rendered post content, escaped by core; kses would strip embed iframes. ?>
               </article>
               <?php $this->display_footer() ?>
             </div>

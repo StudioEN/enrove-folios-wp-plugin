@@ -352,7 +352,7 @@ class Page extends Base_Theme
         <div class="gp-page__mobile-header-title"><?php echo esc_html($this->page->post_title ?? ''); ?></div>
 
         <div class="gp-page__mobile-header-controls">
-          <span class="gp-page__progress-text"><?php echo esc_html(sprintf(__('%1$d / %2$d', 'groove-folios'), (int) $progress['current'], (int) $progress['total'])); ?></span>
+          <span class="gp-page__progress-text"><?php /* translators: 1: current page number, 2: total number of pages */ echo esc_html(sprintf(__('%1$d / %2$d', 'groove-folios'), (int) $progress['current'], (int) $progress['total'])); ?></span>
           <?php if ($show_in_page_nav): ?>
             <button type="button" class="g-folio__theme-page-nav-bar-toggle" aria-expanded="false"><?php echo esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)); ?></button>
           <?php endif; ?>
@@ -477,7 +477,7 @@ class Page extends Base_Theme
     <footer class="g-folio__theme-page-footer gp-page__footer">
       <nav class="gp-page__footer-nav" aria-label="<?php echo esc_attr__('Page navigation', 'groove-folios'); ?>">
         <?php if ($prev_page): ?>
-          <a class="gp-page__footer-arrow g-folio__theme-page-prev" href="<?php echo esc_url(Utils::get_folio_permalink_by_id((int) $prev_page->ID)); ?>" data-tooltip="<?php echo esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)); ?>" aria-label="<?php echo esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)); ?>">
+          <a class="gp-page__footer-arrow g-folio__theme-page-prev" href="<?php echo esc_url(Utils::get_folio_permalink_by_id((int) $prev_page->ID)); ?>" data-tooltip="<?php /* translators: %s: previous page title */ echo esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)); ?>" aria-label="<?php /* translators: %s: previous page title */ echo esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)); ?>">
             <span aria-hidden="true">&larr;</span>
           </a>
         <?php else: ?>
@@ -485,7 +485,7 @@ class Page extends Base_Theme
         <?php endif; ?>
 
         <?php if ($next_page): ?>
-          <a class="gp-page__footer-arrow g-folio__theme-page-next" href="<?php echo esc_url(Utils::get_folio_permalink_by_id((int) $next_page->ID)); ?>" data-tooltip="<?php echo esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)); ?>" aria-label="<?php echo esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)); ?>">
+          <a class="gp-page__footer-arrow g-folio__theme-page-next" href="<?php echo esc_url(Utils::get_folio_permalink_by_id((int) $next_page->ID)); ?>" data-tooltip="<?php /* translators: %s: next page title */ echo esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)); ?>" aria-label="<?php /* translators: %s: next page title */ echo esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)); ?>">
             <span aria-hidden="true">&rarr;</span>
           </a>
         <?php else: ?>
@@ -540,7 +540,7 @@ class Page extends Base_Theme
                 <?php endif; ?>
                 <h1 class="g-folio__theme-page-title gp-page__title"><?php echo esc_html($this->title); ?></h1>
                 <div class="g-folio__theme-page-content gp-page__content">
-                  <?php echo $this->get_content(); ?>
+                  <?php echo $this->get_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block-rendered post content, escaped by core; kses would strip embed iframes. ?>
                 </div>
                 <?php $this->display_footer(); ?>
               </article>
