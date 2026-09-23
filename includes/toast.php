@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
  *
  * Queue a message wherever the inline notice used to be rendered:
  *
- *     \Groove\Toast::success(__('Settings saved.', 'groove'), ['message']);
+ *     \Groove\Toast::success(__('Settings saved.', 'groove-folios'), ['message']);
  *
  * The queue is flushed into the admin footer, so anything queued during page
  * render arrives in the same request. The second argument lists query args to
@@ -28,8 +28,8 @@ if (!defined('ABSPATH')) {
  * the control that was pressed:
  *
  *     \Groove\Toast::failure(
- *         __('That base slug cannot be used in a URL.', 'groove'),
- *         __('Use letters, numbers and hyphens — for example folio.', 'groove'),
+ *         __('That base slug cannot be used in a URL.', 'groove-folios'),
+ *         __('Use letters, numbers and hyphens — for example folio.', 'groove-folios'),
  *         '#groove-save-routing',
  *         ['message']
  *     );

@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 add_filter('block_categories_all', function (array $categories): array {
     array_unshift($categories, [
         'slug'  => 'groove-proposal',
-        'title' => __('Groove Proposal', 'groove'),
+        'title' => __('Groove Proposal', 'groove-folios'),
     ]);
     return $categories;
 });
@@ -242,8 +242,8 @@ function groove_proposal_render_pricing_table(array $attributes): string
     $total = 0;
     $out = '<div class="gp-pricing">'
         . '<div class="gp-pricing__header">'
-        . '<span class="gp-pricing__col-label">' . esc_html__('Scope', 'groove') . '</span>'
-        . '<span class="gp-pricing__col-label gp-pricing__col-label--right">' . esc_html__('Investment', 'groove') . '</span>'
+        . '<span class="gp-pricing__col-label">' . esc_html__('Scope', 'groove-folios') . '</span>'
+        . '<span class="gp-pricing__col-label gp-pricing__col-label--right">' . esc_html__('Investment', 'groove-folios') . '</span>'
         . '</div>';
 
     foreach ($rows as $row) {
@@ -268,7 +268,7 @@ function groove_proposal_render_pricing_table(array $attributes): string
     }
 
     $out .= '<div class="gp-pricing__total">'
-        . '<span class="gp-pricing__total-label">' . esc_html__('Total', 'groove') . '</span>'
+        . '<span class="gp-pricing__total-label">' . esc_html__('Total', 'groove-folios') . '</span>'
         . '<span class="gp-pricing__total-value">' . esc_html($format_price($total)) . '</span>'
         . '</div></div>';
 
@@ -593,7 +593,7 @@ function groove_proposal_render_comparison_columns(array $attributes): string
 
         $out .= '<div class="' . esc_attr($cell_class) . '">';
         if ($is_rec) {
-            $out .= '<span class="gp-compare__rec-badge">' . esc_html__('Recommended', 'groove') . '</span>';
+            $out .= '<span class="gp-compare__rec-badge">' . esc_html__('Recommended', 'groove-folios') . '</span>';
         }
         $name = wp_kses_post($col['name'] ?? '');
         $subtitle = wp_kses_post($col['subtitle'] ?? '');
@@ -737,7 +737,7 @@ function groove_proposal_render_case_study(array $attributes, string $content): 
 
     if ($link !== '') {
         $out .= '<a class="gp-case-study__link" href="' . $link . '" target="_blank" rel="noopener noreferrer">'
-            . esc_html__('View live project', 'groove') . ' &rarr;</a>';
+            . esc_html__('View live project', 'groove-folios') . ' &rarr;</a>';
     }
 
     $out .= '</article>';

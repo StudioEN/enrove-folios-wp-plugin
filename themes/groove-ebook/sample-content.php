@@ -89,37 +89,37 @@ $block = static function (string $name, array $attrs): string {
 // figures run in one sequence across chapters rather than restarting.
 $plate_front = $block('groove-ebook/plate', [
   'url'     => $img_hero,
-  'alt'     => __('An open book resting face down beside a window', 'groove'),
-  'label'   => __('Frontispiece', 'groove'),
-  'caption' => __('The reading moment this book keeps returning to.', 'groove'),
+  'alt'     => __('An open book resting face down beside a window', 'groove-folios'),
+  'label'   => __('Frontispiece', 'groove-folios'),
+  'caption' => __('The reading moment this book keeps returning to.', 'groove-folios'),
   'credit'  => $cr_hero,
   'bleed'   => true,
 ]);
 
 $plate_one = $block('groove-ebook/plate', [
   'url'     => $img_process,
-  'alt'     => __('A workbench mid-project, offcuts and practice pieces pushed to one side', 'groove'),
-  'label'   => __('Fig. 1', 'groove'),
-  'caption' => __('A bench part-way through the work. Everything to the left of the vice is a mistake somebody was allowed to make.', 'groove'),
+  'alt'     => __('A workbench mid-project, offcuts and practice pieces pushed to one side', 'groove-folios'),
+  'label'   => __('Fig. 1', 'groove-folios'),
+  'caption' => __('A bench part-way through the work. Everything to the left of the vice is a mistake somebody was allowed to make.', 'groove-folios'),
   'credit'  => $cr_process,
 ]);
 
 $plate_two = $block('groove-ebook/plate', [
   'url'     => $img_texture,
-  'alt'     => __('Layers of proofing paper stacked and slightly fanned', 'groove'),
-  'label'   => __('Fig. 2', 'groove'),
-  'caption' => __('Eleven proofs of the same page, kept in order. Only the last one was any good, and it needed the other ten.', 'groove'),
+  'alt'     => __('Layers of proofing paper stacked and slightly fanned', 'groove-folios'),
+  'label'   => __('Fig. 2', 'groove-folios'),
+  'caption' => __('Eleven proofs of the same page, kept in order. Only the last one was any good, and it needed the other ten.', 'groove-folios'),
   'credit'  => $cr_texture,
 ]);
 
 return array(
-  'label'       => __('Create with sample eBook content', 'groove'),
-  'description' => __('Seeds a four-part eBook — a foreword, two chapters and a colophon — using the whole book kit: epigraphs, plates, section breaks and a reference list.', 'groove'),
-  'subtitle'    => __('A short book about working slowly', 'groove'),
+  'label'       => __('Create with sample eBook content', 'groove-folios'),
+  'description' => __('Seeds a four-part eBook — a foreword, two chapters and a colophon — using the whole book kit: epigraphs, plates, section breaks and a reference list.', 'groove-folios'),
+  'subtitle'    => __('A short book about working slowly', 'groove-folios'),
   'folio_meta'  => array(),
   'pages'       => array(
     array(
-      'title' => __('Foreword', 'groove'),
+      'title' => __('Foreword', 'groove-folios'),
       'content' => (string) <<<HTML
 {$plate_front}
 <!-- wp:paragraph {"dropCap":true} -->
@@ -144,7 +144,7 @@ return array(
 HTML,
     ),
     array(
-      'title' => __('One: The Material of Attention', 'groove'),
+      'title' => __('One: The Material of Attention', 'groove-folios'),
       'content' => (string) <<<HTML
 <!-- wp:groove-ebook/epigraph {"text":"The hand is the window on to the mind.","attribution":"Immanuel Kant"} /-->
 <!-- wp:paragraph {"dropCap":true} -->
@@ -186,7 +186,7 @@ HTML,
 HTML,
     ),
     array(
-      'title' => __('Two: Working in Public', 'groove'),
+      'title' => __('Two: Working in Public', 'groove-folios'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">The second half of the argument is less comfortable, because it asks something of the people around the work rather than the person doing it. If mistakes have to be visible, somebody has to agree to look at them without flinching.</p>
@@ -228,7 +228,7 @@ HTML,
 HTML,
     ),
     array(
-      'title' => __('Colophon', 'groove'),
+      'title' => __('Colophon', 'groove-folios'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>This edition was set for the screen and is intended to be read in one or two sittings.</p>

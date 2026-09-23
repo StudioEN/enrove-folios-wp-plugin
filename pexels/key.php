@@ -125,23 +125,23 @@ class Key
       case 'constant':
         return sprintf(
           /* translators: %s: PHP constant name. */
-          __('the %s constant in wp-config.php', 'groove'),
+          __('the %s constant in wp-config.php', 'groove-folios'),
           self::CONSTANT
         );
       case 'env':
         return sprintf(
           /* translators: %s: environment variable name. */
-          __('the %s environment variable', 'groove'),
+          __('the %s environment variable', 'groove-folios'),
           self::ENV_VAR
         );
       case 'file':
         return sprintf(
           /* translators: %s: filename. */
-          __('the %s file at the plugin root', 'groove'),
+          __('the %s file at the plugin root', 'groove-folios'),
           self::KEY_FILE
         );
       case 'option':
-        return __('the Groove settings screen', 'groove');
+        return __('the Groove settings screen', 'groove-folios');
       default:
         return '';
     }

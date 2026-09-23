@@ -1,6 +1,10 @@
 <?php
 namespace Groove\Contents;
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 class Contents_Manager {
   private $contents = [];
 

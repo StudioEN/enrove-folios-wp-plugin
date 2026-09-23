@@ -2,6 +2,10 @@
 namespace Groove\List;
 use Groove\Pages\Page;
 
+if (!defined('ABSPATH')) {
+	exit;
+}
+
 class List_Table extends \WP_List_Table
 {
 	protected $page;
@@ -44,16 +48,16 @@ class List_Table extends \WP_List_Table
 				'<a href="%s" aria-label="%s">%s</a>',
 				get_edit_post_link($post->ID),
 				/* translators: %s: Post title. */
-				esc_attr(sprintf(__('Edit &#8220;%s&#8221;'), $title)),
-				__('Edit')
+				esc_attr(sprintf(__('Edit &#8220;%s&#8221;', 'groove-folios'), $title)),
+				__('Edit', 'groove-folios')
 			);
 
 			if ('wp_block' !== $post->post_type) {
 				$actions['inline hide-if-no-js'] = sprintf(
 					'<button type="button" class="button-link editinline" aria-label="%s" aria-expanded="false">%s</button>',
 					/* translators: %s: Post title. */
-					esc_attr(sprintf(__('Quick edit &#8220;%s&#8221; inline'), $title)),
-					__('Quick&nbsp;Edit')
+					esc_attr(sprintf(__('Quick edit &#8220;%s&#8221; inline', 'groove-folios'), $title)),
+					__('Quick&nbsp;Edit', 'groove-folios')
 				);
 			}
 		}
@@ -64,16 +68,16 @@ class List_Table extends \WP_List_Table
 					'<a href="%s" aria-label="%s">%s</a>',
 					wp_nonce_url(admin_url(sprintf($post_type_object->_edit_link . '&amp;action=untrash', $post->ID)), 'untrash-post_' . $post->ID),
 					/* translators: %s: Post title. */
-					esc_attr(sprintf(__('Restore &#8220;%s&#8221; from the Trash'), $title)),
-					__('Restore')
+					esc_attr(sprintf(__('Restore &#8220;%s&#8221; from the Trash', 'groove-folios'), $title)),
+					__('Restore', 'groove-folios')
 				);
 			} elseif (EMPTY_TRASH_DAYS) {
 				$actions['trash'] = sprintf(
 					'<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
 					get_delete_post_link($post->ID),
 					/* translators: %s: Post title. */
-					esc_attr(sprintf(__('Move &#8220;%s&#8221; to the Trash'), $title)),
-					_x('Trash', 'verb')
+					esc_attr(sprintf(__('Move &#8220;%s&#8221; to the Trash', 'groove-folios'), $title)),
+					_x('Trash', 'verb', 'groove-folios')
 				);
 			}
 
@@ -82,8 +86,8 @@ class List_Table extends \WP_List_Table
 					'<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
 					get_delete_post_link($post->ID, '', true),
 					/* translators: %s: Post title. */
-					esc_attr(sprintf(__('Delete &#8220;%s&#8221; permanently'), $title)),
-					__('Delete Permanently')
+					esc_attr(sprintf(__('Delete &#8220;%s&#8221; permanently', 'groove-folios'), $title)),
+					__('Delete Permanently', 'groove-folios')
 				);
 			}
 		}
@@ -101,8 +105,8 @@ class List_Table extends \WP_List_Table
 						'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
 						esc_url($preview_link),
 						/* translators: %s: Post title. */
-						esc_attr(sprintf(__('Preview &#8220;%s&#8221;'), $title)),
-						__('Preview')
+						esc_attr(sprintf(__('Preview &#8220;%s&#8221;', 'groove-folios'), $title)),
+						__('Preview', 'groove-folios')
 					);
 				}
 			} elseif ('trash' !== $post->post_status) {
@@ -110,8 +114,8 @@ class List_Table extends \WP_List_Table
 					'<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
 					get_permalink($post->ID),
 					/* translators: %s: Post title. */
-					esc_attr(sprintf(__('View &#8220;%s&#8221;'), $title)),
-					__('View')
+					esc_attr(sprintf(__('View &#8220;%s&#8221;', 'groove-folios'), $title)),
+					__('View', 'groove-folios')
 				);
 			}
 		}
@@ -121,8 +125,8 @@ class List_Table extends \WP_List_Table
 				'<button type="button" class="wp-list-reusable-blocks__export button-link" data-id="%s" aria-label="%s">%s</button>',
 				$post->ID,
 				/* translators: %s: Post title. */
-				esc_attr(sprintf(__('Export &#8220;%s&#8221; as JSON'), $title)),
-				__('Export as JSON')
+				esc_attr(sprintf(__('Export &#8220;%s&#8221; as JSON', 'groove-folios'), $title)),
+				__('Export as JSON', 'groove-folios')
 			);
 		}
 
@@ -184,7 +188,7 @@ class List_Table extends \WP_List_Table
 			if ($lock_holder) {
 				$lock_holder = get_userdata($lock_holder);
 				$locked_avatar = get_avatar($lock_holder->ID, 18);
-				$locked_text = esc_html(sprintf(__('%s is currently editing'), $lock_holder->display_name));
+				$locked_text = esc_html(sprintf(__('%s is currently editing', 'groove-folios'), $lock_holder->display_name));
 			} else {
 				$locked_avatar = '';
 				$locked_text = '';
@@ -204,7 +208,7 @@ class List_Table extends \WP_List_Table
 			printf(
 				'<a class="row-title g-folio__truncate-text" href="%s" aria-label="%s" title="%s">%s%s</a>',
 				get_edit_post_link($post->ID),
-				esc_attr(sprintf(__('&#8220;%s&#8221; (Edit)'), $title)),
+				esc_attr(sprintf(__('&#8220;%s&#8221; (Edit)', 'groove-folios'), $title)),
 				$title_tooltip,
 				$pad,
 				$title_display
@@ -237,17 +241,17 @@ class List_Table extends \WP_List_Table
 
 		if (current_user_can($post_type_obj->cap->edit_posts)) {
 			if ($this->is_trash) {
-				$actions['untrash'] = __('Restore');
+				$actions['untrash'] = __('Restore', 'groove-folios');
 			} else {
-				$actions['edit'] = __('Edit');
+				$actions['edit'] = __('Edit', 'groove-folios');
 			}
 		}
 
 		if (current_user_can($post_type_obj->cap->delete_posts)) {
 			if ($this->is_trash || !EMPTY_TRASH_DAYS) {
-				$actions['delete'] = __('Delete permanently');
+				$actions['delete'] = __('Delete permanently', 'groove-folios');
 			} else {
-				$actions['trash'] = __('Move to Trash');
+				$actions['trash'] = __('Move to Trash', 'groove-folios');
 			}
 		}
 
@@ -336,7 +340,7 @@ class List_Table extends \WP_List_Table
 					'Mine <span class="count">(%s)</span>',
 					$this->user_posts_count,
 					'posts'
-				),
+				, 'groove-folios'),
 				number_format_i18n($this->user_posts_count)
 			);
 
@@ -357,7 +361,7 @@ class List_Table extends \WP_List_Table
 				'All <span class="count">(%s)</span>',
 				$total_posts,
 				'posts'
-			),
+			, 'groove-folios'),
 			number_format_i18n($total_posts)
 		);
 
@@ -420,7 +424,7 @@ class List_Table extends \WP_List_Table
 					'Sticky <span class="count">(%s)</span>',
 					$this->sticky_posts_count,
 					'posts'
-				),
+				, 'groove-folios'),
 				number_format_i18n($this->sticky_posts_count)
 			);
 
@@ -449,8 +453,8 @@ class List_Table extends \WP_List_Table
 	{
 		$posts_columns = array();
 		$posts_columns['cb'] = '<input type="checkbox" />';
-		$posts_columns['title'] = _x('Title', 'column name');
-		$posts_columns['date'] = __('Date');
+		$posts_columns['title'] = _x('Title', 'column name', 'groove-folios');
+		$posts_columns['date'] = __('Date', 'groove-folios');
 
 		return $posts_columns;
 	}
@@ -458,8 +462,8 @@ class List_Table extends \WP_List_Table
 	protected function get_sortable_columns()
 	{
 		$sortables = array(
-			'title' => array('title', false, __('Title'), __('Table ordered by Title.')),
-			'date' => array('date', true, __('Date'), __('Table ordered by Date.'), 'desc'),
+			'title' => array('title', false, __('Title', 'groove-folios'), __('Table ordered by Title.', 'groove-folios')),
+			'date' => array('date', true, __('Date', 'groove-folios'), __('Table ordered by Date.', 'groove-folios'), 'desc'),
 		);
 
 		return $sortables;
@@ -617,7 +621,10 @@ class List_Table extends \WP_List_Table
 		if (post_type_supports($post_type, 'comments')) {
 			$this->comment_pending_count = get_pending_comments_num($post_ids);
 		}
-		update_post_author_caches($posts);
+		// WordPress 6.1+; on older sites the authors are simply fetched per row.
+		if (function_exists('update_post_author_caches')) {
+			update_post_author_caches($posts);
+		}
 
 		foreach ($posts as $post) {
 			$this->single_row($post);
@@ -721,7 +728,7 @@ class List_Table extends \WP_List_Table
 									aria-labelledby="<?php echo $bulk ? 'bulk' : 'quick'; ?>-edit-legend">
 									<fieldset class="inline-edit-col-left">
 										<legend class="inline-edit-legend" id="<?php echo $bulk ? 'bulk' : 'quick'; ?>-edit-legend">
-											<?php echo $bulk ? __('Bulk Edit') : __('Quick Edit'); ?>
+											<?php echo $bulk ? __('Bulk Edit', 'groove-folios') : __('Quick Edit', 'groove-folios'); ?>
 										</legend>
 										<div class="inline-edit-col">
 
@@ -736,7 +743,7 @@ class List_Table extends \WP_List_Table
 												<?php else:  // $bulk ?>
 
 													<label>
-														<span class="title"><?php _e('Title'); ?></span>
+														<span class="title"><?php _e('Title', 'groove-folios'); ?></span>
 														<span class="input-text-wrap"><input type="text" name="post_title" class="ptitle"
 																value="" /></span>
 													</label>
@@ -745,7 +752,7 @@ class List_Table extends \WP_List_Table
 
 														<label>
 															<span class="title">
-																<?php _e('Slug'); ?>
+																<?php _e('Slug', 'groove-folios'); ?>
 															</span>
 															<span class="input-text-wrap"><input type="text" name="post_name" value=""
 																	autocomplete="off" spellcheck="false" /></span>
@@ -760,7 +767,7 @@ class List_Table extends \WP_List_Table
 											<?php if (!$bulk): ?>
 												<fieldset class="inline-edit-date">
 													<legend><span class="title">
-															<?php _e('Date'); ?>
+															<?php _e('Date', 'groove-folios'); ?>
 														</span></legend>
 													<?php $GLOBALS['post'] = $_inline_default_post; ?>
 													<?php touch_time(1, 1, 0, 1); ?>
@@ -775,7 +782,7 @@ class List_Table extends \WP_List_Table
 												if (current_user_can($post_type_object->cap->edit_others_posts)) {
 													$dropdown_name = 'post_author';
 													$dropdown_class = 'authors';
-													if (wp_is_large_user_count()) {
+													if (function_exists('wp_is_large_user_count') && wp_is_large_user_count()) { // WordPress 6.0+
 														$authors_dropdown = sprintf('<select name="%s" class="%s hidden"></select>', esc_attr($dropdown_name), esc_attr($dropdown_class));
 													} else {
 														$users_opt = array(
@@ -789,7 +796,7 @@ class List_Table extends \WP_List_Table
 														);
 
 														if ($bulk) {
-															$users_opt['show_option_none'] = __('&mdash; No Change &mdash;');
+															$users_opt['show_option_none'] = __('&mdash; No Change &mdash;', 'groove-folios');
 														}
 
 														/**
@@ -808,7 +815,7 @@ class List_Table extends \WP_List_Table
 
 														if ($authors) {
 															$authors_dropdown = '<label class="inline-edit-author">';
-															$authors_dropdown .= '<span class="title">' . __('Author') . '</span>';
+															$authors_dropdown .= '<span class="title">' . __('Author', 'groove-folios') . '</span>';
 															$authors_dropdown .= $authors;
 															$authors_dropdown .= '</label>';
 														}
@@ -826,7 +833,7 @@ class List_Table extends \WP_List_Table
 												<div class="inline-edit-group wp-clearfix">
 													<label class="alignleft">
 														<span class="title">
-															<?php _e('Password'); ?>
+															<?php _e('Password', 'groove-folios'); ?>
 														</span>
 														<span class="input-text-wrap"><input type="text" name="post_password"
 																class="inline-edit-password-input" value="" /></span>
@@ -835,13 +842,13 @@ class List_Table extends \WP_List_Table
 													<span class="alignleft inline-edit-or">
 														<?php
 														/* translators: Between password field and private checkbox on post quick edit interface. */
-														_e('&ndash;OR&ndash;');
+														_e('&ndash;OR&ndash;', 'groove-folios');
 														?>
 													</span>
 													<label class="alignleft inline-edit-private">
 														<input type="checkbox" name="keep_private" value="private" />
 														<span class="checkbox-title">
-															<?php _e('Private'); ?>
+															<?php _e('Private', 'groove-folios'); ?>
 														</span>
 													</label>
 												</div>
@@ -890,20 +897,20 @@ class List_Table extends \WP_List_Table
 
 													<label>
 														<span class="title">
-															<?php _e('Parent'); ?>
+															<?php _e('Parent', 'groove-folios'); ?>
 														</span>
 														<?php
 														$dropdown_args = array(
 															'post_type' => $post_type_object->name,
 															'selected' => $post->post_parent,
 															'name' => 'post_parent',
-															'show_option_none' => __('Main Page (no parent)'),
+															'show_option_none' => __('Main Page (no parent)', 'groove-folios'),
 															'option_none_value' => 0,
 															'sort_column' => 'menu_order, post_title',
 														);
 
 														if ($bulk) {
-															$dropdown_args['show_option_no_change'] = __('&mdash; No Change &mdash;');
+															$dropdown_args['show_option_no_change'] = __('&mdash; No Change &mdash;', 'groove-folios');
 														}
 
 														/**
@@ -929,7 +936,7 @@ class List_Table extends \WP_List_Table
 
 													<label>
 														<span class="title">
-															<?php _e('Order'); ?>
+															<?php _e('Order', 'groove-folios'); ?>
 														</span>
 														<span class="input-text-wrap"><input type="text" name="menu_order"
 																class="inline-edit-menu-order-input"
@@ -944,17 +951,17 @@ class List_Table extends \WP_List_Table
 
 												<label>
 													<span class="title">
-														<?php _e('Template'); ?>
+														<?php _e('Template', 'groove-folios'); ?>
 													</span>
 													<select name="page_template">
 														<?php if ($bulk): ?>
 															<option value="-1">
-																<?php _e('&mdash; No Change &mdash;'); ?>
+																<?php _e('&mdash; No Change &mdash;', 'groove-folios'); ?>
 															</option>
 														<?php endif; // $bulk ?>
 														<?php
 														/** This filter is documented in wp-admin/includes/meta-boxes.php */
-														$default_title = apply_filters('default_page_template_title', __('Default template'), 'quick-edit');
+														$default_title = apply_filters('default_page_template_title', __('Default template', 'groove-folios'), 'quick-edit');
 														?>
 														<option value="default">
 															<?php echo esc_html($default_title); ?>
@@ -1008,17 +1015,17 @@ class List_Table extends \WP_List_Table
 
 															<label class="alignleft">
 																<span class="title">
-																	<?php _e('Comments'); ?>
+																	<?php _e('Comments', 'groove-folios'); ?>
 																</span>
 																<select name="comment_status">
 																	<option value="">
-																		<?php _e('&mdash; No Change &mdash;'); ?>
+																		<?php _e('&mdash; No Change &mdash;', 'groove-folios'); ?>
 																	</option>
 																	<option value="open">
-																		<?php _e('Allow'); ?>
+																		<?php _e('Allow', 'groove-folios'); ?>
 																	</option>
 																	<option value="closed">
-																		<?php _e('Do not allow'); ?>
+																		<?php _e('Do not allow', 'groove-folios'); ?>
 																	</option>
 																</select>
 															</label>
@@ -1029,17 +1036,17 @@ class List_Table extends \WP_List_Table
 
 															<label class="alignright">
 																<span class="title">
-																	<?php _e('Pings'); ?>
+																	<?php _e('Pings', 'groove-folios'); ?>
 																</span>
 																<select name="ping_status">
 																	<option value="">
-																		<?php _e('&mdash; No Change &mdash;'); ?>
+																		<?php _e('&mdash; No Change &mdash;', 'groove-folios'); ?>
 																	</option>
 																	<option value="open">
-																		<?php _e('Allow'); ?>
+																		<?php _e('Allow', 'groove-folios'); ?>
 																	</option>
 																	<option value="closed">
-																		<?php _e('Do not allow'); ?>
+																		<?php _e('Do not allow', 'groove-folios'); ?>
 																	</option>
 																</select>
 															</label>
@@ -1057,7 +1064,7 @@ class List_Table extends \WP_List_Table
 															<label class="alignleft">
 																<input type="checkbox" name="comment_status" value="open" />
 																<span class="checkbox-title">
-																	<?php _e('Allow Comments'); ?>
+																	<?php _e('Allow Comments', 'groove-folios'); ?>
 																</span>
 															</label>
 
@@ -1068,7 +1075,7 @@ class List_Table extends \WP_List_Table
 															<label class="alignleft">
 																<input type="checkbox" name="ping_status" value="open" />
 																<span class="checkbox-title">
-																	<?php _e('Allow Pings'); ?>
+																	<?php _e('Allow Pings', 'groove-folios'); ?>
 																</span>
 															</label>
 
@@ -1083,32 +1090,32 @@ class List_Table extends \WP_List_Table
 											<div class="inline-edit-group wp-clearfix">
 
 												<label class="inline-edit-status alignleft">
-													<span class="title"><?php _e('Status'); ?></span>
+													<span class="title"><?php _e('Status', 'groove-folios'); ?></span>
 													<select name="_status">
 														<?php if ($bulk): ?>
 															<option value="-1">
-																<?php _e('&mdash; No Change &mdash;'); ?>
+																<?php _e('&mdash; No Change &mdash;', 'groove-folios'); ?>
 															</option>
 														<?php endif; // $bulk ?>
 
 														<?php if ($can_publish):  // Contributors only get "Unpublished" and "Pending Review". ?>
-															<option value="publish"><?php _e('Published'); ?>
+															<option value="publish"><?php _e('Published', 'groove-folios'); ?>
 															</option>
 															<option value="future">
-																<?php _e('Scheduled'); ?>
+																<?php _e('Scheduled', 'groove-folios'); ?>
 															</option>
 															<?php if ($bulk): ?>
 																<option value="private">
-																	<?php _e('Private'); ?>
+																	<?php _e('Private', 'groove-folios'); ?>
 																</option>
 															<?php endif; // $bulk ?>
 														<?php endif; ?>
 
 														<option value="pending">
-															<?php _e('Pending Review'); ?>
+															<?php _e('Pending Review', 'groove-folios'); ?>
 														</option>
 														<option value="draft">
-															<?php _e('Draft'); ?>
+															<?php _e('Draft', 'groove-folios'); ?>
 														</option>
 													</select>
 												</label>
@@ -1119,17 +1126,17 @@ class List_Table extends \WP_List_Table
 
 														<label class="alignright">
 															<span class="title">
-																<?php _e('Sticky'); ?>
+																<?php _e('Sticky', 'groove-folios'); ?>
 															</span>
 															<select name="sticky">
 																<option value="-1">
-																	<?php _e('&mdash; No Change &mdash;'); ?>
+																	<?php _e('&mdash; No Change &mdash;', 'groove-folios'); ?>
 																</option>
 																<option value="sticky">
-																	<?php _e('Sticky'); ?>
+																	<?php _e('Sticky', 'groove-folios'); ?>
 																</option>
 																<option value="unsticky">
-																	<?php _e('Not Sticky'); ?>
+																	<?php _e('Not Sticky', 'groove-folios'); ?>
 																</option>
 															</select>
 														</label>
@@ -1138,7 +1145,7 @@ class List_Table extends \WP_List_Table
 
 														<label class="alignleft">
 															<input type="checkbox" name="sticky" value="sticky" />
-															<span class="checkbox-title"><?php _e('Make this post sticky'); ?></span>
+															<span class="checkbox-title"><?php _e('Make this post sticky', 'groove-folios'); ?></span>
 														</label>
 
 													<?php endif; // $bulk ?>
@@ -1152,11 +1159,11 @@ class List_Table extends \WP_List_Table
 
 												<label class="alignleft">
 													<span class="title">
-														<?php _ex('Format', 'post format'); ?>
+														<?php _ex('Format', 'post format', 'groove-folios'); ?>
 													</span>
 													<select name="post_format">
 														<option value="-1">
-															<?php _e('&mdash; No Change &mdash;'); ?>
+															<?php _e('&mdash; No Change &mdash;', 'groove-folios'); ?>
 														</option>
 														<option value="0">
 															<?php echo get_post_format_string('standard'); ?>
@@ -1215,14 +1222,14 @@ class List_Table extends \WP_List_Table
 										<?php if (!$bulk): ?>
 											<?php wp_nonce_field('inlineeditnonce', '_inline_edit', false); ?>
 											<button type="button" class="button button-primary save">
-												<?php _e('Update'); ?>
+												<?php _e('Update', 'groove-folios'); ?>
 											</button>
 										<?php else: ?>
-											<?php submit_button(__('Update'), 'primary', 'bulk_edit', false); ?>
+											<?php submit_button(__('Update', 'groove-folios'), 'primary', 'bulk_edit', false); ?>
 										<?php endif; ?>
 
 										<button type="button" class="button cancel">
-											<?php _e('Cancel'); ?>
+											<?php _e('Cancel', 'groove-folios'); ?>
 										</button>
 
 										<?php if (!$bulk): ?>

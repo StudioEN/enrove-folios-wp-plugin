@@ -42,13 +42,13 @@ $cap_process = Themes_Manager::theme_image_caption($theme, 'process');
 $cap_texture = Themes_Manager::theme_image_caption($theme, 'texture');
 
 return array(
-  'label'       => __('Create with sample portfolio content', 'groove'),
-  'description' => __('Seeds a four-page starter portfolio: an introduction, selected work, a note on process, and a contact page.', 'groove'),
-  'subtitle'    => __('Selected work and working notes', 'groove'),
+  'label'       => __('Create with sample portfolio content', 'groove-folios'),
+  'description' => __('Seeds a four-page starter portfolio: an introduction, selected work, a note on process, and a contact page.', 'groove-folios'),
+  'subtitle'    => __('Selected work and working notes', 'groove-folios'),
   'folio_meta'  => array(),
   'pages'       => array(
     array(
-      'title' => __('Introduction', 'groove'),
+      'title' => __('Introduction', 'groove-folios'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">This folio collects four years of work made mostly in quiet: identity systems, publications, and the occasional building sign. It is not a complete record. It is the part I would want to talk about if we sat down together.</p>
@@ -83,7 +83,7 @@ return array(
 HTML,
     ),
     array(
-      'title' => __('Selected Work', 'groove'),
+      'title' => __('Selected Work', 'groove-folios'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>Three projects, chosen because each one solved a different kind of problem.</p>
@@ -120,7 +120,7 @@ HTML,
 HTML,
     ),
     array(
-      'title' => __('How I Work', 'groove'),
+      'title' => __('How I Work', 'groove-folios'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>Every project runs the same four steps, whether it lasts three weeks or two years. The steps do not change; how long each one takes does.</p>
@@ -178,7 +178,7 @@ HTML,
 HTML,
     ),
     array(
-      'title' => __('About and Contact', 'groove'),
+      'title' => __('About and Contact', 'groove-folios'),
       'content' => (string) <<<HTML
 <!-- wp:heading {"level":2} -->
 <h2>About</h2>

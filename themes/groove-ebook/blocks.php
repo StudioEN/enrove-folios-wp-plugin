@@ -69,7 +69,7 @@ const GROOVE_EBOOK_BLOCKS = [
 add_filter('block_categories_all', function (array $categories): array {
     array_unshift($categories, [
         'slug'  => 'groove-ebook',
-        'title' => __('Groove eBook', 'groove'),
+        'title' => __('Groove eBook', 'groove-folios'),
     ]);
     return $categories;
 });

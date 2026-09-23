@@ -45,6 +45,7 @@ class Credits
     'avg_color',
     'query',
     'src_size',
+    'src_url',
     'width',
     'height',
     'downloaded_at',
@@ -215,12 +216,12 @@ class Credits
     $pexels_link = sprintf(
       '<a href="%1$s" rel="nofollow noopener" target="_blank">%2$s</a>',
       esc_url($photo_url),
-      esc_html__('Pexels', 'groove')
+      esc_html__('Pexels', 'groove-folios')
     );
 
     $text = sprintf(
       /* translators: 1: photographer name (linked), 2: the word "Pexels" (linked). */
-      esc_html__('Photo by %1$s on %2$s', 'groove'),
+      esc_html__('Photo by %1$s on %2$s', 'groove-folios'),
       $photographer_link,
       $pexels_link
     );
@@ -246,7 +247,7 @@ class Credits
     return sprintf(
       '<a class="groove-pexels-link" href="%1$s" rel="nofollow noopener" target="_blank">%2$s</a>',
       esc_url(self::PEXELS_URL),
-      esc_html__('Photos provided by Pexels', 'groove')
+      esc_html__('Photos provided by Pexels', 'groove-folios')
     );
   }
 

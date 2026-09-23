@@ -48,7 +48,7 @@ class Folio extends Page
     }
 
     $preview_text = $is_published ? 'View' : 'Preview';
-    $preview_tooltip_text = $is_published ? __('View Folio', 'groove') : __('Preview Folio', 'groove');
+    $preview_tooltip_text = $is_published ? __('View Folio', 'groove-folios') : __('Preview Folio', 'groove-folios');
     $preview_link = $is_published
       ? $folio_copy_link
       : Utils::get_folio_permalink_by_id(Utils::get_groove_post_id());
@@ -97,7 +97,7 @@ class Folio extends Page
         'action' => $publish_button_action
       ),
       array(
-        'text' => __('Copy link', 'groove'),
+        'text' => __('Copy link', 'groove-folios'),
         'type' => 'secondary',
         'ui' => 'wp',
         'action' => 'copy_groove_folio_link',
@@ -106,18 +106,18 @@ class Folio extends Page
         'class' => 'g-tooltip-button',
         'attrs' => array(
           'id' => 'g-copy-folio-link',
-          'aria-label' => __('Copy link', 'groove'),
+          'aria-label' => __('Copy link', 'groove-folios'),
           'data-copy-link' => $folio_copy_link,
-          'data-copy-text' => __('Copy link', 'groove'),
-          'data-copied-text' => __('Copied', 'groove'),
-          'data-tooltip-text' => __('Copy link', 'groove'),
+          'data-copy-text' => __('Copy link', 'groove-folios'),
+          'data-copied-text' => __('Copied', 'groove-folios'),
+          'data-tooltip-text' => __('Copy link', 'groove-folios'),
         ),
       )
     ];
 
     add_action('save_post', [$this, 'save_post']);
 
-    add_action('wp_ajax_folio_inline_save', [$this, 'inline_save']);
+    add_action('wp_ajax_groove_folio_inline_save', [$this, 'inline_save']);
 
     add_action('groove/menu/register', function (Menu_Manager $menu) {
       $menu->register(static::PAGE_ID, new Folio_Menu_Item($this));
@@ -157,25 +157,25 @@ class Folio extends Page
     $post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : '';
     if ('page' === $post_type) {
       if (!current_user_can('edit_page', $post_id)) {
-        wp_die(__('Sorry, you are not allowed to edit this page.'));
+        wp_die(__('Sorry, you are not allowed to edit this page.', 'groove-folios'));
       }
     } else {
       if (!current_user_can('edit_post', $post_id)) {
-        wp_die(__('Sorry, you are not allowed to edit this post.'));
+        wp_die(__('Sorry, you are not allowed to edit this post.', 'groove-folios'));
       }
     }
 
     $last = wp_check_post_lock($post_id);
     if ($last) {
       $last_user = get_userdata($last);
-      $last_user_name = $last_user ? $last_user->display_name : __('Someone');
+      $last_user_name = $last_user ? $last_user->display_name : __('Someone', 'groove-folios');
 
       /* translators: %s: User's display name. */
-      $msg_template = __('Saving is disabled: %s is currently editing this post.');
+      $msg_template = __('Saving is disabled: %s is currently editing this post.', 'groove-folios');
 
       if ('page' === $post_type) {
         /* translators: %s: User's display name. */
-        $msg_template = __('Saving is disabled: %s is currently editing this page.');
+        $msg_template = __('Saving is disabled: %s is currently editing this page.', 'groove-folios');
       }
 
       printf($msg_template, esc_html($last_user_name));
@@ -613,7 +613,7 @@ class Folio extends Page
       return $fields->title;
     }
 
-    return esc_html__('Folio', 'groove');
+    return esc_html__('Folio', 'groove-folios');
   }
 
   private function get_collection_tag_names($folio_id)
@@ -635,16 +635,16 @@ class Folio extends Page
 
     $tabs = [
       'setup' => [
-        'label' => esc_html__('Setup', 'groove'),
+        'label' => esc_html__('Setup', 'groove-folios'),
       ],
       'pages' => [
-        'label' => esc_html__('Pages', 'groove'),
+        'label' => esc_html__('Pages', 'groove-folios'),
       ]
     ];
 
     if ($is_proposal_theme) {
       $tabs['proposal'] = [
-        'label' => esc_html__('Proposal', 'groove'),
+        'label' => esc_html__('Proposal', 'groove-folios'),
         'attrs' => ['data-theme-target' => 'groove-proposal'],
       ];
     }
@@ -729,60 +729,60 @@ class Folio extends Page
 
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Document', 'groove'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Document', 'groove-folios'); ?></h3>
           </div>
           <div class="p-4 space-y-4">
             <div>
-              <label for="proposal_version" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Version', 'groove'); ?></label>
+              <label for="proposal_version" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Version', 'groove-folios'); ?></label>
               <input type="text" id="proposal_version" name="proposal_version"
                 value="<?php echo esc_attr($proposal_version); ?>"
                 placeholder="v1.0"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Auto-increments on publish. Edit to override.', 'groove'); ?></p>
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Auto-increments on publish. Edit to override.', 'groove-folios'); ?></p>
               <button
                 type="button"
                 class="button-link mt-2"
                 data-version-history-open>
-                <?php esc_html_e('View version history', 'groove'); ?>
+                <?php esc_html_e('View version history', 'groove-folios'); ?>
               </button>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Status', 'groove'); ?></label>
+              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Status', 'groove-folios'); ?></label>
               <div class="flex items-center gap-2">
-                <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-sm font-medium text-gray-700"><?php echo esc_html($proposal_status ?: __('Draft', 'groove')); ?></span>
+                <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-sm font-medium text-gray-700"><?php echo esc_html($proposal_status ?: __('Draft', 'groove-folios')); ?></span>
               </div>
-              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Read-only. Mirrors the folio publish status.', 'groove'); ?></p>
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Read-only. Mirrors the folio publish status.', 'groove-folios'); ?></p>
             </div>
             <div>
-              <label for="proposal_date" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Date', 'groove'); ?></label>
+              <label for="proposal_date" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Date', 'groove-folios'); ?></label>
               <input type="date" id="proposal_date" name="proposal_date"
                 value="<?php echo esc_attr($proposal_date); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label for="proposal_revision_note" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Revision Note', 'groove'); ?></label>
+              <label for="proposal_revision_note" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Revision Note', 'groove-folios'); ?></label>
               <input type="text" id="proposal_revision_note" name="proposal_revision_note"
                 value=""
-                placeholder="<?php esc_attr_e('Optional note for this version', 'groove'); ?>"
+                placeholder="<?php esc_attr_e('Optional note for this version', 'groove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Included in version history when you publish. Not saved between sessions.', 'groove'); ?></p>
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Included in version history when you publish. Not saved between sessions.', 'groove-folios'); ?></p>
             </div>
           </div>
         </div>
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Client', 'groove'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Client', 'groove-folios'); ?></h3>
           </div>
           <div class="p-4 space-y-4">
             <div>
-              <label for="proposal_client_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Name', 'groove'); ?></label>
+              <label for="proposal_client_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Name', 'groove-folios'); ?></label>
               <input type="text" id="proposal_client_name" name="proposal_client_name"
                 value="<?php echo esc_attr($proposal_client_name); ?>"
                 placeholder="Client Name"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Logo', 'groove'); ?></label>
+              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Logo', 'groove-folios'); ?></label>
               <?php
                 $default_client_logo_url = esc_url(GROOVE_URL . 'themes/groove-proposal/assets/images/theme-g-logo.png');
                 $client_logo_preview = $proposal_client_logo_url !== '' ? esc_url($proposal_client_logo_url) : '';
@@ -796,24 +796,24 @@ class Folio extends Page
                     src="<?php echo $client_logo_preview !== '' ? $client_logo_preview : $default_client_logo_url; ?>" />
                 </div>
                 <div class="flex flex-col space-y-2">
-                  <button type="button" id="g-client-logo-select" class="button button-secondary"><?php echo $client_logo_preview !== '' ? esc_html__('Replace logo', 'groove') : esc_html__('Select logo', 'groove'); ?></button>
+                  <button type="button" id="g-client-logo-select" class="button button-secondary"><?php echo $client_logo_preview !== '' ? esc_html__('Replace logo', 'groove-folios') : esc_html__('Select logo', 'groove-folios'); ?></button>
                   <button type="button" id="g-client-logo-default" data-default-url="<?php echo $default_client_logo_url; ?>"
-                    class="button-link <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Use default', 'groove'); ?></button>
+                    class="button-link <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Use default', 'groove-folios'); ?></button>
                   <button type="button" id="g-client-logo-remove"
-                    class="button-link text-red-600 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Remove', 'groove'); ?></button>
+                    class="button-link text-red-600 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Remove', 'groove-folios'); ?></button>
                 </div>
               </div>
             </div>
             <div>
               <label for="proposal_prepared_for" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                <?php esc_html_e('Prepared For', 'groove'); ?>
-                <span class="font-normal text-gray-400 normal-case tracking-normal ml-1">(<?php esc_html_e('legacy', 'groove'); ?>)</span>
+                <?php esc_html_e('Prepared For', 'groove-folios'); ?>
+                <span class="font-normal text-gray-400 normal-case tracking-normal ml-1">(<?php esc_html_e('legacy', 'groove-folios'); ?>)</span>
               </label>
               <input type="text" id="proposal_prepared_for" name="proposal_prepared_for"
                 value="<?php echo esc_attr($proposal_prepared_for); ?>"
                 placeholder="Client Name"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Superseded by Client Name above when set.', 'groove'); ?></p>
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Superseded by Client Name above when set.', 'groove-folios'); ?></p>
             </div>
           </div>
         </div>
@@ -825,32 +825,32 @@ class Folio extends Page
 
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Primary Contact', 'groove'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Primary Contact', 'groove-folios'); ?></h3>
           </div>
           <div class="p-4 space-y-4">
             <div>
-              <label for="proposal_contact_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Name', 'groove'); ?></label>
+              <label for="proposal_contact_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Name', 'groove-folios'); ?></label>
               <input type="text" id="proposal_contact_name" name="proposal_contact_name"
                 value="<?php echo esc_attr($proposal_contact_name); ?>"
                 placeholder="Alex Morgan"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label for="proposal_contact_role" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Role', 'groove'); ?></label>
+              <label for="proposal_contact_role" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Role', 'groove-folios'); ?></label>
               <input type="text" id="proposal_contact_role" name="proposal_contact_role"
                 value="<?php echo esc_attr($proposal_contact_role); ?>"
                 placeholder="Engagement Lead"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label for="proposal_contact_email" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Email', 'groove'); ?></label>
+              <label for="proposal_contact_email" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Email', 'groove-folios'); ?></label>
               <input type="email" id="proposal_contact_email" name="proposal_contact_email"
                 value="<?php echo esc_attr($proposal_contact_email); ?>"
                 placeholder="hello@example.com"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label for="proposal_contact_phone" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Phone', 'groove'); ?></label>
+              <label for="proposal_contact_phone" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Phone', 'groove-folios'); ?></label>
               <input type="text" id="proposal_contact_phone" name="proposal_contact_phone"
                 value="<?php echo esc_attr($proposal_contact_phone); ?>"
                 placeholder="+1 (555) 123-4567"
@@ -861,51 +861,51 @@ class Folio extends Page
 
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Additional Contacts', 'groove'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Additional Contacts', 'groove-folios'); ?></h3>
           </div>
           <div class="p-4">
             <textarea id="proposal_contacts" name="proposal_contacts" rows="5"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Name | Role | email@example.com | +1 555-555-5555 | https://linkedin.com/in/username&#10;Name | Role | email@example.com"><?php echo esc_textarea($proposal_contacts); ?></textarea>
             <p class="mt-2 mb-0 text-xs text-gray-500">
-              <?php esc_html_e('Optional. One contact per line using pipes: Name | Role | Email | Phone | LinkedIn URL. When set, replaces the primary contact above.', 'groove'); ?>
+              <?php esc_html_e('Optional. One contact per line using pipes: Name | Role | Email | Phone | LinkedIn URL. When set, replaces the primary contact above.', 'groove-folios'); ?>
             </p>
           </div>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Behaviour', 'groove'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Behaviour', 'groove-folios'); ?></h3>
           </div>
           <div class="p-4 space-y-4">
             <div>
               <label for="proposal_open_text" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                <?php esc_html_e('Cover CTA Text', 'groove'); ?>
+                <?php esc_html_e('Cover CTA Text', 'groove-folios'); ?>
               </label>
               <input type="text" id="proposal_open_text" name="proposal_open_text"
                 value="<?php echo esc_attr($proposal_open_text); ?>"
-                placeholder="<?php esc_attr_e('Open proposal', 'groove'); ?>"
+                placeholder="<?php esc_attr_e('Open proposal', 'groove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
               <p class="mt-2 mb-0 text-xs text-gray-500">
-                <?php esc_html_e('Optional. Defaults to “Open proposal” on the cover CTA.', 'groove'); ?>
+                <?php esc_html_e('Optional. Defaults to “Open proposal” on the cover CTA.', 'groove-folios'); ?>
               </p>
             </div>
             <div>
               <label for="proposal_color_scheme" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                <?php esc_html_e('Color Scheme', 'groove'); ?>
+                <?php esc_html_e('Color Scheme', 'groove-folios'); ?>
               </label>
               <select id="proposal_color_scheme" name="proposal_color_scheme"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                <option value="default" <?php selected($proposal_color_scheme, 'default'); ?>><?php esc_html_e('Default', 'groove'); ?></option>
-                <option value="dynamic" <?php selected($proposal_color_scheme, 'dynamic'); ?>><?php esc_html_e('Dynamic (from feature image)', 'groove'); ?></option>
+                <option value="default" <?php selected($proposal_color_scheme, 'default'); ?>><?php esc_html_e('Default', 'groove-folios'); ?></option>
+                <option value="dynamic" <?php selected($proposal_color_scheme, 'dynamic'); ?>><?php esc_html_e('Dynamic (from feature image)', 'groove-folios'); ?></option>
               </select>
               <p class="mt-2 mb-0 text-xs text-gray-500">
-                <?php esc_html_e('Dynamic mode extracts accent colors from the folio feature image and applies them across cover and pages.', 'groove'); ?>
+                <?php esc_html_e('Dynamic mode extracts accent colors from the folio feature image and applies them across cover and pages.', 'groove-folios'); ?>
               </p>
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                <?php esc_html_e('In-Page Navigation', 'groove'); ?>
+                <?php esc_html_e('In-Page Navigation', 'groove-folios'); ?>
               </label>
               <div class="flex items-center gap-2">
                 <input type="hidden" name="proposal_show_in_page_nav" value="0" />
@@ -913,10 +913,10 @@ class Folio extends Page
                   class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   <?php echo checked($proposal_show_in_page_nav, true, false); ?> />
                 <label for="g-proposal-show-in-page-nav" class="text-sm text-gray-700">
-                  <?php esc_html_e('Show in-page section navigation', 'groove'); ?>
+                  <?php esc_html_e('Show in-page section navigation', 'groove-folios'); ?>
                 </label>
               </div>
-              <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('When enabled, an "On this page" sidebar shows links to sections within each page.', 'groove'); ?></p>
+              <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('When enabled, an "On this page" sidebar shows links to sections within each page.', 'groove-folios'); ?></p>
             </div>
           </div>
         </div>
@@ -948,29 +948,29 @@ class Folio extends Page
       <div class="g-theme-picker-modal__frame g-version-history-modal__frame">
         <div class="g-theme-picker-modal__header">
           <div class="g-theme-picker-modal__heading">
-            <h3 class="g-theme-picker-modal__title"><?php esc_html_e('Version History', 'groove'); ?></h3>
-            <p class="g-theme-picker-modal__subtitle"><?php esc_html_e('History is recorded each time you publish the proposal.', 'groove'); ?></p>
+            <h3 class="g-theme-picker-modal__title"><?php esc_html_e('Version History', 'groove-folios'); ?></h3>
+            <p class="g-theme-picker-modal__subtitle"><?php esc_html_e('History is recorded each time you publish the proposal.', 'groove-folios'); ?></p>
           </div>
           <button
             type="button"
             class="g-theme-picker-modal__close"
             data-version-history-close
-            aria-label="<?php esc_attr_e('Close version history', 'groove'); ?>">
+            aria-label="<?php esc_attr_e('Close version history', 'groove-folios'); ?>">
             <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
           </button>
         </div>
         <div class="g-theme-picker-modal__body">
         <?php if ($total === 0) : ?>
-          <p class="text-sm text-gray-400 m-0"><?php esc_html_e('No version history yet. History is recorded when you publish.', 'groove'); ?></p>
+          <p class="text-sm text-gray-400 m-0"><?php esc_html_e('No version history yet. History is recorded when you publish.', 'groove-folios'); ?></p>
         <?php else : ?>
           <table class="w-full text-sm text-left">
             <thead>
               <tr class="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                <th class="pb-2 pr-3"><?php esc_html_e('Version', 'groove'); ?></th>
-                <th class="pb-2 pr-3"><?php esc_html_e('Status', 'groove'); ?></th>
-                <th class="pb-2 pr-3"><?php esc_html_e('Date', 'groove'); ?></th>
-                <th class="pb-2 pr-3"><?php esc_html_e('By', 'groove'); ?></th>
-                <th class="pb-2"><?php esc_html_e('Note', 'groove'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('Version', 'groove-folios'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('Status', 'groove-folios'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('Date', 'groove-folios'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('By', 'groove-folios'); ?></th>
+                <th class="pb-2"><?php esc_html_e('Note', 'groove-folios'); ?></th>
               </tr>
             </thead>
             <tbody>
@@ -996,8 +996,8 @@ class Folio extends Page
           <?php if ($total > $visible_limit) : ?>
             <button type="button"
               class="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer bg-transparent border-0 p-0"
-              onclick="document.querySelectorAll('.g-revision-row-hidden').forEach(function(r){r.classList.toggle('hidden')});this.textContent=this.textContent==='<?php echo esc_js(__('Show all', 'groove')); ?>'?'<?php echo esc_js(__('Show less', 'groove')); ?>':'<?php echo esc_js(__('Show all', 'groove')); ?>'">
-              <?php esc_html_e('Show all', 'groove'); ?>
+              onclick="document.querySelectorAll('.g-revision-row-hidden').forEach(function(r){r.classList.toggle('hidden')});this.textContent=this.textContent==='<?php echo esc_js(__('Show all', 'groove-folios')); ?>'?'<?php echo esc_js(__('Show less', 'groove-folios')); ?>':'<?php echo esc_js(__('Show all', 'groove-folios')); ?>'">
+              <?php esc_html_e('Show all', 'groove-folios'); ?>
             </button>
           <?php endif; ?>
         <?php endif; ?>
@@ -1007,7 +1007,7 @@ class Folio extends Page
             type="button"
             class="g-theme-picker-modal__done"
             data-version-history-close>
-            <?php esc_html_e('Done', 'groove'); ?>
+            <?php esc_html_e('Done', 'groove-folios'); ?>
           </button>
         </div>
       </div>
@@ -1036,24 +1036,24 @@ class Folio extends Page
       </div>
       <div class="p-4 space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Theme', 'groove'); ?></label>
+          <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Theme', 'groove-folios'); ?></label>
           <div class="g-theme-picker-summary">
             <div class="g-theme-picker-summary__layout">
               <div class="g-theme-picker-summary__thumb">
                 <img
                   src="<?php echo esc_url($current_theme['thumbnail_url'] ?? ''); ?>"
-                  alt="<?php echo esc_attr($current_theme['name'] ?? __('Selected theme', 'groove')); ?>"
+                  alt="<?php echo esc_attr($current_theme['name'] ?? __('Selected theme', 'groove-folios')); ?>"
                   class="g-theme-picker-summary__thumb-image"
                   data-theme-summary-thumbnail />
               </div>
               <div class="g-theme-picker-summary__content">
-                <p class="g-theme-picker-summary__name" data-theme-summary-name><?php echo esc_html($current_theme['name'] ?? __('No theme selected', 'groove')); ?></p>
+                <p class="g-theme-picker-summary__name" data-theme-summary-name><?php echo esc_html($current_theme['name'] ?? __('No theme selected', 'groove-folios')); ?></p>
                 <p class="g-theme-picker-summary__description" data-theme-summary-description><?php echo esc_html($current_theme['description'] ?? ''); ?></p>
                 <button
                   type="button"
                   class="button button-secondary g-theme-picker-summary__button"
                   data-theme-picker-open>
-                  <?php esc_html_e('Change theme', 'groove'); ?>
+                  <?php esc_html_e('Change theme', 'groove-folios'); ?>
                 </button>
               </div>
             </div>
@@ -1076,8 +1076,8 @@ class Folio extends Page
               </select>
               <button type="button" id="g-reset-header-font"
                 class="g-tooltip-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                aria-label="<?php esc_attr_e('Reset font', 'groove'); ?>"
-                data-tooltip-text="<?php esc_attr_e('Reset font', 'groove'); ?>">
+                aria-label="<?php esc_attr_e('Reset font', 'groove-folios'); ?>"
+                data-tooltip-text="<?php esc_attr_e('Reset font', 'groove-folios'); ?>">
                 <span class="dashicons dashicons-undo" aria-hidden="true"></span>
               </button>
             </div>
@@ -1097,8 +1097,8 @@ class Folio extends Page
               </select>
               <button type="button" id="g-reset-body-font"
                 class="g-tooltip-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                aria-label="<?php esc_attr_e('Reset font', 'groove'); ?>"
-                data-tooltip-text="<?php esc_attr_e('Reset font', 'groove'); ?>">
+                aria-label="<?php esc_attr_e('Reset font', 'groove-folios'); ?>"
+                data-tooltip-text="<?php esc_attr_e('Reset font', 'groove-folios'); ?>">
                 <span class="dashicons dashicons-undo" aria-hidden="true"></span>
               </button>
             </div>
@@ -1208,16 +1208,16 @@ class Folio extends Page
         </div>
         <div>
           <label for="collection_tags"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Collection Tags', 'groove'); ?></label>
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Collection Tags', 'groove-folios'); ?></label>
           <input type="text" id="collection_tags" name="collection_tags" value="<?php echo esc_attr($collection_tags) ?>"
-            placeholder="<?php esc_attr_e('Magazine, 2026, Weekly', 'groove'); ?>"
+            placeholder="<?php esc_attr_e('Magazine, 2026, Weekly', 'groove-folios'); ?>"
             autocomplete="off"
             data-tags="<?php echo esc_attr(wp_json_encode($all_collection_tag_names_list)); ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
           <p class="mt-1 mb-0 text-xs text-gray-400">
-            <?php esc_html_e('Comma-separated tags. Manage available tags from Settings.', 'groove'); ?>
+            <?php esc_html_e('Comma-separated tags. Manage available tags from Settings.', 'groove-folios'); ?>
             <?php if (current_user_can('manage_options')): ?>
-              <a href="<?php echo esc_url($collection_tags_settings_url); ?>"><?php esc_html_e('Open Collections settings', 'groove'); ?></a>
+              <a href="<?php echo esc_url($collection_tags_settings_url); ?>"><?php esc_html_e('Open Collections settings', 'groove-folios'); ?></a>
             <?php endif; ?>
           </p>
         </div>
@@ -1277,7 +1277,7 @@ class Folio extends Page
             'id' => 'byline',
             'selected' => $selected_byline,
             'class' => 'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
-            'show_option_none' => __('Hide byline', 'groove'),
+            'show_option_none' => __('Hide byline', 'groove-folios'),
             'option_none_value' => '0',
           ));
           ?>
@@ -1310,14 +1310,14 @@ class Folio extends Page
       <div class="g-theme-picker-modal__frame">
         <div class="g-theme-picker-modal__header">
           <div class="g-theme-picker-modal__heading">
-            <h3 class="g-theme-picker-modal__title"><?php esc_html_e('Choose a theme', 'groove'); ?></h3>
-            <p class="g-theme-picker-modal__subtitle"><?php esc_html_e('Switch the folio theme for the cover and inner pages.', 'groove'); ?></p>
+            <h3 class="g-theme-picker-modal__title"><?php esc_html_e('Choose a theme', 'groove-folios'); ?></h3>
+            <p class="g-theme-picker-modal__subtitle"><?php esc_html_e('Switch the folio theme for the cover and inner pages.', 'groove-folios'); ?></p>
           </div>
           <button
             type="button"
             class="g-theme-picker-modal__close"
             data-theme-picker-close
-            aria-label="<?php esc_attr_e('Close theme picker', 'groove'); ?>">
+            aria-label="<?php esc_attr_e('Close theme picker', 'groove-folios'); ?>">
             <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
           </button>
         </div>
@@ -1349,7 +1349,7 @@ class Folio extends Page
                   <?php endif; ?>
                 </div>
                 <span
-                  class="active-badge g-theme-picker-modal__badge <?php echo $active ? '' : 'is-hidden'; ?>"><?php esc_html_e('Selected', 'groove'); ?></span>
+                  class="active-badge g-theme-picker-modal__badge <?php echo $active ? '' : 'is-hidden'; ?>"><?php esc_html_e('Selected', 'groove-folios'); ?></span>
               </button>
             <?php endforeach; ?>
           </div>
@@ -1359,7 +1359,7 @@ class Folio extends Page
             type="button"
             class="g-theme-picker-modal__done"
             data-theme-picker-close>
-            <?php esc_html_e('Done', 'groove'); ?>
+            <?php esc_html_e('Done', 'groove-folios'); ?>
           </button>
         </div>
       </div>
@@ -1374,7 +1374,7 @@ class Folio extends Page
 
     $q = $this->parse_query();
     ?>
-    <nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Folio tabs', 'groove'); ?>">
+    <nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Folio tabs', 'groove-folios'); ?>">
       <?php
       foreach ($tabs as $tab_id => $tab) {
         $active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
@@ -1453,17 +1453,17 @@ class Folio extends Page
   {
     switch ($status) {
       case 'publish':
-        return esc_html__('Published', 'groove');
+        return esc_html__('Published', 'groove-folios');
       case 'draft':
-        return esc_html__('Draft', 'groove');
+        return esc_html__('Draft', 'groove-folios');
       case 'pending':
-        return esc_html__('Pending', 'groove');
+        return esc_html__('Pending', 'groove-folios');
       case 'private':
-        return esc_html__('Private', 'groove');
+        return esc_html__('Private', 'groove-folios');
       case 'trash':
-        return esc_html__('Trash', 'groove');
+        return esc_html__('Trash', 'groove-folios');
       default:
-        return esc_html__('All', 'groove');
+        return esc_html__('All', 'groove-folios');
     }
   }
 
@@ -1471,20 +1471,20 @@ class Folio extends Page
   {
     switch ($status) {
       case 'publish':
-        return esc_html__('Published', 'groove');
+        return esc_html__('Published', 'groove-folios');
       case 'draft':
       case 'auto-draft':
-        return esc_html__('Draft', 'groove');
+        return esc_html__('Draft', 'groove-folios');
       case 'pending':
-        return esc_html__('Pending', 'groove');
+        return esc_html__('Pending', 'groove-folios');
       case 'private':
-        return esc_html__('Private', 'groove');
+        return esc_html__('Private', 'groove-folios');
       case 'trash':
-        return esc_html__('Trash', 'groove');
+        return esc_html__('Trash', 'groove-folios');
       default:
         $status = is_string($status) ? trim($status) : '';
         if ($status === '') {
-          return esc_html__('Draft', 'groove');
+          return esc_html__('Draft', 'groove-folios');
         }
 
         return esc_html(ucwords(str_replace(array('-', '_'), ' ', $status)));
@@ -1614,13 +1614,13 @@ class Folio extends Page
   {
     if ($status === 'trash') {
       return array(
-        'untrash' => esc_html__('Restore', 'groove'),
-        'delete' => esc_html__('Delete Permanently', 'groove'),
+        'untrash' => esc_html__('Restore', 'groove-folios'),
+        'delete' => esc_html__('Delete Permanently', 'groove-folios'),
       );
     }
 
     return array(
-      'trash' => esc_html__('Move to Trash', 'groove'),
+      'trash' => esc_html__('Move to Trash', 'groove-folios'),
     );
   }
 
@@ -1734,7 +1734,7 @@ class Folio extends Page
       case 'trash':
         $message = sprintf(
           /* translators: %s: number of pages moved to trash */
-          _n('%s page moved to Trash.', '%s pages moved to Trash.', $count, 'groove'),
+          _n('%s page moved to Trash.', '%s pages moved to Trash.', $count, 'groove-folios'),
           number_format_i18n($count)
         );
         $type = \Groove\Toast::INFO;
@@ -1742,14 +1742,14 @@ class Folio extends Page
       case 'untrash':
         $message = sprintf(
           /* translators: %s: number of pages restored */
-          _n('%s page restored.', '%s pages restored.', $count, 'groove'),
+          _n('%s page restored.', '%s pages restored.', $count, 'groove-folios'),
           number_format_i18n($count)
         );
         break;
       case 'delete':
         $message = sprintf(
           /* translators: %s: number of pages deleted */
-          _n('%s page deleted permanently.', '%s pages deleted permanently.', $count, 'groove'),
+          _n('%s page deleted permanently.', '%s pages deleted permanently.', $count, 'groove-folios'),
           number_format_i18n($count)
         );
         $type = \Groove\Toast::INFO;
@@ -1774,7 +1774,7 @@ class Folio extends Page
     }
 
     $author = get_userdata((int) get_post_field('post_author', $post_id));
-    return $author ? $author->display_name : esc_html__('Unknown user', 'groove');
+    return $author ? $author->display_name : esc_html__('Unknown user', 'groove-folios');
   }
 
   public function display_tab_pages()
@@ -1840,23 +1840,23 @@ class Folio extends Page
 
       <p class="search-box">
         <label class="screen-reader-text"
-          for="post-search-input"><?php esc_html_e('Search folio pages', 'groove'); ?>:</label>
+          for="post-search-input"><?php esc_html_e('Search folio pages', 'groove-folios'); ?>:</label>
         <input type="search" id="post-search-input" name="s" value="<?php echo esc_attr($search); ?>" />
         <input type="submit" id="search-submit" class="button"
-          value="<?php esc_attr_e('Search Folio Pages', 'groove'); ?>" />
+          value="<?php esc_attr_e('Search Folio Pages', 'groove-folios'); ?>" />
       </p>
 
       <div class="tablenav top">
         <div class="alignleft actions bulkactions">
           <label for="bulk-action-selector-top"
-            class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove'); ?></label>
+            class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove-folios'); ?></label>
           <select name="action" id="bulk-action-selector-top">
-            <option value="-1"><?php esc_html_e('Bulk actions', 'groove'); ?></option>
+            <option value="-1"><?php esc_html_e('Bulk actions', 'groove-folios'); ?></option>
             <?php foreach ($bulk_actions as $action_key => $action_label): ?>
               <option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
             <?php endforeach; ?>
           </select>
-          <input type="submit" id="doaction" class="button action" value="<?php esc_attr_e('Apply', 'groove'); ?>" />
+          <input type="submit" id="doaction" class="button action" value="<?php esc_attr_e('Apply', 'groove-folios'); ?>" />
         </div>
         <div class="tablenav-pages">
           <?php if ($total_pages > 1): ?>
@@ -1887,7 +1887,7 @@ class Folio extends Page
               <?php
               printf(
                 /* translators: %s: number of items */
-                esc_html(_n('%s item', '%s items', $total_items, 'groove')),
+                esc_html(_n('%s item', '%s items', $total_items, 'groove-folios')),
                 esc_html(number_format_i18n($total_items))
               );
               ?>
@@ -1900,7 +1900,7 @@ class Folio extends Page
               <?php
               printf(
                 /* translators: %s: number of items */
-                esc_html(_n('%s item', '%s items', $total_items, 'groove')),
+                esc_html(_n('%s item', '%s items', $total_items, 'groove-folios')),
                 esc_html(number_format_i18n($total_items))
               );
               ?>
@@ -1915,14 +1915,14 @@ class Folio extends Page
           <tr>
             <th scope="col" id="cb" class="manage-column column-cb check-column">
               <label class="screen-reader-text"
-                for="cb-select-all-1"><?php esc_html_e('Select all pages', 'groove'); ?></label>
+                for="cb-select-all-1"><?php esc_html_e('Select all pages', 'groove-folios'); ?></label>
               <input id="cb-select-all-1" type="checkbox" />
             </th>
             <th scope="col"
               class="manage-column column-primary <?php echo esc_attr($orderby === 'title' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
               <a
                 href="<?php echo esc_url($this->get_pages_tab_sort_url($folio_id, 'title', $orderby, $order, $status, $search)); ?>">
-                <span><?php esc_html_e('Page Name', 'groove'); ?></span>
+                <span><?php esc_html_e('Page Name', 'groove-folios'); ?></span>
                 <span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span
                     class="sorting-indicator desc" aria-hidden="true"></span></span>
               </a>
@@ -1931,17 +1931,17 @@ class Folio extends Page
               class="manage-column <?php echo esc_attr($orderby === 'menu_order' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
               <a
                 href="<?php echo esc_url($this->get_pages_tab_sort_url($folio_id, 'menu_order', $orderby, $order, $status, $search)); ?>">
-                <span><?php esc_html_e('Menu Position', 'groove'); ?></span>
+                <span><?php esc_html_e('Menu Position', 'groove-folios'); ?></span>
                 <span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span
                     class="sorting-indicator desc" aria-hidden="true"></span></span>
               </a>
             </th>
-            <th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove'); ?></th>
+            <th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove-folios'); ?></th>
             <th scope="col"
               class="manage-column <?php echo esc_attr($orderby === 'modified' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
               <a
                 href="<?php echo esc_url($this->get_pages_tab_sort_url($folio_id, 'modified', $orderby, $order, $status, $search)); ?>">
-                <span><?php esc_html_e('Last Updated', 'groove'); ?></span>
+                <span><?php esc_html_e('Last Updated', 'groove-folios'); ?></span>
                 <span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span
                     class="sorting-indicator desc" aria-hidden="true"></span></span>
               </a>
@@ -1955,7 +1955,7 @@ class Folio extends Page
               $post_id = (int) $post->ID;
               $post_status = (string) get_post_status($post_id);
               $title = get_the_title($post_id);
-              $post_title = $title !== '' ? $title : esc_html__('(no title)', 'groove');
+              $post_title = $title !== '' ? $title : esc_html__('(no title)', 'groove-folios');
               $base_edit_url = get_edit_post_link($post_id, '');
               if ($base_edit_url) {
                 $edit_url = add_query_arg(
@@ -1978,28 +1978,28 @@ class Folio extends Page
               }
               $is_preview_status = in_array($post_status, array('draft', 'pending', 'future'), true);
               $row_view_url = $view_url;
-              $row_view_label = $is_preview_status ? esc_html__('Preview', 'groove') : esc_html__('View', 'groove');
+              $row_view_label = $is_preview_status ? esc_html__('Preview', 'groove-folios') : esc_html__('View', 'groove-folios');
               $modified_label = sprintf(
                 /* translators: 1: date/time value, 2: user display name */
-                esc_html__('%1$s by %2$s', 'groove'),
+                esc_html__('%1$s by %2$s', 'groove-folios'),
                 get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post_id),
                 $this->get_pages_tab_last_modified_by($post_id)
               );
               $quick_edit_aria_label = sprintf(
                 /* translators: %s: Page title. */
-                esc_attr__('Quick edit "%s" inline', 'groove'),
+                esc_attr__('Quick edit "%s" inline', 'groove-folios'),
                 wp_strip_all_tags($post_title)
               );
               ?>
               <tr id="post-<?php echo esc_attr((string) $post_id); ?>">
                 <th scope="row" class="check-column">
                   <label class="screen-reader-text"
-                    for="cb-select-<?php echo esc_attr((string) $post_id); ?>"><?php esc_html_e('Select page', 'groove'); ?></label>
+                    for="cb-select-<?php echo esc_attr((string) $post_id); ?>"><?php esc_html_e('Select page', 'groove-folios'); ?></label>
                   <input id="cb-select-<?php echo esc_attr((string) $post_id); ?>" type="checkbox" name="post[]"
                     value="<?php echo esc_attr((string) $post_id); ?>" />
                 </th>
                 <td class="title column-title has-row-actions column-primary page-title"
-                  data-colname="<?php esc_attr_e('Page Name', 'groove'); ?>">
+                  data-colname="<?php esc_attr_e('Page Name', 'groove-folios'); ?>">
                   <strong class="g-folio__title-wrap">
                     <a class="row-title g-folio__truncate-text" href="<?php echo esc_url($edit_url); ?>"
                       title="<?php echo esc_attr($post_title); ?>">
@@ -2007,26 +2007,26 @@ class Folio extends Page
                     </a>
                   </strong>
                   <div class="row-actions">
-                    <span class="edit"><a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove'); ?></a>
+                    <span class="edit"><a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove-folios'); ?></a>
                       |</span>
                     <?php if ($post_status !== 'trash'): ?>
                       <span class="inline hide-if-no-js">
                         <button type="button" class="button-link editinline"
                           aria-label="<?php echo esc_attr($quick_edit_aria_label); ?>"
-                          aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove'); ?></button> |
+                          aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove-folios'); ?></button> |
                       </span>
                     <?php endif; ?>
                     <span class="view"><a href="<?php echo esc_url($row_view_url); ?>" target="_blank"
                         rel="noopener noreferrer"><?php echo esc_html($row_view_label); ?></a> |</span>
                     <?php if ($post_status === 'trash'): ?>
                       <span class="untrash"><a
-                          href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove'); ?></a>
+                          href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove-folios'); ?></a>
                         |</span>
                       <span class="delete"><a class="submitdelete"
-                          href="<?php echo esc_url(get_delete_post_link($post_id, '', true)); ?>"><?php esc_html_e('Delete Permanently', 'groove'); ?></a></span>
+                          href="<?php echo esc_url(get_delete_post_link($post_id, '', true)); ?>"><?php esc_html_e('Delete Permanently', 'groove-folios'); ?></a></span>
                     <?php else: ?>
                       <span class="trash"><a class="submitdelete"
-                          href="<?php echo esc_url(get_delete_post_link($post_id)); ?>"><?php esc_html_e('Trash', 'groove'); ?></a></span>
+                          href="<?php echo esc_url(get_delete_post_link($post_id)); ?>"><?php esc_html_e('Trash', 'groove-folios'); ?></a></span>
                     <?php endif; ?>
                   </div>
                   <?php
@@ -2035,18 +2035,18 @@ class Folio extends Page
                   }
                   ?>
                   <button type="button" class="toggle-row"><span
-                      class="screen-reader-text"><?php esc_html_e('Show more details', 'groove'); ?></span></button>
+                      class="screen-reader-text"><?php esc_html_e('Show more details', 'groove-folios'); ?></span></button>
                 </td>
-                <td data-colname="<?php esc_attr_e('Menu Position', 'groove'); ?>">
+                <td data-colname="<?php esc_attr_e('Menu Position', 'groove-folios'); ?>">
                   <?php echo esc_html((string) (int) get_post_field('menu_order', $post_id)); ?>
                 </td>
-                <td data-colname="<?php esc_attr_e('Publish Status', 'groove'); ?>">
+                <td data-colname="<?php esc_attr_e('Publish Status', 'groove-folios'); ?>">
                   <?php
                   $status_object = get_post_status_object($post_status);
                   echo esc_html($status_object && !empty($status_object->label) ? (string) $status_object->label : ucfirst($post_status));
                   ?>
                 </td>
-                <td data-colname="<?php esc_attr_e('Last Updated', 'groove'); ?>">
+                <td data-colname="<?php esc_attr_e('Last Updated', 'groove-folios'); ?>">
                   <?php echo esc_html($modified_label); ?>
                 </td>
               </tr>
@@ -2054,7 +2054,7 @@ class Folio extends Page
           <?php else: ?>
             <tr class="no-items">
               <td class="colspanchange" colspan="5">
-                <?php esc_html_e('No pages found for the current filters.', 'groove'); ?>
+                <?php esc_html_e('No pages found for the current filters.', 'groove-folios'); ?>
               </td>
             </tr>
           <?php endif; ?>
@@ -2063,13 +2063,13 @@ class Folio extends Page
           <tr>
             <td class="manage-column column-cb check-column">
               <label class="screen-reader-text"
-                for="cb-select-all-2"><?php esc_html_e('Select all pages', 'groove'); ?></label>
+                for="cb-select-all-2"><?php esc_html_e('Select all pages', 'groove-folios'); ?></label>
               <input id="cb-select-all-2" type="checkbox" />
             </td>
-            <th scope="col" class="manage-column column-primary"><?php esc_html_e('Page Name', 'groove'); ?></th>
-            <th scope="col" class="manage-column"><?php esc_html_e('Menu Position', 'groove'); ?></th>
-            <th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove'); ?></th>
-            <th scope="col" class="manage-column"><?php esc_html_e('Last Updated', 'groove'); ?></th>
+            <th scope="col" class="manage-column column-primary"><?php esc_html_e('Page Name', 'groove-folios'); ?></th>
+            <th scope="col" class="manage-column"><?php esc_html_e('Menu Position', 'groove-folios'); ?></th>
+            <th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove-folios'); ?></th>
+            <th scope="col" class="manage-column"><?php esc_html_e('Last Updated', 'groove-folios'); ?></th>
           </tr>
         </tfoot>
       </table>
@@ -2091,21 +2091,21 @@ class Folio extends Page
         <div class="tablenav bottom">
           <div class="alignleft actions bulkactions">
             <label for="bulk-action-selector-bottom"
-              class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove'); ?></label>
+              class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove-folios'); ?></label>
             <select name="action2" id="bulk-action-selector-bottom">
-              <option value="-1"><?php esc_html_e('Bulk actions', 'groove'); ?></option>
+              <option value="-1"><?php esc_html_e('Bulk actions', 'groove-folios'); ?></option>
               <?php foreach ($bulk_actions as $action_key => $action_label): ?>
                 <option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
               <?php endforeach; ?>
             </select>
-            <input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove'); ?>" />
+            <input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove-folios'); ?>" />
           </div>
           <div class="tablenav-pages">
             <span class="displaying-num">
               <?php
               printf(
                 /* translators: %s: number of items */
-                esc_html(_n('%s item', '%s items', $total_items, 'groove')),
+                esc_html(_n('%s item', '%s items', $total_items, 'groove-folios')),
                 esc_html(number_format_i18n($total_items))
               );
               ?>
@@ -2142,14 +2142,14 @@ class Folio extends Page
         <div class="tablenav bottom">
           <div class="alignleft actions bulkactions">
             <label for="bulk-action-selector-bottom"
-              class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove'); ?></label>
+              class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove-folios'); ?></label>
             <select name="action2" id="bulk-action-selector-bottom">
-              <option value="-1"><?php esc_html_e('Bulk actions', 'groove'); ?></option>
+              <option value="-1"><?php esc_html_e('Bulk actions', 'groove-folios'); ?></option>
               <?php foreach ($bulk_actions as $action_key => $action_label): ?>
                 <option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
               <?php endforeach; ?>
             </select>
-            <input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove'); ?>" />
+            <input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove-folios'); ?>" />
           </div>
           <br class="clear" />
         </div>

@@ -159,7 +159,7 @@ class Page extends Base_Theme
     ?>
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
-        <button type="button" class="g-folio__theme-page-nav-button" aria-label="<?= esc_attr__('Open navigation', 'groove') ?>"
+        <button type="button" class="g-folio__theme-page-nav-button" aria-label="<?= esc_attr__('Open navigation', 'groove-folios') ?>"
           aria-expanded="false">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -170,7 +170,7 @@ class Page extends Base_Theme
         <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
             <?= esc_html(isset($this->folio->post_title) ? $this->folio->post_title : '') ?> |
           </span>
-          <?= esc_html($this->page->post_title ?? __('Page', 'groove')) ?>
+          <?= esc_html($this->page->post_title ?? __('Page', 'groove-folios')) ?>
         </div>
       </div>
 
@@ -228,11 +228,11 @@ class Page extends Base_Theme
       $folio_url = Utils::get_folio_permalink_by_id($folio->ID);
     }
     ?>
-    <nav class="g-folio__theme-page-nav" aria-label="<?= esc_attr__('Folio contents', 'groove') ?>"
+    <nav class="g-folio__theme-page-nav" aria-label="<?= esc_attr__('Folio contents', 'groove-folios') ?>"
       data-groove-drawer=".g-folio__theme-page-nav-button">
       <?php // Outside the -content box, which is the scroller: the close button
         // used to scroll away with a long contents list. ?>
-      <button type="button" class="g-folio__theme-page-nav-close" aria-label="<?= esc_attr__('Close navigation', 'groove') ?>">
+      <button type="button" class="g-folio__theme-page-nav-close" aria-label="<?= esc_attr__('Close navigation', 'groove-folios') ?>">
         <svg class="g-folio__theme-close-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <line x1="6" y1="6" x2="18" y2="18"></line>
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -248,7 +248,7 @@ class Page extends Base_Theme
             <?= esc_html($folio_title) ?>
           <?php endif; ?>
         </h3>
-        <p class="g-folio__theme-page-nav-label"><?= esc_html__('Contents', 'groove') ?></p>
+        <p class="g-folio__theme-page-nav-label"><?= esc_html__('Contents', 'groove-folios') ?></p>
         <div class="g-folio__theme-page-navs">
           <?php
           $index = 1;
@@ -294,7 +294,7 @@ class Page extends Base_Theme
         ?>
       </div>
 
-      <div class="g-folio__theme-page-powerby"><?= esc_html__('Powered by Groove Folios', 'groove') ?></div>
+      <div class="g-folio__theme-page-powerby"><?= esc_html__('Powered by Groove Folios', 'groove-folios') ?></div>
 
       <div class="g-folio__theme-page-next">
         <?php

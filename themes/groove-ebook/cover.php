@@ -22,12 +22,12 @@ class Cover extends Base_Theme
   function display_nav()
   {
     ?>
-    <nav class="g-folio__theme-nav" aria-label="<?= esc_attr__('Folio contents', 'groove') ?>"
+    <nav class="g-folio__theme-nav" aria-label="<?= esc_attr__('Folio contents', 'groove-folios') ?>"
       data-groove-drawer=".g-folio__theme-nav-button">
       <?php // Outside .g-folio__theme-nav-content, which is the scrolling box: a
         // long contents list used to carry the close button off the top of the pane. ?>
       <button type="button" class="g-folio__theme-nav-close"
-        aria-label="<?= esc_attr__('Close navigation', 'groove') ?>"></button>
+        aria-label="<?= esc_attr__('Close navigation', 'groove-folios') ?>"></button>
       <div class="g-folio__theme-nav-content">
         <h3 class="g-folio__theme-nav-name">
           <?= $this->theme_name ?>
@@ -102,7 +102,7 @@ class Cover extends Base_Theme
     ?>
     <div class="g-folio__theme-2 g-folio__theme-cover" style="background: url(<?= esc_url($this->theme_cover_url) ?>)">
       <button type="button" class="g-folio__theme-nav-button"
-        aria-label="<?= esc_attr__('Open navigation', 'groove') ?>" aria-expanded="false">
+        aria-label="<?= esc_attr__('Open navigation', 'groove-folios') ?>" aria-expanded="false">
         <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <line x1="3" y1="6" x2="21" y2="6"></line>
           <line x1="3" y1="12" x2="21" y2="12"></line>

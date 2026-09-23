@@ -80,8 +80,8 @@ class Cover extends Base_Theme
       <div class="gn-cover__edition-line">
         <div class="gn-cover__edition-actions">
           <button class="g-folio__theme-nav-button gn-nav-trigger gn-nav-trigger--cover"
-            aria-label="<?= esc_attr__('Open issue navigation', 'groove') ?>">
-            <span class="gn-nav-trigger__label"><?= esc_html__('Contents', 'groove') ?></span>
+            aria-label="<?= esc_attr__('Open issue navigation', 'groove-folios') ?>">
+            <span class="gn-nav-trigger__label"><?= esc_html__('Contents', 'groove-folios') ?></span>
             <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -105,13 +105,13 @@ class Cover extends Base_Theme
         </h1>
         <?php if (!empty($this->author)): ?>
           <p class="g-folio__theme-author">
-            <?= esc_html(sprintf(__('By %s', 'groove'), $this->author)) ?>
+            <?= esc_html(sprintf(__('By %s', 'groove-folios'), $this->author)) ?>
           </p>
         <?php endif; ?>
 
         <?php if ($issue_date_label !== ''): ?>
           <p class="gn-cover__left-meta">
-            <span><?= esc_html__('Updated', 'groove') ?></span>
+            <span><?= esc_html__('Updated', 'groove-folios') ?></span>
             <span><?= esc_html($issue_date_label) ?></span>
           </p>
         <?php endif; ?>
@@ -121,7 +121,7 @@ class Cover extends Base_Theme
         <?php if (!empty($this->pages)): ?>
           <div class="gn-cover__story-list">
             <div class="gn-cover__story-list-head">
-              <div class="gn-cover__story-list-label"><?= esc_html__('Latest', 'groove') ?></div>
+              <div class="gn-cover__story-list-label"><?= esc_html__('Latest', 'groove-folios') ?></div>
             </div>
             <ol class="gn-cover__story-items">
               <?php foreach ($this->pages as $index => $story): ?>
@@ -136,7 +136,7 @@ class Cover extends Base_Theme
             </ol>
           </div>
         <?php else: ?>
-          <span class="gn-cover__empty-state"><?= esc_html__('Pages will appear here once published.', 'groove') ?></span>
+          <span class="gn-cover__empty-state"><?= esc_html__('Pages will appear here once published.', 'groove-folios') ?></span>
         <?php endif; ?>
       </div>
 
@@ -148,7 +148,7 @@ class Cover extends Base_Theme
         <?php endif; ?>
 
         <div class="g-folio__theme-powerby">
-          <?= esc_html__('Powered by Groove Folios', 'groove') ?>
+          <?= esc_html__('Powered by Groove Folios', 'groove-folios') ?>
         </div>
       </div>
     </div>

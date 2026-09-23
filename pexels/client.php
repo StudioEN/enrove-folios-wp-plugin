@@ -91,7 +91,7 @@ class Client
     if ('' === $query) {
       return new \WP_Error(
         'groove_pexels_bad_request',
-        __('A Pexels search needs a non-empty query.', 'groove')
+        __('A Pexels search needs a non-empty query.', 'groove-folios')
       );
     }
 
@@ -124,7 +124,7 @@ class Client
     if ($id <= 0) {
       return new \WP_Error(
         'groove_pexels_bad_request',
-        __('A Pexels photo ID must be a positive integer.', 'groove')
+        __('A Pexels photo ID must be a positive integer.', 'groove-folios')
       );
     }
 
@@ -219,7 +219,7 @@ class Client
     if (!$this->has_key()) {
       return new \WP_Error(
         'groove_pexels_no_key',
-        __('No Pexels API key is configured. Add one in Groove settings, or define GROOVE_PEXELS_API_KEY in wp-config.php.', 'groove')
+        __('No Pexels API key is configured. Add one in Groove settings, or define GROOVE_PEXELS_API_KEY in wp-config.php.', 'groove-folios')
       );
     }
 
@@ -264,7 +264,7 @@ class Client
         'groove_pexels_transport_error',
         sprintf(
           /* translators: %s: HTTP transport error message. */
-          __('Could not reach the Pexels API: %s', 'groove'),
+          __('Could not reach the Pexels API: %s', 'groove-folios'),
           $response->get_error_message()
         ),
         ['endpoint' => $endpoint]
@@ -286,7 +286,7 @@ class Client
     if (!is_array($data)) {
       return new \WP_Error(
         'groove_pexels_invalid_json',
-        __('The Pexels API returned a response that could not be decoded as JSON.', 'groove'),
+        __('The Pexels API returned a response that could not be decoded as JSON.', 'groove-folios'),
         ['endpoint' => $endpoint, 'status' => $status]
       );
     }
@@ -418,7 +418,7 @@ class Client
         'groove_pexels_unauthorized',
         sprintf(
           /* translators: %s: masked API key, e.g. ••••••••abcd. */
-          __('Pexels rejected the API key (%s). Check the key and try again.', 'groove'),
+          __('Pexels rejected the API key (%s). Check the key and try again.', 'groove-folios'),
           Key::masked()
         ),
         $data
@@ -428,7 +428,7 @@ class Client
     if (429 === $status) {
       return new \WP_Error(
         'groove_pexels_rate_limited',
-        __('The Pexels rate limit has been reached. Wait for the window to reset and re-run.', 'groove'),
+        __('The Pexels rate limit has been reached. Wait for the window to reset and re-run.', 'groove-folios'),
         $data
       );
     }
@@ -436,7 +436,7 @@ class Client
     if (404 === $status) {
       return new \WP_Error(
         'groove_pexels_not_found',
-        __('The requested Pexels resource does not exist.', 'groove'),
+        __('The requested Pexels resource does not exist.', 'groove-folios'),
         $data
       );
     }
@@ -445,7 +445,7 @@ class Client
       'groove_pexels_http_error',
       sprintf(
         /* translators: 1: HTTP status code, 2: HTTP status message. */
-        __('The Pexels API responded with HTTP %1$d %2$s.', 'groove'),
+        __('The Pexels API responded with HTTP %1$d %2$s.', 'groove-folios'),
         $status,
         $status_message
       ),

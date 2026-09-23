@@ -20,7 +20,7 @@ class All_Folios_Menu_Item extends Menu_Item_Page {
 	}
 
 	public function get_label() {
-		return esc_html__( 'All Folios', 'groove' );
+		return esc_html__( 'All Folios', 'groove-folios' );
 	}
 
 	public function get_page_title() {

@@ -35,7 +35,7 @@ class Themes extends Page
 
 	public function get_title()
 	{
-		return esc_html__('Themes', 'groove');
+		return esc_html__('Themes', 'groove-folios');
 	}
 
 	/**
@@ -49,9 +49,9 @@ class Themes extends Page
 	public function create_tabs()
 	{
 		return [
-			self::TAB_THEMES => ['label' => esc_html__('Themes', 'groove')],
-			'spec' => ['label' => esc_html__('Spec', 'groove')],
-			'playbook' => ['label' => esc_html__('Playbook', 'groove')],
+			self::TAB_THEMES => ['label' => esc_html__('Themes', 'groove-folios')],
+			'spec' => ['label' => esc_html__('Spec', 'groove-folios')],
+			'playbook' => ['label' => esc_html__('Playbook', 'groove-folios')],
 		];
 	}
 
@@ -98,15 +98,15 @@ class Themes extends Page
 		check_admin_referer('groove_install_theme');
 
 		if (!current_user_can('manage_options')) {
-			wp_die(esc_html__('You do not have permission to install themes.', 'groove'));
+			wp_die(esc_html__('You do not have permission to install themes.', 'groove-folios'));
 		}
 
 		if (empty($_FILES['theme_zip']) || $_FILES['theme_zip']['error'] !== UPLOAD_ERR_OK) {
 			// This used to redirect with the literal string 'upload_failed',
 			// which is what the operator then read in the toast.
 			$this->redirect_with_failure(
-				__('The file did not finish uploading.', 'groove'),
-				__('Check the package is a .zip and is smaller than this server\'s upload limit, then try again.', 'groove'),
+				__('The file did not finish uploading.', 'groove-folios'),
+				__('Check the package is a .zip and is smaller than this server\'s upload limit, then try again.', 'groove-folios'),
 				'#groove-theme-submit'
 			);
 			return;
@@ -156,8 +156,8 @@ class Themes extends Page
 
 		if (!@move_uploaded_file($tmp_name, $parked)) {
 			$this->redirect_with_failure(
-				__('The upload could not be held while you confirmed.', 'groove'),
-				__('Check that PHP can write to the server\'s temporary directory, then try again.', 'groove'),
+				__('The upload could not be held while you confirmed.', 'groove-folios'),
+				__('Check that PHP can write to the server\'s temporary directory, then try again.', 'groove-folios'),
 				'#groove-theme-submit'
 			);
 			return;
@@ -176,7 +176,7 @@ class Themes extends Page
 		check_admin_referer('groove_replace_theme');
 
 		if (!current_user_can('manage_options')) {
-			wp_die(esc_html__('You do not have permission to install themes.', 'groove'));
+			wp_die(esc_html__('You do not have permission to install themes.', 'groove-folios'));
 		}
 
 		$key = 'groove_theme_pending_' . get_current_user_id();
@@ -185,8 +185,8 @@ class Themes extends Page
 
 		if (empty($pending['zip']) || !is_readable($pending['zip'])) {
 			$this->redirect_with_failure(
-				__('That upload is no longer waiting to be confirmed.', 'groove'),
-				__('It is held for fifteen minutes. Upload the package again.', 'groove'),
+				__('That upload is no longer waiting to be confirmed.', 'groove-folios'),
+				__('It is held for fifteen minutes. Upload the package again.', 'groove-folios'),
 				'#groove-theme-submit'
 			);
 			return;
@@ -215,7 +215,7 @@ class Themes extends Page
 		check_admin_referer('groove_cancel_replace');
 
 		if (!current_user_can('manage_options')) {
-			wp_die(esc_html__('You do not have permission to install themes.', 'groove'));
+			wp_die(esc_html__('You do not have permission to install themes.', 'groove-folios'));
 		}
 
 		$key = 'groove_theme_pending_' . get_current_user_id();
@@ -242,15 +242,15 @@ class Themes extends Page
 		check_admin_referer('groove_uninstall_theme');
 
 		if (!current_user_can('manage_options')) {
-			wp_die(esc_html__('You do not have permission to remove themes.', 'groove'));
+			wp_die(esc_html__('You do not have permission to remove themes.', 'groove-folios'));
 		}
 
 		$theme_id = isset($_POST['theme_id']) ? sanitize_key($_POST['theme_id']) : '';
 
 		if (empty($theme_id)) {
 			$this->redirect_with_failure(
-				__('No theme was named in that request.', 'groove'),
-				__('Open the theme from the grid and use Remove in its details dialog.', 'groove')
+				__('No theme was named in that request.', 'groove-folios'),
+				__('Open the theme from the grid and use Remove in its details dialog.', 'groove-folios')
 			);
 			return;
 		}
@@ -310,7 +310,7 @@ class Themes extends Page
 		// carrying them across a tab switch would re-fire the toast.
 		unset($query['groove_notice'], $query['groove_value']);
 		?>
-		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Themes tabs', 'groove'); ?>">
+		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Themes tabs', 'groove-folios'); ?>">
 			<?php
 			foreach ($tabs as $tab_id => $tab) {
 				$active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
@@ -346,7 +346,7 @@ class Themes extends Page
 						<?php
 						printf(
 							/* translators: %s: path to the documentation file, relative to the plugin folder */
-							esc_html__('This document is not on disk. It ships with the plugin at %s, and a deployment that copies only PHP files leaves this tab with nothing to render.', 'groove'),
+							esc_html__('This document is not on disk. It ships with the plugin at %s, and a deployment that copies only PHP files leaves this tab with nothing to render.', 'groove-folios'),
 							'<code>' . esc_html($relative) . '</code>'
 						);
 						?>
@@ -356,7 +356,7 @@ class Themes extends Page
 						<?php
 						printf(
 							/* translators: %s: path to the documentation file, relative to the plugin folder */
-							esc_html__('Rendered from %s, which ships with the plugin. Edit that file to change this page.', 'groove'),
+							esc_html__('Rendered from %s, which ships with the plugin. Edit that file to change this page.', 'groove-folios'),
 							'<code>' . esc_html($relative) . '</code>'
 						);
 						?>
@@ -416,7 +416,7 @@ class Themes extends Page
 		<?php /* Named by the heading it already shows rather than by an aria-label
 		         repeating the same word, so a screen reader announces the rail once. */ ?>
 		<nav class="g-docs__toc" aria-labelledby="g-docs-toc-title">
-			<p class="g-docs__toc-title" id="g-docs-toc-title"><?php esc_html_e('Contents', 'groove'); ?></p>
+			<p class="g-docs__toc-title" id="g-docs-toc-title"><?php esc_html_e('Contents', 'groove-folios'); ?></p>
 			<ul class="g-docs__toc-list">
 				<?php foreach ($entries as $entry): ?>
 					<li class="g-docs__toc-item">
@@ -626,14 +626,14 @@ class Themes extends Page
 
 			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
 				<div>
-					<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Your Themes', 'groove'); ?></h2>
+					<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Your Themes', 'groove-folios'); ?></h2>
 					<p class="mt-1 mb-0 text-sm text-gray-600">
 						<?php
 						/* The three summary tiles that used to sit above the grid counted
 						   what the grid already shows, so the counts moved into this line
 						   and the tiles came out. */
 						if ($total_themes === 0) {
-							esc_html_e('No themes are available yet.', 'groove');
+							esc_html_e('No themes are available yet.', 'groove-folios');
 						} else {
 							printf(
 								/* translators: 1: total theme count, 2: built-in count, 3: installed package count */
@@ -642,7 +642,7 @@ class Themes extends Page
 										'%1$s theme available — %2$s built-in, %3$s installed. Select one for details.',
 										'%1$s themes available — %2$s built-in, %3$s installed. Select one for details.',
 										$total_themes,
-										'groove'
+										'groove-folios'
 									)
 								),
 								esc_html(number_format_i18n($total_themes)),
@@ -662,8 +662,8 @@ class Themes extends Page
 						<p><?php
 							echo esc_html(
 								Themes_Manager::get_skipped_themes()
-									? __('No themes loaded. Every theme folder on this site failed to register — see above.', 'groove')
-									: __('No themes installed yet. Upload a theme package below.', 'groove')
+									? __('No themes loaded. Every theme folder on this site failed to register — see above.', 'groove-folios')
+									: __('No themes installed yet. Upload a theme package below.', 'groove-folios')
 							);
 						?></p>
 					</div>
@@ -677,7 +677,7 @@ class Themes extends Page
 								<?php /* The dialog's header wears the same badges this card stands for,
 								         so it takes them from the card rather than re-deriving them. */ ?>
 								data-theme-installed="<?php echo isset($installed_meta[$id]) ? '1' : '0'; ?>"
-								data-theme-badge="<?php echo esc_attr(isset($installed_meta[$id]) ? __('Installed', 'groove') : __('Built-in', 'groove')); ?>"
+								data-theme-badge="<?php echo esc_attr(isset($installed_meta[$id]) ? __('Installed', 'groove-folios') : __('Built-in', 'groove-folios')); ?>"
 								data-theme-default="<?php echo ((string) $id === $default_theme_id) ? '1' : '0'; ?>"
 								aria-haspopup="dialog">
 								<span class="g-themes-card-thumb">
@@ -692,10 +692,10 @@ class Themes extends Page
 											$folio_count > 0
 												? sprintf(
 													/* translators: %s: number of folios using this theme */
-													_n('%s folio', '%s folios', $folio_count, 'groove'),
+													_n('%s folio', '%s folios', $folio_count, 'groove-folios'),
 													number_format_i18n($folio_count)
 												)
-												: __('Unused', 'groove')
+												: __('Unused', 'groove-folios')
 										);
 										?>
 									</span>
@@ -708,9 +708,9 @@ class Themes extends Page
 
 			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4 g-themes-upload-section">
 				<div>
-					<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Install a Theme', 'groove'); ?></h2>
+					<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Install a Theme', 'groove-folios'); ?></h2>
 					<p class="mt-1 mb-0 text-sm text-gray-600">
-						<?php esc_html_e('Upload a Groove theme package (.zip) provided by the Groove team or a trusted theme author.', 'groove'); ?>
+						<?php esc_html_e('Upload a Groove theme package (.zip) provided by the Groove team or a trusted theme author.', 'groove-folios'); ?>
 					</p>
 				</div>
 
@@ -726,30 +726,30 @@ class Themes extends Page
 						<div class="g-themes-dropzone" id="groove-theme-dropzone">
 							<div class="g-themes-dropzone-icon">📦</div>
 							<p class="g-themes-dropzone-label">
-								<?php esc_html_e('Drag and drop your theme .zip here', 'groove'); ?>
+								<?php esc_html_e('Drag and drop your theme .zip here', 'groove-folios'); ?>
 							</p>
 							<p class="g-themes-dropzone-sub">
-								<?php esc_html_e('or choose a file to upload', 'groove'); ?>
+								<?php esc_html_e('or choose a file to upload', 'groove-folios'); ?>
 							</p>
 							<label for="theme_zip" class="button button-secondary g-themes-file-label">
-								<?php esc_html_e('Choose File', 'groove'); ?>
+								<?php esc_html_e('Choose File', 'groove-folios'); ?>
 							</label>
 							<input type="file" name="theme_zip" id="theme_zip" accept=".zip" class="g-themes-file-input" />
 							<p class="g-themes-file-name" id="groove-theme-filename">
-								<?php esc_html_e('No file chosen', 'groove'); ?>
+								<?php esc_html_e('No file chosen', 'groove-folios'); ?>
 							</p>
 						</div>
 
 						<div class="g-themes-upload-actions">
 							<button type="submit" class="button button-primary" id="groove-theme-submit" disabled>
-								<?php esc_html_e('Install Theme', 'groove'); ?>
+								<?php esc_html_e('Install Theme', 'groove-folios'); ?>
 							</button>
 						</div>
 					</form>
 
 					<div class="g-themes-package-info xl:col-span-1">
-						<h3><?php esc_html_e('Package format', 'groove'); ?></h3>
-						<p><?php esc_html_e('A valid Groove theme package is a .zip file with this structure:', 'groove'); ?>
+						<h3><?php esc_html_e('Package format', 'groove-folios'); ?></h3>
+						<p><?php esc_html_e('A valid Groove theme package is a .zip file with this structure:', 'groove-folios'); ?>
 						</p>
 						<pre class="g-themes-code">my-theme.zip
 ├── setup.php
@@ -772,16 +772,16 @@ class Themes extends Page
 						         apart, so neither can quietly stop being true — and a pointer
 						         to the spec rather than a retelling of it. */ ?>
 						<p>
-							<?php esc_html_e('setup.php, cover.php and page.php are required; everything under assets/ is optional. Image filenames are whatever setup.php declares, and are only ever looked for in assets/images/.', 'groove'); ?>
+							<?php esc_html_e('setup.php, cover.php and page.php are required; everything under assets/ is optional. Image filenames are whatever setup.php declares, and are only ever looked for in assets/images/.', 'groove-folios'); ?>
 						</p>
 						<p>
-							<?php esc_html_e('The theme name in setup.php becomes its ID, so a package cannot be re-uploaded as an update — remove the installed theme first.', 'groove'); ?>
+							<?php esc_html_e('The theme name in setup.php becomes its ID, so a package cannot be re-uploaded as an update — remove the installed theme first.', 'groove-folios'); ?>
 						</p>
 						<p>
 							<?php
 							printf(
 								/* translators: %s: path to the theme spec, rendered as a code element */
-								esc_html__('The full theme spec ships with this plugin at %s.', 'groove'),
+								esc_html__('The full theme spec ships with this plugin at %s.', 'groove-folios'),
 								'<code>themes/README.md</code>'
 							);
 							?>
@@ -1022,11 +1022,11 @@ class Themes extends Page
 						<h2 id="g-theme-details-title" class="g-theme-details__title"></h2>
 						<span class="g-themes-tag" data-groove-theme-badge hidden></span>
 						<span class="g-themes-tag g-themes-tag--default" data-groove-theme-default hidden>
-							<?php esc_html_e('Default', 'groove'); ?>
+							<?php esc_html_e('Default', 'groove-folios'); ?>
 						</span>
 					</div>
 					<button type="button" class="g-theme-details__close" data-groove-theme-close
-						aria-label="<?php esc_attr_e('Close theme details', 'groove'); ?>">
+						aria-label="<?php esc_attr_e('Close theme details', 'groove-folios'); ?>">
 						<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
 					</button>
 				</div>
@@ -1089,10 +1089,10 @@ class Themes extends Page
 									<button type="button" class="g-theme-preview-btn" data-theme-id="<?php echo esc_attr($id); ?>"
 										aria-label="<?php echo esc_attr(sprintf(
 											/* translators: %s: theme name */
-											__('Preview %s theme', 'groove'),
+											__('Preview %s theme', 'groove-folios'),
 											$theme['name']
 										)); ?>">
-										<?php esc_html_e('Preview', 'groove'); ?>
+										<?php esc_html_e('Preview', 'groove-folios'); ?>
 									</button>
 								</div>
 
@@ -1127,37 +1127,37 @@ class Themes extends Page
 
 									<dl class="g-theme-details__stats">
 										<div class="g-theme-details__stat">
-											<dt><?php esc_html_e('Folios', 'groove'); ?></dt>
+											<dt><?php esc_html_e('Folios', 'groove-folios'); ?></dt>
 											<dd>
 												<?php if ($folio_count > 0): ?>
 													<a href="<?php echo esc_url($folios_url); ?>">
 														<?php echo esc_html(number_format_i18n($folio_count)); ?>
 													</a>
 												<?php else: ?>
-													<span class="g-theme-details__muted"><?php esc_html_e('None yet', 'groove'); ?></span>
+													<span class="g-theme-details__muted"><?php esc_html_e('None yet', 'groove-folios'); ?></span>
 												<?php endif; ?>
 											</dd>
 										</div>
 										<?php if (!empty($theme['author'])): ?>
 											<div class="g-theme-details__stat">
-												<dt><?php esc_html_e('Author', 'groove'); ?></dt>
+												<dt><?php esc_html_e('Author', 'groove-folios'); ?></dt>
 												<dd><?php echo esc_html($theme['author']); ?></dd>
 											</div>
 										<?php endif; ?>
 										<?php if ($updated_label !== ''): ?>
 											<div class="g-theme-details__stat">
-												<dt><?php esc_html_e('Updated', 'groove'); ?></dt>
+												<dt><?php esc_html_e('Updated', 'groove-folios'); ?></dt>
 												<dd><?php echo esc_html($updated_label); ?></dd>
 											</div>
 										<?php endif; ?>
 										<?php if ($version !== ''): ?>
 											<div class="g-theme-details__stat">
-												<dt><?php esc_html_e('Version', 'groove'); ?></dt>
+												<dt><?php esc_html_e('Version', 'groove-folios'); ?></dt>
 												<dd><?php echo esc_html($version); ?></dd>
 											</div>
 										<?php endif; ?>
 										<div class="g-theme-details__stat">
-											<dt><?php esc_html_e('Theme ID', 'groove'); ?></dt>
+											<dt><?php esc_html_e('Theme ID', 'groove-folios'); ?></dt>
 											<dd><code><?php echo esc_html($id); ?></code></dd>
 										</div>
 									</dl>
@@ -1216,7 +1216,7 @@ class Themes extends Page
 									<?php endif; ?>
 
 									<button type="submit" class="button button-primary">
-										<?php esc_html_e('Create a folio', 'groove'); ?>
+										<?php esc_html_e('Create a folio', 'groove-folios'); ?>
 									</button>
 								</form>
 							<?php elseif ($can_remove): ?>
@@ -1239,27 +1239,27 @@ class Themes extends Page
 														'Remove this theme? Its files are deleted permanently, and %s folio still uses it.',
 														'Remove this theme? Its files are deleted permanently, and %s folios still use it.',
 														$folio_count,
-														'groove'
+														'groove-folios'
 													)
 												),
 												esc_html(number_format_i18n($folio_count))
 											);
 										} else {
-											esc_html_e('Remove this theme? Its files are deleted permanently.', 'groove');
+											esc_html_e('Remove this theme? Its files are deleted permanently.', 'groove-folios');
 										}
 										?>
 									</p>
 									<div class="g-theme-details__danger-buttons">
 										<button type="button" class="button button-secondary"
 											data-groove-theme-danger-cancel>
-											<?php esc_html_e('Keep it', 'groove'); ?>
+											<?php esc_html_e('Keep it', 'groove-folios'); ?>
 										</button>
 										<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 											<?php wp_nonce_field('groove_uninstall_theme'); ?>
 											<input type="hidden" name="action" value="groove_uninstall_theme" />
 											<input type="hidden" name="theme_id" value="<?php echo esc_attr($id); ?>" />
 											<button type="submit" class="button button-secondary g-themes-delete-btn">
-												<?php esc_html_e('Remove permanently', 'groove'); ?>
+												<?php esc_html_e('Remove permanently', 'groove-folios'); ?>
 											</button>
 										</form>
 									</div>
@@ -1326,7 +1326,7 @@ class Themes extends Page
 		}
 		?>
 		<button type="button" class="g-theme-details__danger-start" data-groove-theme-danger-start>
-			<?php esc_html_e('Remove theme', 'groove'); ?>
+			<?php esc_html_e('Remove theme', 'groove-folios'); ?>
 		</button>
 		<?php
 	}
@@ -1366,7 +1366,7 @@ class Themes extends Page
 				<div class="g-theme-details__header">
 					<div class="g-theme-details__ident">
 						<h2 id="g-theme-replace-title" class="g-theme-details__title">
-							<?php esc_html_e('Replace this theme?', 'groove'); ?>
+							<?php esc_html_e('Replace this theme?', 'groove-folios'); ?>
 						</h2>
 					</div>
 					<?php /* Closing this dialog is cancelling, so the corner button submits the
@@ -1374,7 +1374,7 @@ class Themes extends Page
 					         the details dialog's button, which is also what stops this header
 					         standing shorter than that one. */ ?>
 					<button type="submit" form="g-theme-replace-cancel" class="g-theme-details__close"
-						aria-label="<?php esc_attr_e('Cancel replacing this theme', 'groove'); ?>">
+						aria-label="<?php esc_attr_e('Cancel replacing this theme', 'groove-folios'); ?>">
 						<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
 					</button>
 				</div>
@@ -1384,7 +1384,7 @@ class Themes extends Page
 						<?php
 						printf(
 							/* translators: %s: name of the theme already installed, in bold */
-							esc_html__('%s is already installed, and the package you uploaded derives to the same theme ID. Installing it replaces the version that is there.', 'groove'),
+							esc_html__('%s is already installed, and the package you uploaded derives to the same theme ID. Installing it replaces the version that is there.', 'groove-folios'),
 							'<strong>' . esc_html($existing_name) . '</strong>'
 						);
 						?>
@@ -1398,11 +1398,11 @@ class Themes extends Page
 					 * sanitise alike, and the sentence above has already said it.
 					 */
 					$names_differ = ($existing_name !== $incoming_name);
-					$no_version = __('No version declared', 'groove');
+					$no_version = __('No version declared', 'groove-folios');
 					?>
 					<dl class="g-theme-details__stats g-theme-confirm__facts">
 						<div class="g-theme-details__stat">
-							<dt><?php esc_html_e('Installed', 'groove'); ?></dt>
+							<dt><?php esc_html_e('Installed', 'groove-folios'); ?></dt>
 							<dd>
 								<?php echo esc_html($existing_version !== '' ? $existing_version : $no_version); ?>
 								<?php if ($names_differ): ?>
@@ -1411,7 +1411,7 @@ class Themes extends Page
 							</dd>
 						</div>
 						<div class="g-theme-details__stat">
-							<dt><?php esc_html_e('Uploaded', 'groove'); ?></dt>
+							<dt><?php esc_html_e('Uploaded', 'groove-folios'); ?></dt>
 							<dd>
 								<?php echo esc_html($incoming_version !== '' ? $incoming_version : $no_version); ?>
 								<?php if ($names_differ): ?>
@@ -1420,7 +1420,7 @@ class Themes extends Page
 							</dd>
 						</div>
 						<div class="g-theme-details__stat g-theme-confirm__fact--id">
-							<dt><?php esc_html_e('Theme ID', 'groove'); ?></dt>
+							<dt><?php esc_html_e('Theme ID', 'groove-folios'); ?></dt>
 							<dd><code><?php echo esc_html($theme_id); ?></code></dd>
 						</div>
 					</dl>
@@ -1434,23 +1434,23 @@ class Themes extends Page
 									'%s folio uses this theme and will change appearance.',
 									'%s folios use this theme and will change appearance.',
 									$folio_count,
-									'groove'
+									'groove-folios'
 								)),
 								esc_html(number_format_i18n($folio_count))
 							);
 							?>
 							<a href="<?php echo esc_url(admin_url(
 								'admin.php?page=' . \Groove\Pages\All_Folios::PAGE_ID . '&theme_id=' . $theme_id
-							)); ?>"><?php esc_html_e('View them', 'groove'); ?></a>
+							)); ?>"><?php esc_html_e('View them', 'groove-folios'); ?></a>
 						</p>
 					<?php else: ?>
 						<p class="g-theme-confirm__note">
-							<?php esc_html_e('No folios use this theme yet, so nothing published changes.', 'groove'); ?>
+							<?php esc_html_e('No folios use this theme yet, so nothing published changes.', 'groove-folios'); ?>
 						</p>
 					<?php endif; ?>
 
 					<p class="g-theme-confirm__note">
-						<?php esc_html_e('The theme keeps its ID, so folios stay pointed at it. The replacement is live from the next page load.', 'groove'); ?>
+						<?php esc_html_e('The theme keeps its ID, so folios stay pointed at it. The replacement is live from the next page load.', 'groove-folios'); ?>
 					</p>
 
 					<?php
@@ -1471,14 +1471,14 @@ class Themes extends Page
 							<?php wp_nonce_field('groove_cancel_replace'); ?>
 							<input type="hidden" name="action" value="groove_cancel_replace" />
 							<button type="submit" class="button button-secondary">
-								<?php esc_html_e('Cancel', 'groove'); ?>
+								<?php esc_html_e('Cancel', 'groove-folios'); ?>
 							</button>
 						</form>
 						<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 							<?php wp_nonce_field('groove_replace_theme'); ?>
 							<input type="hidden" name="action" value="groove_replace_theme" />
 							<button type="submit" class="button button-primary">
-								<?php esc_html_e('Replace theme', 'groove'); ?>
+								<?php esc_html_e('Replace theme', 'groove-folios'); ?>
 							</button>
 						</form>
 					</div>
@@ -1578,14 +1578,14 @@ class Themes extends Page
 								'%s theme folder did not load.',
 								'%s theme folders did not load.',
 								count($skipped),
-								'groove'
+								'groove-folios'
 							)),
 							esc_html(number_format_i18n(count($skipped)))
 						);
 						?>
 					</h2>
 					<p class="mt-1 mb-0 text-sm text-gray-600">
-						<?php esc_html_e('They are not in the theme picker. Until now they failed in silence — a theme simply was not there, with nothing to say why.', 'groove'); ?>
+						<?php esc_html_e('They are not in the theme picker. Until now they failed in silence — a theme simply was not there, with nothing to say why.', 'groove-folios'); ?>
 						<?php /* Each row below names a fault and a fix in a sentence. The
 						         playbook's section 9 is a table of every fault a loader can
 						         record, which is the thing to read when the sentence is not
@@ -1593,7 +1593,7 @@ class Themes extends Page
 						         nine rows that would all point at the same table. */ ?>
 						<a class="g-docs__link" href="<?php echo esc_url(
 							$this->tab_url(Theme_Docs::SKIPPED_THEME_DOC, Theme_Docs::SKIPPED_THEME_ANCHOR)
-						); ?>"><?php esc_html_e('What each fault means', 'groove'); ?></a>
+						); ?>"><?php esc_html_e('What each fault means', 'groove-folios'); ?></a>
 					</p>
 				</div>
 
@@ -1608,7 +1608,7 @@ class Themes extends Page
 							<div class="flex items-center gap-2">
 								<code class="text-gray-800"><?php echo esc_html($folder); ?></code>
 								<span class="g-themes-tag <?php echo $is_installed ? 'g-themes-tag--installed' : 'g-themes-tag--builtin'; ?>">
-									<?php echo esc_html($is_installed ? __('Installed', 'groove') : __('Built-in', 'groove')); ?>
+									<?php echo esc_html($is_installed ? __('Installed', 'groove-folios') : __('Built-in', 'groove-folios')); ?>
 								</span>
 							</div>
 							<div class="text-gray-800"><?php echo esc_html($described->get_error_message()); ?></div>
@@ -1625,14 +1625,14 @@ class Themes extends Page
 											'%s folio points at this theme and will not open.',
 											'%s folios point at this theme and will not open.',
 											$folio_count,
-											'groove'
+											'groove-folios'
 										)),
 										esc_html(number_format_i18n($folio_count))
 									);
 									?>
 									<a href="<?php echo esc_url(admin_url(
 										'admin.php?page=' . \Groove\Pages\All_Folios::PAGE_ID . '&theme_id=' . $folder
-									)); ?>"><?php esc_html_e('View them', 'groove'); ?></a>
+									)); ?>"><?php esc_html_e('View them', 'groove-folios'); ?></a>
 								</div>
 							<?php endif; ?>
 							<?php if ($is_installed): ?>
@@ -1643,7 +1643,7 @@ class Themes extends Page
 									<?php /* A package whose files are gone has no card, so this row is
 									         the only place its stale entry can be cleared from. */ ?>
 									<button type="submit" class="button button-secondary g-themes-delete-btn">
-										<?php esc_html_e('Remove entry', 'groove'); ?>
+										<?php esc_html_e('Remove entry', 'groove-folios'); ?>
 									</button>
 								</form>
 							<?php endif; ?>
@@ -1658,7 +1658,7 @@ class Themes extends Page
 						<?php
 						printf(
 							/* translators: %s: theme name */
-							esc_html__('"%s" is installed and renders, but the contract check found things worth fixing.', 'groove'),
+							esc_html__('"%s" is installed and renders, but the contract check found things worth fixing.', 'groove-folios'),
 							esc_html((string) ($meta['name'] ?? $theme_id))
 						);
 						?>
@@ -1669,7 +1669,7 @@ class Themes extends Page
 						<?php endforeach; ?>
 					</ul>
 					<p class="m-0 text-sm text-gray-600">
-						<?php esc_html_e('None of these stops the theme rendering — they are the mistakes that produce no error when it does. The full spec ships with the plugin at themes/README.md.', 'groove'); ?>
+						<?php esc_html_e('None of these stops the theme rendering — they are the mistakes that produce no error when it does. The full spec ships with the plugin at themes/README.md.', 'groove-folios'); ?>
 					</p>
 				</div>
 			<?php endforeach; ?>
@@ -1690,7 +1690,7 @@ class Themes extends Page
 				\Groove\Toast::success(
 					sprintf(
 						/* translators: %s: theme name */
-						__('"%s" installed successfully.', 'groove'),
+						__('"%s" installed successfully.', 'groove-folios'),
 						$value
 					),
 					$consumed
@@ -1700,20 +1700,20 @@ class Themes extends Page
 				\Groove\Toast::success(
 					sprintf(
 						/* translators: %s: theme name */
-						__('"%s" replaced. The new version is live from the next page load.', 'groove'),
+						__('"%s" replaced. The new version is live from the next page load.', 'groove-folios'),
 						$value
 					),
 					$consumed
 				);
 				break;
 			case 'replace_cancelled':
-				\Groove\Toast::info(__('Upload discarded. Nothing was changed.', 'groove'), $consumed);
+				\Groove\Toast::info(__('Upload discarded. Nothing was changed.', 'groove-folios'), $consumed);
 				break;
 			case 'confirm_replace':
 				// The dialog says it all; a toast behind it would only repeat it.
 				break;
 			case 'uninstalled':
-				\Groove\Toast::info(__('Theme removed successfully.', 'groove'), $consumed);
+				\Groove\Toast::info(__('Theme removed successfully.', 'groove-folios'), $consumed);
 				break;
 			case 'error':
 			default:
@@ -1736,7 +1736,7 @@ class Themes extends Page
 				}
 
 				\Groove\Toast::error(
-					!empty($value) ? $value : __('An unknown error occurred.', 'groove'),
+					!empty($value) ? $value : __('An unknown error occurred.', 'groove-folios'),
 					$consumed
 				);
 				break;

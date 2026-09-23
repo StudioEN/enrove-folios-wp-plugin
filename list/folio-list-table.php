@@ -4,6 +4,10 @@ use Groove\List\List_Table;
 use Groove\Pages\Page;
 use Groove\Utils\Utils;
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 class Folio_List_Table extends List_Table {
   function __construct(Page $page, $post_type) {
     parent::__construct($page, $post_type);
@@ -40,22 +44,22 @@ class Folio_List_Table extends List_Table {
   {
     return array(
       'cb' => '<input type="checkbox" />',
-      'title' => esc_html__('Folio Name', 'groove'),
-      'theme_name' => esc_html__('Theme Name', 'groove'),
-      'collection_tags' => esc_html__('Collection Tags', 'groove'),
-      'page_count' => esc_html__('Page Count', 'groove'),
-      'publish_status' => esc_html__('Publish Status', 'groove'),
-      'modified' => esc_html__('Last Updated', 'groove'),
+      'title' => esc_html__('Folio Name', 'groove-folios'),
+      'theme_name' => esc_html__('Theme Name', 'groove-folios'),
+      'collection_tags' => esc_html__('Collection Tags', 'groove-folios'),
+      'page_count' => esc_html__('Page Count', 'groove-folios'),
+      'publish_status' => esc_html__('Publish Status', 'groove-folios'),
+      'modified' => esc_html__('Last Updated', 'groove-folios'),
     );
   }
 
   protected function get_sortable_columns()
   {
     return array(
-      'title' => array('title', false, __('Folio Name', 'groove'), __('Table ordered by Folio Name.', 'groove')),
-      'theme_name' => array('theme_name', false, __('Theme Name', 'groove'), __('Table ordered by Theme Name.', 'groove')),
-      'page_count' => array('page_count', false, __('Page Count', 'groove'), __('Table ordered by Page Count.', 'groove')),
-      'modified' => array('modified', true, __('Last Updated', 'groove'), __('Table ordered by Last Updated.', 'groove'), 'desc'),
+      'title' => array('title', false, __('Folio Name', 'groove-folios'), __('Table ordered by Folio Name.', 'groove-folios')),
+      'theme_name' => array('theme_name', false, __('Theme Name', 'groove-folios'), __('Table ordered by Theme Name.', 'groove-folios')),
+      'page_count' => array('page_count', false, __('Page Count', 'groove-folios'), __('Table ordered by Page Count.', 'groove-folios')),
+      'modified' => array('modified', true, __('Last Updated', 'groove-folios'), __('Table ordered by Last Updated.', 'groove-folios'), 'desc'),
     );
   }
 
@@ -71,7 +75,7 @@ class Folio_List_Table extends List_Table {
         if (isset($all_themes[$theme_id])) {
           return esc_html($all_themes[$theme_id]['name']);
         }
-        return esc_html($theme_id) . ' ' . esc_html__('(Unknown)', 'groove');
+        return esc_html($theme_id) . ' ' . esc_html__('(Unknown)', 'groove-folios');
 
       case 'collection_tags':
         $terms = get_the_terms($post_id, 'groove_collection_tag');
@@ -124,11 +128,11 @@ class Folio_List_Table extends List_Table {
         }
         if (empty($display_name)) {
           $author = get_userdata((int) $post->post_author);
-          $display_name = $author ? $author->display_name : esc_html__('Unknown user', 'groove');
+          $display_name = $author ? $author->display_name : esc_html__('Unknown user', 'groove-folios');
         }
         return esc_html(sprintf(
           /* translators: 1: date/time value, 2: user display name */
-          __('%1$s by %2$s', 'groove'),
+          __('%1$s by %2$s', 'groove-folios'),
           get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post_id),
           $display_name
         ));
@@ -150,21 +154,21 @@ class Folio_List_Table extends List_Table {
     $actions = array();
     $title = get_the_title($post_id);
     if ($title === '') {
-      $title = esc_html__('(no title)', 'groove');
+      $title = esc_html__('(no title)', 'groove-folios');
     }
 
     if ($can_edit_post && 'trash' !== $post->post_status) {
       $actions['edit'] = sprintf(
         '<a href="%s" aria-label="%s">%s</a>',
         get_edit_post_link($post_id),
-        esc_attr(sprintf(__('Edit &#8220;%s&#8221;'), $title)),
-        __('Edit')
+        esc_attr(sprintf(__('Edit &#8220;%s&#8221;', 'groove-folios'), $title)),
+        __('Edit', 'groove-folios')
       );
 
       $actions['inline hide-if-no-js'] = sprintf(
         '<button type="button" class="button-link editinline" aria-label="%s" aria-expanded="false">%s</button>',
-        esc_attr(sprintf(__('Quick edit &#8220;%s&#8221; inline'), $title)),
-        __('Quick&nbsp;Edit')
+        esc_attr(sprintf(__('Quick edit &#8220;%s&#8221; inline', 'groove-folios'), $title)),
+        __('Quick&nbsp;Edit', 'groove-folios')
       );
     }
 
@@ -185,10 +189,10 @@ class Folio_List_Table extends List_Table {
         esc_url($duplicate_url),
         esc_attr(sprintf(
           /* translators: %s: Folio title. */
-          __('Duplicate &#8220;%s&#8221;', 'groove'),
+          __('Duplicate &#8220;%s&#8221;', 'groove-folios'),
           $title
         )),
-        esc_html__('Duplicate', 'groove')
+        esc_html__('Duplicate', 'groove-folios')
       );
     }
 
@@ -197,15 +201,15 @@ class Folio_List_Table extends List_Table {
         $actions['untrash'] = sprintf(
           '<a href="%s" aria-label="%s">%s</a>',
           wp_nonce_url(admin_url(sprintf($post_type_object->_edit_link . '&amp;action=untrash', $post_id)), 'untrash-post_' . $post_id),
-          esc_attr(sprintf(__('Restore &#8220;%s&#8221; from the Trash'), $title)),
-          __('Restore')
+          esc_attr(sprintf(__('Restore &#8220;%s&#8221; from the Trash', 'groove-folios'), $title)),
+          __('Restore', 'groove-folios')
         );
       } elseif (EMPTY_TRASH_DAYS) {
         $actions['trash'] = sprintf(
           '<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
           get_delete_post_link($post_id),
-          esc_attr(sprintf(__('Move &#8220;%s&#8221; to the Trash'), $title)),
-          _x('Trash', 'verb')
+          esc_attr(sprintf(__('Move &#8220;%s&#8221; to the Trash', 'groove-folios'), $title)),
+          _x('Trash', 'verb', 'groove-folios')
         );
       }
 
@@ -213,8 +217,8 @@ class Folio_List_Table extends List_Table {
         $actions['delete'] = sprintf(
           '<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
           get_delete_post_link($post_id, '', true),
-          esc_attr(sprintf(__('Delete &#8220;%s&#8221; permanently'), $title)),
-          __('Delete Permanently')
+          esc_attr(sprintf(__('Delete &#8220;%s&#8221; permanently', 'groove-folios'), $title)),
+          __('Delete Permanently', 'groove-folios')
         );
       }
     }
@@ -228,8 +232,8 @@ class Folio_List_Table extends List_Table {
           $actions['view'] = sprintf(
             '<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
             esc_url($view_url),
-            esc_attr(sprintf(__('Preview &#8220;%s&#8221;'), $title)),
-            __('Preview')
+            esc_attr(sprintf(__('Preview &#8220;%s&#8221;', 'groove-folios'), $title)),
+            __('Preview', 'groove-folios')
           );
         }
       } elseif ('trash' !== $post->post_status) {
@@ -240,8 +244,8 @@ class Folio_List_Table extends List_Table {
         $actions['view'] = sprintf(
           '<a href="%s" rel="bookmark" aria-label="%s">%s</a>',
           esc_url($view_url),
-          esc_attr(sprintf(__('View &#8220;%s&#8221;'), $title)),
-          __('View')
+          esc_attr(sprintf(__('View &#8220;%s&#8221;', 'groove-folios'), $title)),
+          __('View', 'groove-folios')
         );
       }
     }

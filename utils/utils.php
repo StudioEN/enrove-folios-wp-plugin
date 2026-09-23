@@ -1,6 +1,10 @@
 <?php
 namespace Groove\Utils;
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 class Utils
 {
   static function can_preview_unpublished_posts()
@@ -229,7 +233,7 @@ class Utils
 
   static function get_default_on_this_page_label()
   {
-    return __('On this page', 'groove');
+    return __('On this page', 'groove-folios');
   }
 
   static function get_folio_on_this_page_label($folio_id)
@@ -249,23 +253,23 @@ class Utils
   {
     return array(
       'coastal-slate' => array(
-        'label' => __('Coastal Slate', 'groove'),
+        'label' => __('Coastal Slate', 'groove-folios'),
         'seed' => '#2E5F7B',
       ),
       'evergreen-ink' => array(
-        'label' => __('Evergreen Ink', 'groove'),
+        'label' => __('Evergreen Ink', 'groove-folios'),
         'seed' => '#2C6650',
       ),
       'clay-signal' => array(
-        'label' => __('Clay Signal', 'groove'),
+        'label' => __('Clay Signal', 'groove-folios'),
         'seed' => '#A3553D',
       ),
       'berry-graphite' => array(
-        'label' => __('Berry Graphite', 'groove'),
+        'label' => __('Berry Graphite', 'groove-folios'),
         'seed' => '#6E4969',
       ),
       'deep-ultramarine' => array(
-        'label' => __('Deep Ultramarine', 'groove'),
+        'label' => __('Deep Ultramarine', 'groove-folios'),
         'seed' => '#355E9D',
       ),
     );

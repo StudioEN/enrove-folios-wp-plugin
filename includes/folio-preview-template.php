@@ -1,4 +1,8 @@
 <?php
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 use Groove\Themes\Font_Loader;
 use Groove\Themes\Themes_Manager;
 
@@ -85,10 +89,10 @@ $theme = Themes_Manager::create_theme_for_current_request();
       $_pw_action_url = esc_url(site_url('wp-login.php?action=postpass', 'login_post'));
     ?>
     <form action="<?php echo $_pw_action_url; ?>" class="post-password-form" method="post">
-      <p><?php echo esc_html__('Enter the password to view this folio.', 'groove'); ?></p>
-      <label for="pwbox-<?php echo $_pw_post_id; ?>"><?php echo esc_html__('Password', 'groove'); ?></label>
+      <p><?php echo esc_html__('Enter the password to view this folio.', 'groove-folios'); ?></p>
+      <label for="pwbox-<?php echo $_pw_post_id; ?>"><?php echo esc_html__('Password', 'groove-folios'); ?></label>
       <input name="post_password" id="pwbox-<?php echo $_pw_post_id; ?>" type="password" spellcheck="false" />
-      <input type="submit" name="Submit" value="<?php echo esc_attr__('Unlock', 'groove'); ?>" />
+      <input type="submit" name="Submit" value="<?php echo esc_attr__('Unlock', 'groove-folios'); ?>" />
     </form>
   </div>
 </body>
@@ -110,17 +114,17 @@ if ($_gv_id) {
 if (!$_gv_post || !\Groove\Utils\Utils::is_groove_post($_gv_post)) {
   // Nothing here at all: a bad link, or the folio was deleted.
   $_gv_status = 404;
-  $_gv_title = __('Folio not found', 'groove');
-  $_gv_message = __('This folio no longer exists, or the link is wrong.', 'groove');
+  $_gv_title = __('Folio not found', 'groove-folios');
+  $_gv_message = __('This folio no longer exists, or the link is wrong.', 'groove-folios');
 }
 elseif (!\Groove\Utils\Utils::can_current_request_view_post($_gv_post)) {
   // It exists but this visitor may not see it — in practice, a draft folio.
   // 404 rather than 403 so an unpublished folio's existence stays private.
   $_gv_status = 404;
-  $_gv_title = __('Not published yet', 'groove');
+  $_gv_title = __('Not published yet', 'groove-folios');
   $_gv_message = is_user_logged_in()
-    ? __('This folio is not published yet, and your account cannot preview it.', 'groove')
-    : __('This folio is not published yet. Sign in to preview it, or publish it to share the link.', 'groove');
+    ? __('This folio is not published yet, and your account cannot preview it.', 'groove-folios')
+    : __('This folio is not published yet. Sign in to preview it, or publish it to share the link.', 'groove-folios');
 }
 else {
   // Genuinely no usable theme: the folio names a theme_id nothing on this site
@@ -132,8 +136,8 @@ else {
   // an empty one, so a folio whose theme failed to load rendered in a different
   // theme at HTTP 200 and this notice never ran.
   $_gv_status = 404;
-  $_gv_title = __('Theme not found', 'groove');
-  $_gv_message = __('This folio points at a theme that is not installed.', 'groove');
+  $_gv_title = __('Theme not found', 'groove-folios');
+  $_gv_message = __('This folio points at a theme that is not installed.', 'groove-folios');
 }
 
 status_header($_gv_status);

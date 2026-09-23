@@ -208,8 +208,8 @@ registry key `''`.
 > breakages do that and which are merely skipped is exact rather than intuitive, and not what folklore
 > says: see [§13](#13-known-warts).
 >
-> Second, **`__()` does not work in the loaders.** The `groove` text domain is loaded on `plugins_loaded`,
-> so a translation call here returns English and trips `_load_textdomain_just_in_time` on WordPress 6.7+,
+> Second, **`__()` does not work in the loaders.** The `groove-folios` text domain loads just in time, on the
+> first translation call after `init`, so a translation call here returns English and trips `_load_textdomain_just_in_time` on WordPress 6.7+,
 > on every request. That is why `record_skipped_theme()` stores a reason code plus raw context and
 > `describe_skipped_theme()` turns it into a sentence later, in admin code where translation works.
 
@@ -784,7 +784,7 @@ inverts, every theme's ground turns white.
 
 Every dynamic value is escaped at output: `esc_html()`, `esc_attr()`, `esc_url()`, `esc_attr__()`.
 Only `get_content()` output (already block-rendered + `wp_kses`'d inside blocks) is echoed raw.
-All user-facing strings go through `__()` / `esc_html__()` with the `groove` text domain.
+All user-facing strings go through `__()` / `esc_html__()` with the `groove-folios` text domain.
 
 ---
 
@@ -1053,7 +1053,7 @@ None of them wraps the `require` itself. What that costs depends on how the file
 | Undefined function called at file scope | `Error` | **yes** | site-wide fatal |
 | Class name already declared | engine fatal, not a `Throwable` | **no** | site-wide fatal |
 
-The first three are `Throwable`, and have been since PHP 7.0 — this plugin's floor. They bring the site
+The first three are `Throwable`, and have been since PHP 7.0. The plugin's floor is 7.1. They bring the site
 down because the loaders do not `try` around the `require`, **not** because they cannot be caught. That
 is worth stating plainly, because "a parse error in an included file is an uncatchable fatal" was true
 before PHP 7 and is repeated as though it still were. Containing those three is a small, local change:

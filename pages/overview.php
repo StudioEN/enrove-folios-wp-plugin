@@ -26,8 +26,8 @@ class Overview extends Page
   public function register_admin_menu()
   {
     add_menu_page(
-      esc_html__('Groove', 'groove'),
-      esc_html__('Groove Folios', 'groove'),
+      esc_html__('Groove', 'groove-folios'),
+      esc_html__('Groove Folios', 'groove-folios'),
       'edit_posts',
       self::PAGE_ID,
     [$this, 'display_page'],
@@ -43,7 +43,7 @@ class Overview extends Page
     global $submenu;
 
     $menu_slug = 'groove-overview';
-    $new_label = esc_html__('Overview', 'groove');
+    $new_label = esc_html__('Overview', 'groove-folios');
 
     if (isset($submenu[$menu_slug])) {
       $submenu[$menu_slug][0][0] = $new_label;
@@ -94,31 +94,31 @@ class Overview extends Page
     ?>
 <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
   <div class="flex items-center justify-between mb-4">
-    <h2 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('At a Glance', 'groove'); ?></h2>
+    <h2 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('At a Glance', 'groove-folios'); ?></h2>
     <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=groove-all-folios&open_add_new=1')); ?>">
-      <?php esc_html_e('Add New Folio', 'groove'); ?>
+      <?php esc_html_e('Add New Folio', 'groove-folios'); ?>
     </a>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <a href="<?php echo esc_url($folios_url); ?>" class="block rounded-lg border border-gray-200 bg-gray-50/50 p-4 hover:bg-gray-100">
-      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide"><?php esc_html_e('Folios', 'groove'); ?></div>
+      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide"><?php esc_html_e('Folios', 'groove-folios'); ?></div>
       <div class="mt-2 text-2xl font-semibold text-gray-900"><?php echo esc_html(number_format_i18n($folio_total)); ?></div>
       <div class="mt-1 text-xs text-gray-600">
         <?php
         /* translators: %s: number of folios */
-        printf(esc_html(_n('%s item', '%s items', $folio_total, 'groove')), esc_html(number_format_i18n($folio_total)));
+        printf(esc_html(_n('%s item', '%s items', $folio_total, 'groove-folios')), esc_html(number_format_i18n($folio_total)));
         ?>
       </div>
     </a>
 
     <div class="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
-      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide"><?php esc_html_e('Collections', 'groove'); ?></div>
+      <div class="text-xs font-medium text-gray-500 uppercase tracking-wide"><?php esc_html_e('Collections', 'groove-folios'); ?></div>
       <div class="mt-2 text-2xl font-semibold text-gray-900"><?php echo esc_html(number_format_i18n($collection_total)); ?></div>
       <div class="mt-1 text-xs text-gray-600">
         <?php
         /* translators: %s: number of collection tags */
-        printf(esc_html(_n('%s tag', '%s tags', $collection_total, 'groove')), esc_html(number_format_i18n($collection_total)));
+        printf(esc_html(_n('%s tag', '%s tags', $collection_total, 'groove-folios')), esc_html(number_format_i18n($collection_total)));
         ?>
       </div>
     </div>
@@ -139,9 +139,9 @@ class Overview extends Page
     ?>
 <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
   <div class="flex items-center justify-between mb-4">
-    <h2 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Recent Activity', 'groove'); ?></h2>
+    <h2 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Recent Activity', 'groove-folios'); ?></h2>
     <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=groove-all-folios')); ?>">
-      <?php esc_html_e('View All Folios', 'groove'); ?>
+      <?php esc_html_e('View All Folios', 'groove-folios'); ?>
     </a>
   </div>
 
@@ -150,16 +150,16 @@ class Overview extends Page
     <table class="min-w-full border-collapse">
       <thead class="bg-gray-50 border-b border-gray-200">
         <tr>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"><?php esc_html_e('Folio', 'groove'); ?></th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"><?php esc_html_e('Status', 'groove'); ?></th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"><?php esc_html_e('Updated', 'groove'); ?></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"><?php esc_html_e('Folio', 'groove-folios'); ?></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"><?php esc_html_e('Status', 'groove-folios'); ?></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"><?php esc_html_e('Updated', 'groove-folios'); ?></th>
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-100">
         <?php foreach ($recent_posts as $post): ?>
         <?php
           $title = get_the_title($post);
-          $title = $title ? $title : esc_html__('(no title)', 'groove');
+          $title = $title ? $title : esc_html__('(no title)', 'groove-folios');
           $link = admin_url('admin.php?page=groove-folio&folio_id=' . $post->ID);
           $status_object = get_post_status_object($post->post_status);
           $status_label = $status_object ? $status_object->label : ucfirst($post->post_status);
@@ -174,7 +174,7 @@ class Overview extends Page
     </table>
   </div>
   <?php else: ?>
-  <p class="text-sm text-gray-600"><?php esc_html_e('No recent activity found.', 'groove'); ?></p>
+  <p class="text-sm text-gray-600"><?php esc_html_e('No recent activity found.', 'groove-folios'); ?></p>
   <?php endif; ?>
 </section>
 <?php
@@ -186,7 +186,7 @@ class Overview extends Page
 <div class="space-y-6">
   <div class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
     <p class="m-0 text-sm text-indigo-900">
-      <?php esc_html_e('Welcome to Groove Folios. Manage your folios, review recent changes, and create new work from here.', 'groove'); ?>
+      <?php esc_html_e('Welcome to Groove Folios. Manage your folios, review recent changes, and create new work from here.', 'groove-folios'); ?>
     </p>
   </div>
 

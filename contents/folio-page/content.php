@@ -2,6 +2,10 @@
 namespace Groove\Contents\FolioPage;
 use Groove\Contents\BaseContent;
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 class Content extends BaseContent
 {
 
@@ -18,18 +22,18 @@ class Content extends BaseContent
   public function create_posttype()
   {
     $labels = array(
-      'name' => _x('Folio Pages', 'post type general name', 'groove'),
-      'singular_name' => _x('Folio Page', 'post type singular name', 'groove'),
-      'menu_name' => _x('Folio Pages', 'admin menu', 'groove'),
-      'all_items' => __('All Folio Pages', 'groove'),
-      'add_new' => __('Add New', 'groove'),
-      'add_new_item' => __('Add New Folio Page', 'groove'),
-      'edit_item' => __('Edit Folio Page', 'groove'),
-      'new_item' => __('New Folio Page', 'groove'),
-      'view_item' => __('View Folio Page', 'groove'),
-      'search_items' => __('Search Folio Pages', 'groove'),
-      'not_found' => __('No folio pages found', 'groove'),
-      'not_found_in_trash' => __('No folio pages found in trash', 'groove'),
+      'name' => _x('Folio Pages', 'post type general name', 'groove-folios'),
+      'singular_name' => _x('Folio Page', 'post type singular name', 'groove-folios'),
+      'menu_name' => _x('Folio Pages', 'admin menu', 'groove-folios'),
+      'all_items' => __('All Folio Pages', 'groove-folios'),
+      'add_new' => __('Add New', 'groove-folios'),
+      'add_new_item' => __('Add New Folio Page', 'groove-folios'),
+      'edit_item' => __('Edit Folio Page', 'groove-folios'),
+      'new_item' => __('New Folio Page', 'groove-folios'),
+      'view_item' => __('View Folio Page', 'groove-folios'),
+      'search_items' => __('Search Folio Pages', 'groove-folios'),
+      'not_found' => __('No folio pages found', 'groove-folios'),
+      'not_found_in_trash' => __('No folio pages found in trash', 'groove-folios'),
     );
 
     $args = array(

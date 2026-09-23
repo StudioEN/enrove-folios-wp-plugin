@@ -23,12 +23,12 @@ class Overview_Menu_Item extends Menu_Item_Page
 
     public function get_label()
     {
-        return esc_html__('Overview', 'groove');
+        return esc_html__('Overview', 'groove-folios');
     }
 
     public function get_page_title()
     {
-        return esc_html__('Groove Folios — Overview', 'groove');
+        return esc_html__('Groove Folios — Overview', 'groove-folios');
     }
 
     public function get_capability()

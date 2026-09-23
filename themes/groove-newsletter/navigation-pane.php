@@ -69,10 +69,10 @@ function display_recent_navigation_pane($theme, array $args = []): void
   $item_meta_class = $class_prefix . '-item-meta';
   $item_state_class = $class_prefix . '-item-state';
   ?>
-  <nav class="<?= esc_attr($class_prefix) ?>" aria-label="<?= esc_attr__('Issue navigation', 'groove') ?>">
+  <nav class="<?= esc_attr($class_prefix) ?>" aria-label="<?= esc_attr__('Issue navigation', 'groove-folios') ?>">
     <div class="<?= esc_attr($content_class) ?>">
-      <button class="<?= esc_attr($close_class) ?>" aria-label="<?= esc_attr__('Close navigation', 'groove') ?>"></button>
-      <div class="<?= esc_attr($eyebrow_class) ?>"><?= esc_html__('Contents', 'groove') ?></div>
+      <button class="<?= esc_attr($close_class) ?>" aria-label="<?= esc_attr__('Close navigation', 'groove-folios') ?>"></button>
+      <div class="<?= esc_attr($eyebrow_class) ?>"><?= esc_html__('Contents', 'groove-folios') ?></div>
       <h3 class="<?= esc_attr($name_class) ?>">
         <?php if (!empty($title_url)): ?>
           <a href="<?= esc_url($title_url) ?>">
@@ -85,13 +85,13 @@ function display_recent_navigation_pane($theme, array $args = []): void
       <div class="<?= esc_attr($stats_class) ?>">
         <?php if ($latest_date !== ''): ?>
           <div class="<?= esc_attr($stat_class) ?>">
-            <span><?= esc_html__('Updated', 'groove') ?></span>
+            <span><?= esc_html__('Updated', 'groove-folios') ?></span>
             <time datetime="<?= esc_attr(gmdate('c', $latest_timestamp)) ?>"><?= esc_html($latest_date) ?></time>
           </div>
         <?php endif; ?>
         <?php if ($label !== ''): ?>
           <div class="<?= esc_attr($stat_class) ?>">
-            <span><?= esc_html__('Showing', 'groove') ?></span>
+            <span><?= esc_html__('Showing', 'groove-folios') ?></span>
             <span><?= esc_html($label) ?></span>
           </div>
         <?php endif; ?>
@@ -124,7 +124,7 @@ function display_recent_navigation_pane($theme, array $args = []): void
                 <?php endif; ?>
               </div>
               <?php if ($is_current): ?>
-                <span class="<?= esc_attr($item_state_class) ?>"><?= esc_html__('Current', 'groove') ?></span>
+                <span class="<?= esc_attr($item_state_class) ?>"><?= esc_html__('Current', 'groove-folios') ?></span>
               <?php endif; ?>
             </div>
           </a>

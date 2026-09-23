@@ -41,12 +41,12 @@ class Add_New extends Page
       check_admin_referer('groove_create_folio_action', 'groove_nonce');
 
       if (!current_user_can('edit_posts')) {
-        wp_die(esc_html__('You do not have permission to create folios.', 'groove'));
+        wp_die(esc_html__('You do not have permission to create folios.', 'groove-folios'));
       }
 
       $themes = \Groove\Themes\Themes_Manager::get_all_themes();
       if (empty($themes)) {
-        wp_die(esc_html__('No themes are available. Install a theme first.', 'groove'));
+        wp_die(esc_html__('No themes are available. Install a theme first.', 'groove-folios'));
       }
 
       $default_theme_id = (string) get_option('groove_default_theme_id', '');
@@ -56,7 +56,7 @@ class Add_New extends Page
 
       $theme_id = isset($_POST['themeId']) ? sanitize_key(wp_unslash($_POST['themeId'])) : $default_theme_id;
       if (empty($theme_id) || !isset($themes[$theme_id])) {
-        wp_die(esc_html__('Invalid theme selection.', 'groove'));
+        wp_die(esc_html__('Invalid theme selection.', 'groove-folios'));
       }
       // Any theme shipping a sample-content.php can be seeded. The definition
       // is null for themes that ship none, which also disables the request.
@@ -132,7 +132,7 @@ class Add_New extends Page
 
   public function get_title()
   {
-    return esc_html__('Add New', 'groove');
+    return esc_html__('Add New', 'groove-folios');
   }
 
   public function create_tabs()
@@ -159,7 +159,7 @@ class Add_New extends Page
     }
 
     if (empty($themes)) {
-      echo '<p>' . esc_html__('No themes available. Please install a theme first.', 'groove') . '</p>';
+      echo '<p>' . esc_html__('No themes available. Please install a theme first.', 'groove-folios') . '</p>';
       return;
     }
 
@@ -180,21 +180,21 @@ class Add_New extends Page
   <?php
   /* translators: %s: number of available themes */
   $themes_help_text = sprintf(
-    _n('Choose a theme to get started. %s theme available.', 'Choose a theme to get started. %s themes available.', $theme_count, 'groove'),
+    _n('Choose a theme to get started. %s theme available.', 'Choose a theme to get started. %s themes available.', $theme_count, 'groove-folios'),
     number_format_i18n($theme_count)
   );
   echo esc_html($themes_help_text);
   ?>
 </p>
 <p class="g-folio__themes-selected">
-  <?php echo esc_html__('Selected theme:', 'groove'); ?>
+  <?php echo esc_html__('Selected theme:', 'groove-folios'); ?>
   <strong id="g-folio-selected-theme-name"><?php echo esc_html($first_theme_name); ?></strong>
 </p>
 <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
   <?php wp_nonce_field('groove_create_folio_action', 'groove_nonce'); ?>
   <input type="hidden" name="action" value="groove_create_folio" />
 
-  <div class="g-folio__themes" role="radiogroup" aria-label="<?php echo esc_attr__('Available themes', 'groove'); ?>">
+  <div class="g-folio__themes" role="radiogroup" aria-label="<?php echo esc_attr__('Available themes', 'groove-folios'); ?>">
     <?php
     foreach ($themes as $id => $theme) {
       $is_first = ($id === $first_theme_id);
@@ -217,11 +217,11 @@ class Add_New extends Page
       echo esc_html($theme['name']);
       echo '</div>';
       echo '<span class="active-badge absolute -top-2 -right-2 inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ring-2 ring-white ' . ($is_first ? '' : 'hidden') . '">';
-      echo esc_html__('Selected', 'groove');
+      echo esc_html__('Selected', 'groove-folios');
       echo '</span>';
       echo '</button>';
-      echo '<button type="button" class="g-theme-preview-btn" data-theme-id="' . esc_attr($id) . '" aria-label="' . esc_attr(sprintf(__('Preview %s theme', 'groove'), $theme['name'])) . '">';
-      echo esc_html__('Preview', 'groove');
+      echo '<button type="button" class="g-theme-preview-btn" data-theme-id="' . esc_attr($id) . '" aria-label="' . esc_attr(sprintf(__('Preview %s theme', 'groove-folios'), $theme['name'])) . '">';
+      echo esc_html__('Preview', 'groove-folios');
       echo '</button>';
       echo '</div>';
     }
@@ -229,8 +229,17 @@ class Add_New extends Page
   </div>
   <input type="hidden" id="g-add-new-theme-id" name="themeId" value="<?php echo esc_attr($first_theme_id)?>" />
   <div class="g-folio__theme-button">
-    <?php foreach ($sample_definitions as $sample_theme_id => $sample) :
+    <?php
+    // A WordPress.org install has no sample photos until they are downloaded
+    // (see \Groove\Pexels\Library). Seeding without them still works: inline
+    // images fill in once the photos arrive, but page featured images are only
+    // attached at seed time. Say so where the choice is made.
+    $photos_missing = !empty(\Groove\Pexels\Library::status()['missing']);
+    foreach ($sample_definitions as $sample_theme_id => $sample) :
       $is_selected_theme = ($sample_theme_id === $first_theme_id);
+      if ($photos_missing) {
+        $sample['description'] = trim($sample['description'] . ' ' . __('The sample photos are not on this site yet. Download them from Settings → Imagery first to get the full sample, including each page’s featured image.', 'groove-folios'));
+      }
       // Fields in a hidden section start disabled so a no-JS submit cannot seed
       // the wrong theme's content; groove-main.js re-enables the visible one.
       $field_disabled = $is_selected_theme ? '' : ' disabled="disabled"';
@@ -257,7 +266,7 @@ class Add_New extends Page
     </div>
     <?php endforeach; ?>
     <button type="submit" class="button button-primary">
-      <?php echo esc_html__('Continue', 'groove'); ?>
+      <?php echo esc_html__('Continue', 'groove-folios'); ?>
     </button>
   </div>
 </form>
@@ -420,7 +429,7 @@ class Add_New extends Page
       <div class="g-folio__postbox-header">
         <div class="g-folio__postbox-header-left">
           <h2 class="g-folio__postbox-title">
-            <?php echo esc_html__('Themes', 'groove'); ?>
+            <?php echo esc_html__('Themes', 'groove-folios'); ?>
           </h2>
         </div>
         <div class="g-folio__postbox-header-right">

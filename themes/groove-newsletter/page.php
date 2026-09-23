@@ -51,7 +51,7 @@ class Page extends Base_Theme
     $minutes = max(1, (int) ceil($word_count / 220));
 
     return sprintf(
-      _n('%d min read', '%d min read', $minutes, 'groove'),
+      _n('%d min read', '%d min read', $minutes, 'groove-folios'),
       $minutes
     );
   }
@@ -172,23 +172,23 @@ class Page extends Base_Theme
     <div class="g-folio__theme-page-nav-bar" data-groove-navbar="own">
       <div class="g-folio__theme-page-nav-bar-main">
         <button type="button" class="g-folio__theme-page-nav-button gn-nav-trigger gn-nav-trigger--page"
-          aria-label="<?= esc_attr__('Open issue navigation', 'groove') ?>">
+          aria-label="<?= esc_attr__('Open issue navigation', 'groove-folios') ?>">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-          <span class="gn-nav-trigger__label"><?= esc_html__('Contents', 'groove') ?></span>
+          <span class="gn-nav-trigger__label"><?= esc_html__('Contents', 'groove-folios') ?></span>
         </button>
 
         <div class="gn-page__masthead-copy">
           <?php if ($page_nav_count > 0): ?>
             <nav class="gn-page__story-switcher<?= $page_nav_count === 1 ? ' gn-page__story-switcher--single' : '' ?>"
-              aria-label="<?= esc_attr__('Page navigation', 'groove') ?>">
+              aria-label="<?= esc_attr__('Page navigation', 'groove-folios') ?>">
               <?php if ($prev_page): ?>
                 <a class="gn-page__story-link gn-page__story-link--prev"
                   href="<?= esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)) ?>">
-                  <span class="gn-page__story-link-direction"><?= esc_html__('Previous page', 'groove') ?></span>
+                  <span class="gn-page__story-link-direction"><?= esc_html__('Previous page', 'groove-folios') ?></span>
                   <span class="gn-page__story-link-title"><?= esc_html($prev_page->post_title) ?></span>
                 </a>
               <?php endif; ?>
@@ -196,7 +196,7 @@ class Page extends Base_Theme
               <?php if ($next_page): ?>
                 <a class="gn-page__story-link gn-page__story-link--next"
                   href="<?= esc_url(Utils::get_folio_permalink_by_id($next_page->ID)) ?>">
-                  <span class="gn-page__story-link-direction"><?= esc_html__('Next page', 'groove') ?></span>
+                  <span class="gn-page__story-link-direction"><?= esc_html__('Next page', 'groove-folios') ?></span>
                   <span class="gn-page__story-link-title"><?= esc_html($next_page->post_title) ?></span>
                 </a>
               <?php endif; ?>
@@ -205,7 +205,7 @@ class Page extends Base_Theme
         </div>
 
         <button type="button" class="g-folio__theme-page-nav-bar-toggle" data-groove-nav-toggle="own">
-          <?= esc_html__('Sections', 'groove') ?>
+          <?= esc_html__('Sections', 'groove-folios') ?>
         </button>
       </div>
 
@@ -243,7 +243,7 @@ class Page extends Base_Theme
           ?>
         </div>
         <button type="button" class="g-folio__theme-page-mobile-nav-back" data-g-scroll-target="#gn-page-top">↑
-          <?= esc_html__('Back to top', 'groove') ?></button>
+          <?= esc_html__('Back to top', 'groove-folios') ?></button>
       </div>
     </nav>
     <?php
@@ -317,15 +317,15 @@ class Page extends Base_Theme
     $feature_thumb_url = $this->get_feature_image_thumb_url();
     $read_time_label = $this->get_read_time_label();
     ?>
-    <aside class="gn-page__meta-rail" aria-label="<?= esc_attr__('Page tools', 'groove') ?>">
+    <aside class="gn-page__meta-rail" aria-label="<?= esc_attr__('Page tools', 'groove-folios') ?>">
       <div class="gn-page__meta-group">
-        <div class="gn-page__meta-label"><?= esc_html__('Read time', 'groove') ?></div>
+        <div class="gn-page__meta-label"><?= esc_html__('Read time', 'groove-folios') ?></div>
         <div class="gn-page__meta-value"><?= esc_html($read_time_label) ?></div>
       </div>
 
       <?php if ($feature_thumb_url !== ''): ?>
         <a class="gn-page__feature-peek" data-g-scroll-target="#gn-page-feature" href="#gn-page-feature"
-          aria-label="<?= esc_attr__('Jump to feature image', 'groove') ?>">
+          aria-label="<?= esc_attr__('Jump to feature image', 'groove-folios') ?>">
           <span class="gn-page__feature-peek-frame">
             <img class="gn-page__feature-peek-image" src="<?= esc_url($feature_thumb_url) ?>" alt="" loading="lazy" />
           </span>
@@ -333,7 +333,7 @@ class Page extends Base_Theme
       <?php endif; ?>
 
       <button type="button" class="gn-page__back-to-top" data-g-scroll-target="#gn-page-top">
-        <?= esc_html__('Back to top', 'groove') ?>
+        <?= esc_html__('Back to top', 'groove-folios') ?>
       </button>
     </aside>
     <?php

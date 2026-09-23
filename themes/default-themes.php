@@ -1,6 +1,10 @@
 <?php
 namespace Groove\Themes;
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 /**
  * Default_Themes
  *

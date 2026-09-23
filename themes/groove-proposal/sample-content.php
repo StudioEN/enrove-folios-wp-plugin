@@ -28,24 +28,24 @@ $vale_logo_url      = $sample_logos_url . 'vale.svg';
 $zhou_logo_url      = $sample_logos_url . 'zhou-studio.svg';
 
 return array(
-  'label'       => __('Create with sample proposal content', 'groove'),
-  'description' => __('Seeds cover details and five sample pages that showcase every proposal content block.', 'groove'),
-  'subtitle'    => __('Strategic proposal overview', 'groove'),
+  'label'       => __('Create with sample proposal content', 'groove-folios'),
+  'description' => __('Seeds cover details and five sample pages that showcase every proposal content block.', 'groove-folios'),
+  'subtitle'    => __('Strategic proposal overview', 'groove-folios'),
   'folio_meta'  => array(
     'proposal_version'       => 'v0.1',
-    'proposal_status'        => __('Draft', 'groove'),
-    'proposal_prepared_for'  => __('Client Name', 'groove'),
-    'proposal_client_name'   => __('Client Name', 'groove'),
-    'proposal_prepared_by'   => __('Your Agency Name', 'groove'),
-    'proposal_contact_name'  => __('Engagement Lead', 'groove'),
-    'proposal_contact_role'  => __('Principal Consultant', 'groove'),
+    'proposal_status'        => __('Draft', 'groove-folios'),
+    'proposal_prepared_for'  => __('Client Name', 'groove-folios'),
+    'proposal_client_name'   => __('Client Name', 'groove-folios'),
+    'proposal_prepared_by'   => __('Your Agency Name', 'groove-folios'),
+    'proposal_contact_name'  => __('Engagement Lead', 'groove-folios'),
+    'proposal_contact_role'  => __('Principal Consultant', 'groove-folios'),
     'proposal_contact_email' => 'hello@example.com',
     'proposal_contact_phone' => '+1 (555) 010-2020',
     'proposal_date'          => wp_date('Y-m-d'),
   ),
   'pages'       => array(
       array(
-        'title' => __('Executive Summary', 'groove'),
+        'title' => __('Executive Summary', 'groove-folios'),
         'content' => (string) <<<HTML
 <!-- wp:heading {"level":2} -->
 <h2>Context</h2>
@@ -73,7 +73,7 @@ return array(
 HTML,
       ),
       array(
-        'title' => __('Scope and Approach', 'groove'),
+        'title' => __('Scope and Approach', 'groove-folios'),
         'content' => (string) <<<HTML
 <!-- wp:heading {"level":2} -->
 <h2>Workstreams</h2>
@@ -97,7 +97,7 @@ HTML,
 HTML,
       ),
       array(
-        'title' => __('Case Studies', 'groove'),
+        'title' => __('Case Studies', 'groove-folios'),
         'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>The clearest way to evaluate a partner is to see how they've handled a comparable challenge. Here's a recent engagement with a client in a similar position.</p>
@@ -128,7 +128,7 @@ HTML,
 HTML,
       ),
       array(
-        'title' => __('Timeline and Investment', 'groove'),
+        'title' => __('Timeline and Investment', 'groove-folios'),
         'content' => (string) <<<HTML
 <!-- wp:heading {"level":2} -->
 <h2>Timeline</h2>
@@ -154,7 +154,7 @@ HTML,
 HTML,
       ),
       array(
-        'title' => __('Next Steps', 'groove'),
+        'title' => __('Next Steps', 'groove-folios'),
         'content' => (string) <<<HTML
 <!-- wp:paragraph -->
 <p>Here's what happens once you're ready to move forward, along with answers to the questions we hear most often at this stage.</p>

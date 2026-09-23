@@ -371,7 +371,7 @@ class Plugin
 
 	final public static function get_title()
 	{
-		return esc_html__('Groove', 'groove');
+		return esc_html__('Groove', 'groove-folios');
 	}
 }
 

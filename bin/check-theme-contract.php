@@ -35,6 +35,17 @@
  */
 
 
+// Two ways in, and only two: `php bin/check-theme-contract.php` from a shell, or
+// Themes_Manager including it on a WordPress request. A browser asking for the
+// file directly gets nothing. The shell defines ABSPATH for itself (as
+// bin/check-docs.php does) so the guard can be the plain form Plugin Check reads.
+if (PHP_SAPI === 'cli' && !defined('ABSPATH')) {
+    define('ABSPATH', dirname(__DIR__) . '/');
+}
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 // This file stopped being CLI-only when Themes_Manager began including it to
 // check a package at install time, which puts it on a WordPress request. The
 // rest of the plugin's runtime code uses no PHP 8 function anywhere — it is

@@ -25,7 +25,7 @@ class Folio_Menu_Item extends Menu_Item_Page
 
 	public function get_label()
 	{
-		return esc_html__('Folio', 'groove');
+		return esc_html__('Folio', 'groove-folios');
 	}
 
 	public function get_page_title()

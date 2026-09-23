@@ -3,6 +3,10 @@ namespace Groove\Fields;
 
 use Groove\Utils\Utils;
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 class FolioFields
 {
   public $name;

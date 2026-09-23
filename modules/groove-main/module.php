@@ -49,10 +49,12 @@ class Module extends BaseModule
 		$is_vite_dev = false;
 		$vite_port = 5173;
 
-		// Optional: simple check to see if the dev server is active
-		// Note: in a deep WP dev environment we might use a constant `define('IS_VITE_DEVELOPMENT', true);`
-		// Here we'll do a quick socket check (fails gracefully if not running)
-		if (in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'])) {
+		// Probe for the Vite dev server only on a local or development site
+		// (WP_ENVIRONMENT_TYPE; Studio sets 'local'). A production install never
+		// opens a socket or enqueues anything from localhost — it reads the
+		// committed manifest below. The probe fails gracefully when Vite is down.
+		$remote_addr = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+		if (in_array(wp_get_environment_type(), ['local', 'development'], true) && in_array($remote_addr, ['127.0.0.1', '::1'], true)) {
 			$connection = @fsockopen('localhost', $vite_port, $errno, $errstr, 0.1);
 			if (is_resource($connection)) {
 				fclose($connection);

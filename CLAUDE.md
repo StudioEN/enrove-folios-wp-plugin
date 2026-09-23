@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Groove Folios — a WordPress plugin (PHP 7.0+, WP 5.9+) for authoring multi-page documents ("folios") that render through self-contained themes, bypassing the site's WordPress theme entirely. Bootstrap is [groove-folios.php](groove-folios.php); everything else hangs off [includes/plugin.php](includes/plugin.php).
+Groove Folios — a WordPress plugin (PHP 7.1+, WP 5.9+) for authoring multi-page documents ("folios") that render through self-contained themes, bypassing the site's WordPress theme entirely. Bootstrap is [groove-folios.php](groove-folios.php); everything else hangs off [includes/plugin.php](includes/plugin.php).
 
 ## Commands
 
@@ -86,7 +86,7 @@ Use `\Groove\Toast` ([includes/toast.php](includes/toast.php)) for action outcom
 
 - Tabs for indentation in PHP in most files (the repo is mixed; match the file you're in). `.editorconfig` covers JSON/YAML/Markdown only.
 - Every PHP file starts with an `if (!defined('ABSPATH')) exit;` guard.
-- Text domain is `groove` for all i18n.
+- Text domain is `groove-folios` (it must equal the WordPress.org slug) for all i18n, including strings copied from core. Translations load just in time; there is no `load_plugin_textdomain()` call.
 - Managers and singletons follow the same `instance()` / `__clone()` / `__wakeup()` shape — copy an existing one when adding a module or content type.
 - `CHANGELOG.md` is kept in prose-heavy Keep-a-Changelog form under `## [Unreleased]`; add entries there for user-visible changes.
 

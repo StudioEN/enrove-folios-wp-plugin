@@ -190,51 +190,51 @@ class Themes_Manager extends Assets
         switch ($reason) {
             case 'no_setup':
                 return new \WP_Error($reason,
-                    __('No setup.php in this folder.', 'groove'),
-                    __('A theme needs setup.php, cover.php and page.php side by side. The full spec ships at themes/README.md.', 'groove'));
+                    __('No setup.php in this folder.', 'groove-folios'),
+                    __('A theme needs setup.php, cover.php and page.php side by side. The full spec ships at themes/README.md.', 'groove-folios'));
 
             case 'unreadable_file':
                 return new \WP_Error($reason,
-                    sprintf(/* translators: %s: a theme file name */ __('%s is missing, or cannot be read.', 'groove'), $file),
-                    __('Restore the file, or check the web server is allowed to read it.', 'groove'));
+                    sprintf(/* translators: %s: a theme file name */ __('%s is missing, or cannot be read.', 'groove-folios'), $file),
+                    __('Restore the file, or check the web server is allowed to read it.', 'groove-folios'));
 
             case 'setup_not_array':
                 return new \WP_Error($reason,
-                    __('setup.php does not return an array.', 'groove'),
-                    __('It must be a literal return array( … ); with no side effects — it is included more than once per request.', 'groove'));
+                    __('setup.php does not return an array.', 'groove-folios'),
+                    __('It must be a literal return array( … ); with no side effects — it is included more than once per request.', 'groove-folios'));
 
             case 'no_class_names':
                 return new \WP_Error($reason,
-                    __('setup.php declares no cover_class and page_class.', 'groove'),
-                    __('Each is a fully-qualified class name, namespace included, declared in cover.php and page.php respectively.', 'groove'));
+                    __('setup.php declares no cover_class and page_class.', 'groove-folios'),
+                    __('Each is a fully-qualified class name, namespace included, declared in cover.php and page.php respectively.', 'groove-folios'));
 
             case 'missing_dependency':
                 return new \WP_Error($reason,
-                    sprintf(/* translators: %s: the dependency path declared in setup.php */ __('setup.php lists the dependency "%s", which is not there.', 'groove'), $dep),
-                    __('Every dependency a theme declares has to ship inside it. The theme is skipped rather than registered, because a dependency that is missing is a fatal on the first folio anyone opens.', 'groove'));
+                    sprintf(/* translators: %s: the dependency path declared in setup.php */ __('setup.php lists the dependency "%s", which is not there.', 'groove-folios'), $dep),
+                    __('Every dependency a theme declares has to ship inside it. The theme is skipped rather than registered, because a dependency that is missing is a fatal on the first folio anyone opens.', 'groove-folios'));
 
             case 'class_missing':
                 return new \WP_Error($reason,
-                    sprintf(/* translators: 1: a theme file name, 2: the class setup.php names */ __('%1$s declares no class %2$s.', 'groove'), $file, $class),
-                    __('Check the name in setup.php against the class in that file, including the namespace.', 'groove'));
+                    sprintf(/* translators: 1: a theme file name, 2: the class setup.php names */ __('%1$s declares no class %2$s.', 'groove-folios'), $file, $class),
+                    __('Check the name in setup.php against the class in that file, including the namespace.', 'groove-folios'));
 
             case 'not_base_theme':
                 return new \WP_Error($reason,
-                    sprintf(/* translators: 1: setup.php key, 2: the class name */ __('%1$s names %2$s, which does not extend Base_Theme.', 'groove'), $key, $class),
-                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove'));
+                    sprintf(/* translators: 1: setup.php key, 2: the class name */ __('%1$s names %2$s, which does not extend Base_Theme.', 'groove-folios'), $key, $class),
+                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove-folios'));
 
             case 'shadowed':
                 return new \WP_Error($reason,
-                    __('An installed theme package uses this ID and has taken it over.', 'groove'),
-                    __('The built-in theme of that name is not available while the package is installed. Remove the package to get it back, or rename one of the two — the ID is derived from the name.', 'groove'));
+                    __('An installed theme package uses this ID and has taken it over.', 'groove-folios'),
+                    __('The built-in theme of that name is not available while the package is installed. Remove the package to get it back, or rename one of the two — the ID is derived from the name.', 'groove-folios'));
 
             case 'package_gone':
                 return new \WP_Error($reason,
-                    __('The package files are no longer in wp-content/groove-themes/.', 'groove'),
-                    __('Remove the theme to clear the entry, then install the package again.', 'groove'));
+                    __('The package files are no longer in wp-content/groove-themes/.', 'groove-folios'),
+                    __('Remove the theme to clear the entry, then install the package again.', 'groove-folios'));
         }
 
-        return new \WP_Error('unknown', __('This folder did not register.', 'groove'), '');
+        return new \WP_Error('unknown', __('This folder did not register.', 'groove-folios'), '');
     }
 
     /**
@@ -420,7 +420,7 @@ class Themes_Manager extends Assets
 
         $label = isset($definition['label']) ? trim((string) $definition['label']) : '';
         if ($label === '') {
-            $label = __('Create with sample content', 'groove');
+            $label = __('Create with sample content', 'groove-folios');
         }
 
         $cache[$theme_id] = [
@@ -457,7 +457,7 @@ class Themes_Manager extends Assets
      */
     public static function get_default_folio_title(string $theme_id): string
     {
-        $fallback = __('A New Folio', 'groove');
+        $fallback = __('A New Folio', 'groove-folios');
 
         if ($theme_id === '' || !isset(self::$registry[$theme_id]['cover_class'])) {
             return $fallback;
@@ -623,10 +623,10 @@ class Themes_Manager extends Assets
     public static function feature_label(string $key): string
     {
         $labels = array(
-            'blocks' => __('Content blocks', 'groove'),
-            'dynamic-color' => __('Dynamic color', 'groove'),
-            'light-dark' => __('Light and dark', 'groove'),
-            'page-transitions' => __('Page transitions', 'groove'),
+            'blocks' => __('Content blocks', 'groove-folios'),
+            'dynamic-color' => __('Dynamic color', 'groove-folios'),
+            'light-dark' => __('Light and dark', 'groove-folios'),
+            'page-transitions' => __('Page transitions', 'groove-folios'),
         );
 
         if (isset($labels[$key])) {
@@ -641,31 +641,32 @@ class Themes_Manager extends Assets
     /**
      * Absolute path of a curated Pexels placeholder, by manifest slug.
      *
+     * The photo is either bundled (a development checkout) or downloaded into
+     * uploads from Settings → Imagery (a WordPress.org install, which may not
+     * carry Pexels photos). \Groove\Pexels\Library knows both places.
+     *
      * @param string $slug
-     * @return string  Empty when the slug is not a usable filename.
+     * @return string  Empty when the slug is unusable or the photo is on neither.
      */
     public static function sample_image_path(string $slug): string
     {
-        $slug = sanitize_key($slug);
-        return $slug === '' ? '' : GROOVE_PATH . 'assets/images/pexels/' . $slug . '.jpg';
+        return \Groove\Pexels\Library::path($slug);
     }
 
     /**
      * Public URL of a curated Pexels placeholder, by manifest slug.
      *
-     * The file is downloaded by the curation script and may not exist yet. The
-     * URL is emitted regardless: sample content is stored once, at seed time, so
-     * a URL that resolves later means running the curator fills in imagery for
-     * folios that were already created. A missing file is a broken <img>, never
-     * a fatal.
+     * The photo may not be on this site yet. The URL is emitted regardless:
+     * sample content is stored once, at seed time, so a URL that resolves later
+     * means downloading the photos fills in imagery for folios that were already
+     * created. A missing file is a broken <img>, never a fatal.
      *
      * @param string $slug
      * @return string
      */
     public static function sample_image_url(string $slug): string
     {
-        $slug = sanitize_key($slug);
-        return $slug === '' ? '' : esc_url_raw(GROOVE_URL . 'assets/images/pexels/' . $slug . '.jpg');
+        return esc_url_raw(\Groove\Pexels\Library::url($slug));
     }
 
     /**
@@ -1232,8 +1233,8 @@ class Themes_Manager extends Assets
             static::cleanup_dir($staging);
             return new \WP_Error(
                 'replace_failed',
-                __('The installed copy of this theme could not be moved aside.', 'groove'),
-                __('Nothing was changed. Check that the web server can write to wp-content/groove-themes/.', 'groove')
+                __('The installed copy of this theme could not be moved aside.', 'groove-folios'),
+                __('Nothing was changed. Check that the web server can write to wp-content/groove-themes/.', 'groove-folios')
             );
         }
 
@@ -1243,8 +1244,8 @@ class Themes_Manager extends Assets
             static::cleanup_dir($staging);
             return new \WP_Error(
                 'replace_failed',
-                __('The new files could not be moved into place.', 'groove'),
-                __('The version that was already installed has been left where it was. Check that the web server can write to wp-content/groove-themes/.', 'groove')
+                __('The new files could not be moved into place.', 'groove-folios'),
+                __('The version that was already installed has been left where it was. Check that the web server can write to wp-content/groove-themes/.', 'groove-folios')
             );
         }
 
@@ -1280,10 +1281,10 @@ class Themes_Manager extends Assets
                     'bad_dependency_path',
                     sprintf(
                         /* translators: %s: the offending dependency path */
-                        __('setup.php lists the dependency "%s", which is empty or climbs out of the theme folder.', 'groove'),
+                        __('setup.php lists the dependency "%s", which is empty or climbs out of the theme folder.', 'groove-folios'),
                         $dep
                     ),
-                    __('Dependency paths are relative to the theme folder and may not contain "..".', 'groove')
+                    __('Dependency paths are relative to the theme folder and may not contain "..".', 'groove-folios')
                 );
             }
 
@@ -1292,10 +1293,10 @@ class Themes_Manager extends Assets
                     'missing_dependency',
                     sprintf(
                         /* translators: %s: the dependency path declared in setup.php */
-                        __('setup.php lists the dependency "%s", which is not in the package.', 'groove'),
+                        __('setup.php lists the dependency "%s", which is not in the package.', 'groove-folios'),
                         $dep
                     ),
-                    __('Every dependency a theme declares has to ship inside it.', 'groove')
+                    __('Every dependency a theme declares has to ship inside it.', 'groove-folios')
                 );
             }
         }
@@ -1303,8 +1304,8 @@ class Themes_Manager extends Assets
         if (!is_readable($dir . 'cover.php') || !is_readable($dir . 'page.php')) {
             return new \WP_Error(
                 'missing_files',
-                __('cover.php and page.php copied across but cannot be read.', 'groove'),
-                __('This is a file-permission problem on the server rather than anything wrong with the package.', 'groove')
+                __('cover.php and page.php copied across but cannot be read.', 'groove-folios'),
+                __('This is a file-permission problem on the server rather than anything wrong with the package.', 'groove-folios')
             );
         }
 
@@ -1331,11 +1332,11 @@ class Themes_Manager extends Assets
                     'class_not_found',
                     sprintf(
                         /* translators: 1: the file, 2: the class name setup.php names */
-                        __('%1$s does not declare %2$s.', 'groove'),
+                        __('%1$s does not declare %2$s.', 'groove-folios'),
                         $file,
                         $fqcn
                     ),
-                    __('Check the names in setup.php against the classes in those files, including the namespace.', 'groove')
+                    __('Check the names in setup.php against the classes in those files, including the namespace.', 'groove-folios')
                 );
             }
 
@@ -1344,11 +1345,11 @@ class Themes_Manager extends Assets
                     'bad_base_class',
                     sprintf(
                         /* translators: 1: setup.php key (cover_class or page_class), 2: the class name */
-                        __('%1$s names %2$s, which does not extend Base_Theme.', 'groove'),
+                        __('%1$s names %2$s, which does not extend Base_Theme.', 'groove-folios'),
                         $key,
                         $fqcn
                     ),
-                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove')
+                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove-folios')
                 );
             }
         }
@@ -1447,8 +1448,8 @@ class Themes_Manager extends Assets
             static::cleanup_dir($tmp_dir);
             return new \WP_Error(
                 'missing_info',
-                __('No setup.php in the package.', 'groove'),
-                __('It belongs at the top level of the zip, or one folder down. The zip must hold the theme folder, not a loose set of its files.', 'groove')
+                __('No setup.php in the package.', 'groove-folios'),
+                __('It belongs at the top level of the zip, or one folder down. The zip must hold the theme folder, not a loose set of its files.', 'groove-folios')
             );
         }
 
@@ -1461,8 +1462,8 @@ class Themes_Manager extends Assets
             static::cleanup_dir($tmp_dir);
             return new \WP_Error(
                 'invalid_info',
-                __('setup.php must return an array with a "name".', 'groove'),
-                __('The name is what the theme is called everywhere, and the ID every folio stores is derived from it.', 'groove')
+                __('setup.php must return an array with a "name".', 'groove-folios'),
+                __('The name is what the theme is called everywhere, and the ID every folio stores is derived from it.', 'groove-folios')
             );
         }
 
@@ -1470,8 +1471,8 @@ class Themes_Manager extends Assets
             static::cleanup_dir($tmp_dir);
             return new \WP_Error(
                 'missing_files',
-                __('No cover.php and page.php beside setup.php.', 'groove'),
-                __('All three files are required, and all three must sit in the same folder.', 'groove')
+                __('No cover.php and page.php beside setup.php.', 'groove-folios'),
+                __('All three files are required, and all three must sit in the same folder.', 'groove-folios')
             );
         }
 
@@ -1487,8 +1488,8 @@ class Themes_Manager extends Assets
             static::cleanup_dir($tmp_dir);
             return new \WP_Error(
                 'bad_class',
-                __('setup.php must define cover_class and page_class.', 'groove'),
-                __('Each is a fully-qualified class name, namespace included, declared in cover.php and page.php respectively.', 'groove')
+                __('setup.php must define cover_class and page_class.', 'groove-folios'),
+                __('Each is a fully-qualified class name, namespace included, declared in cover.php and page.php respectively.', 'groove-folios')
             );
         }
 
@@ -1498,8 +1499,8 @@ class Themes_Manager extends Assets
                 static::cleanup_dir($tmp_dir);
                 return new \WP_Error(
                     'bad_dependencies',
-                    __('setup.php declares dependencies as something other than an array.', 'groove'),
-                    __('It takes a list of file paths, each relative to the theme folder.', 'groove')
+                    __('setup.php declares dependencies as something other than an array.', 'groove-folios'),
+                    __('It takes a list of file paths, each relative to the theme folder.', 'groove-folios')
                 );
             }
             $dependencies = $info['dependencies'];
@@ -1518,10 +1519,10 @@ class Themes_Manager extends Assets
                 'theme_exists',
                 sprintf(
                     /* translators: %s: theme ID derived from the package's name */
-                    __('"%s" is a built-in theme, and this package\'s name derives to the same ID.', 'groove'),
+                    __('"%s" is a built-in theme, and this package\'s name derives to the same ID.', 'groove-folios'),
                     $theme_id
                 ),
-                __('Built-in themes cannot be replaced by an upload. Give this one a different name in setup.php — the ID is derived from the name.', 'groove')
+                __('Built-in themes cannot be replaced by an upload. Give this one a different name in setup.php — the ID is derived from the name.', 'groove-folios')
             );
         }
 
@@ -1535,7 +1536,7 @@ class Themes_Manager extends Assets
                 'replace_confirm_required',
                 sprintf(
                     /* translators: %s: name of the theme already installed */
-                    __('"%s" is already installed, and this package replaces it.', 'groove'),
+                    __('"%s" is already installed, and this package replaces it.', 'groove-folios'),
                     (string) ($installed_meta[$theme_id]['name'] ?? $theme_id)
                 ),
                 array(
@@ -1566,10 +1567,10 @@ class Themes_Manager extends Assets
                 'class_conflict',
                 sprintf(
                     /* translators: %s: one or both fully-qualified class names */
-                    __('This package declares %s, which is already loaded on this site.', 'groove'),
+                    __('This package declares %s, which is already loaded on this site.', 'groove-folios'),
                     implode(', ', $conflicting)
                 ),
-                __('Two themes cannot share a class name. Give this one a namespace of its own.', 'groove')
+                __('Two themes cannot share a class name. Give this one a namespace of its own.', 'groove-folios')
             );
         }
 
@@ -1626,10 +1627,10 @@ class Themes_Manager extends Assets
                     'bad_dependency_path',
                     sprintf(
                         /* translators: %s: the offending dependency path */
-                        __('setup.php lists the dependency "%s", which is empty or climbs out of the theme folder.', 'groove'),
+                        __('setup.php lists the dependency "%s", which is empty or climbs out of the theme folder.', 'groove-folios'),
                         $dep
                     ),
-                    __('Dependency paths are relative to the theme folder and may not contain "..".', 'groove')
+                    __('Dependency paths are relative to the theme folder and may not contain "..".', 'groove-folios')
                 );
             }
 
@@ -1640,10 +1641,10 @@ class Themes_Manager extends Assets
                     'missing_dependency',
                     sprintf(
                         /* translators: %s: the dependency path declared in setup.php */
-                        __('setup.php lists the dependency "%s", which is not in the package.', 'groove'),
+                        __('setup.php lists the dependency "%s", which is not in the package.', 'groove-folios'),
                         $dep
                     ),
-                    __('Every dependency a theme declares has to ship inside it.', 'groove')
+                    __('Every dependency a theme declares has to ship inside it.', 'groove-folios')
                 );
             }
 
@@ -1654,8 +1655,8 @@ class Themes_Manager extends Assets
             static::cleanup_dir($dest);
             return new \WP_Error(
                 'missing_files',
-                __('cover.php and page.php copied across but cannot be read.', 'groove'),
-                __('This is a file-permission problem on the server rather than anything wrong with the package.', 'groove')
+                __('cover.php and page.php copied across but cannot be read.', 'groove-folios'),
+                __('This is a file-permission problem on the server rather than anything wrong with the package.', 'groove-folios')
             );
         }
 
@@ -1669,11 +1670,11 @@ class Themes_Manager extends Assets
                 'class_not_found',
                 sprintf(
                     /* translators: 1: cover_class value, 2: page_class value */
-                    __('cover.php and page.php loaded, but do not declare %1$s and %2$s.', 'groove'),
+                    __('cover.php and page.php loaded, but do not declare %1$s and %2$s.', 'groove-folios'),
                     $cover_class,
                     $page_class
                 ),
-                __('Check the names in setup.php against the classes in those files, including the namespace.', 'groove')
+                __('Check the names in setup.php against the classes in those files, including the namespace.', 'groove-folios')
             );
         }
 
@@ -1689,11 +1690,11 @@ class Themes_Manager extends Assets
                     'bad_base_class',
                     sprintf(
                         /* translators: 1: setup.php key (cover_class or page_class), 2: the class name */
-                        __('%1$s names %2$s, which does not extend Base_Theme.', 'groove'),
+                        __('%1$s names %2$s, which does not extend Base_Theme.', 'groove-folios'),
                         $key,
                         $class
                     ),
-                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove')
+                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove-folios')
                 );
             }
         }
@@ -1743,8 +1744,8 @@ class Themes_Manager extends Assets
         if (!isset($installed[$theme_id])) {
             return new \WP_Error(
                 'not_found',
-                __('That theme is not an installed package.', 'groove'),
-                __('Built-in themes ship with the plugin and cannot be removed from here.', 'groove')
+                __('That theme is not an installed package.', 'groove-folios'),
+                __('Built-in themes ship with the plugin and cannot be removed from here.', 'groove-folios')
             );
         }
 

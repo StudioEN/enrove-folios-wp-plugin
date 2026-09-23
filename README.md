@@ -6,7 +6,7 @@ A "Folio" is a general-purpose multi-page document container; the theme you pick
 
 - **Plugin URI:** https://studioen.us/groove/
 - **Author:** [StudioEN](https://studioen.us/)
-- **Requires:** PHP 7.0+, WordPress 5.9+
+- **Requires:** PHP 7.1+, WordPress 5.9+
 
 ## Features
 
@@ -20,7 +20,7 @@ A "Folio" is a general-purpose multi-page document container; the theme you pick
 ## Requirements
 
 - WordPress 5.9 or later
-- PHP 7.0 or later
+- PHP 7.1 or later
 
 ## Development
 
@@ -40,6 +40,14 @@ Theme covers and the shared placeholder pool used by sample content are curated
 **once, at build time** from [Pexels](https://www.pexels.com) and committed as local
 assets. The plugin makes no Pexels API calls when a folio is rendered or an admin
 page is loaded.
+
+The photos are in this repository but **not in the WordPress.org package**: the Pexels
+licence forbids redistributing unaltered copies, which the GPL requires the plugin
+directory to allow. The packaging script leaves the JPEGs out (keeping `credits.json`),
+and a site installed from the package fetches its own copy from `images.pexels.com`
+when an administrator presses **Download Photos** on Settings → Imagery. That download
+needs no API key: it uses the `src_url` the curator records for each photo in
+`credits.json`. See `Groove\Pexels\Library` for where photos resolve from.
 
 ### Supplying the API key
 
@@ -148,4 +156,4 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+GPLv2 or later — see [LICENSE](LICENSE). Third-party components are listed in [readme.txt](readme.txt).

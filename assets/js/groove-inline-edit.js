@@ -449,7 +449,7 @@ window.wp = window.wp || {};
 		$( 'table.widefat .spinner' ).addClass( 'is-active' );
 
 		params = {
-			action: 'folio_inline_save',
+			action: 'groove_folio_inline_save',
 			post_type: typenow,
 			post_ID: id,
 			edit_date: 'true',

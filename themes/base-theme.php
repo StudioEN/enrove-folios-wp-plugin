@@ -4,6 +4,10 @@ namespace Groove\Themes;
 use Groove\Modules\Assets;
 use Groove\Utils\Utils;
 
+if (!defined('ABSPATH')) {
+  exit;
+}
+
 abstract class Base_Theme extends Assets
 {
   public $id;
@@ -519,7 +523,7 @@ abstract class Base_Theme extends Assets
       'ID' => static::get_id(),
       'name' => static::get_name(),
       'thumbnail_url' => $theme_assets_url . 'images/' . static::get_thumbnail_filename(),
-      'cover_url' => $theme_assets_url . 'images/' . static::get_cover_filename(),
+      'cover_url' => static::resolve_cover_url($theme_assets_url),
       'logo_url' => $theme_assets_url . 'images/' . static::get_logo_filename(),
       'description' => static::get_description(),
       'features' => static::get_features(),
@@ -536,6 +540,36 @@ abstract class Base_Theme extends Assets
    *
    * @return string
    */
+  /**
+   * URL of the theme's cover, or '' when there is no cover to show.
+   *
+   * A theme package carries its own cover. The built-in themes' covers are
+   * Pexels photos, which the WordPress.org package cannot carry, so when the
+   * file is not in the theme folder the downloaded copy is used instead (see
+   * \Groove\Pexels\Library) — and when that is not there either, '' rather
+   * than a URL to nothing, so each theme falls back to its own background.
+   *
+   * @param string $theme_assets_url The theme's assets/ URL, trailing slash.
+   * @return string
+   */
+  protected static function resolve_cover_url(string $theme_assets_url): string
+  {
+    $filename = static::get_cover_filename();
+    if ($filename === '') {
+      return '';
+    }
+
+    if (is_readable(trailingslashit(static::get_theme_folder_path()) . 'assets/images/' . $filename)) {
+      return $theme_assets_url . 'images/' . $filename;
+    }
+
+    if (class_exists('\\Groove\\Pexels\\Library')) {
+      return \Groove\Pexels\Library::existing_url('cover-' . static::get_id());
+    }
+
+    return '';
+  }
+
   protected static function resolve_theme_folder_url(): string
   {
     $class = static::class;
@@ -582,7 +616,7 @@ abstract class Base_Theme extends Assets
       $this->feature_image = get_the_post_thumbnail($page->ID);
       $this->page = $page;
     } else {
-      $this->title = esc_html__('Not Found', 'groove');
+      $this->title = esc_html__('Not Found', 'groove-folios');
       $this->content = '';
       $this->author = '';
       $this->feature_image = '';

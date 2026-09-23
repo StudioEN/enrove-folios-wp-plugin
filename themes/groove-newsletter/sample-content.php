@@ -43,15 +43,15 @@ $cap_scene    = Themes_Manager::theme_image_caption($theme, 'scene');
 $cap_backdrop = Themes_Manager::theme_image_caption($theme, 'backdrop');
 
 return array(
-  'label'       => __('Create with sample newsletter content', 'groove'),
-  'description' => __('Seeds a four-part newsletter issue — a shipping note, a reading list, team notes and a look ahead — each with its own header image.', 'groove'),
-  'subtitle'    => __('Dispatch No. 12', 'groove'),
+  'label'       => __('Create with sample newsletter content', 'groove-folios'),
+  'description' => __('Seeds a four-part newsletter issue — a shipping note, a reading list, team notes and a look ahead — each with its own header image.', 'groove-folios'),
+  'subtitle'    => __('Dispatch No. 12', 'groove-folios'),
   'folio_meta'  => array(
     'newsletter_theme_preset' => 'evergreen-ink',
   ),
   'pages'       => array(
     array(
-      'title' => __('What We Shipped', 'groove'),
+      'title' => __('What We Shipped', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'hero'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
@@ -90,7 +90,7 @@ return array(
 HTML,
     ),
     array(
-      'title' => __('Three Things Worth Reading', 'groove'),
+      'title' => __('Three Things Worth Reading', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'scene'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
@@ -125,7 +125,7 @@ HTML,
 HTML,
     ),
     array(
-      'title' => __('Team Notes', 'groove'),
+      'title' => __('Team Notes', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'people'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->
@@ -172,7 +172,7 @@ HTML,
 HTML,
     ),
     array(
-      'title' => __('What Comes Next', 'groove'),
+      'title' => __('What Comes Next', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'backdrop'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->

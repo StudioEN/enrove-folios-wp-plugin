@@ -157,7 +157,7 @@ class Page extends Base_Theme
                     </span>
                 </div>
                 <div class="gm-page__navbar-progress-label">
-                    <?= esc_html__('SECTIONS', 'groove') ?>
+                    <?= esc_html__('SECTIONS', 'groove-folios') ?>
                 </div>
             </div>
         </header>

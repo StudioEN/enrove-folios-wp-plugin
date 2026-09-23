@@ -132,27 +132,27 @@ class Page extends Base_Theme
 
     $role_map = [
       'context' => [
-        'label' => __('Context', 'groove'),
+        'label' => __('Context', 'groove-folios'),
         'keywords' => ['context', 'introduction', 'summary', 'overview'],
       ],
       'problem-framing' => [
-        'label' => __('Problem framing', 'groove'),
+        'label' => __('Problem framing', 'groove-folios'),
         'keywords' => ['problem', 'challenge', 'opportunity', 'diagnosis'],
       ],
       'approach' => [
-        'label' => __('Approach', 'groove'),
+        'label' => __('Approach', 'groove-folios'),
         'keywords' => ['approach', 'methodology', 'method', 'scope', 'workstream', 'plan'],
       ],
       'evidence' => [
-        'label' => __('Evidence', 'groove'),
+        'label' => __('Evidence', 'groove-folios'),
         'keywords' => ['evidence', 'case', 'result', 'impact', 'proof'],
       ],
       'investment' => [
-        'label' => __('Investment', 'groove'),
+        'label' => __('Investment', 'groove-folios'),
         'keywords' => ['investment', 'pricing', 'budget', 'fee', 'commercial'],
       ],
       'next-steps' => [
-        'label' => __('Next steps', 'groove'),
+        'label' => __('Next steps', 'groove-folios'),
         'keywords' => ['next', 'timeline', 'kickoff', 'decision'],
       ],
     ];
@@ -268,8 +268,8 @@ class Page extends Base_Theme
       'class_prefix'  => 'g-folio__theme-page-nav',
       'title'         => (string) $folio_title,
       'title_url'     => $folio_url,
-      'label'         => __('Proposal', 'groove'),
-      'aria_label'    => __('Proposal navigation', 'groove'),
+      'label'         => __('Proposal', 'groove-folios'),
+      'aria_label'    => __('Proposal navigation', 'groove-folios'),
       'pages'         => $pages,
       'current_page_id' => (int) $this->id,
       'info_version'  => $nav_meta['version'],
@@ -340,19 +340,19 @@ class Page extends Base_Theme
     ?>
     <header class="gp-page__mobile-header">
       <div class="gp-page__mobile-header-main">
-        <button type="button" class="g-folio__theme-page-nav-button gp-nav-trigger" aria-label="<?= esc_attr__('Open proposal navigation', 'groove') ?>">
+        <button type="button" class="g-folio__theme-page-nav-button gp-nav-trigger" aria-label="<?= esc_attr__('Open proposal navigation', 'groove-folios') ?>">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-          <span><?= esc_html__('Contents', 'groove') ?></span>
+          <span><?= esc_html__('Contents', 'groove-folios') ?></span>
         </button>
 
         <div class="gp-page__mobile-header-title"><?= esc_html($this->page->post_title ?? '') ?></div>
 
         <div class="gp-page__mobile-header-controls">
-          <span class="gp-page__progress-text"><?= esc_html(sprintf(__('%1$d / %2$d', 'groove'), (int) $progress['current'], (int) $progress['total'])) ?></span>
+          <span class="gp-page__progress-text"><?= esc_html(sprintf(__('%1$d / %2$d', 'groove-folios'), (int) $progress['current'], (int) $progress['total'])) ?></span>
           <?php if ($show_in_page_nav): ?>
             <button type="button" class="g-folio__theme-page-nav-bar-toggle" aria-expanded="false"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></button>
           <?php endif; ?>
@@ -386,7 +386,7 @@ class Page extends Base_Theme
              because this is a dropdown, not a full-screen drawer. The theme's
              own drawer controller is scoped to .g-folio__theme-page-nav and does
              not touch this pane. */ ?>
-    <nav class="g-folio__theme-page-mobile-nav gp-page__mobile-nav" aria-label="<?= esc_attr__('On this page', 'groove') ?>"
+    <nav class="g-folio__theme-page-mobile-nav gp-page__mobile-nav" aria-label="<?= esc_attr__('On this page', 'groove-folios') ?>"
       data-groove-drawer=".g-folio__theme-page-nav-bar-toggle" data-groove-drawer-lock="off">
       <div class="g-folio__theme-page-mobile-nav-content">
         <div class="g-folio__theme-page-mobile-nav-label"><?= esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)) ?></div>
@@ -400,7 +400,7 @@ class Page extends Base_Theme
         <?php /* No data-g-scroll-target: groove-main.js already scrolls this
                  button to the top, and binding the theme's smooth scroll to the
                  same click ran both — an instant jump, then a smooth no-op. */ ?>
-        <button type="button" class="g-folio__theme-page-mobile-nav-back">↑ <?= esc_html__('Back to top', 'groove') ?></button>
+        <button type="button" class="g-folio__theme-page-mobile-nav-back">↑ <?= esc_html__('Back to top', 'groove-folios') ?></button>
       </div>
     </nav>
     <?php
@@ -475,9 +475,9 @@ class Page extends Base_Theme
     $next_page = $this->get_next_page();
     ?>
     <footer class="g-folio__theme-page-footer gp-page__footer">
-      <nav class="gp-page__footer-nav" aria-label="<?= esc_attr__('Page navigation', 'groove') ?>">
+      <nav class="gp-page__footer-nav" aria-label="<?= esc_attr__('Page navigation', 'groove-folios') ?>">
         <?php if ($prev_page): ?>
-          <a class="gp-page__footer-arrow g-folio__theme-page-prev" href="<?= esc_url(Utils::get_folio_permalink_by_id((int) $prev_page->ID)) ?>" data-tooltip="<?= esc_attr(sprintf(__('Previous: %s', 'groove'), $prev_page->post_title)) ?>" aria-label="<?= esc_attr(sprintf(__('Previous: %s', 'groove'), $prev_page->post_title)) ?>">
+          <a class="gp-page__footer-arrow g-folio__theme-page-prev" href="<?= esc_url(Utils::get_folio_permalink_by_id((int) $prev_page->ID)) ?>" data-tooltip="<?= esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)) ?>" aria-label="<?= esc_attr(sprintf(__('Previous: %s', 'groove-folios'), $prev_page->post_title)) ?>">
             <span aria-hidden="true">&larr;</span>
           </a>
         <?php else: ?>
@@ -485,7 +485,7 @@ class Page extends Base_Theme
         <?php endif; ?>
 
         <?php if ($next_page): ?>
-          <a class="gp-page__footer-arrow g-folio__theme-page-next" href="<?= esc_url(Utils::get_folio_permalink_by_id((int) $next_page->ID)) ?>" data-tooltip="<?= esc_attr(sprintf(__('Next: %s', 'groove'), $next_page->post_title)) ?>" aria-label="<?= esc_attr(sprintf(__('Next: %s', 'groove'), $next_page->post_title)) ?>">
+          <a class="gp-page__footer-arrow g-folio__theme-page-next" href="<?= esc_url(Utils::get_folio_permalink_by_id((int) $next_page->ID)) ?>" data-tooltip="<?= esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)) ?>" aria-label="<?= esc_attr(sprintf(__('Next: %s', 'groove-folios'), $next_page->post_title)) ?>">
             <span aria-hidden="true">&rarr;</span>
           </a>
         <?php else: ?>

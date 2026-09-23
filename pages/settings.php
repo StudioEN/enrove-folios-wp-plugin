@@ -25,19 +25,19 @@ class Settings extends Page
   {
     return [
       'general' => [
-        'label' => esc_html__('General', 'groove'),
+        'label' => esc_html__('General', 'groove-folios'),
       ],
       'collections' => [
-        'label' => esc_html__('Collection Tags', 'groove'),
+        'label' => esc_html__('Collection Tags', 'groove-folios'),
       ],
       'routing' => [
-        'label' => esc_html__('Routing', 'groove'),
+        'label' => esc_html__('Routing', 'groove-folios'),
       ],
       'imagery' => [
-        'label' => esc_html__('Imagery', 'groove'),
+        'label' => esc_html__('Imagery', 'groove-folios'),
       ],
       'privacy' => [
-        'label' => esc_html__('Privacy', 'groove'),
+        'label' => esc_html__('Privacy', 'groove-folios'),
       ]
     ];
   }
@@ -50,6 +50,7 @@ class Settings extends Page
     $this->add_post_action('save_groove_pexels_key', 'handle_pexels_key_save');
     $this->add_post_action('delete_groove_pexels_key', 'handle_pexels_key_delete');
     $this->add_post_action('test_groove_pexels_connection', 'handle_pexels_connection_test');
+    $this->add_post_action('download_groove_sample_photos', 'handle_sample_photos_download');
 
     add_action('groove/menu/register', function (Menu_Manager $menu) {
       $menu->register(static::PAGE_ID, new Settings_Menu_Item($this));
@@ -172,16 +173,16 @@ class Settings extends Page
   {
     switch ($source) {
       case 'constant':
-        return __('GROOVE_PEXELS_API_KEY in wp-config.php', 'groove');
+        return __('GROOVE_PEXELS_API_KEY in wp-config.php', 'groove-folios');
       case 'env':
-        return __('PEXELS_API_KEY environment variable', 'groove');
+        return __('PEXELS_API_KEY environment variable', 'groove-folios');
       case 'file':
-        return __('.pexels-key file in the plugin folder', 'groove');
+        return __('.pexels-key file in the plugin folder', 'groove-folios');
       case 'option':
-        return __('This settings field', 'groove');
+        return __('This settings field', 'groove-folios');
     }
 
-    return __('Not configured', 'groove');
+    return __('Not configured', 'groove-folios');
   }
 
   /**
@@ -226,7 +227,7 @@ class Settings extends Page
     check_admin_referer('groove_save_settings', 'groove_nonce');
 
     if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have permission to modify settings.', 'groove'));
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
     }
 
     $tab = isset($_POST['tab_key']) ? sanitize_key(wp_unslash($_POST['tab_key'])) : 'general';
@@ -286,7 +287,7 @@ class Settings extends Page
     check_admin_referer('groove_save_collection_tag', 'groove_nonce');
 
     if (!$this->can_manage_collection_tags()) {
-      wp_die(esc_html__('You do not have permission to manage collection tags.', 'groove'));
+      wp_die(esc_html__('You do not have permission to manage collection tags.', 'groove-folios'));
     }
 
     $term_name = isset($_POST['collection_tag_name']) ? sanitize_text_field(wp_unslash($_POST['collection_tag_name'])) : '';
@@ -339,7 +340,7 @@ class Settings extends Page
     check_admin_referer('groove_delete_collection_tag', 'groove_nonce');
 
     if (!$this->can_manage_collection_tags()) {
-      wp_die(esc_html__('You do not have permission to manage collection tags.', 'groove'));
+      wp_die(esc_html__('You do not have permission to manage collection tags.', 'groove-folios'));
     }
 
     $term_id = isset($_POST['collection_tag_id']) ? (int) wp_unslash($_POST['collection_tag_id']) : 0;
@@ -373,14 +374,14 @@ class Settings extends Page
 
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
     <div>
-      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Folio Defaults', 'groove'); ?></h3>
-      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('These defaults are applied when you create a new folio.', 'groove'); ?></p>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Folio Defaults', 'groove-folios'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('These defaults are applied when you create a new folio.', 'groove-folios'); ?></p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div>
         <label for="groove-default-theme-id" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-          <?php esc_html_e('Default Theme', 'groove'); ?>
+          <?php esc_html_e('Default Theme', 'groove-folios'); ?>
         </label>
         <select id="groove-default-theme-id" name="default_theme_id" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
           <?php foreach ($themes as $theme_id => $theme): ?>
@@ -394,18 +395,18 @@ class Settings extends Page
 
       <div>
         <label for="groove-default-folio-status" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-          <?php esc_html_e('Default Publish Status', 'groove'); ?>
+          <?php esc_html_e('Default Publish Status', 'groove-folios'); ?>
         </label>
         <select id="groove-default-folio-status" name="default_folio_status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-          <option value="draft" <?php selected($default_status, 'draft'); ?>><?php esc_html_e('Draft', 'groove'); ?></option>
-          <option value="publish" <?php selected($default_status, 'publish'); ?>><?php esc_html_e('Published', 'groove'); ?></option>
+          <option value="draft" <?php selected($default_status, 'draft'); ?>><?php esc_html_e('Draft', 'groove-folios'); ?></option>
+          <option value="publish" <?php selected($default_status, 'publish'); ?>><?php esc_html_e('Published', 'groove-folios'); ?></option>
         </select>
       </div>
     </div>
 
     <div>
       <label for="groove-default-folio-title" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-        <?php esc_html_e('Default Folio Title', 'groove'); ?>
+        <?php esc_html_e('Default Folio Title', 'groove-folios'); ?>
       </label>
       <input
         id="groove-default-folio-title"
@@ -415,7 +416,7 @@ class Settings extends Page
         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
         placeholder="<?php echo esc_attr($default_theme_title); ?>" />
       <p class="mt-2 mb-0 text-sm text-gray-600">
-        <?php esc_html_e('Leave blank to name each folio after the theme it is created with. Anything you type here is used for every folio instead.', 'groove'); ?>
+        <?php esc_html_e('Leave blank to name each folio after the theme it is created with. Anything you type here is used for every folio instead.', 'groove-folios'); ?>
       </p>
     </div>
 
@@ -442,7 +443,7 @@ class Settings extends Page
         id="groove-save-general"
         class="button button-primary"
         data-groove-save
-        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove')); ?>"><?php esc_html_e('Save Changes', 'groove'); ?></button>
+        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove-folios')); ?>"><?php esc_html_e('Save Changes', 'groove-folios'); ?></button>
     </div>
   </section>
 </form>
@@ -462,13 +463,13 @@ class Settings extends Page
 
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
     <div>
-      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Routing', 'groove'); ?></h3>
-      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('Customize the public URL base for folios.', 'groove'); ?></p>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Routing', 'groove-folios'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('Customize the public URL base for folios.', 'groove-folios'); ?></p>
     </div>
 
     <div>
       <label for="groove-folio-base-slug" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-        <?php esc_html_e('Folio Base Slug', 'groove'); ?>
+        <?php esc_html_e('Folio Base Slug', 'groove-folios'); ?>
       </label>
       <div class="mt-1 flex rounded-md shadow-sm">
         <span class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">
@@ -485,8 +486,8 @@ class Settings extends Page
     </div>
 
     <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700">
-      <p class="m-0"><?php esc_html_e('Example folio URL:', 'groove'); ?> <code><?php echo esc_html($sample_folio); ?></code></p>
-      <p class="mt-2 mb-0"><?php esc_html_e('Example page URL:', 'groove'); ?> <code><?php echo esc_html($sample_page); ?></code></p>
+      <p class="m-0"><?php esc_html_e('Example folio URL:', 'groove-folios'); ?> <code><?php echo esc_html($sample_folio); ?></code></p>
+      <p class="mt-2 mb-0"><?php esc_html_e('Example page URL:', 'groove-folios'); ?> <code><?php echo esc_html($sample_page); ?></code></p>
     </div>
 
     <div>
@@ -495,7 +496,7 @@ class Settings extends Page
         id="groove-save-routing"
         class="button button-primary"
         data-groove-save
-        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove')); ?>"><?php esc_html_e('Save Changes', 'groove'); ?></button>
+        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove-folios')); ?>"><?php esc_html_e('Save Changes', 'groove-folios'); ?></button>
     </div>
   </section>
 </form>
@@ -507,17 +508,17 @@ class Settings extends Page
     $terms = $this->get_collection_tag_terms();
     $edit_term = $this->get_collection_tag_edit_term();
     $is_editing = $edit_term instanceof \WP_Term;
-    $form_title = $is_editing ? __('Edit Collection Tag', 'groove') : __('Add Collection Tag', 'groove');
-    $submit_label = $is_editing ? __('Update Tag', 'groove') : __('Add Tag', 'groove');
+    $form_title = $is_editing ? __('Edit Collection Tag', 'groove-folios') : __('Add Collection Tag', 'groove-folios');
+    $submit_label = $is_editing ? __('Update Tag', 'groove-folios') : __('Add Tag', 'groove-folios');
     $submit_idle = $is_editing
-      ? __('Nothing to save — this tag already matches what is stored.', 'groove')
-      : __('Give the tag a name first — the slug is optional.', 'groove');
+      ? __('Nothing to save — this tag already matches what is stored.', 'groove-folios')
+      : __('Give the tag a name first — the slug is optional.', 'groove-folios');
     ?>
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4 xl:col-span-1">
     <div>
       <h3 class="m-0 text-sm font-semibold text-gray-800"><?php echo esc_html($form_title); ?></h3>
-      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('Manage the tags used to group folios into collections.', 'groove'); ?></p>
+      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('Manage the tags used to group folios into collections.', 'groove-folios'); ?></p>
     </div>
 
     <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4" data-groove-track-changes>
@@ -527,7 +528,7 @@ class Settings extends Page
 
       <div>
         <label for="groove-collection-tag-name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-          <?php esc_html_e('Name', 'groove'); ?>
+          <?php esc_html_e('Name', 'groove-folios'); ?>
         </label>
         <input
           id="groove-collection-tag-name"
@@ -535,12 +536,12 @@ class Settings extends Page
           name="collection_tag_name"
           value="<?php echo esc_attr($is_editing ? $edit_term->name : ''); ?>"
           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          placeholder="<?php esc_attr_e('Magazine', 'groove'); ?>" />
+          placeholder="<?php esc_attr_e('Magazine', 'groove-folios'); ?>" />
       </div>
 
       <div>
         <label for="groove-collection-tag-slug" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-          <?php esc_html_e('Slug', 'groove'); ?>
+          <?php esc_html_e('Slug', 'groove-folios'); ?>
         </label>
         <input
           id="groove-collection-tag-slug"
@@ -548,8 +549,8 @@ class Settings extends Page
           name="collection_tag_slug"
           value="<?php echo esc_attr($is_editing ? $edit_term->slug : ''); ?>"
           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          placeholder="<?php esc_attr_e('magazine', 'groove'); ?>" />
-        <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Optional. Leave blank to generate from the name.', 'groove'); ?></p>
+          placeholder="<?php esc_attr_e('magazine', 'groove-folios'); ?>" />
+        <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Optional. Leave blank to generate from the name.', 'groove-folios'); ?></p>
       </div>
 
       <div class="flex items-center gap-2">
@@ -560,7 +561,7 @@ class Settings extends Page
           data-groove-save
           data-groove-save-idle="<?php echo esc_attr($submit_idle); ?>"><?php echo esc_html($submit_label); ?></button>
         <?php if ($is_editing): ?>
-          <a href="<?php echo esc_url($this->get_settings_tab_url('collections')); ?>" class="button button-secondary"><?php esc_html_e('Cancel', 'groove'); ?></a>
+          <a href="<?php echo esc_url($this->get_settings_tab_url('collections')); ?>" class="button button-secondary"><?php esc_html_e('Cancel', 'groove-folios'); ?></a>
         <?php endif; ?>
       </div>
     </form>
@@ -568,20 +569,20 @@ class Settings extends Page
 
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 xl:col-span-2">
     <div class="mb-4">
-      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Existing Collection Tags', 'groove'); ?></h3>
-      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('These tags can be assigned on folio setup screens and used to filter All Folios.', 'groove'); ?></p>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Existing Collection Tags', 'groove-folios'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('These tags can be assigned on folio setup screens and used to filter All Folios.', 'groove-folios'); ?></p>
     </div>
 
     <?php if (empty($terms)): ?>
-      <p class="m-0 text-sm text-gray-600"><?php esc_html_e('No collection tags yet.', 'groove'); ?></p>
+      <p class="m-0 text-sm text-gray-600"><?php esc_html_e('No collection tags yet.', 'groove-folios'); ?></p>
     <?php else: ?>
       <table class="widefat striped">
         <thead>
           <tr>
-            <th><?php esc_html_e('Name', 'groove'); ?></th>
-            <th><?php esc_html_e('Slug', 'groove'); ?></th>
-            <th><?php esc_html_e('Folios', 'groove'); ?></th>
-            <th><?php esc_html_e('Actions', 'groove'); ?></th>
+            <th><?php esc_html_e('Name', 'groove-folios'); ?></th>
+            <th><?php esc_html_e('Slug', 'groove-folios'); ?></th>
+            <th><?php esc_html_e('Folios', 'groove-folios'); ?></th>
+            <th><?php esc_html_e('Actions', 'groove-folios'); ?></th>
           </tr>
         </thead>
         <tbody>
@@ -593,13 +594,13 @@ class Settings extends Page
                 <td><?php echo esc_html(number_format_i18n((int) $term->count)); ?></td>
                 <td>
                   <a href="<?php echo esc_url($this->get_settings_tab_url('collections', array('edit_collection_tag' => (int) $term->term_id))); ?>">
-                    <?php esc_html_e('Edit', 'groove'); ?>
+                    <?php esc_html_e('Edit', 'groove-folios'); ?>
                   </a>
-                  <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="inline-block ml-3" onsubmit="return window.confirm('<?php echo esc_js(__('Delete this collection tag?', 'groove')); ?>');">
+                  <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="inline-block ml-3" onsubmit="return window.confirm('<?php echo esc_js(__('Delete this collection tag?', 'groove-folios')); ?>');">
                     <?php wp_nonce_field('groove_delete_collection_tag', 'groove_nonce'); ?>
                     <input type="hidden" name="action" value="delete_groove_collection_tag" />
                     <input type="hidden" name="collection_tag_id" value="<?php echo esc_attr((string) $term->term_id); ?>" />
-                    <button type="submit" class="button-link delete"><?php esc_html_e('Delete', 'groove'); ?></button>
+                    <button type="submit" class="button-link delete"><?php esc_html_e('Delete', 'groove-folios'); ?></button>
                   </form>
                 </td>
               </tr>
@@ -621,14 +622,14 @@ class Settings extends Page
     check_admin_referer('groove_save_pexels_key', 'groove_nonce');
 
     if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have permission to modify settings.', 'groove'));
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
     }
 
     if ($this->pexels_is_available() && \Groove\Pexels\Key::is_locked_by_constant()) {
       $this->set_pexels_notice(
         'warning',
-        __('GROOVE_PEXELS_API_KEY is defined in wp-config.php, so the stored key was not changed.', 'groove'),
-        __('The constant wins over anything saved here. Remove it from wp-config.php if you want to manage the key from this screen.', 'groove'),
+        __('GROOVE_PEXELS_API_KEY is defined in wp-config.php, so the stored key was not changed.', 'groove-folios'),
+        __('The constant wins over anything saved here. Remove it from wp-config.php if you want to manage the key from this screen.', 'groove-folios'),
         '#groove-save-pexels-key'
       );
       $this->redirect_to_imagery_tab();
@@ -637,7 +638,7 @@ class Settings extends Page
     $submitted = isset($_POST['pexels_api_key']) ? sanitize_text_field(wp_unslash($_POST['pexels_api_key'])) : '';
 
     if ($submitted === '') {
-      $this->set_pexels_notice('info', __('No key entered — the stored key was left unchanged.', 'groove'));
+      $this->set_pexels_notice('info', __('No key entered — the stored key was left unchanged.', 'groove-folios'));
       $this->redirect_to_imagery_tab();
     }
 
@@ -646,7 +647,7 @@ class Settings extends Page
     delete_option('groove_pexels_api_key');
     add_option('groove_pexels_api_key', $submitted, '', 'no');
 
-    $this->set_pexels_notice('success', __('Pexels API key saved.', 'groove'));
+    $this->set_pexels_notice('success', __('Pexels API key saved.', 'groove-folios'));
     $this->redirect_to_imagery_tab();
   }
 
@@ -658,12 +659,12 @@ class Settings extends Page
     check_admin_referer('groove_delete_pexels_key', 'groove_nonce');
 
     if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have permission to modify settings.', 'groove'));
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
     }
 
     delete_option('groove_pexels_api_key');
 
-    $this->set_pexels_notice('success', __('Stored Pexels API key removed.', 'groove'));
+    $this->set_pexels_notice('success', __('Stored Pexels API key removed.', 'groove-folios'));
     $this->redirect_to_imagery_tab();
   }
 
@@ -676,14 +677,14 @@ class Settings extends Page
     check_admin_referer('groove_test_pexels_connection', 'groove_nonce');
 
     if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have permission to modify settings.', 'groove'));
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
     }
 
     if (!$this->pexels_is_available()) {
       $this->set_pexels_notice(
         'error',
-        __('The Pexels client is unavailable.', 'groove'),
-        __('The pexels/ helpers are missing from this copy of the plugin. Reinstall or update Groove Folios to restore them.', 'groove'),
+        __('The Pexels client is unavailable.', 'groove-folios'),
+        __('The pexels/ helpers are missing from this copy of the plugin. Reinstall or update Groove Folios to restore them.', 'groove-folios'),
         '#groove-test-pexels-connection'
       );
       $this->redirect_to_imagery_tab();
@@ -694,8 +695,8 @@ class Settings extends Page
     if (!$client->has_key()) {
       $this->set_pexels_notice(
         'error',
-        __('No Pexels API key is configured.', 'groove'),
-        __('Paste a key into the field above and save it, then test the connection again.', 'groove'),
+        __('No Pexels API key is configured.', 'groove-folios'),
+        __('Paste a key into the field above and save it, then test the connection again.', 'groove-folios'),
         '#groove-test-pexels-connection'
       );
       $this->redirect_to_imagery_tab();
@@ -708,10 +709,10 @@ class Settings extends Page
         'error',
         sprintf(
           /* translators: %s: error message returned by the Pexels API. */
-          __('Pexels rejected the request: %s', 'groove'),
+          __('Pexels rejected the request: %s', 'groove-folios'),
           $result->get_error_message()
         ),
-        __('Check the key is still active in your Pexels account and paste it again. A key created moments ago can take a few minutes to work.', 'groove'),
+        __('Check the key is still active in your Pexels account and paste it again. A key created moments ago can take a few minutes to work.', 'groove-folios'),
         '#groove-test-pexels-connection'
       );
       $this->redirect_to_imagery_tab();
@@ -722,10 +723,53 @@ class Settings extends Page
 
     $this->set_pexels_notice('success', sprintf(
       /* translators: 1: remaining requests, 2: hourly request limit. */
-      __('Connected to Pexels. %1$s of %2$s requests remaining this hour.', 'groove'),
+      __('Connected to Pexels. %1$s of %2$s requests remaining this hour.', 'groove-folios'),
       number_format_i18n($remaining),
       number_format_i18n($limit)
     ));
+    $this->redirect_to_imagery_tab();
+  }
+
+  /**
+   * Download the sample photos this site does not have yet. Only ever runs from
+   * an explicit button press; see \Groove\Pexels\Library for why the plugin
+   * does not simply carry them.
+   */
+  public function handle_sample_photos_download()
+  {
+    check_admin_referer('groove_download_sample_photos', 'groove_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
+    }
+
+    $result = \Groove\Pexels\Library::download_missing();
+    $failed = count($result['failed']);
+
+    if ($failed === 0) {
+      $this->set_pexels_notice('success', sprintf(
+        /* translators: %s: number of photos downloaded. */
+        _n('Downloaded %s photo.', 'Downloaded %s photos.', $result['downloaded'], 'groove-folios'),
+        number_format_i18n($result['downloaded'])
+      ));
+      $this->redirect_to_imagery_tab();
+    }
+
+    $this->set_pexels_notice(
+      'error',
+      sprintf(
+        /* translators: 1: photos downloaded, 2: photos that failed. */
+        __('Downloaded %1$s photos; %2$s could not be fetched.', 'groove-folios'),
+        number_format_i18n($result['downloaded']),
+        number_format_i18n($failed)
+      ),
+      sprintf(
+        /* translators: %s: the first error message. */
+        __('First error: %s Press Download again to retry the ones that are missing.', 'groove-folios'),
+        (string) reset($result['failed'])
+      ),
+      '#groove-download-sample-photos'
+    );
     $this->redirect_to_imagery_tab();
   }
 
@@ -738,6 +782,12 @@ class Settings extends Page
     $has_key = $source !== '';
     $has_option_key = get_option('groove_pexels_api_key', '') !== '';
     $notice = $this->take_pexels_notice();
+
+    // The API key and the curation script only matter in a development checkout.
+    // The WordPress.org package leaves bin/curate-pexels.php out, and without it
+    // the key has nothing to do, so neither section is shown.
+    $can_curate = is_readable(GROOVE_PATH . 'bin/curate-pexels.php');
+    $photos = $available ? \Groove\Pexels\Library::status() : array('total' => 0, 'present' => 0, 'missing' => array());
 
     $credits = array();
     $credits_exist = false;
@@ -769,15 +819,54 @@ class Settings extends Page
 <div class="space-y-4">
   <?php if (!$available): ?>
   <div class="notice notice-warning">
-    <p><?php esc_html_e('The Pexels helper classes are not installed in this copy of the plugin.', 'groove'); ?></p>
+    <p><?php esc_html_e('The Pexels helper classes are not installed in this copy of the plugin.', 'groove-folios'); ?></p>
   </div>
   <?php endif; ?>
 
+  <?php if ($photos['total'] > 0): ?>
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
     <div>
-      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Pexels API Key', 'groove'); ?></h3>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Sample Photos', 'groove-folios'); ?></h3>
       <p class="mt-1 mb-0 text-sm text-gray-600">
-        <?php esc_html_e('Used only when curating imagery from the command line. Folios never call the Pexels API when they are viewed or edited.', 'groove'); ?>
+        <?php esc_html_e('Theme covers and the photos in sample content come from Pexels. The Pexels licence does not allow them to be packaged with the plugin, so this site fetches its own copy when you ask.', 'groove-folios'); ?>
+      </p>
+    </div>
+
+    <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700">
+      <p class="m-0">
+        <?php
+        printf(
+          /* translators: 1: photos on this site, 2: photos in total. */
+          esc_html__('%1$s of %2$s photos are on this site.', 'groove-folios'),
+          esc_html(number_format_i18n($photos['present'])),
+          esc_html(number_format_i18n($photos['total']))
+        );
+        ?>
+      </p>
+    </div>
+
+    <?php if (!empty($photos['missing'])): ?>
+    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+      <?php wp_nonce_field('groove_download_sample_photos', 'groove_nonce'); ?>
+      <input type="hidden" name="action" value="download_groove_sample_photos" />
+      <button type="submit" id="groove-download-sample-photos" class="button button-primary">
+        <?php esc_html_e('Download Photos', 'groove-folios'); ?>
+      </button>
+    </form>
+    <?php endif; ?>
+
+    <p class="m-0 text-xs text-gray-500">
+      <?php esc_html_e('Downloads about 4 MB from images.pexels.com into your uploads folder. Nothing is sent to Pexels beyond the requests for the photos, and nothing is fetched until you press the button. Folios seeded before the download pick the photos up once they are here.', 'groove-folios'); ?>
+    </p>
+  </section>
+  <?php endif; ?>
+
+  <?php if ($can_curate): ?>
+  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
+    <div>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Pexels API Key', 'groove-folios'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600">
+        <?php esc_html_e('Used only when curating imagery from the command line. Folios never call the Pexels API when they are viewed or edited.', 'groove-folios'); ?>
       </p>
     </div>
 
@@ -787,7 +876,7 @@ class Settings extends Page
         <?php
         printf(
           /* translators: %s: the wp-config.php constant name. */
-          esc_html__('%s is defined in wp-config.php and takes precedence. The field below is disabled.', 'groove'),
+          esc_html__('%s is defined in wp-config.php and takes precedence. The field below is disabled.', 'groove-folios'),
           '<code>GROOVE_PEXELS_API_KEY</code>'
         );
         ?>
@@ -801,7 +890,7 @@ class Settings extends Page
 
       <div>
         <label for="groove-pexels-api-key" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-          <?php esc_html_e('API Key', 'groove'); ?>
+          <?php esc_html_e('API Key', 'groove-folios'); ?>
         </label>
         <input
           id="groove-pexels-api-key"
@@ -811,10 +900,10 @@ class Settings extends Page
           autocomplete="new-password"
           spellcheck="false"
           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-400"
-          placeholder="<?php echo esc_attr($masked !== '' ? $masked : __('Paste your Pexels API key', 'groove')); ?>"
+          placeholder="<?php echo esc_attr($masked !== '' ? $masked : __('Paste your Pexels API key', 'groove-folios')); ?>"
           <?php disabled($locked, true); ?> />
         <p class="mt-1 mb-0 text-xs text-gray-400">
-          <?php esc_html_e('The stored key is never displayed. Leave this empty to keep the current key.', 'groove'); ?>
+          <?php esc_html_e('The stored key is never displayed. Leave this empty to keep the current key.', 'groove-folios'); ?>
         </p>
       </div>
 
@@ -824,21 +913,21 @@ class Settings extends Page
           id="groove-save-pexels-key"
           class="button button-primary"
           data-groove-save
-          data-groove-save-idle="<?php echo esc_attr__('Paste a key into the field above to save it.', 'groove'); ?>"
-          <?php disabled($locked, true); ?>><?php esc_html_e('Save Key', 'groove'); ?></button>
+          data-groove-save-idle="<?php echo esc_attr__('Paste a key into the field above to save it.', 'groove-folios'); ?>"
+          <?php disabled($locked, true); ?>><?php esc_html_e('Save Key', 'groove-folios'); ?></button>
       </div>
     </form>
 
     <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700 space-y-1">
       <p class="m-0">
-        <strong><?php esc_html_e('Key source:', 'groove'); ?></strong>
+        <strong><?php esc_html_e('Key source:', 'groove-folios'); ?></strong>
         <?php echo esc_html($this->get_pexels_key_source_label($source)); ?>
         <?php if ($masked !== ''): ?>
         <code><?php echo esc_html($masked); ?></code>
         <?php endif; ?>
       </p>
       <p class="m-0 text-xs text-gray-500">
-        <?php esc_html_e('Checked in order: wp-config.php constant, PEXELS_API_KEY environment variable, .pexels-key file, then this setting.', 'groove'); ?>
+        <?php esc_html_e('Checked in order: wp-config.php constant, PEXELS_API_KEY environment variable, .pexels-key file, then this setting.', 'groove-folios'); ?>
       </p>
     </div>
 
@@ -847,66 +936,69 @@ class Settings extends Page
         <?php wp_nonce_field('groove_test_pexels_connection', 'groove_nonce'); ?>
         <input type="hidden" name="action" value="test_groove_pexels_connection" />
         <button type="submit" id="groove-test-pexels-connection" class="button button-secondary" <?php disabled(!$available || !$has_key, true); ?>>
-          <?php esc_html_e('Test Connection', 'groove'); ?>
+          <?php esc_html_e('Test Connection', 'groove-folios'); ?>
         </button>
       </form>
 
       <?php if ($has_option_key): ?>
-      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" onsubmit="return window.confirm('<?php echo esc_js(__('Remove the stored Pexels API key?', 'groove')); ?>');">
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" onsubmit="return window.confirm('<?php echo esc_js(__('Remove the stored Pexels API key?', 'groove-folios')); ?>');">
         <?php wp_nonce_field('groove_delete_pexels_key', 'groove_nonce'); ?>
         <input type="hidden" name="action" value="delete_groove_pexels_key" />
-        <button type="submit" class="button-link delete"><?php esc_html_e('Remove Key', 'groove'); ?></button>
+        <button type="submit" class="button-link delete"><?php esc_html_e('Remove Key', 'groove-folios'); ?></button>
       </form>
       <?php endif; ?>
     </div>
 
     <p class="m-0 text-xs text-gray-500">
-      <?php esc_html_e('Testing the connection is the only action on this screen that contacts Pexels, and it only happens when you press the button.', 'groove'); ?>
+      <?php esc_html_e('Testing the connection is the only action on this screen that contacts Pexels, and it only happens when you press the button.', 'groove-folios'); ?>
     </p>
   </section>
 
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
     <div>
-      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Curating Imagery', 'groove'); ?></h3>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Curating Imagery', 'groove-folios'); ?></h3>
       <p class="mt-1 mb-0 text-sm text-gray-600">
-        <?php esc_html_e('Theme covers and sample-content placeholders are downloaded once from the command line and committed with the plugin.', 'groove'); ?>
+        <?php esc_html_e('Theme covers and sample-content placeholders are chosen and downloaded from the command line in a development checkout, which also records where each one can be fetched from.', 'groove-folios'); ?>
       </p>
     </div>
     <pre class="m-0 overflow-x-auto rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-800">php bin/curate-pexels.php --help</pre>
   </section>
+  <?php endif; ?>
 
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
     <div>
-      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Image Credits', 'groove'); ?></h3>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Image Credits', 'groove-folios'); ?></h3>
       <p class="mt-1 mb-0 text-sm text-gray-600">
-        <?php esc_html_e('The Pexels licence requires a visible link to Pexels and credit to each photographer.', 'groove'); ?>
+        <?php esc_html_e('The Pexels licence requires a visible link to Pexels and credit to each photographer.', 'groove-folios'); ?>
       </p>
     </div>
 
     <p class="m-0 text-sm">
       <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" class="font-semibold text-indigo-600 hover:text-indigo-500">
-        <?php esc_html_e('Photos provided by Pexels', 'groove'); ?>
+        <?php esc_html_e('Photos provided by Pexels', 'groove-folios'); ?>
       </a>
     </p>
 
     <?php if (empty($credits)): ?>
     <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700">
-      <p class="m-0"><?php esc_html_e('No imagery has been curated yet, so there is nothing to credit.', 'groove'); ?></p>
+      <p class="m-0"><?php esc_html_e('No imagery has been curated yet, so there is nothing to credit.', 'groove-folios'); ?></p>
+      <?php if ($can_curate): ?>
       <p class="mt-2 mb-0">
-        <?php esc_html_e('Run the curation script to download imagery and build the credits file:', 'groove'); ?>
+        <?php esc_html_e('Run the curation script to download imagery and build the credits file:', 'groove-folios'); ?>
         <code>php bin/curate-pexels.php</code>
       </p>
+      <?php endif; ?>
       <?php if ($credits_exist): ?>
-      <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('A credits file exists but contains no entries.', 'groove'); ?></p>
+      <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('A credits file exists but contains no entries.', 'groove-folios'); ?></p>
       <?php endif; ?>
     </div>
     <?php else: ?>
     <table class="widefat striped">
       <thead>
         <tr>
-          <th><?php esc_html_e('Slot', 'groove'); ?></th>
-          <th><?php esc_html_e('Photographer', 'groove'); ?></th>
-          <th><?php esc_html_e('Photo', 'groove'); ?></th>
+          <th><?php esc_html_e('Slot', 'groove-folios'); ?></th>
+          <th><?php esc_html_e('Photographer', 'groove-folios'); ?></th>
+          <th><?php esc_html_e('Photo', 'groove-folios'); ?></th>
         </tr>
       </thead>
       <tbody>
@@ -937,7 +1029,7 @@ class Settings extends Page
             <td>
               <?php if ($photo_url !== ''): ?>
                 <a href="<?php echo esc_url($photo_url); ?>" target="_blank" rel="noopener noreferrer">
-                  <?php echo esc_html($photo_id !== '' ? '#' . $photo_id : __('View on Pexels', 'groove')); ?>
+                  <?php echo esc_html($photo_id !== '' ? '#' . $photo_id : __('View on Pexels', 'groove-folios')); ?>
                 </a>
               <?php else: ?>
                 <span class="text-gray-400">&mdash;</span>
@@ -977,30 +1069,35 @@ class Settings extends Page
 <div class="space-y-4">
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
     <div>
-      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Privacy', 'groove'); ?></h3>
-      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('What this plugin sends, and where it goes.', 'groove'); ?></p>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Privacy', 'groove-folios'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600"><?php esc_html_e('What this plugin sends, and where it goes.', 'groove-folios'); ?></p>
     </div>
 
     <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 space-y-2">
       <p class="m-0 text-sm font-medium text-gray-800">
-        <?php esc_html_e('Groove Folios collects nothing about you or your site.', 'groove'); ?>
+        <?php esc_html_e('Groove Folios collects nothing about you or your site.', 'groove-folios'); ?>
       </p>
       <p class="m-0 text-sm text-gray-600">
-        <?php esc_html_e('No analytics, no usage tracking, no telemetry — so there is nothing here to switch on or off. The plugin never reports back to StudioEN, and your folios, collection tags and settings stay in your own WordPress database.', 'groove'); ?>
+        <?php esc_html_e('No analytics, no usage tracking, no telemetry — so there is nothing here to switch on or off. The plugin never reports back to StudioEN, and your folios, collection tags and settings stay in your own WordPress database.', 'groove-folios'); ?>
       </p>
     </div>
 
     <div class="space-y-2">
       <h4 class="m-0 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-        <?php esc_html_e('Requests the plugin does make', 'groove'); ?>
+        <?php esc_html_e('Requests the plugin does make', 'groove-folios'); ?>
       </h4>
       <ul class="m-0 pl-5 list-disc space-y-1 text-sm text-gray-600">
         <li>
-          <?php esc_html_e('Google Fonts — when a folio is rendered, the reader’s browser fetches the theme’s typefaces from fonts.googleapis.com, which means Google sees the reader’s IP address. This happens on your published folios, not in the admin.', 'groove'); ?>
+          <?php esc_html_e('Google Fonts — when a folio is rendered, the reader’s browser fetches the theme’s typefaces from fonts.googleapis.com, which means Google sees the reader’s IP address. This happens on your published folios, not in the admin.', 'groove-folios'); ?>
         </li>
         <li>
-          <?php esc_html_e('Pexels — only if you add your own API key on the Imagery tab, and only when you run the image curation script or press the connection test yourself.', 'groove'); ?>
+          <?php esc_html_e('Pexels images — only when an administrator presses Download Photos on the Imagery tab. The photos are fetched once from images.pexels.com into your uploads folder, and Pexels sees your server’s IP address. After that they are served from your own site.', 'groove-folios'); ?>
         </li>
+        <?php if (is_readable(GROOVE_PATH . 'bin/curate-pexels.php')): ?>
+        <li>
+          <?php esc_html_e('Pexels API — only if you add your own API key on the Imagery tab, and only when you run the image curation script or press the connection test yourself.', 'groove-folios'); ?>
+        </li>
+        <?php endif; ?>
       </ul>
     </div>
   </section>
@@ -1068,24 +1165,24 @@ class Settings extends Page
     switch ($error_code) {
       case 'duplicate_term_slug':
         return array(
-          __('Another collection tag already uses that slug.', 'groove'),
-          __('Pick a different slug, or clear the field and one will be generated from the name.', 'groove'),
+          __('Another collection tag already uses that slug.', 'groove-folios'),
+          __('Pick a different slug, or clear the field and one will be generated from the name.', 'groove-folios'),
         );
       case 'term_exists':
         return array(
-          __('A collection tag with that name already exists.', 'groove'),
-          __('Edit the existing tag from the list instead, or choose a different name.', 'groove'),
+          __('A collection tag with that name already exists.', 'groove-folios'),
+          __('Edit the existing tag from the list instead, or choose a different name.', 'groove-folios'),
         );
       case 'invalid_taxonomy':
         return array(
-          __('The collection tag taxonomy is not registered.', 'groove'),
-          __('Deactivate and reactivate Groove Folios so the taxonomy is registered again, then retry.', 'groove'),
+          __('The collection tag taxonomy is not registered.', 'groove-folios'),
+          __('Deactivate and reactivate Groove Folios so the taxonomy is registered again, then retry.', 'groove-folios'),
         );
     }
 
     return array(
-      __('The collection tag could not be saved.', 'groove'),
-      __('Reload this screen and try again. If it keeps failing, check the site error log for the database error behind it.', 'groove'),
+      __('The collection tag could not be saved.', 'groove-folios'),
+      __('Reload this screen and try again. If it keeps failing, check the site error log for the database error behind it.', 'groove-folios'),
     );
   }
 
@@ -1112,10 +1209,10 @@ class Settings extends Page
     $consumed = array('message', 'error_code');
 
     $success = array(
-      'settings_saved' => __('Settings saved.', 'groove'),
-      'collection_tag_created' => __('Collection tag created.', 'groove'),
-      'collection_tag_updated' => __('Collection tag updated.', 'groove'),
-      'collection_tag_deleted' => __('Collection tag deleted.', 'groove'),
+      'settings_saved' => __('Settings saved.', 'groove-folios'),
+      'collection_tag_created' => __('Collection tag created.', 'groove-folios'),
+      'collection_tag_updated' => __('Collection tag updated.', 'groove-folios'),
+      'collection_tag_deleted' => __('Collection tag deleted.', 'groove-folios'),
     );
 
     if (isset($success[$message])) {
@@ -1126,8 +1223,8 @@ class Settings extends Page
     switch ($message) {
       case 'base_slug_empty':
         \Groove\Toast::failure(
-          __('A folio base slug is required.', 'groove'),
-          __('Enter the word you want in folio URLs — "folio" gives /folio/my-folio. The previous slug is still in place.', 'groove'),
+          __('A folio base slug is required.', 'groove-folios'),
+          __('Enter the word you want in folio URLs — "folio" gives /folio/my-folio. The previous slug is still in place.', 'groove-folios'),
           '#groove-save-routing',
           $consumed
         );
@@ -1135,8 +1232,8 @@ class Settings extends Page
 
       case 'base_slug_invalid':
         \Groove\Toast::failure(
-          __('That base slug cannot be used in a URL.', 'groove'),
-          __('Use letters, numbers and hyphens, such as "folio" or "case-studies". The previous slug is still in place.', 'groove'),
+          __('That base slug cannot be used in a URL.', 'groove-folios'),
+          __('Use letters, numbers and hyphens, such as "folio" or "case-studies". The previous slug is still in place.', 'groove-folios'),
           '#groove-save-routing',
           $consumed
         );
@@ -1144,8 +1241,8 @@ class Settings extends Page
 
       case 'collection_tag_empty':
         \Groove\Toast::failure(
-          __('A collection tag needs a name.', 'groove'),
-          __('Type a name in the Name field above. The slug can be left blank — it is generated from the name.', 'groove'),
+          __('A collection tag needs a name.', 'groove-folios'),
+          __('Type a name in the Name field above. The slug can be left blank — it is generated from the name.', 'groove-folios'),
           '#groove-save-collection-tag',
           $consumed
         );
@@ -1161,16 +1258,16 @@ class Settings extends Page
         // to a row that may no longer be on the screen.
         \Groove\Toast::error(
           'not_found' === $error_code
-            ? __('That collection tag was already gone, so nothing was removed.', 'groove')
-            : __('That collection tag could not be removed. Reload the screen and try again.', 'groove'),
+            ? __('That collection tag was already gone, so nothing was removed.', 'groove-folios')
+            : __('That collection tag could not be removed. Reload the screen and try again.', 'groove-folios'),
           $consumed
         );
         return;
 
       case 'unknown_tab':
         \Groove\Toast::failure(
-          __('Nothing was saved — that settings tab was not recognised.', 'groove'),
-          __('This usually means the page had been open long enough to go stale. Reload the settings screen and make the change again.', 'groove'),
+          __('Nothing was saved — that settings tab was not recognised.', 'groove-folios'),
+          __('This usually means the page had been open long enough to go stale. Reload the settings screen and make the change again.', 'groove-folios'),
           '#groove-save-general',
           $consumed
         );
@@ -1208,7 +1305,7 @@ class Settings extends Page
     $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'general';
     $q = $this->parse_query();
     ?>
-<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Settings tabs', 'groove'); ?>">
+<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Settings tabs', 'groove-folios'); ?>">
   <?php
     foreach ($tabs as $tab_id => $tab) {
       $active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';

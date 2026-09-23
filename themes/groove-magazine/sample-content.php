@@ -47,13 +47,13 @@ $cap_detail  = Themes_Manager::theme_image_caption($theme, 'detail');
 $cap_scene   = Themes_Manager::theme_image_caption($theme, 'scene');
 
 return array(
-  'label'       => __('Create with sample magazine content', 'groove'),
-  'description' => __('Seeds a four-story issue with hero images, a studio visit, a photo essay and a contributors page.', 'groove'),
-  'subtitle'    => __('Issue 04 — The Quiet Cities', 'groove'),
+  'label'       => __('Create with sample magazine content', 'groove-folios'),
+  'description' => __('Seeds a four-story issue with hero images, a studio visit, a photo essay and a contributors page.', 'groove-folios'),
+  'subtitle'    => __('Issue 04 — The Quiet Cities', 'groove-folios'),
   'folio_meta'  => array(),
   'pages'       => array(
     array(
-      'title' => __('The Quiet Cities', 'groove'),
+      'title' => __('The Quiet Cities', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'hero'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph {"dropCap":true} -->
@@ -92,7 +92,7 @@ return array(
 HTML,
     ),
     array(
-      'title' => __('Studio Visit: Making Slowly', 'groove'),
+      'title' => __('Studio Visit: Making Slowly', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'process'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph {"dropCap":true} -->
@@ -132,7 +132,7 @@ HTML,
 HTML,
     ),
     array(
-      'title' => __('Field Notes from the Edge of the Map', 'groove'),
+      'title' => __('Field Notes from the Edge of the Map', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'wide'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph {"dropCap":true} -->
@@ -170,7 +170,7 @@ HTML,
 HTML,
     ),
     array(
-      'title' => __('Contributors', 'groove'),
+      'title' => __('Contributors', 'groove-folios'),
       'feature_image' => Themes_Manager::sample_image_slug($theme, 'people'),
       'content' => (string) <<<HTML
 <!-- wp:paragraph -->

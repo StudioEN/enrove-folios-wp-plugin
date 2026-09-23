@@ -91,8 +91,9 @@ class Cover extends Base_Theme
                 $count++;
             }
         }
-        // Fall back to the theme cover if no feature images
-        if (empty($images)) {
+        // Fall back to the theme cover if no feature images — when there is one.
+        // A WordPress.org install has no cover until its photos are downloaded.
+        if (empty($images) && !empty($this->theme_cover_url)) {
             $images[] = [
                 'url' => $this->theme_cover_url,
                 'page_id' => 0,
@@ -218,7 +219,7 @@ class Cover extends Base_Theme
                     <span class="gm-cover__powerby">Powered by Groove Folios</span>
                     <?php if (!empty($latest_pages_date)): ?>
                         <span class="gm-cover__updated">
-                            <?= esc_html(sprintf(__('Updated %s', 'groove'), $latest_pages_date)) ?>
+                            <?= esc_html(sprintf(__('Updated %s', 'groove-folios'), $latest_pages_date)) ?>
                         </span>
                     <?php else: ?>
                         <span class="gm-cover__updated" aria-hidden="true"></span>
