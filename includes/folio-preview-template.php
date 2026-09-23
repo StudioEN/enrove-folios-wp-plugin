@@ -190,7 +190,14 @@ nocache_headers();
 
 </html>
 <?php return;
-endif; ?>
+endif;
+
+// A folio this request may see. WordPress's own main query found nothing at this
+// path (there are no rewrite rules, by design) and has already set a 404, which
+// every published folio was served with until this line: search engines drop a
+// 404 and link previews refuse it. The page is real, so say so.
+status_header(200);
+?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 
