@@ -1,5 +1,5 @@
 === Groove Folios ===
-Contributors: REPLACE-WITH-WPORG-USERNAME
+Contributors: studioenfrankw
 Tags: ebook, newsletter, portfolio, publishing, documents
 Requires at least: 5.9
 Tested up to: 7.1
