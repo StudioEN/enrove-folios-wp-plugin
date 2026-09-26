@@ -59,7 +59,8 @@ class Module extends BaseModule
 		if (in_array(wp_get_environment_type(), ['local', 'development'], true) && in_array($remote_addr, ['127.0.0.1', '::1'], true)) {
 			// A 200 from /@vite/client means it is Vite on the port, not another local
 			// app holding it; a refused connection fails fast, well inside the timeout.
-			$response = wp_remote_head('http://localhost:' . $vite_port . '/@vite/client', ['timeout' => 0.5]);
+			// GET, not HEAD: Vite answers HEAD on /@vite/client with a 404.
+			$response = wp_remote_get('http://localhost:' . $vite_port . '/@vite/client', ['timeout' => 0.5, 'limit_response_size' => 1024]);
 			if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
 				$is_vite_dev = true;
 			}

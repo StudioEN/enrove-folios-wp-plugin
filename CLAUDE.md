@@ -74,7 +74,7 @@ A `groove_folio_page` belongs to a folio via `folio_id` post meta, which `includ
 
 ### Admin assets
 
-[modules/groove-main/module.php](modules/groove-main/module.php) (`is_active()` → `is_admin()`) is the single enqueue point. Tailwind 4 comes from the Vite dev server when a socket probe *and* a HEAD on `/@vite/client` both succeed on localhost:5173, otherwise from `assets/build/.vite/manifest.json`. Hand-authored CSS/JS under `assets/css` and `assets/js` is enqueued directly and versioned by `filemtime()`. Load order matters: `groove-toggletip` → `groove-toast` → `groove-main`. PHP config reaches JS through `window.GROOVE_SETTINGS`.
+[modules/groove-main/module.php](modules/groove-main/module.php) (`is_active()` → `is_admin()`) is the single enqueue point. Tailwind 4 comes from the Vite dev server when a GET on `/@vite/client` returns 200 from localhost:5173 (probed only on a `local`/`development` site, for a request from localhost; Vite answers HEAD there with a 404), otherwise from `assets/build/.vite/manifest.json`. Hand-authored CSS/JS under `assets/css` and `assets/js` is enqueued directly and versioned by `filemtime()`. Load order matters: `groove-toggletip` → `groove-toast` → `groove-main`. PHP config reaches JS through `window.GROOVE_SETTINGS`.
 
 All admin pages get `body.groove` via an `admin_body_class` filter — the CSS scope for the whole plugin.
 
