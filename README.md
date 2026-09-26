@@ -4,7 +4,7 @@ Create, manage, and publish beautiful digital literature directly within WordPre
 
 A "Folio" is a general-purpose multi-page document container; the theme you pick determines whether it reads as an ebook, newsletter, portfolio, proposal, or another format.
 
-- **Plugin URI:** https://studioen.us/groove/
+- **Plugin URI:** https://groove.studioen.us/
 - **Author:** [StudioEN](https://studioen.us/)
 - **Requires:** PHP 7.1+, WordPress 5.9+
 

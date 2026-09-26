@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Groove Folios
  * Description: Create, manage, and publish beautiful digital literature directly within WordPress — ebooks, newsletters, product catalogs, portfolios, proposals, and more. Groove Folios provides a robust foundation with custom themes, access permissions, dynamic previews, and a dedicated folio builder interface powered by the modern Block Editor.
- * Plugin URI: https://studioen.us/groove/
+ * Plugin URI: https://groove.studioen.us/
  * Author: StudioEN
  * Version: 0.4.0
  * Author URI: https://studioen.us/
