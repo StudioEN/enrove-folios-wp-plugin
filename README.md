@@ -37,15 +37,14 @@ Admin UI is scoped under `body.groove` and built with Tailwind utility classes a
 ## Imagery (Pexels)
 
 Theme covers and the shared placeholder pool used by sample content are curated
-**once, at build time** from [Pexels](https://www.pexels.com) and committed as local
-assets. The plugin makes no Pexels API calls when a folio is rendered or an admin
-page is loaded.
+**once, at build time** from [Pexels](https://www.pexels.com). The plugin makes no
+Pexels API calls when a folio is rendered or an admin page is loaded.
 
-The photos are in this repository but **not in the WordPress.org package**: the Pexels
-licence forbids redistributing unaltered copies, which the GPL requires the plugin
-directory to allow. The packaging script leaves the JPEGs out (keeping `credits.json`),
-and a site installed from the package fetches its own copy from `images.pexels.com`
-when an administrator presses **Download Photos** on Settings → Imagery. That download
+The photos are **not in this repository or in the WordPress.org package**: the Pexels
+licence forbids redistributing unaltered copies, which the GPL requires. Only
+`credits.json` is committed, and the JPEGs are gitignored. A site, including one
+running a fresh checkout, fetches its own copy from `images.pexels.com` when an
+administrator presses **Download Photos** on Settings → Imagery. That download
 needs no API key: it uses the `src_url` the curator records for each photo in
 `credits.json`. See `Groove\Pexels\Library` for where photos resolve from.
 

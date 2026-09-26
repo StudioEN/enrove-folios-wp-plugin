@@ -144,6 +144,23 @@ build
 .pexels-key
 
 ############################
+# Pexels photos
+############################
+
+# The Pexels licence forbids redistributing unaltered copies, so the photos stay
+# local. credits.json is tracked: Download Photos fetches from the src_url it records.
+assets/images/pexels/*.jpg
+themes/*/assets/images/theme-cover.jpg
+
+############################
+# Shared agent-skills tooling (local only)
+############################
+
+.agent/
+.codex/
+tools/
+
+############################
 # Claude Code
 ############################
 

@@ -93,5 +93,5 @@ Use `\Groove\Toast` ([includes/toast.php](includes/toast.php)) for action outcom
 
 ## Notes
 
-- `.mcp.json` (WordPress Studio MCP server) and `.claude/` are gitignored.
-- `tools/agent-skills` is a git submodule (StudioEN/Base-Agent-Skills) and is not checked out locally; the weekly GitHub Action only checks it for updates against `.codex/agent-skills.lock.json`. It runs no build, lint or test for this plugin.
+- The repository is public. `.mcp.json` (WordPress Studio MCP server), `.claude/`, and the shared agent-skills tooling (`.agent/`, `.codex/`, `tools/`) are gitignored, local only.
+- The Pexels photos are gitignored as well (the licence forbids redistributing them); only `assets/images/pexels/credits.json` is tracked. A checkout without them behaves like a packaged install: press Download Photos on Settings → Imagery.
