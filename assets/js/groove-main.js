@@ -578,6 +578,10 @@ jQuery(function () {
             jQuery('#permalink').val(result.slug)
           }
 
+          if (result.copy_link) {
+            jQuery('#g-copy-folio-link').data('copy-link', result.copy_link)
+          }
+
           if (shouldReload) {
             if (reloadDelayMs > 0) {
               setTimeout(function () {

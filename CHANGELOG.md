@@ -9,6 +9,7 @@
 - The folio editor's header has the same actions on every tab. The Pages tab used to show only Preview, so Save, Publish and Copy link disappeared the moment you switched to it, and the Preview button slid across into their place. Now Preview, Save, Publish (or Unpublish) and Copy link sit in the same spots on Setup, Pages and Proposal, and you can publish a folio or copy its link straight from its page list. Save is greyed out whenever there is nothing to save, the way the Settings forms already work: it lights up when a field on Setup or Proposal differs from what is stored, and goes quiet again once an autosave, a manual save or a publish has stored it, or when the edit is undone. It is also switched off while a save is in flight, so a double press cannot save twice. Pressing it while greyed out explains why; on the Pages tab it says that pages save in the page editor.
 
 ### Fixed
+- Copy link on a draft folio copied a public address that doesn't work yet. It now copies the preview link until the folio is published, then the public link.
 - Publishing a folio no longer clears its collection tags when the tags field was not part of the save.
 - With reduced motion turned on, closing the Add New dialog left it covering the page invisibly and swallowing clicks, because it waited for a fade that never ran.
 

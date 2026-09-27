@@ -41,11 +41,21 @@ class Folio extends Page
         $is_published = true;
       }
 
-      $folio_copy_link = (string) Utils::get_folio_permalink($folio_post, '');
+      // A published folio shares its public URL. A draft has none that
+      // works yet — its pretty URL is a 404 to everyone — so it shares the
+      // preview URL, which opens for anyone signed in who can edit it.
+      $folio_copy_link = $is_published ? (string) Utils::get_folio_permalink($folio_post, '') : '';
       if ($folio_copy_link === '') {
         $folio_copy_link = (string) Utils::get_folio_permalink_by_id($folio_id);
       }
     }
+
+    $copy_link_label = $is_published
+      ? __('Copy public link', 'groove-folios')
+      : __('Copy preview link (editors only)', 'groove-folios');
+    $copied_link_label = $is_published
+      ? __('Link copied', 'groove-folios')
+      : __('Preview link copied', 'groove-folios');
 
     $preview_text = $is_published ? 'View' : 'Preview';
     $preview_tooltip_text = $is_published ? __('View Folio', 'groove-folios') : __('Preview Folio', 'groove-folios');
@@ -114,11 +124,11 @@ class Folio extends Page
         'class' => 'g-tooltip-button',
         'attrs' => array(
           'id' => 'g-copy-folio-link',
-          'aria-label' => __('Copy link', 'groove-folios'),
+          'aria-label' => $copy_link_label,
           'data-copy-link' => $folio_copy_link,
-          'data-copy-text' => __('Copy link', 'groove-folios'),
-          'data-copied-text' => __('Copied', 'groove-folios'),
-          'data-tooltip-text' => __('Copy link', 'groove-folios'),
+          'data-copy-text' => $copy_link_label,
+          'data-copied-text' => $copied_link_label,
+          'data-tooltip-text' => $copy_link_label,
         ),
       )
     ];
@@ -617,6 +627,8 @@ class Folio extends Page
         'code' => 0,
         'post_id' => $id,
         'slug' => $post_name,
+        // A published folio's link follows its slug, so a rename moves it.
+        'copy_link' => $post_status === 'publish' ? (string) Utils::get_folio_permalink(get_post($id), '') : '',
       ));
     } else {
       wp_send_json(array(
