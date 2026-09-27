@@ -1454,13 +1454,9 @@ class Folio extends Page
   private static function count_theme_blocks(array $blocks, array $theme_ids, array &$counts): void
   {
     foreach ($blocks as $block) {
-      $name = (string) ($block['blockName'] ?? '');
-      $slash = strpos($name, '/');
-      if ($slash !== false) {
-        $namespace = substr($name, 0, $slash);
-        if (in_array($namespace, $theme_ids, true)) {
-          $counts[$namespace] = ($counts[$namespace] ?? 0) + 1;
-        }
+      $owner = \Groove\Themes\Theme_Blocks::get_owner((string) ($block['blockName'] ?? ''), $theme_ids);
+      if ($owner !== '') {
+        $counts[$owner] = ($counts[$owner] ?? 0) + 1;
       }
       if (!empty($block['innerBlocks'])) {
         self::count_theme_blocks($block['innerBlocks'], $theme_ids, $counts);

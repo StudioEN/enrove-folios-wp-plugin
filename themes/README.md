@@ -855,6 +855,17 @@ Two themes ship blocks: `groove-proposal` (fourteen, with folio-level settings b
 `register_block_type(..., ['render_callback' => …])`, adds a block category via `block_categories_all`,
 and enqueues editor JS on `enqueue_block_editor_assets` **gated on `$screen->post_type === 'groove_folio_page'`**.
 
+**Name every block `<theme-id>/<block>`.** The namespace is how the plugin knows a block is yours. Every
+theme's `blocks.php` loads on every request, so without that rule a Magazine page would offer Proposal
+pricing tables that render unstyled. `Groove\Themes\Theme_Blocks` hides blocks whose namespace is another
+theme's ID from the inserter of a page whose folio uses a different theme. They stay registered, so a
+page that already holds one after a theme switch still opens and edits it, under an editor-only note
+naming its theme, and the Change theme dialog counts them by the same rule. Keep registering and enqueueing unconditionally, as the two shipped themes
+do. Gating your editor script on the folio's theme would turn those existing blocks into "unsupported"
+placeholders. A block under any other namespace is offered on every theme. An editor-side lookup of the
+page's folio or theme should call `Theme_Blocks::get_editor_folio_id()` / `get_editor_theme_id()`, which
+resolve URL first and meta second, as the front end does.
+
 Seed your blocks into `sample-content.php` — an empty inserter does not explain what a block is for. Most
 seed as literal block comments. One that carries **markup** in an attribute cannot: `<`, `>`, `&` and `--`
 have to be escaped before the JSON can sit inside an HTML comment, which is what `serializeAttributes()`

@@ -800,7 +800,7 @@ class Themes_Manager extends Assets
      * @param string $theme_id
      * @return string|null
      */
-    protected static function resolve_registered_theme_id($theme_id)
+    public static function resolve_registered_theme_id($theme_id)
     {
         $theme_id = (string) $theme_id;
 

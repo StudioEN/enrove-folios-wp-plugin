@@ -39,6 +39,7 @@
  */
 
 use Groove\Themes\Font_Loader;
+use Groove\Themes\Theme_Blocks;
 use Groove\Themes\Groove_Ebook\Cover;
 
 if (!defined('ABSPATH')) {
@@ -443,14 +444,10 @@ function groove_ebook_enqueue_editor_fonts(): void
         return;
     }
 
-    $folio_id = (int) get_post_meta($page->ID, 'folio_id', true);
-    if ($folio_id <= 0) {
+    if (Theme_Blocks::get_editor_theme_id($page) !== Cover::get_id()) {
         return;
     }
-
-    if ((string) get_post_meta($folio_id, 'theme_id', true) !== Cover::get_id()) {
-        return;
-    }
+    $folio_id = Theme_Blocks::get_editor_folio_id($page);
 
     $resolved = Font_Loader::resolve($folio_id, Cover::get_default_fonts());
 

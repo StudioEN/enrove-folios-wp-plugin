@@ -12,6 +12,7 @@ use Groove\Pages\Settings;
 use Groove\Pages\Themes;
 use Groove\Menu\Menu_Manager;
 use Groove\Themes\Themes_Manager;
+use Groove\Themes\Theme_Blocks;
 use Groove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
@@ -209,6 +210,7 @@ class Plugin
 
 		// Boot the theme registry immediately so it is available everywhere.
 		Themes_Manager::register_defaults();
+		Theme_Blocks::register();
 
 		add_filter('admin_body_class', function ($classes) {
 			$classes .= ' groove';
