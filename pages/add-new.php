@@ -140,6 +140,48 @@ class Add_New extends Page
     return array();
   }
 
+  /**
+   * One theme card: thumbnail, name, Selected badge and a Preview link.
+   *
+   * Shared by the Add New picker and the folio editor's Change theme dialog,
+   * so choosing a theme looks and behaves the same in both. Must sit inside a
+   * `.g-folio__themes` radiogroup; groove-main.js moves the selection.
+   *
+   * @param array $theme A Themes_Manager::get_all_themes() entry.
+   */
+  public static function display_theme_card(string $id, array $theme, bool $selected): void
+  {
+    // Radius and border width are the stylesheet's — the inner corners are
+    // derived from them there. Only the border colour changes per state, and
+    // groove-main.js swaps exactly these classes when the selection moves.
+    $card_classes = 'g-folio__theme-option g-folio__theme-option--add-new relative cursor-pointer transition-all';
+    $card_classes .= $selected ? ' border-indigo-600 ring-1 ring-indigo-600' : ' border-gray-200 hover:border-gray-300';
+    echo '<div class="g-folio__theme-card-wrap">';
+    echo '<button type="button" class="' . esc_attr($card_classes) . '"
+               data-theme-id="' . esc_attr($id) . '"
+               data-theme-name="' . esc_attr($theme['name']) . '"
+               data-theme-thumbnail-url="' . esc_url($theme['thumbnail_url']) . '"
+               data-theme-description="' . esc_attr($theme['description'] ?? '') . '"
+               role="radio"
+               aria-checked="' . ($selected ? 'true' : 'false') . '"
+               tabindex="' . ($selected ? '0' : '-1') . '">';
+    echo '<div class="g-folio__theme-option-thumb overflow-hidden border-b border-gray-200">';
+    echo '<img src="' . esc_url($theme['thumbnail_url']) . '" alt="' . esc_attr($theme['name']) . '" class="object-cover w-full h-full" loading="lazy" />';
+    echo '</div>';
+    echo '<div class="g-folio__theme-option-name p-2 text-center text-sm font-medium text-gray-900 bg-gray-50/50">';
+    echo esc_html($theme['name']);
+    echo '</div>';
+    echo '<span class="active-badge absolute -top-2 -right-2 inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ring-2 ring-white ' . ($selected ? '' : 'hidden') . '">';
+    echo esc_html__('Selected', 'groove-folios');
+    echo '</span>';
+    echo '</button>';
+    /* translators: %s: theme name */
+    echo '<button type="button" class="g-theme-preview-btn" data-theme-id="' . esc_attr($id) . '" aria-label="' . esc_attr(sprintf(__('Preview %s theme', 'groove-folios'), $theme['name'])) . '">';
+    echo esc_html__('Preview', 'groove-folios');
+    echo '</button>';
+    echo '</div>';
+  }
+
   public function display__themes()
   {
     $themes = \Groove\Themes\Themes_Manager::get_all_themes();
@@ -197,34 +239,7 @@ class Add_New extends Page
   <div class="g-folio__themes" role="radiogroup" aria-label="<?php echo esc_attr__('Available themes', 'groove-folios'); ?>">
     <?php
     foreach ($themes as $id => $theme) {
-      $is_first = ($id === $first_theme_id);
-      // Radius and border width are the stylesheet's — the inner corners are
-      // derived from them there. Only the border colour changes per state, and
-      // groove-main.js swaps exactly these classes when the selection moves.
-      $card_classes = 'g-folio__theme-option g-folio__theme-option--add-new relative cursor-pointer transition-all';
-      $card_classes .= $is_first ? ' border-indigo-600 ring-1 ring-indigo-600' : ' border-gray-200 hover:border-gray-300';
-      echo '<div class="g-folio__theme-card-wrap">';
-      echo '<button type="button" class="' . esc_attr($card_classes) . '"
-                 data-theme-id="' . esc_attr($id) . '"
-                 data-theme-name="' . esc_attr($theme['name']) . '"
-                 role="radio"
-                 aria-checked="' . ($is_first ? 'true' : 'false') . '"
-                 tabindex="' . ($is_first ? '0' : '-1') . '">';
-      echo '<div class="g-folio__theme-option-thumb overflow-hidden border-b border-gray-200">';
-      echo '<img src="' . esc_url($theme['thumbnail_url']) . '" alt="' . esc_attr($theme['name']) . '" class="object-cover w-full h-full" loading="lazy" />';
-      echo '</div>';
-      echo '<div class="g-folio__theme-option-name p-2 text-center text-sm font-medium text-gray-900 bg-gray-50/50">';
-      echo esc_html($theme['name']);
-      echo '</div>';
-      echo '<span class="active-badge absolute -top-2 -right-2 inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ring-2 ring-white ' . ($is_first ? '' : 'hidden') . '">';
-      echo esc_html__('Selected', 'groove-folios');
-      echo '</span>';
-      echo '</button>';
-      /* translators: %s: theme name */
-      echo '<button type="button" class="g-theme-preview-btn" data-theme-id="' . esc_attr($id) . '" aria-label="' . esc_attr(sprintf(__('Preview %s theme', 'groove-folios'), $theme['name'])) . '">';
-      echo esc_html__('Preview', 'groove-folios');
-      echo '</button>';
-      echo '</div>';
+      self::display_theme_card((string) $id, $theme, $id === $first_theme_id);
     }
 ?>
   </div>

@@ -830,7 +830,8 @@ body.groove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible
 
 /* The Add New card is the one theme card that cannot clip its children: the
    Selected badge hangs off the top-right corner, so overflow:hidden — what the
-   picker modal's card and the Themes grid card both use — would cut it off.
+   Themes grid card uses — would cut it off. The folio editor's Change theme
+   dialog renders this same card (Add_New::display_theme_card()).
    Each inner corner is therefore drawn to fit the border by hand. A box with an
    8px outer radius and a 2px border curves its padding box at 6px, so a child
    that keeps the card's own 8px bulges past that curve and leaves a white
@@ -1992,89 +1993,6 @@ body.groove .g-theme-picker-modal__body {
   padding: 20px;
 }
 
-body.groove .g-theme-picker-modal__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-body.groove .g-theme-picker-modal__option {
-  position: relative;
-  overflow: hidden;
-  border-radius: 10px;
-  border-width: 2px;
-  border-style: solid;
-  border-color: var(--g-border);
-  box-shadow: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-}
-
-body.groove .g-theme-picker-modal__option:hover {
-  border-color: var(--g-gray-30);
-}
-
-body.groove .g-theme-picker-modal__option.is-active {
-  border-color: var(--g-accent);
-  box-shadow: 0 0 0 1px var(--g-accent);
-}
-
-body.groove .g-theme-picker-modal__option.is-active:hover {
-  border-color: var(--g-accent);
-}
-
-body.groove .g-theme-picker-modal__option-media {
-  height: 96px;
-  overflow: hidden;
-  border-bottom: 1px solid var(--g-border);
-  background: var(--g-gray-5);
-}
-
-body.groove .g-theme-picker-modal__option-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-body.groove .g-theme-picker-modal__option-copy {
-  padding: 12px;
-  background: var(--g-surface);
-}
-
-body.groove .g-theme-picker-modal__option-name {
-  font-size: 14px;
-  line-height: 1.4;
-  font-weight: 600;
-  color: var(--g-text);
-}
-
-body.groove .g-theme-picker-modal__option-description {
-  margin-top: 4px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--g-text-muted);
-}
-
-body.groove .g-theme-picker-modal__badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  background: var(--g-accent);
-  color: #fff;
-  padding: 4px 8px;
-  font-size: 11px;
-  line-height: 1;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(var(--g-accent-rgb), 0.28);
-}
-
-body.groove .g-theme-picker-modal__badge.is-hidden {
-  display: none;
-}
-
 body.groove .g-theme-picker-modal__done {
   padding: 9px 14px;
 }
@@ -2103,10 +2021,6 @@ body.groove .g-version-history-modal__frame {
   body.groove .g-theme-picker-modal__footer,
   body.groove .g-theme-picker-modal__body {
     padding: 16px;
-  }
-
-  body.groove .g-theme-picker-modal__grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -2419,10 +2333,15 @@ body.groove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
 }
 
 /* ── Add New Folio modal ────────────────────────────────────────────────── */
+/* Also the shell of the folio editor's Change theme dialog, so choosing a
+   theme and changing one happen in the same frame. */
 
 .g-add-new-modal {
   position: fixed;
   inset: 0;
+  /* The folio editor renders this inside a Tailwind space-y-* column, whose
+     margin would lift the bottom edge of a fixed, inset:0 box off the viewport. */
+  margin: 0;
   z-index: 99999;
   display: flex;
   align-items: center;
@@ -2549,6 +2468,146 @@ body.groove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
   .g-add-new-modal__dialog {
     transition: none;
   }
+}
+
+/* ── Change theme: confirm before a switch hides content ─────────────────
+   A second screen in the same frame, standing where the grid was: the JS
+   gives it the grid screen's height, and the answers sit on the same bottom
+   row the grid's own buttons did. Nothing is deleted by a switch, so the
+   notice wears the yellow of the replace-theme warning, not Remove's red. */
+
+body.groove .g-theme-switch__screen[hidden] {
+  display: none;
+}
+
+body.groove .g-theme-switch-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* The confirm comes in from the right and the grid goes back from the left,
+   so the two screens read as a step forward and a step back. */
+body.groove .g-theme-switch__screen.is-entering-forward {
+  animation: g-theme-switch-forward 0.18s ease;
+}
+
+body.groove .g-theme-switch__screen.is-entering-back {
+  animation: g-theme-switch-back 0.18s ease;
+}
+
+@keyframes g-theme-switch-forward {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes g-theme-switch-back {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* From → to, at a size that names the themes without competing with the
+   words below it. */
+body.groove .g-theme-switch-confirm__route {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+body.groove .g-theme-switch-confirm__theme {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  width: 150px;
+}
+
+body.groove .g-theme-switch-confirm__thumb {
+  display: block;
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border: 1px solid var(--g-border);
+  border-radius: 6px;
+  background: var(--g-gray-5);
+}
+
+body.groove .g-theme-switch-confirm__theme figcaption {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--g-text);
+}
+
+body.groove .g-theme-switch-confirm__arrow {
+  /* Centred on the thumbnails, not on thumbnail + caption: twice the
+     caption line and its gap, since a bottom margin moves the centre by half. */
+  margin-bottom: 26px;
+  color: var(--g-gray-30);
+}
+
+body.groove .g-theme-switch-confirm__notice {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--g-yellow-30);
+  border-radius: 8px;
+  background: var(--g-yellow-0);
+  color: var(--g-yellow-70);
+}
+
+/* Core's p and li margins are unlayered and would win over any utility;
+   the column's gap does the spacing instead. */
+body.groove .g-theme-switch-confirm p,
+body.groove .g-theme-switch-confirm ul,
+body.groove .g-theme-switch-confirm li {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+body.groove .g-theme-switch-confirm__lead {
+  font-weight: 600;
+}
+
+body.groove .g-theme-switch-confirm__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+/* Pinned to the bottom of the borrowed height, where Switch theme was. */
+body.groove .g-theme-switch-confirm__actions {
+  margin-top: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.groove .g-theme-switch__screen.is-entering-forward,
+  body.groove .g-theme-switch__screen.is-entering-back {
+    animation: none;
+  }
+}
+
+@media (max-width: 600px) {
+  body.groove .g-theme-switch-confirm__route {
+    gap: 10px;
+  }
+
+  body.groove .g-theme-switch-confirm__theme {
+    width: 110px;
+  }
+
+  body.groove .g-theme-switch-confirm__thumb {
+    height: 66px;
+  }
+
 }
 
 /* ── Theme card wrap + preview button ───────────────────────────────────── */

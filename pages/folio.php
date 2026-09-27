@@ -1298,6 +1298,151 @@ class Folio extends Page
     <?php
   }
 
+  /**
+   * What each theme would stop showing on this folio if the folio left it.
+   *
+   * Switching theme deletes nothing: page content is untouched and theme meta
+   * survives every save. What a switch does lose is what readers see, and that
+   * is what the Change theme dialog confirms. Keyed by the theme being left,
+   * each entry is a list of finished sentences, since groove-main.js has no
+   * translation functions of its own:
+   *
+   * Blocks that theme registered (`<theme-id>/…`): every theme's blocks are
+   * registered on every request, so they still render under another theme,
+   * but their styles live only in their own theme.css. Proposal details, the
+   * one theme-only setting, are checked separately (has_proposal_details()).
+   *
+   * @return array<string, string[]>
+   */
+  private function get_theme_switch_impact(): array
+  {
+    $this->get_fields();
+    $folio_id = $this->folio ? (int) $this->folio->ID : 0;
+    if (!$folio_id) {
+      return array();
+    }
+
+    $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
+    $theme_ids = array_map('strval', array_keys($all_themes));
+
+    $page_ids = get_posts(array(
+      'post_type' => 'groove_folio_page',
+      'post_status' => array('publish', 'draft', 'pending', 'private', 'future'),
+      'posts_per_page' => -1,
+      'fields' => 'ids',
+      'no_found_rows' => true,
+      'orderby' => array('menu_order' => 'ASC', 'ID' => 'ASC'),
+      'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the only link from a page to its folio.
+        array(
+          'key' => 'folio_id',
+          'value' => $folio_id,
+          'compare' => '=',
+          'type' => 'NUMERIC',
+        ),
+      ),
+    ));
+
+    // theme id => ['count' => blocks, 'pages' => titles]
+    $blocks = array();
+    foreach ($page_ids as $page_id) {
+      $content = (string) get_post_field('post_content', $page_id);
+      if (strpos($content, '<!-- wp:') === false) {
+        continue;
+      }
+
+      $counts = array();
+      self::count_theme_blocks(parse_blocks($content), $theme_ids, $counts);
+      foreach ($counts as $theme_id => $count) {
+        // Raw, not get_the_title(): the sentence is set as text, so texturised
+        // entities would show literally, and a "Private:" prefix is noise here.
+        $title = trim((string) get_post_field('post_title', $page_id, 'raw'));
+        $blocks[$theme_id]['count'] = ($blocks[$theme_id]['count'] ?? 0) + $count;
+        $blocks[$theme_id]['pages'][] = $title !== '' ? $title : __('(no title)', 'groove-folios');
+      }
+    }
+
+    $impact = array();
+    foreach ($blocks as $theme_id => $found) {
+      $titles = array_slice($found['pages'], 0, 5);
+      $more = count($found['pages']) - count($titles);
+      $page_list = implode(', ', $titles);
+      if ($more > 0) {
+        /* translators: 1: comma-separated page titles, 2: number of further pages */
+        $page_list = sprintf(__('%1$s and %2$s more', 'groove-folios'), $page_list, number_format_i18n($more));
+      }
+      $impact[$theme_id][] = sprintf(
+        /* translators: 1: number of blocks, 2: theme name, 3: comma-separated page titles */
+        _n(
+          '%1$s %2$s block loses its styling, on: %3$s.',
+          '%1$s %2$s blocks lose their styling, on: %3$s.',
+          $found['count'],
+          'groove-folios'
+        ),
+        number_format_i18n($found['count']),
+        $all_themes[$theme_id]['name'] ?? $theme_id,
+        $page_list
+      );
+    }
+
+    return $impact;
+  }
+
+  /**
+   * Proposal meta that readers see only under Groove Proposal, and that the
+   * Change theme dialog warns about leaving behind. Left out: version, status,
+   * scheme and the nav toggle, which are derived or only matter once there is
+   * something to show; and prepared_by and the revision log, which no theme
+   * displays (the log is written on every publish, whatever the theme).
+   */
+  private const PROPOSAL_DETAIL_KEYS = array(
+    'proposal_client_name', 'proposal_client_logo_url', 'proposal_prepared_for',
+    'proposal_date', 'proposal_open_text',
+    'proposal_contact_name', 'proposal_contact_role', 'proposal_contact_email',
+    'proposal_contact_phone', 'proposal_contact_linkedin', 'proposal_contacts',
+  );
+
+  /**
+   * Whether this folio has stored proposal details. groove-main.js prefers the
+   * Proposal tab's live fields when the tab is on the page, since they hold
+   * whatever was typed or cleared since load.
+   */
+  private function has_proposal_details(): bool
+  {
+    $fields = $this->get_fields();
+    foreach (self::PROPOSAL_DETAIL_KEYS as $key) {
+      $value = trim((string) ($fields->$key ?? ''));
+      if ($value !== '') {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Count blocks named `<theme-id>/…`, inner blocks included, per theme.
+   *
+   * @param array $blocks    parse_blocks() output.
+   * @param string[] $theme_ids Registered theme IDs.
+   * @param array<string, int> $counts Filled in place.
+   */
+  private static function count_theme_blocks(array $blocks, array $theme_ids, array &$counts): void
+  {
+    foreach ($blocks as $block) {
+      $name = (string) ($block['blockName'] ?? '');
+      $slash = strpos($name, '/');
+      if ($slash !== false) {
+        $namespace = substr($name, 0, $slash);
+        if (in_array($namespace, $theme_ids, true)) {
+          $counts[$namespace] = ($counts[$namespace] ?? 0) + 1;
+        }
+      }
+      if (!empty($block['innerBlocks'])) {
+        self::count_theme_blocks($block['innerBlocks'], $theme_ids, $counts);
+      }
+    }
+  }
+
   public function display_theme_selection()
   {
     $fields = $this->get_fields();
@@ -1307,65 +1452,98 @@ class Folio extends Page
       $current_id = !empty($all_themes) ? (string) array_key_first($all_themes) : '';
     }
     ?>
-    <div
-      id="g-theme-picker-modal"
-      class="g-theme-picker-modal hidden"
-      aria-hidden="true">
-      <div class="g-theme-picker-modal__backdrop" data-theme-picker-close></div>
-      <div class="g-theme-picker-modal__frame">
-        <div class="g-theme-picker-modal__header">
-          <div class="g-theme-picker-modal__heading">
-            <h3 class="g-theme-picker-modal__title"><?php esc_html_e('Choose a theme', 'groove-folios'); ?></h3>
-            <p class="g-theme-picker-modal__subtitle"><?php esc_html_e('Switch the folio theme for the cover and inner pages.', 'groove-folios'); ?></p>
-          </div>
-          <button
-            type="button"
-            class="g-theme-picker-modal__close"
-            data-theme-picker-close
-            aria-label="<?php esc_attr_e('Close theme picker', 'groove-folios'); ?>">
-            <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+    <?php /* The same shell and cards as the Add New dialog on All Folios
+             (g-add-new-modal, Add_New::display_theme_card()), so changing a
+             folio's theme looks like choosing one did. Picking a card only
+             stages it: theme_id autosaves the moment it changes, so the
+             change waits for Switch theme, and for a confirmation when the
+             theme being left would take something off the folio. */ ?>
+    <div id="g-theme-picker-modal" class="g-add-new-modal" role="dialog" aria-modal="true"
+      aria-labelledby="g-theme-picker-modal-title" hidden
+      data-theme-switch-impact="<?php echo esc_attr(wp_json_encode($this->get_theme_switch_impact())); ?>">
+      <div class="g-add-new-modal__backdrop" data-theme-picker-close></div>
+      <div class="g-add-new-modal__dialog">
+        <div class="g-add-new-modal__header">
+          <h2 id="g-theme-picker-modal-title" class="g-add-new-modal__title">
+            <?php esc_html_e('Change theme', 'groove-folios'); ?>
+          </h2>
+          <button type="button" class="g-add-new-modal__close" data-theme-picker-close
+            aria-label="<?php esc_attr_e('Close', 'groove-folios'); ?>">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75"
+                stroke-linecap="round" />
+            </svg>
           </button>
         </div>
-        <div class="g-theme-picker-modal__body">
-          <div class="g-theme-picker-modal__grid">
-            <?php foreach ($all_themes as $id => $theme):
-              $active = ($id === $current_id);
+        <div class="g-add-new-modal__body">
+          <?php /* Two screens in one frame: pick, then — only when leaving the
+                   current theme would take something off the folio — confirm.
+                   The confirm screen takes the pick screen's height, so the
+                   dialog does not jump between them. */ ?>
+          <div class="g-theme-switch__screen" data-theme-switch-pick>
+            <p class="g-folio__themes-desc"><?php esc_html_e('Switch the folio theme for the cover and inner pages.', 'groove-folios'); ?></p>
+            <p class="g-folio__themes-selected">
+              <?php esc_html_e('Selected theme:', 'groove-folios'); ?>
+              <strong data-theme-staged-name><?php echo esc_html($all_themes[$current_id]['name'] ?? ''); ?></strong>
+            </p>
+            <div class="g-folio__themes" role="radiogroup" aria-label="<?php esc_attr_e('Available themes', 'groove-folios'); ?>">
+              <?php
+              foreach ($all_themes as $id => $theme) {
+                Add_New::display_theme_card((string) $id, $theme, $id === $current_id);
+              }
               ?>
-              <button
-                type="button"
-                class="g-folio__theme-option g-theme-picker-modal__option <?php echo $active ? 'is-active' : ''; ?>"
-                data-theme-id="<?php echo esc_attr($id); ?>"
-                data-theme-name="<?php echo esc_attr($theme['name']); ?>"
-                data-theme-thumbnail-url="<?php echo esc_url($theme['thumbnail_url']); ?>"
-                data-theme-description="<?php echo esc_attr($theme['description'] ?? ''); ?>"
-                aria-pressed="<?php echo $active ? 'true' : 'false'; ?>">
-                <div class="g-theme-picker-modal__option-media">
-                  <img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="<?php echo esc_attr($theme['name']); ?>"
-                    class="g-theme-picker-modal__option-image" />
-                </div>
-                <div class="g-theme-picker-modal__option-copy">
-                  <div class="g-theme-picker-modal__option-name">
-                    <?php echo esc_html($theme['name']); ?>
-                  </div>
-                  <?php if (!empty($theme['description'])): ?>
-                    <div class="g-theme-picker-modal__option-description">
-                      <?php echo esc_html($theme['description']); ?>
-                    </div>
-                  <?php endif; ?>
-                </div>
-                <span
-                  class="active-badge g-theme-picker-modal__badge <?php echo $active ? '' : 'is-hidden'; ?>"><?php esc_html_e('Selected', 'groove-folios'); ?></span>
+            </div>
+            <div class="g-folio__theme-button">
+              <button type="button" class="button button-secondary" data-theme-picker-close>
+                <?php esc_html_e('Cancel', 'groove-folios'); ?>
               </button>
-            <?php endforeach; ?>
+              <button type="button" class="button button-primary" data-theme-switch-apply disabled>
+                <?php esc_html_e('Switch theme', 'groove-folios'); ?>
+              </button>
+            </div>
           </div>
-        </div>
-        <div class="g-theme-picker-modal__footer">
-          <button
-            type="button"
-            class="g-theme-picker-modal__done"
-            data-theme-picker-close>
-            <?php esc_html_e('Done', 'groove-folios'); ?>
-          </button>
+
+          <?php /* Filled in by groove-main.js from data-theme-switch-impact:
+                   which theme is being left, and what of it is on this folio. */ ?>
+          <div class="g-theme-switch__screen g-theme-switch-confirm" data-theme-switch-confirm hidden role="group"
+            aria-labelledby="g-theme-switch-confirm-lead" aria-describedby="g-theme-switch-confirm-list g-theme-switch-confirm-note"
+            data-lead="<?php echo esc_attr(
+              /* translators: %s: theme name. Keep the placeholder as %s. */
+              __('Leaving %s changes what readers of this folio see:', 'groove-folios')); ?>"
+            data-note="<?php echo esc_attr(
+              /* translators: %s: theme name. Keep the placeholder as %s. */
+              __('Nothing is deleted. Switch back to %s and it all shows again.', 'groove-folios')); ?>"
+            data-title="<?php echo esc_attr(
+              /* translators: %s: theme name. Keep the placeholder as %s. */
+              __('Switch to %s?', 'groove-folios')); ?>"
+            data-proposal-details="<?php echo esc_attr(__('The proposal details stop showing: client, contacts, date and cover button text.', 'groove-folios')); ?>"
+            data-proposal-details-stored="<?php echo $this->has_proposal_details() ? '1' : '0'; ?>"
+            data-proposal-detail-fields="<?php echo esc_attr(implode(',', self::PROPOSAL_DETAIL_KEYS)); ?>">
+            <div class="g-theme-switch-confirm__route" aria-hidden="true">
+              <figure class="g-theme-switch-confirm__theme">
+                <img alt="" class="g-theme-switch-confirm__thumb" data-theme-switch-from-thumb />
+                <figcaption data-theme-switch-from-name></figcaption>
+              </figure>
+              <span class="g-theme-switch-confirm__arrow dashicons dashicons-arrow-right-alt"></span>
+              <figure class="g-theme-switch-confirm__theme">
+                <img alt="" class="g-theme-switch-confirm__thumb" data-theme-switch-to-thumb />
+                <figcaption data-theme-switch-to-name></figcaption>
+              </figure>
+            </div>
+            <div class="g-theme-switch-confirm__notice">
+              <p id="g-theme-switch-confirm-lead" class="g-theme-switch-confirm__lead" data-theme-switch-confirm-lead></p>
+              <ul id="g-theme-switch-confirm-list" class="g-theme-switch-confirm__list" data-theme-switch-confirm-list></ul>
+              <p id="g-theme-switch-confirm-note" class="g-theme-switch-confirm__note" data-theme-switch-confirm-note></p>
+            </div>
+            <div class="g-folio__theme-button g-theme-switch-confirm__actions">
+              <button type="button" class="button button-secondary" data-theme-switch-back>
+                <?php esc_html_e('Back', 'groove-folios'); ?>
+              </button>
+              <button type="button" class="button button-primary" data-theme-switch-confirm-apply>
+                <?php esc_html_e('Switch theme', 'groove-folios'); ?>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

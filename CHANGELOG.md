@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Changed
+- Change theme in the folio editor opens the same dialog as choosing a theme for a new folio: the same frame, the same cards with the Selected badge on the corner, a Preview link under each, and arrow keys that move the selection. It used to be a wider dialog of its own, with larger cards, each theme's description, a bordered close button and a Done footer, so the one decision looked like two. The descriptions are gone from the cards because the selected theme's description is already on the Setup tab beside the Change theme button. Both dialogs now render the card from one method, `Add_New::display_theme_card()`, and move the selection with the same script, so they cannot drift apart again.
+- Changing a folio's theme asks first when the switch would take something off the folio. A switch deletes nothing — page content is untouched and every theme setting survives the save — but it can change what readers see. Blocks from Groove eBook or Groove Proposal still render under another theme, just without their styling, which lives only in their own theme's stylesheet; and a proposal's client, contacts, date and cover button text show only in Groove Proposal. So when the theme being left has any of that on this folio, Switch theme turns the dialog to a second screen titled with the question — "Switch to Groove Magazine?" — showing the two themes side by side, then which pages and which details, with Back to choose again and Switch theme to confirm, and says that switching back brings it all back. The screen takes the grid's place and its height, so the dialog does not grow to ask. A folio with nothing to lose switches without the question. For that to be possible, picking a card now only chooses it and Switch theme applies it: the theme used to be applied, and autosaved, on the click — or on each arrow-key step through the cards — so there was nothing to confirm before it had already happened, and Cancel could not take it back.
+
+### Fixed
+- With reduced motion turned on, closing the Add New dialog left it covering the page invisibly and swallowing clicks, because it waited for a fade that never ran.
+
 ## [0.4.0] - 2026-09-23
 
 ### Added

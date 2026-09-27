@@ -19,6 +19,96 @@ jQuery(function () {
     }
   }
 
+  // A .g-add-new-modal shell fades out, then takes [hidden] back. Until it
+  // does, it still covers the page invisibly, so with reduced motion — no
+  // transition, so no transitionend — it has to be hidden straight away.
+  function hideAfterFade(modalEl) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      modalEl.setAttribute('hidden', '')
+      return
+    }
+
+    // transitionend bubbles, so a button's own hover fade inside the dialog
+    // would end this early. Only the dialog's fade counts.
+    const dialogEl = modalEl.querySelector('.g-add-new-modal__dialog')
+    modalEl.addEventListener('transitionend', function handler(event) {
+      if (event.target !== dialogEl || event.propertyName !== 'opacity') {
+        return
+      }
+      modalEl.removeEventListener('transitionend', handler)
+      if (!modalEl.classList.contains('is-open')) {
+        modalEl.setAttribute('hidden', '')
+      }
+    })
+  }
+
+  // Theme cards (Add_New::display_theme_card()) are one radiogroup per
+  // .g-folio__themes, used by the Add New picker and the folio editor's Change
+  // theme dialog. Moving the selection is shared; what it means is not, so
+  // each page passes its own onSelect.
+  const themeCardSelector = '.g-folio__themes .g-folio__theme-option'
+
+  function markThemeCardSelected(card, moveFocus) {
+    const selected = jQuery(card)
+    const cards = selected.closest('.g-folio__themes').find('.g-folio__theme-option')
+
+    // hover:border-gray-300 rides along with the resting border colour. It
+    // used to be set in the markup only, so the card the page opened on lost
+    // its hover state for good once the selection moved off it.
+    cards
+      .removeClass('border-indigo-600 ring-1 ring-indigo-600')
+      .addClass('border-gray-200 hover:border-gray-300')
+      .attr('aria-checked', 'false')
+      .attr('tabindex', '-1')
+    cards.find('.active-badge').addClass('hidden')
+
+    selected
+      .removeClass('border-gray-200 hover:border-gray-300')
+      .addClass('border-indigo-600 ring-1 ring-indigo-600')
+      .attr('aria-checked', 'true')
+      .attr('tabindex', '0')
+    selected.find('.active-badge').removeClass('hidden')
+
+    if (moveFocus) {
+      selected.trigger('focus')
+    }
+  }
+
+  function bindThemeCards(onSelect) {
+    function select(card) {
+      markThemeCardSelected(card, true)
+      onSelect(jQuery(card))
+    }
+
+    jQuery(document).on('click', themeCardSelector, function () {
+      select(this)
+    })
+
+    // Arrow keys move the selection, as in any radiogroup.
+    jQuery(document).on('keydown', themeCardSelector, function (event) {
+      const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
+      if (keys.indexOf(event.key) === -1) {
+        return
+      }
+
+      event.preventDefault()
+
+      const cards = jQuery(this).closest('.g-folio__themes').find('.g-folio__theme-option')
+      const currentIndex = cards.index(this)
+      if (currentIndex === -1) {
+        return
+      }
+
+      const isBack = event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+      const nextIndex = (currentIndex + (isBack ? -1 : 1) + cards.length) % cards.length
+      const nextCard = cards.get(nextIndex)
+
+      if (nextCard) {
+        select(nextCard)
+      }
+    })
+  }
+
   // Hover/focus tooltip for icon-only controls. Lives at the top of the file,
   // not inside a page branch: the folio editor's font resets and copy-link were
   // the first callers, the Add New sample-content hint is the next, and any
@@ -953,35 +1043,192 @@ jQuery(function () {
       if (!modal.length) {
         return {
           open() {},
-          close() {}
+          close() {},
+          stage() {}
         }
       }
 
+      const modalEl = modal[0]
+      const activeInput = jQuery('#g-active-theme-id')
+      const pickScreen = modal.find('[data-theme-switch-pick]')
+      const applyButton = modal.find('[data-theme-switch-apply]')
+      const confirmBox = modal.find('[data-theme-switch-confirm]')
+      const title = modal.find('#g-theme-picker-modal-title')
+      const pickTitle = title.text().trim()
       let lastFocusedElement = null
+      let stagedThemeId = ''
 
+      // Pages whose blocks belong to each theme, as finished sentences keyed
+      // by the theme being left (Folio::get_theme_switch_impact()).
+      let blockImpact = {}
+      try {
+        blockImpact = JSON.parse(modal.attr('data-theme-switch-impact') || '{}') || {}
+      } catch (error) {
+        blockImpact = {}
+      }
+
+      function currentThemeId() {
+        return String(activeInput.val() || '')
+      }
+
+      function findCard(themeId) {
+        return modal.find('.g-folio__theme-option').filter(function () {
+          return String(jQuery(this).data('theme-id')) === themeId
+        }).first()
+      }
+
+      function themeName(themeId) {
+        return String(findCard(themeId).data('theme-name') || themeId)
+      }
+
+      function fillName(attribute, themeId) {
+        return String(confirmBox.attr(attribute) || '').replace(/%(1\$)?s/, themeName(themeId))
+      }
+
+      // The Proposal tab's fields when the tab is on the page — they hold what
+      // was typed or cleared since load, and autosave keeps it — otherwise
+      // what was stored. The tab is only rendered for a folio that loaded on
+      // Groove Proposal.
+      function hasProposalDetails() {
+        const names = String(confirmBox.attr('data-proposal-detail-fields') || '').split(',')
+        const fields = activeInput.closest('form').find(names.map(function (name) {
+          return '[name="' + name + '"]'
+        }).join(','))
+
+        if (!fields.length) {
+          return confirmBox.attr('data-proposal-details-stored') === '1'
+        }
+
+        return fields.toArray().some(function (field) {
+          return !field.disabled && String(jQuery(field).val() || '').trim() !== ''
+        })
+      }
+
+      // What leaving themeId takes off the folio, one sentence per line.
+      function impactOfLeaving(themeId) {
+        const items = Array.isArray(blockImpact[themeId]) ? blockImpact[themeId].slice() : []
+        if (themeId === 'groove-proposal' && hasProposalDetails()) {
+          items.push(String(confirmBox.attr('data-proposal-details') || ''))
+        }
+        return items
+      }
+
+      // Each screen slides in from the side it sits on: the confirm from the
+      // right, the grid back from the left. Restarted by class, so it runs
+      // every time rather than only on the first show.
+      function enterScreen(screen, className) {
+        const el = screen[0]
+        el.classList.remove('is-entering-forward', 'is-entering-back')
+        void el.offsetWidth
+        el.classList.add(className)
+      }
+
+      function showPickScreen(animate) {
+        confirmBox.prop('hidden', true).css('min-height', '')
+        pickScreen.prop('hidden', false)
+        title.text(pickTitle)
+        if (animate) {
+          enterScreen(pickScreen, 'is-entering-back')
+        }
+      }
+
+      // The confirm screen stands where the grid was and takes its height, so
+      // the dialog neither jumps nor grows to ask.
+      function showConfirmScreen(leaving, items) {
+        const pickHeight = pickScreen.outerHeight()
+
+        confirmBox.find('[data-theme-switch-from-thumb]').attr('src', String(findCard(leaving).data('theme-thumbnail-url') || ''))
+        confirmBox.find('[data-theme-switch-from-name]').text(themeName(leaving))
+        confirmBox.find('[data-theme-switch-to-thumb]').attr('src', String(findCard(stagedThemeId).data('theme-thumbnail-url') || ''))
+        confirmBox.find('[data-theme-switch-to-name]').text(themeName(stagedThemeId))
+
+        confirmBox.find('[data-theme-switch-confirm-lead]').text(fillName('data-lead', leaving))
+        const list = confirmBox.find('[data-theme-switch-confirm-list]').empty()
+        items.forEach(function (item) {
+          list.append(jQuery('<li>').text(item))
+        })
+        confirmBox.find('[data-theme-switch-confirm-note]').text(fillName('data-note', leaving))
+        title.text(fillName('data-title', stagedThemeId))
+
+        pickScreen.prop('hidden', true)
+        confirmBox.css('min-height', pickHeight ? pickHeight + 'px' : '').prop('hidden', false)
+        enterScreen(confirmBox, 'is-entering-forward')
+        confirmBox.find('[data-theme-switch-back]').trigger('focus')
+      }
+
+      // Back keeps the staged card, so the choice can be changed rather than
+      // made again.
+      function backToPick() {
+        showPickScreen(true)
+        const stagedCard = findCard(stagedThemeId)
+        if (stagedCard.length) {
+          stagedCard.trigger('focus')
+        }
+      }
+
+      // Picking a card only stages it. theme_id autosaves the moment it
+      // changes, so nothing reaches it until Switch theme, and the confirm.
+      function stage(themeId) {
+        stagedThemeId = themeId
+        applyButton.prop('disabled', themeId === currentThemeId())
+        modal.find('[data-theme-staged-name]').text(themeName(themeId))
+        showPickScreen()
+      }
+
+      function apply() {
+        const themeId = stagedThemeId
+        closeModal()
+        if (themeId && themeId !== currentThemeId()) {
+          activeInput.val(themeId).trigger('change')
+        }
+      }
+
+      function requestApply() {
+        const leaving = currentThemeId()
+        if (!stagedThemeId || stagedThemeId === leaving) {
+          closeModal()
+          return
+        }
+
+        const items = impactOfLeaving(leaving)
+        if (!items.length) {
+          apply()
+          return
+        }
+
+        showConfirmScreen(leaving, items)
+      }
+
+      // Same open/close as the Add New dialog, whose shell this one borrows:
+      // [hidden] keeps it out of the tab order, .is-open runs the fade.
       function openModal() {
-        if (!modal.hasClass('hidden')) {
+        if (modalEl.classList.contains('is-open')) {
           return
         }
 
         lastFocusedElement = document.activeElement
-        modal.removeClass('hidden').attr('aria-hidden', 'false')
+        const current = currentThemeId()
+        const currentCard = findCard(current)
+        if (currentCard.length) {
+          markThemeCardSelected(currentCard, false)
+        }
+        stage(current)
 
+        modalEl.removeAttribute('hidden')
         window.requestAnimationFrame(function () {
-          const selectedCard = modal.find('.g-folio__theme-option[aria-pressed="true"]').first()
-          const firstFocusable = selectedCard.length ? selectedCard : modal.find('button').filter(':visible').first()
-          if (firstFocusable.length) {
-            firstFocusable.trigger('focus')
-          }
+          modalEl.classList.add('is-open')
+          const firstFocusable = currentCard.length ? currentCard : modal.find('.g-add-new-modal__close')
+          firstFocusable.trigger('focus')
         })
       }
 
       function closeModal() {
-        if (modal.hasClass('hidden')) {
+        if (!modalEl.classList.contains('is-open')) {
           return
         }
 
-        modal.addClass('hidden').attr('aria-hidden', 'true')
+        modalEl.classList.remove('is-open')
+        hideAfterFade(modalEl)
 
         if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
           lastFocusedElement.focus()
@@ -996,8 +1243,16 @@ jQuery(function () {
         closeModal()
       })
 
+      applyButton.on('click', requestApply)
+      confirmBox.on('click', '[data-theme-switch-confirm-apply]', apply)
+      confirmBox.on('click', '[data-theme-switch-back]', backToPick)
+
+      // Escape belongs to the theme preview while it is open over this dialog.
       jQuery(document).on('keydown.gThemePicker', function (event) {
-        if (event.key !== 'Escape' || modal.hasClass('hidden')) {
+        if (event.key !== 'Escape' || !modalEl.classList.contains('is-open')) {
+          return
+        }
+        if (jQuery('.g-tpp-overlay.is-open').length) {
           return
         }
 
@@ -1007,28 +1262,12 @@ jQuery(function () {
 
       return {
         open: openModal,
-        close: closeModal
+        close: closeModal,
+        stage: stage
       }
     }
 
-    bindThemePickerModal()
-
-    function setActiveThemeOption(option) {
-      const selected = jQuery(option)
-      const options = jQuery('#g-theme-picker-modal .g-folio__theme-option')
-
-      options
-        .removeClass('is-active')
-        .attr('aria-pressed', 'false')
-
-      options.find('.active-badge').addClass('is-hidden')
-
-      selected
-        .addClass('is-active')
-        .attr('aria-pressed', 'true')
-
-      selected.find('.active-badge').removeClass('is-hidden')
-    }
+    const themePickerModal = bindThemePickerModal()
 
     function syncSelectedThemeSummary() {
       const activeThemeId = String(jQuery('#g-active-theme-id').val() || '')
@@ -1041,7 +1280,7 @@ jQuery(function () {
         return
       }
 
-      setActiveThemeOption(selectedOption)
+      markThemeCardSelected(selectedOption, false)
 
       jQuery('[data-theme-summary-name]').text(String(selectedOption.data('theme-name') || ''))
       jQuery('[data-theme-summary-description]').text(String(selectedOption.data('theme-description') || ''))
@@ -1087,15 +1326,12 @@ jQuery(function () {
       syncSelectedThemeSummary()
     })
 
-    jQuery(document).on('click', '#g-theme-picker-modal .g-folio__theme-option', function () {
-      setActiveThemeOption(this)
-      jQuery('#g-active-theme-id').val(jQuery(this).data('theme-id')).trigger('change')
+    bindThemeCards(function (card) {
+      themePickerModal.stage(String(card.data('theme-id') || ''))
     })
   }
 
   if (Groove.isAddNewPage()) {
-    const themeCardsSelector = '.g-folio__theme-option'
-
     function syncAddNewThemeSpecificFields(themeId) {
       const activeThemeId = String(themeId || '')
 
@@ -1109,67 +1345,15 @@ jQuery(function () {
       })
     }
 
-    function selectAddNewTheme(card) {
-      const selected = jQuery(card)
-      const cards = jQuery(themeCardsSelector)
-      const selectedName = selected.data('theme-name') || ''
-      const selectedThemeId = selected.data('theme-id')
-
-      // hover:border-gray-300 rides along with the resting border colour. It
-      // used to be set in the markup only, so the card the page opened on lost
-      // its hover state for good once the selection moved off it.
-      cards
-        .removeClass('border-indigo-600 ring-1 ring-indigo-600')
-        .addClass('border-gray-200 hover:border-gray-300')
-        .attr('aria-checked', 'false')
-        .attr('tabindex', '-1')
-      cards.find('.active-badge').addClass('hidden')
-
-      selected
-        .removeClass('border-gray-200 hover:border-gray-300')
-        .addClass('border-indigo-600 ring-1 ring-indigo-600')
-        .attr('aria-checked', 'true')
-        .attr('tabindex', '0')
-        .focus()
-      selected.find('.active-badge').removeClass('hidden')
+    bindThemeCards(function (card) {
+      const selectedThemeId = card.data('theme-id')
 
       jQuery('[name="themeId"]').val(selectedThemeId)
-      jQuery('#g-folio-selected-theme-name').text(selectedName)
+      jQuery('#g-folio-selected-theme-name').text(card.data('theme-name') || '')
       syncAddNewThemeSpecificFields(selectedThemeId)
-    }
-
-    jQuery(document).on('click', themeCardsSelector, function () {
-      selectAddNewTheme(this)
     })
 
-    jQuery(document).on('keydown', themeCardsSelector, function (event) {
-      const horizontalKeys = ['ArrowLeft', 'ArrowRight']
-      const verticalKeys = ['ArrowUp', 'ArrowDown']
-      const allKeys = horizontalKeys.concat(verticalKeys)
-
-      if (allKeys.indexOf(event.key) === -1) {
-        return
-      }
-
-      event.preventDefault()
-
-      const cards = jQuery(themeCardsSelector)
-      const currentIndex = cards.index(this)
-      if (currentIndex === -1) {
-        return
-      }
-
-      const isBack = event.key === 'ArrowLeft' || event.key === 'ArrowUp'
-      const delta = isBack ? -1 : 1
-      const nextIndex = (currentIndex + delta + cards.length) % cards.length
-      const nextCard = cards.get(nextIndex)
-
-      if (nextCard) {
-        selectAddNewTheme(nextCard)
-      }
-    })
-
-    const initialSelectedCard = jQuery(themeCardsSelector + '[aria-checked="true"]').first()
+    const initialSelectedCard = jQuery(themeCardSelector + '[aria-checked="true"]').first()
     if (initialSelectedCard.length) {
       syncAddNewThemeSpecificFields(initialSelectedCard.data('theme-id'))
     } else {
@@ -1402,10 +1586,7 @@ jQuery(function () {
     function closeAddNewModal() {
       addNewModalEl.classList.remove('is-open')
       document.body.style.overflow = ''
-      addNewModalEl.addEventListener('transitionend', function handler() {
-        addNewModalEl.removeEventListener('transitionend', handler)
-        addNewModalEl.setAttribute('hidden', '')
-      }, { once: true })
+      hideAfterFade(addNewModalEl)
     }
 
     jQuery(document).on('click', '[data-groove-open-add-new]', openAddNewModal)
@@ -1462,9 +1643,10 @@ jQuery(function () {
 
   // ── Theme Picker Preview Overlay ────────────────────────────────────────────
 
-  // Shared by the Add New theme picker and the Themes screen's details dialog —
-  // both offer Preview on a theme, so both get the same overlay.
-  if (Groove.isAddNewPage() || Groove.isThemesPage()) {
+  // Shared by the Add New theme picker, the folio editor's Change theme dialog
+  // and the Themes screen's details dialog — all offer Preview on a theme, so
+  // all get the same overlay.
+  if (Groove.isAddNewPage() || Groove.isFolioPage() || Groove.isThemesPage()) {
     const previewBaseUrl = (settings.themePreviewBaseUrl || '').replace(/\?.*$/, '')
     const previewNonce   = settings.themePreviewNonce || ''
 

@@ -161,7 +161,7 @@ class Module extends BaseModule
 		$theme_preview_base_url = '';
 		$theme_preview_nonce = '';
 		$open_add_new_modal = false;
-		if (in_array($current_page, ['groove-add-new', 'groove-all-folios', 'groove-themes'], true)) {
+		if (in_array($current_page, ['groove-add-new', 'groove-all-folios', 'groove-folio', 'groove-themes'], true)) {
 			$theme_preview_base_url = add_query_arg([], site_url('/'));
 			$theme_preview_nonce    = wp_create_nonce('groove_theme_preview');
 		}
