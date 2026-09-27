@@ -88,13 +88,21 @@ class Folio extends Page
         'text' => 'Save',
         'type' => 'secondary',
         'ui' => 'wp',
-        'action' => 'save_groove_folio_manual'
+        'action' => 'save_groove_folio_manual',
+        'attrs' => array(
+          'id' => 'g-folio-save',
+          'form' => 'g-folio-form',
+          'data-groove-save-idle' => __('Nothing to save — every change is already saved.', 'groove-folios'),
+        ),
       ),
       array(
         'text' => $publish_button_text,
         'type' => $publish_button_type,
         'ui' => 'wp',
-        'action' => $publish_button_action
+        'action' => $publish_button_action,
+        'attrs' => array(
+          'form' => 'g-folio-form',
+        ),
       ),
       array(
         'text' => __('Copy link', 'groove-folios'),
@@ -462,8 +470,13 @@ class Folio extends Page
     $proposal_color_scheme = isset($_POST['proposal_color_scheme']) ? sanitize_key(wp_unslash($_POST['proposal_color_scheme'])) : (string) ($fields->proposal_color_scheme ?? 'default');
     $proposal_color_scheme = $proposal_color_scheme === 'dynamic' ? 'dynamic' : 'default';
     $proposal_open_text = isset($_POST['proposal_open_text']) ? sanitize_text_field(wp_unslash($_POST['proposal_open_text'])) : (string) ($fields->proposal_open_text ?? '');
-    $collection_tags_raw = isset($_POST['collection_tags']) ? sanitize_text_field(wp_unslash($_POST['collection_tags'])) : '';
-    $collection_tag_names = array_values(array_unique(array_filter(array_map('trim', explode(',', $collection_tags_raw)))));
+    // A missing field means 'keep existing', like the images below: the Pages
+    // tab publishes without the Setup fields, and must not clear the tags.
+    $collection_tag_names = null;
+    if (isset($_POST['collection_tags'])) {
+      $collection_tags_raw = sanitize_text_field(wp_unslash($_POST['collection_tags']));
+      $collection_tag_names = array_values(array_unique(array_filter(array_map('trim', explode(',', $collection_tags_raw)))));
+    }
 
     // feature_image_id: empty-string means 'clear image', positive int means 'set image'.
     // A missing or null field means 'keep existing' — we do NOT delete in that case.
@@ -523,7 +536,7 @@ class Folio extends Page
 
     $folio_result = wp_update_post($update_args);
 
-    if (!is_wp_error($folio_result)) {
+    if (!is_wp_error($folio_result) && $collection_tag_names !== null) {
       wp_set_object_terms($id, $collection_tag_names, 'groove_collection_tag', false);
     }
 
@@ -2349,24 +2362,37 @@ class Folio extends Page
   {
     $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tab to show.
 
+    $folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the folio this form edits; the save handler checks the groove_save_folio nonce.
+
     if ($tab_key === 'pages') {
+      // The Pages tab holds its own list form, and forms cannot nest, so the
+      // header's Save and Publish point at this empty one through their form
+      // attribute. It carries no Setup fields; save_folio() keeps what is stored.
+      ?>
+      <form id="g-folio-form" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+        <?php wp_nonce_field('groove_save_folio', 'groove_nonce'); ?>
+        <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
+      </form>
+      <?php
+      // Save stays in the header so it does not move between tabs, but there
+      // is nothing on this tab for it to save.
       $original_right_buttons = $this->right_button_items;
-      $this->right_button_items = array_values(array_filter(
-        (array) $this->right_button_items,
-        function ($item) {
-          return isset($item['link']);
+      foreach ($this->right_button_items as &$item) {
+        if (isset($item['action']) && $item['action'] === 'save_groove_folio_manual') {
+          $item['class'] = 'disabled';
+          $item['attrs']['aria-disabled'] = 'true';
+          $item['attrs']['data-groove-save-idle'] = __('Nothing to save here — pages save in the page editor.', 'groove-folios');
         }
-      ));
+      }
+      unset($item);
 
       parent::display_page();
 
       $this->right_button_items = $original_right_buttons;
       return;
     }
-
-    $folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the folio this form edits; the save handler checks the groove_save_folio nonce.
     ?>
-    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+    <form id="g-folio-form" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
       <?php wp_nonce_field('groove_save_folio', 'groove_nonce'); ?>
       <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
       <?php parent::display_page() ?>

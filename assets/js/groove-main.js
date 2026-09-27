@@ -511,6 +511,32 @@ jQuery(function () {
       return fields
     }
 
+    // Save is live only while the form differs from what the server last
+    // stored — by an autosave, a manual save or a publish — the same rule as
+    // the Settings forms (groove-form-state.js). The revision note is left out:
+    // Save does not store it, only Publish reads it.
+    const saveButton = jQuery('button[value="save_groove_folio_manual"]').first()
+    let isSaveBusy = false
+
+    function savedStateOf(fields) {
+      const state = Object.assign({}, fields)
+      delete state.groove_nonce
+      delete state.proposal_revision_note
+      return JSON.stringify(state)
+    }
+
+    let lastSavedState = ''
+
+    function refreshSaveButton() {
+      if (!saveButton.length) {
+        return
+      }
+
+      const idle = isSaveBusy || savedStateOf(getFields()) === lastSavedState
+      saveButton.toggleClass('disabled', idle)
+      saveButton.attr('aria-disabled', idle ? 'true' : 'false')
+    }
+
     function ajax(status, options = {}) {
       const shouldReload = !!options.reload
       const reloadDelayMs = Number(options.reloadDelayMs || 0)
@@ -520,6 +546,7 @@ jQuery(function () {
       const savedText = options.savedText || 'Saved'
       const errorText = options.errorText || 'Save failed'
       const fields = getFields()
+      const sentState = savedStateOf(fields)
       const nonce = fields.groove_nonce || folioForm.find('input[name="groove_nonce"]').first().val()
 
       if (!fields.folio_id || !nonce) {
@@ -544,6 +571,8 @@ jQuery(function () {
       }).done(function (result) {
         if (result && result.code === 0) {
           setSaveStatus('saved', savedText, saveIndicatorAutoHideMs)
+          lastSavedState = sentState
+          refreshSaveButton()
 
           if (shouldUpdatePermalink && result.slug) {
             jQuery('#permalink').val(result.slug)
@@ -615,6 +644,13 @@ jQuery(function () {
 
     if (folioForm.length) {
       folioForm.on('input change', 'input, select, textarea', function () {
+        if (window.grooveHideToggletip && !isWithinNonFolioSaveScope(this)) {
+          // They are editing again; whatever the last press was told has
+          // served its purpose.
+          window.grooveHideToggletip()
+        }
+        refreshSaveButton()
+
         const name = this.name || ''
         if (!name || name === 'groove_nonce' || name === 'folio_id' || name === 'action' || name === 'permalink' || name === 'proposal_revision_note') {
           return
@@ -664,9 +700,24 @@ jQuery(function () {
       const originalLabel = saveBtn.text()
 
       e.preventDefault()
+
+      if (saveBtn.attr('aria-disabled') === 'true') {
+        if (!isSaveBusy && window.grooveShowToggletip) {
+          window.grooveShowToggletip(this, {
+            message: String(saveBtn.data('groove-save-idle') || ''),
+            type: 'info',
+            duration: 4000
+          })
+        }
+        return
+      }
+
       isManualSave = true
       clearTimeout(autosaveTimer)
       saveBtn.text('Saving...')
+      // Switched off while in flight, so a double press cannot save twice.
+      isSaveBusy = true
+      refreshSaveButton()
       ajax(action, {
         reload: false,
         updatePermalink: true,
@@ -675,8 +726,26 @@ jQuery(function () {
         errorText: 'Save failed'
       }).always(function () {
         isManualSave = false
+        isSaveBusy = false
         saveBtn.text(originalLabel)
+        refreshSaveButton()
       })
+    })
+
+    // The baseline is taken once the rest of this handler has run, so a field
+    // an initialiser below adjusts on load does not count as an edit.
+    setTimeout(function () {
+      lastSavedState = savedStateOf(getFields())
+      refreshSaveButton()
+    }, 0)
+
+    // Coming back to the editor from the browser's cache: the fields may hold
+    // values the server never saw, so the state has to be worked out again.
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted) {
+        isSaveBusy = false
+        refreshSaveButton()
+      }
     })
 
     createAdaptiveTooltip('#g-reset-header-font', 'Reset font')
