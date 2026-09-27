@@ -76,6 +76,15 @@ Under a base path, `/folio/` by default. You can change it on Groove → Setting
 
 == Changelog ==
 
+= 0.5.0 =
+* Change theme in the folio editor uses the same dialog as choosing a theme for a new folio.
+* Switching a folio's theme asks first when the new theme would hide blocks or proposal details, and nothing is applied until you press Switch theme.
+* Removing a theme on Groove → Themes asks on a second screen of the theme's dialog, with a count of the folios that use it.
+* The folio editor's header shows Preview, Save, Publish and Copy link on every tab. Save is greyed out when there is nothing to save.
+* Copy link on a draft folio copies the preview link until the folio is published.
+* Publishing a folio no longer clears its collection tags.
+* With reduced motion on, the Add New dialog no longer blocks clicks after it closes.
+
 = 0.4.0 =
 * First release on WordPress.org.
 * Sample photos are downloaded on request (Settings → Imagery) instead of being bundled.
@@ -85,6 +94,9 @@ Under a base path, `/folio/` by default. You can change it on Groove → Setting
 * CHANGELOG.md in the plugin folder has the full history.
 
 == Upgrade Notice ==
+
+= 0.5.0 =
+Theme switches and theme removal now ask before hiding content, and publishing a folio no longer clears its collection tags.
 
 = 0.4.0 =
 Security fix for headings in the eBook, Magazine and Newsletter themes, and published folios now return HTTP 200. Sample photos must be downloaded once from Settings → Imagery.
