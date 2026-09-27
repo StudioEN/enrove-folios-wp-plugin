@@ -1607,29 +1607,8 @@ body.groove .g-theme-details__actions .g-folio__sample-toggle {
   margin-right: 0;
 }
 
-/* Opens under the row that asked, so it needs the gap the row's own rule
-   above it has — and nothing when it is closed, which is most of the time. */
-.g-theme-details__danger-confirm {
-  margin-top: 14px;
-  padding: 12px 14px;
-  border: 1px solid var(--g-red-5);
-  border-radius: 8px;
-  background: var(--g-red-0);
-}
-
-.g-theme-details__danger-confirm p {
-  margin: 0 0 10px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--g-red-70);
-}
-
-.g-theme-details__danger-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
+/* Remove theme asks on a second screen in this frame — see "Dialog screens"
+   further down, which the folio's Change theme dialog shares. */
 
 /* ── Replace-theme confirmation ─────────────────────────────────────────────
    Borrows the details dialog's frame — and its header, its action row and the
@@ -1675,7 +1654,7 @@ body.groove .g-theme-confirm__answers form {
   color: var(--g-text);
 }
 
-/* Same inset as the danger confirm below it, because it is the same kind of
+/* Same inset as a dialog-screen notice, because it is the same kind of
    thing: the facts the answer turns on, held apart from the prose. */
 .g-theme-confirm__facts {
   padding: 12px 14px;
@@ -2470,45 +2449,52 @@ body.groove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
   }
 }
 
-/* ── Change theme: confirm before a switch hides content ─────────────────
-   A second screen in the same frame, standing where the grid was: the JS
-   gives it the grid screen's height, and the answers sit on the same bottom
-   row the grid's own buttons did. Nothing is deleted by a switch, so the
-   notice wears the yellow of the replace-theme warning, not Remove's red. */
+/* ── Dialog screens: confirm on a second screen in the same frame ────────
+   A dialog that has to ask before something disruptive — Change theme on a
+   folio, Remove theme on the Themes screen — does not stack a second dialog
+   or grow a box under its buttons. The screen it was on steps aside and the
+   question stands in its place, at that screen's height (the JS sets it), so
+   the frame neither jumps nor grows to ask. The dialog's title becomes the
+   question, and the answers sit on the bottom row the first screen's own
+   buttons did.
 
-body.groove .g-theme-switch__screen[hidden] {
+   The notice is yellow when nothing is lost for good (a theme switch hides
+   content; switching back shows it again) and red, --danger, when the answer
+   deletes something. */
+
+body.groove .g-dialog-screen[hidden] {
   display: none;
 }
 
-body.groove .g-theme-switch-confirm {
+body.groove .g-dialog-confirm {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* The confirm comes in from the right and the grid goes back from the left,
-   so the two screens read as a step forward and a step back. */
-body.groove .g-theme-switch__screen.is-entering-forward {
-  animation: g-theme-switch-forward 0.18s ease;
+/* The question comes in from the right and the first screen goes back from
+   the left, so the two read as a step forward and a step back. */
+body.groove .g-dialog-screen.is-entering-forward {
+  animation: g-dialog-screen-forward 0.18s ease;
 }
 
-body.groove .g-theme-switch__screen.is-entering-back {
-  animation: g-theme-switch-back 0.18s ease;
+body.groove .g-dialog-screen.is-entering-back {
+  animation: g-dialog-screen-back 0.18s ease;
 }
 
-@keyframes g-theme-switch-forward {
+@keyframes g-dialog-screen-forward {
   from { opacity: 0; transform: translateX(8px); }
   to { opacity: 1; transform: none; }
 }
 
-@keyframes g-theme-switch-back {
+@keyframes g-dialog-screen-back {
   from { opacity: 0; transform: translateX(-8px); }
   to { opacity: 1; transform: none; }
 }
 
-/* From → to, at a size that names the themes without competing with the
-   words below it. */
-body.groove .g-theme-switch-confirm__route {
+/* What the question is about — one theme, or from → to — at a size that
+   names it without competing with the words below. */
+body.groove .g-dialog-confirm__subject {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2516,7 +2502,7 @@ body.groove .g-theme-switch-confirm__route {
   padding-top: 4px;
 }
 
-body.groove .g-theme-switch-confirm__theme {
+body.groove .g-dialog-confirm__figure {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2525,7 +2511,7 @@ body.groove .g-theme-switch-confirm__theme {
   width: 150px;
 }
 
-body.groove .g-theme-switch-confirm__thumb {
+body.groove .g-dialog-confirm__thumb {
   display: block;
   width: 100%;
   height: 90px;
@@ -2535,7 +2521,7 @@ body.groove .g-theme-switch-confirm__thumb {
   background: var(--g-gray-5);
 }
 
-body.groove .g-theme-switch-confirm__theme figcaption {
+body.groove .g-dialog-confirm__figure figcaption {
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
@@ -2543,14 +2529,14 @@ body.groove .g-theme-switch-confirm__theme figcaption {
   color: var(--g-text);
 }
 
-body.groove .g-theme-switch-confirm__arrow {
+body.groove .g-dialog-confirm__arrow {
   /* Centred on the thumbnails, not on thumbnail + caption: twice the
      caption line and its gap, since a bottom margin moves the centre by half. */
   margin-bottom: 26px;
   color: var(--g-gray-30);
 }
 
-body.groove .g-theme-switch-confirm__notice {
+body.groove .g-dialog-confirm__notice {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2561,21 +2547,27 @@ body.groove .g-theme-switch-confirm__notice {
   color: var(--g-yellow-70);
 }
 
+body.groove .g-dialog-confirm__notice--danger {
+  border-color: var(--g-red-5);
+  background: var(--g-red-0);
+  color: var(--g-red-70);
+}
+
 /* Core's p and li margins are unlayered and would win over any utility;
    the column's gap does the spacing instead. */
-body.groove .g-theme-switch-confirm p,
-body.groove .g-theme-switch-confirm ul,
-body.groove .g-theme-switch-confirm li {
+body.groove .g-dialog-confirm p,
+body.groove .g-dialog-confirm ul,
+body.groove .g-dialog-confirm li {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
 }
 
-body.groove .g-theme-switch-confirm__lead {
+body.groove .g-dialog-confirm__lead {
   font-weight: 600;
 }
 
-body.groove .g-theme-switch-confirm__list {
+body.groove .g-dialog-confirm__list {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2583,31 +2575,72 @@ body.groove .g-theme-switch-confirm__list {
   list-style: disc;
 }
 
-/* Pinned to the bottom of the borrowed height, where Switch theme was. */
-body.groove .g-theme-switch-confirm__actions {
+body.groove .g-dialog-confirm__notice a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Pinned to the bottom of the borrowed height, where the first screen's
+   buttons were. */
+body.groove .g-dialog-confirm__actions {
   margin-top: auto;
 }
 
+/* An answer that posts is its own form, so the form is the flex child. */
+body.groove .g-dialog-confirm__actions form {
+  margin: 0;
+}
+
+/* The answer that deletes: filled red, so it cannot be mistaken for the
+   primary action of the screen before it. wp-admin has no destructive
+   button, so this is built on .button and overrides only colour. */
+body.groove .button.g-dialog-confirm__destroy {
+  border-color: var(--g-red-50);
+  background: var(--g-red-50);
+  color: #fff;
+}
+
+body.groove .button.g-dialog-confirm__destroy:hover {
+  border-color: var(--g-red-60);
+  background: var(--g-red-60);
+  color: #fff;
+}
+
+body.groove .button.g-dialog-confirm__destroy:focus {
+  border-color: var(--g-red-60);
+  background: var(--g-red-60);
+  color: #fff;
+  box-shadow: 0 0 0 1px var(--g-surface), 0 0 0 3px var(--g-red-50);
+  outline: 2px solid transparent;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  body.groove .g-theme-switch__screen.is-entering-forward,
-  body.groove .g-theme-switch__screen.is-entering-back {
+  body.groove .g-dialog-screen.is-entering-forward,
+  body.groove .g-dialog-screen.is-entering-back {
     animation: none;
   }
 }
 
 @media (max-width: 600px) {
-  body.groove .g-theme-switch-confirm__route {
+  body.groove .g-dialog-confirm__subject {
     gap: 10px;
   }
 
-  body.groove .g-theme-switch-confirm__theme {
+  body.groove .g-dialog-confirm__figure {
     width: 110px;
   }
 
-  body.groove .g-theme-switch-confirm__thumb {
+  body.groove .g-dialog-confirm__thumb {
     height: 66px;
   }
 
+  /* Where the row stacks (.g-theme-details__actions does), a button inside
+     its own form does not stretch with the form. */
+  body.groove .g-theme-details__actions.g-dialog-confirm__actions .button {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 /* ── Theme card wrap + preview button ───────────────────────────────────── */

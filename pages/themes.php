@@ -890,12 +890,51 @@ class Themes extends Page
 				var panels = modal.querySelectorAll('[data-groove-theme-panel]');
 				var lastFocused = null;
 				var hideTimer = null;
+				var themeName = '';
 
-				function resetDanger(panel) {
-					var confirmBox = panel.querySelector('[data-groove-theme-danger-confirm]');
-					var trigger = panel.querySelector('[data-groove-theme-danger-start]');
-					if (confirmBox) confirmBox.hidden = true;
-					if (trigger) trigger.hidden = false;
+				// Each screen slides in from the side it sits on: the question from
+				// the right, the details back from the left (the .g-dialog-screen
+				// rules in groove-main.css, shared with the folio's Change theme).
+				// Restarted by class, so it runs every time, not only the first.
+				function enterScreen(screen, className) {
+					screen.classList.remove('is-entering-forward', 'is-entering-back');
+					void screen.offsetWidth;
+					screen.classList.add(className);
+				}
+
+				// While the question is up the header asks it, and the badges go:
+				// they describe the theme, and the title is no longer its name.
+				function setHeader(text, showBadges) {
+					titleEl.textContent = text;
+					badgeEl.hidden = !showBadges || badgeEl.textContent === '';
+					defaultEl.hidden = !showBadges || defaultEl.getAttribute('data-shown') !== '1';
+				}
+
+				function showDetails(panel, animate) {
+					var details = panel.querySelector('[data-groove-theme-screen]');
+					var confirmScreen = panel.querySelector('[data-groove-theme-danger-confirm]');
+					if (confirmScreen) {
+						confirmScreen.hidden = true;
+						confirmScreen.style.minHeight = '';
+					}
+					details.hidden = false;
+					setHeader(themeName, true);
+					if (animate) enterScreen(details, 'is-entering-back');
+				}
+
+				// The question stands where the details were and takes their
+				// height, so the dialog neither jumps nor shrinks to ask.
+				function showConfirm(panel) {
+					var details = panel.querySelector('[data-groove-theme-screen]');
+					var confirmScreen = panel.querySelector('[data-groove-theme-danger-confirm]');
+					var height = details.offsetHeight;
+
+					details.hidden = true;
+					confirmScreen.style.minHeight = height ? height + 'px' : '';
+					confirmScreen.hidden = false;
+					setHeader(confirmScreen.getAttribute('data-title') || themeName, false);
+					enterScreen(confirmScreen, 'is-entering-forward');
+					confirmScreen.querySelector('[data-groove-theme-danger-cancel]').focus();
 				}
 
 				// The card carries the theme's name and badges, so the header can be
@@ -913,23 +952,21 @@ class Themes extends Page
 					Array.prototype.forEach.call(panels, function (panel) {
 						var mine = panel.getAttribute('data-groove-theme-panel') === themeId;
 						panel.hidden = !mine;
-						if (mine) {
-							matched = panel;
-							resetDanger(panel);
-						}
+						if (mine) matched = panel;
 					});
 					if (!matched) return;
 
 					window.clearTimeout(hideTimer);
 					lastFocused = document.activeElement;
-					titleEl.textContent = card.getAttribute('data-theme-name') || '';
+					themeName = card.getAttribute('data-theme-name') || '';
 
 					var badge = card.getAttribute('data-theme-badge') || '';
 					var installed = card.getAttribute('data-theme-installed') === '1';
 					badgeEl.textContent = badge;
 					badgeEl.className = 'g-themes-tag ' + (installed ? 'g-themes-tag--installed' : 'g-themes-tag--builtin');
-					badgeEl.hidden = badge === '';
-					defaultEl.hidden = card.getAttribute('data-theme-default') !== '1';
+					defaultEl.setAttribute('data-shown', card.getAttribute('data-theme-default') === '1' ? '1' : '0');
+					// Always opens on the details, whatever screen it closed on.
+					showDetails(matched, false);
 
 					modal.hidden = false;
 					// The lock is a class rather than an inline style: the theme
@@ -984,18 +1021,16 @@ class Themes extends Page
 
 					var start = target.closest('[data-groove-theme-danger-start]');
 					if (start) {
-						var panel = start.closest('[data-groove-theme-panel]');
-						start.hidden = true;
-						var box = panel.querySelector('[data-groove-theme-danger-confirm]');
-						box.hidden = false;
-						box.querySelector('[data-groove-theme-danger-cancel]').focus();
+						showConfirm(start.closest('[data-groove-theme-panel]'));
 						return;
 					}
 
+					// Back returns to the details with focus on the control that
+					// asked, so a second thought is one keypress from where it began.
 					var cancel = target.closest('[data-groove-theme-danger-cancel]');
 					if (cancel) {
 						var owner = cancel.closest('[data-groove-theme-panel]');
-						resetDanger(owner);
+						showDetails(owner, true);
 						owner.querySelector('[data-groove-theme-danger-start]').focus();
 					}
 				});
@@ -1087,220 +1122,245 @@ class Themes extends Page
 						$folios_url = admin_url('admin.php?page=' . \Groove\Pages\All_Folios::PAGE_ID . '&theme_id=' . $id);
 						?>
 						<div class="g-theme-details__panel" data-groove-theme-panel="<?php echo esc_attr($id); ?>" hidden>
-							<?php
-							/*
-							 * The picture and the facts share a row rather than stacking. At
-							 * 16/10 a full-width frame stood 400px tall and pushed the actions
-							 * off a laptop screen; beside the facts it stays about the size it
-							 * had on the card, which is the point of showing it at all.
-							 */
-							?>
-							<div class="g-theme-details__top">
+							<div class="g-dialog-screen" data-groove-theme-screen>
 								<?php
 								/*
-								 * The theme's cover photograph fills the frame and the thumbnail
-								 * sits on it: one picture answering both questions — what a new
-								 * folio starts with, and the layout underneath it. The thumbnail
-								 * is the image the card was showing, which is what makes the
-								 * dialog read as that card opening rather than a new screen.
-								 *
-								 * A theme that declares no cover in setup.php gets a URL ending
-								 * at the images directory, so the filename is what is tested; that
-								 * theme shows its thumbnail full-frame and no inset.
+								 * The picture and the facts share a row rather than stacking. At
+								 * 16/10 a full-width frame stood 400px tall and pushed the actions
+								 * off a laptop screen; beside the facts it stays about the size it
+								 * had on the card, which is the point of showing it at all.
 								 */
-								$cover_url = (string) ($theme['cover_url'] ?? '');
-								$has_cover = $cover_url !== '' && substr($cover_url, -1) !== '/';
 								?>
-								<?php /* Thumbnail and its Preview link, in the Add New picker's own wrap:
-								         it is the same control on the same picture, so it reads where the
-								         eye already learned to find it and the action row is left to the
-								         two things that change something. */ ?>
-								<div class="g-folio__theme-card-wrap">
-									<div class="g-theme-details__media<?php echo $has_cover ? ' g-theme-details__media--cover' : ''; ?>">
-										<?php if ($has_cover): ?>
-											<img src="<?php echo esc_url($cover_url); ?>" alt="" loading="lazy" />
-											<span class="g-theme-details__inset">
-												<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
-											</span>
-										<?php else: ?>
-											<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
-										<?php endif; ?>
-									</div>
-									<button type="button" class="g-theme-preview-btn" data-theme-id="<?php echo esc_attr($id); ?>"
-										aria-label="<?php echo esc_attr(sprintf(
-											/* translators: %s: theme name */
-											__('Preview %s theme', 'groove-folios'),
-											$theme['name']
-										)); ?>">
-										<?php esc_html_e('Preview', 'groove-folios'); ?>
-									</button>
-								</div>
-
-								<div class="g-theme-details__info">
-									<?php if (!empty($theme['description'])): ?>
-										<p class="g-theme-details__desc"><?php echo esc_html($theme['description']); ?></p>
-									<?php endif; ?>
-
+								<div class="g-theme-details__top">
 									<?php
 									/*
-									 * What the theme says it can do, in the theme's own setup.php —
-									 * the descriptor is the only source, so an installed package
-									 * carries its list with it and nothing here has to be kept in
-									 * step by hand. A theme that declares nothing shows nothing.
+									 * The theme's cover photograph fills the frame and the thumbnail
+									 * sits on it: one picture answering both questions — what a new
+									 * folio starts with, and the layout underneath it. The thumbnail
+									 * is the image the card was showing, which is what makes the
+									 * dialog read as that card opening rather than a new screen.
+									 *
+									 * A theme that declares no cover in setup.php gets a URL ending
+									 * at the images directory, so the filename is what is tested; that
+									 * theme shows its thumbnail full-frame and no inset.
 									 */
-									$features = isset($theme['features']) && is_array($theme['features'])
-										? $theme['features']
-										: array();
-									if (!empty($features)):
-										?>
-										<ul class="g-theme-details__features">
-											<?php foreach ($features as $feature):
-												$feature_label = Themes_Manager::feature_label((string) $feature);
-												if ($feature_label === '') {
-													continue;
-												}
-												?>
-												<li><?php echo esc_html($feature_label); ?></li>
-											<?php endforeach; ?>
-										</ul>
-									<?php endif; ?>
-
-									<dl class="g-theme-details__stats">
-										<div class="g-theme-details__stat">
-											<dt><?php esc_html_e('Folios', 'groove-folios'); ?></dt>
-											<dd>
-												<?php if ($folio_count > 0): ?>
-													<a href="<?php echo esc_url($folios_url); ?>">
-														<?php echo esc_html(number_format_i18n($folio_count)); ?>
-													</a>
-												<?php else: ?>
-													<span class="g-theme-details__muted"><?php esc_html_e('None yet', 'groove-folios'); ?></span>
-												<?php endif; ?>
-											</dd>
-										</div>
-										<?php if (!empty($theme['author'])): ?>
-											<div class="g-theme-details__stat">
-												<dt><?php esc_html_e('Author', 'groove-folios'); ?></dt>
-												<dd><?php echo esc_html($theme['author']); ?></dd>
-											</div>
-										<?php endif; ?>
-										<?php if ($updated_label !== ''): ?>
-											<div class="g-theme-details__stat">
-												<dt><?php esc_html_e('Updated', 'groove-folios'); ?></dt>
-												<dd><?php echo esc_html($updated_label); ?></dd>
-											</div>
-										<?php endif; ?>
-										<?php if ($version !== ''): ?>
-											<div class="g-theme-details__stat">
-												<dt><?php esc_html_e('Version', 'groove-folios'); ?></dt>
-												<dd><?php echo esc_html($version); ?></dd>
-											</div>
-										<?php endif; ?>
-										<div class="g-theme-details__stat">
-											<dt><?php esc_html_e('Theme ID', 'groove-folios'); ?></dt>
-											<dd><code><?php echo esc_html($id); ?></code></dd>
-										</div>
-									</dl>
-								</div>
-							</div>
-
-							<?php
-							/*
-							 * The action row is the Add New picker's footer: the primary action
-							 * keeps the trailing corner, the sample-content toggle sits with it
-							 * because all it does is qualify it, and the sentence explaining what
-							 * gets seeded hangs off the same info button rather than widening the
-							 * row. Same classes, not a lookalike, so the two cannot drift.
-							 *
-							 * Removing the theme takes the leading edge, opposite the action that
-							 * builds something — the same row rather than a divided strip under
-							 * it, which is where wp-admin's own theme dialog keeps Delete, and
-							 * which leaves the dialog ending on the thing you came here to do.
-							 *
-							 * The <form> is the row itself, because the toggle has to post with
-							 * it. The remove trigger is a plain button inside that form; the box
-							 * it opens is a sibling after the row, since it carries a form of its
-							 * own and forms cannot nest.
-							 */
-							$seed_field_id = 'g-theme-seed-' . sanitize_key($id);
-							$row_classes = 'g-folio__theme-button g-theme-details__actions';
-							$can_remove = ($is_installed && $can_manage);
-							?>
-							<?php if ($can_create): ?>
-								<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
-									class="<?php echo esc_attr($row_classes); ?>">
-									<?php wp_nonce_field('groove_create_folio_action', 'groove_nonce'); ?>
-									<input type="hidden" name="action" value="groove_create_folio" />
-									<input type="hidden" name="themeId" value="<?php echo esc_attr($id); ?>" />
-
-									<?php $this->display_remove_trigger($can_remove); ?>
-
-									<?php if ($sample !== null): ?>
-										<div class="g-folio__sample-toggle">
-											<label for="<?php echo esc_attr($seed_field_id); ?>"
-												class="g-folio__sample-label">
-												<input type="hidden" name="seed_sample_content" value="0" />
-												<input type="checkbox" name="seed_sample_content" value="1"
-													id="<?php echo esc_attr($seed_field_id); ?>" />
-												<?php echo esc_html($sample['label']); ?>
-											</label>
-											<?php if ($sample['description'] !== ''): ?>
-												<button type="button"
-													class="g-folio__sample-info g-tooltip-button g-tooltip-button--wrap"
-													aria-label="<?php echo esc_attr($sample['description']); ?>"
-													data-tooltip-text="<?php echo esc_attr($sample['description']); ?>">
-													<span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
-												</button>
+									$cover_url = (string) ($theme['cover_url'] ?? '');
+									$has_cover = $cover_url !== '' && substr($cover_url, -1) !== '/';
+									?>
+									<?php /* Thumbnail and its Preview link, in the Add New picker's own wrap:
+									         it is the same control on the same picture, so it reads where the
+									         eye already learned to find it and the action row is left to the
+									         two things that change something. */ ?>
+									<div class="g-folio__theme-card-wrap">
+										<div class="g-theme-details__media<?php echo $has_cover ? ' g-theme-details__media--cover' : ''; ?>">
+											<?php if ($has_cover): ?>
+												<img src="<?php echo esc_url($cover_url); ?>" alt="" loading="lazy" />
+												<span class="g-theme-details__inset">
+													<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
+												</span>
+											<?php else: ?>
+												<img src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
 											<?php endif; ?>
 										</div>
-									<?php endif; ?>
+										<button type="button" class="g-theme-preview-btn" data-theme-id="<?php echo esc_attr($id); ?>"
+											aria-label="<?php echo esc_attr(sprintf(
+												/* translators: %s: theme name */
+												__('Preview %s theme', 'groove-folios'),
+												$theme['name']
+											)); ?>">
+											<?php esc_html_e('Preview', 'groove-folios'); ?>
+										</button>
+									</div>
 
-									<button type="submit" class="button button-primary">
-										<?php esc_html_e('Create a folio', 'groove-folios'); ?>
-									</button>
-								</form>
-							<?php elseif ($can_remove): ?>
-								<div class="<?php echo esc_attr($row_classes); ?>">
-									<?php $this->display_remove_trigger($can_remove); ?>
-								</div>
-							<?php endif; ?>
+									<div class="g-theme-details__info">
+										<?php if (!empty($theme['description'])): ?>
+											<p class="g-theme-details__desc"><?php echo esc_html($theme['description']); ?></p>
+										<?php endif; ?>
 
-							<?php if ($can_remove): ?>
-								<?php /* Deleting the package files cannot be undone, so this asks in
-								         place rather than firing a browser confirm over the dialog. It
-								         opens where the trigger was, under the row that asked. */ ?>
-								<div class="g-theme-details__danger-confirm" data-groove-theme-danger-confirm hidden>
-									<p>
 										<?php
-										if ($folio_count > 0) {
-											printf(
-												esc_html(
-													/* translators: %s: number of folios using this theme */
-													_n(
-														'Remove this theme? Its files are deleted permanently, and %s folio still uses it.',
-														'Remove this theme? Its files are deleted permanently, and %s folios still use it.',
-														$folio_count,
-														'groove-folios'
-													)
-												),
-												esc_html(number_format_i18n($folio_count))
-											);
-										} else {
-											esc_html_e('Remove this theme? Its files are deleted permanently.', 'groove-folios');
-										}
-										?>
-									</p>
-									<div class="g-theme-details__danger-buttons">
-										<button type="button" class="button button-secondary"
-											data-groove-theme-danger-cancel>
-											<?php esc_html_e('Keep it', 'groove-folios'); ?>
+										/*
+										 * What the theme says it can do, in the theme's own setup.php —
+										 * the descriptor is the only source, so an installed package
+										 * carries its list with it and nothing here has to be kept in
+										 * step by hand. A theme that declares nothing shows nothing.
+										 */
+										$features = isset($theme['features']) && is_array($theme['features'])
+											? $theme['features']
+											: array();
+										if (!empty($features)):
+											?>
+											<ul class="g-theme-details__features">
+												<?php foreach ($features as $feature):
+													$feature_label = Themes_Manager::feature_label((string) $feature);
+													if ($feature_label === '') {
+														continue;
+													}
+													?>
+													<li><?php echo esc_html($feature_label); ?></li>
+												<?php endforeach; ?>
+											</ul>
+										<?php endif; ?>
+
+										<dl class="g-theme-details__stats">
+											<div class="g-theme-details__stat">
+												<dt><?php esc_html_e('Folios', 'groove-folios'); ?></dt>
+												<dd>
+													<?php if ($folio_count > 0): ?>
+														<a href="<?php echo esc_url($folios_url); ?>">
+															<?php echo esc_html(number_format_i18n($folio_count)); ?>
+														</a>
+													<?php else: ?>
+														<span class="g-theme-details__muted"><?php esc_html_e('None yet', 'groove-folios'); ?></span>
+													<?php endif; ?>
+												</dd>
+											</div>
+											<?php if (!empty($theme['author'])): ?>
+												<div class="g-theme-details__stat">
+													<dt><?php esc_html_e('Author', 'groove-folios'); ?></dt>
+													<dd><?php echo esc_html($theme['author']); ?></dd>
+												</div>
+											<?php endif; ?>
+											<?php if ($updated_label !== ''): ?>
+												<div class="g-theme-details__stat">
+													<dt><?php esc_html_e('Updated', 'groove-folios'); ?></dt>
+													<dd><?php echo esc_html($updated_label); ?></dd>
+												</div>
+											<?php endif; ?>
+											<?php if ($version !== ''): ?>
+												<div class="g-theme-details__stat">
+													<dt><?php esc_html_e('Version', 'groove-folios'); ?></dt>
+													<dd><?php echo esc_html($version); ?></dd>
+												</div>
+											<?php endif; ?>
+											<div class="g-theme-details__stat">
+												<dt><?php esc_html_e('Theme ID', 'groove-folios'); ?></dt>
+												<dd><code><?php echo esc_html($id); ?></code></dd>
+											</div>
+										</dl>
+									</div>
+								</div>
+
+								<?php
+								/*
+								 * The action row is the Add New picker's footer: the primary action
+								 * keeps the trailing corner, the sample-content toggle sits with it
+								 * because all it does is qualify it, and the sentence explaining what
+								 * gets seeded hangs off the same info button rather than widening the
+								 * row. Same classes, not a lookalike, so the two cannot drift.
+								 *
+								 * Removing the theme takes the leading edge, opposite the action that
+								 * builds something — the same row rather than a divided strip under
+								 * it, which is where wp-admin's own theme dialog keeps Delete, and
+								 * which leaves the dialog ending on the thing you came here to do.
+								 *
+								 * The <form> is the row itself, because the toggle has to post with
+								 * it. The remove trigger is a plain button inside that form; the
+								 * screen it opens is a sibling of this one, since it carries a form
+								 * of its own and forms cannot nest.
+								 */
+								$seed_field_id = 'g-theme-seed-' . sanitize_key($id);
+								$row_classes = 'g-folio__theme-button g-theme-details__actions';
+								$can_remove = ($is_installed && $can_manage);
+								?>
+								<?php if ($can_create): ?>
+									<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
+										class="<?php echo esc_attr($row_classes); ?>">
+										<?php wp_nonce_field('groove_create_folio_action', 'groove_nonce'); ?>
+										<input type="hidden" name="action" value="groove_create_folio" />
+										<input type="hidden" name="themeId" value="<?php echo esc_attr($id); ?>" />
+
+										<?php $this->display_remove_trigger($can_remove); ?>
+
+										<?php if ($sample !== null): ?>
+											<div class="g-folio__sample-toggle">
+												<label for="<?php echo esc_attr($seed_field_id); ?>"
+													class="g-folio__sample-label">
+													<input type="hidden" name="seed_sample_content" value="0" />
+													<input type="checkbox" name="seed_sample_content" value="1"
+														id="<?php echo esc_attr($seed_field_id); ?>" />
+													<?php echo esc_html($sample['label']); ?>
+												</label>
+												<?php if ($sample['description'] !== ''): ?>
+													<button type="button"
+														class="g-folio__sample-info g-tooltip-button g-tooltip-button--wrap"
+														aria-label="<?php echo esc_attr($sample['description']); ?>"
+														data-tooltip-text="<?php echo esc_attr($sample['description']); ?>">
+														<span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
+													</button>
+												<?php endif; ?>
+											</div>
+										<?php endif; ?>
+
+										<button type="submit" class="button button-primary">
+											<?php esc_html_e('Create a folio', 'groove-folios'); ?>
+										</button>
+									</form>
+								<?php elseif ($can_remove): ?>
+									<div class="<?php echo esc_attr($row_classes); ?>">
+										<?php $this->display_remove_trigger($can_remove); ?>
+									</div>
+								<?php endif; ?>
+							</div>
+
+							<?php if ($can_remove):
+								$confirm_id = 'g-theme-remove-' . sanitize_key($id);
+								?>
+								<?php /* Deleting the package files cannot be undone, so the dialog asks
+								         first, on a second screen in the same frame rather than a box
+								         under the buttons or a browser confirm over it. The script swaps
+								         the header for data-title, gives this screen the details
+								         screen's height and slides it in; Back slides the details back. */ ?>
+								<div class="g-dialog-screen g-dialog-confirm" data-groove-theme-danger-confirm hidden
+									role="group" aria-labelledby="<?php echo esc_attr($confirm_id . '-lead'); ?>"
+									aria-describedby="<?php echo esc_attr($confirm_id . '-list'); ?>"
+									data-title="<?php echo esc_attr(sprintf(
+										/* translators: %s: theme name */
+										__('Remove %s?', 'groove-folios'),
+										$theme['name']
+									)); ?>">
+									<div class="g-dialog-confirm__subject" aria-hidden="true">
+										<figure class="g-dialog-confirm__figure">
+											<img class="g-dialog-confirm__thumb" src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
+											<figcaption><?php echo esc_html($theme['name']); ?></figcaption>
+										</figure>
+									</div>
+									<div class="g-dialog-confirm__notice g-dialog-confirm__notice--danger">
+										<p id="<?php echo esc_attr($confirm_id . '-lead'); ?>" class="g-dialog-confirm__lead">
+											<?php esc_html_e('This can’t be undone.', 'groove-folios'); ?>
+										</p>
+										<ul id="<?php echo esc_attr($confirm_id . '-list'); ?>" class="g-dialog-confirm__list">
+											<li><?php esc_html_e('Its files are deleted from this site. To use it again, you’d upload its .zip file.', 'groove-folios'); ?></li>
+											<?php if ($folio_count > 0): ?>
+												<li>
+													<?php
+													printf(
+														/* translators: %s: number of folios using this theme */
+														esc_html(_n(
+															'%s folio uses it. Readers get a “Theme not found” page until you give that folio another theme.',
+															'%s folios use it. Readers get a “Theme not found” page until you give those folios another theme.',
+															$folio_count,
+															'groove-folios'
+														)),
+														esc_html(number_format_i18n($folio_count))
+													);
+													?>
+													<a href="<?php echo esc_url($folios_url); ?>"><?php esc_html_e('View them', 'groove-folios'); ?></a>
+												</li>
+											<?php else: ?>
+												<li><?php esc_html_e('No folios use it, so no reader sees a change.', 'groove-folios'); ?></li>
+											<?php endif; ?>
+										</ul>
+									</div>
+									<div class="g-folio__theme-button g-theme-details__actions g-dialog-confirm__actions">
+										<button type="button" class="button button-secondary" data-groove-theme-danger-cancel>
+											<?php esc_html_e('Back', 'groove-folios'); ?>
 										</button>
 										<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
 											<?php wp_nonce_field('groove_uninstall_theme'); ?>
 											<input type="hidden" name="action" value="groove_uninstall_theme" />
 											<input type="hidden" name="theme_id" value="<?php echo esc_attr($id); ?>" />
-											<button type="submit" class="button button-secondary g-themes-delete-btn">
-												<?php esc_html_e('Remove permanently', 'groove-folios'); ?>
+											<button type="submit" class="button g-dialog-confirm__destroy">
+												<?php esc_html_e('Remove theme', 'groove-folios'); ?>
 											</button>
 										</form>
 									</div>

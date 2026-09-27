@@ -1480,7 +1480,7 @@ class Folio extends Page
                    current theme would take something off the folio — confirm.
                    The confirm screen takes the pick screen's height, so the
                    dialog does not jump between them. */ ?>
-          <div class="g-theme-switch__screen" data-theme-switch-pick>
+          <div class="g-dialog-screen" data-theme-switch-pick>
             <p class="g-folio__themes-desc"><?php esc_html_e('Switch the folio theme for the cover and inner pages.', 'groove-folios'); ?></p>
             <p class="g-folio__themes-selected">
               <?php esc_html_e('Selected theme:', 'groove-folios'); ?>
@@ -1505,7 +1505,7 @@ class Folio extends Page
 
           <?php /* Filled in by groove-main.js from data-theme-switch-impact:
                    which theme is being left, and what of it is on this folio. */ ?>
-          <div class="g-theme-switch__screen g-theme-switch-confirm" data-theme-switch-confirm hidden role="group"
+          <div class="g-dialog-screen g-dialog-confirm" data-theme-switch-confirm hidden role="group"
             aria-labelledby="g-theme-switch-confirm-lead" aria-describedby="g-theme-switch-confirm-list g-theme-switch-confirm-note"
             data-lead="<?php echo esc_attr(
               /* translators: %s: theme name. Keep the placeholder as %s. */
@@ -1519,23 +1519,23 @@ class Folio extends Page
             data-proposal-details="<?php echo esc_attr(__('The proposal details stop showing: client, contacts, date and cover button text.', 'groove-folios')); ?>"
             data-proposal-details-stored="<?php echo $this->has_proposal_details() ? '1' : '0'; ?>"
             data-proposal-detail-fields="<?php echo esc_attr(implode(',', self::PROPOSAL_DETAIL_KEYS)); ?>">
-            <div class="g-theme-switch-confirm__route" aria-hidden="true">
-              <figure class="g-theme-switch-confirm__theme">
-                <img alt="" class="g-theme-switch-confirm__thumb" data-theme-switch-from-thumb />
+            <div class="g-dialog-confirm__subject" aria-hidden="true">
+              <figure class="g-dialog-confirm__figure">
+                <img alt="" class="g-dialog-confirm__thumb" data-theme-switch-from-thumb />
                 <figcaption data-theme-switch-from-name></figcaption>
               </figure>
-              <span class="g-theme-switch-confirm__arrow dashicons dashicons-arrow-right-alt"></span>
-              <figure class="g-theme-switch-confirm__theme">
-                <img alt="" class="g-theme-switch-confirm__thumb" data-theme-switch-to-thumb />
+              <span class="g-dialog-confirm__arrow dashicons dashicons-arrow-right-alt"></span>
+              <figure class="g-dialog-confirm__figure">
+                <img alt="" class="g-dialog-confirm__thumb" data-theme-switch-to-thumb />
                 <figcaption data-theme-switch-to-name></figcaption>
               </figure>
             </div>
-            <div class="g-theme-switch-confirm__notice">
-              <p id="g-theme-switch-confirm-lead" class="g-theme-switch-confirm__lead" data-theme-switch-confirm-lead></p>
-              <ul id="g-theme-switch-confirm-list" class="g-theme-switch-confirm__list" data-theme-switch-confirm-list></ul>
-              <p id="g-theme-switch-confirm-note" class="g-theme-switch-confirm__note" data-theme-switch-confirm-note></p>
+            <div class="g-dialog-confirm__notice">
+              <p id="g-theme-switch-confirm-lead" class="g-dialog-confirm__lead" data-theme-switch-confirm-lead></p>
+              <ul id="g-theme-switch-confirm-list" class="g-dialog-confirm__list" data-theme-switch-confirm-list></ul>
+              <p id="g-theme-switch-confirm-note" class="g-dialog-confirm__note" data-theme-switch-confirm-note></p>
             </div>
-            <div class="g-folio__theme-button g-theme-switch-confirm__actions">
+            <div class="g-folio__theme-button g-dialog-confirm__actions">
               <button type="button" class="button button-secondary" data-theme-switch-back>
                 <?php esc_html_e('Back', 'groove-folios'); ?>
               </button>
