@@ -53,21 +53,21 @@ class Overview extends Page
   public function __construct()
   {
     add_action('admin_menu', [$this, 'register_admin_menu'], 20);
-    add_action('admin_head', [$this, 'normalize_menu_icon_spacing']);
+    add_action('admin_enqueue_scripts', [$this, 'normalize_menu_icon_spacing']);
   }
 
+  /**
+   * Size the menu icon like core's dashicons. On every admin screen, since the
+   * menu is, so it rides on a handle of its own rather than groove-main's.
+   */
   public function normalize_menu_icon_spacing()
   {
-    ?>
-<style id="groove-admin-menu-icon-spacing">
-  #adminmenu #toplevel_page_groove-overview .wp-menu-image img {
-    width: 16px;
-    height: 16px;
-    padding: 9px 10px;
-    box-sizing: content-box;
-  }
-</style>
-<?php
+    wp_register_style('groove-admin-menu', false, [], GROOVE_VERSION);
+    wp_enqueue_style('groove-admin-menu');
+    wp_add_inline_style(
+      'groove-admin-menu',
+      '#adminmenu #toplevel_page_groove-overview .wp-menu-image img { width: 16px; height: 16px; padding: 9px 10px; box-sizing: content-box; }'
+    );
   }
 
   public function display_glance()

@@ -8,8 +8,10 @@ if (!defined('ABSPATH')) {
 /**
  * Credits
  *
- * Reads and writes assets/images/pexels/credits.json — the attribution
- * manifest the curator fills in, keyed by slot slug.
+ * Reads assets/images/pexels/credits.json — the attribution manifest the
+ * build-time curator fills in, keyed by slot slug. This class never writes it:
+ * a plugin must not write to its own folder at runtime (an update replaces the
+ * folder), so the writer lives in Curator, which is not shipped.
  *
  * The Pexels licence asks for two things and this class provides both:
  * a per-photo "Photo by {photographer} on Pexels" credit linking to the
@@ -28,28 +30,6 @@ class Credits
 
   /** Public Pexels URL used for the required attribution link. */
   const PEXELS_URL = 'https://www.pexels.com';
-
-  /**
-   * Canonical field order, so re-running the curator produces clean diffs.
-   *
-   * @var string[]
-   */
-  private static $field_order = [
-    'slug',
-    'file',
-    'pexels_id',
-    'pexels_url',
-    'photographer',
-    'photographer_url',
-    'alt',
-    'avg_color',
-    'query',
-    'src_size',
-    'src_url',
-    'width',
-    'height',
-    'downloaded_at',
-  ];
 
   /**
    * In-request cache of the decoded manifest. Null means "not read yet".
@@ -115,61 +95,6 @@ class Credits
     $all = self::all();
 
     return isset($all[$slug]) && is_array($all[$slug]) ? $all[$slug] : null;
-  }
-
-  /**
-   * Write the whole manifest, pretty-printed with a stable key order.
-   *
-   * @param array $credits slug => credit record.
-   *
-   * @return bool True on a successful write.
-   */
-  public static function save(array $credits): bool
-  {
-    $credits = self::normalise($credits);
-
-    $path = self::path();
-    $dir = dirname($path);
-
-    if (!is_dir($dir) && !self::mkdir($dir)) {
-      return false;
-    }
-
-    $json = wp_json_encode(
-      $credits,
-      JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
-    );
-
-    if (false === $json || null === $json) {
-      return false;
-    }
-
-    $written = file_put_contents($path, $json . "\n", LOCK_EX);
-    if (false === $written) {
-      return false;
-    }
-
-    self::$cache = $credits;
-
-    return true;
-  }
-
-  /**
-   * Merge a single record into the manifest and write it out.
-   *
-   * Additive helper for the curator — not part of the frozen contract.
-   *
-   * @param string $slug
-   * @param array  $record
-   *
-   * @return bool
-   */
-  public static function put(string $slug, array $record): bool
-  {
-    $all = self::all();
-    $all[$slug] = array_merge(['slug' => $slug], $record);
-
-    return self::save($all);
   }
 
   /**
@@ -249,54 +174,5 @@ class Credits
       esc_url(self::PEXELS_URL),
       esc_html__('Photos provided by Pexels', 'groove-folios')
     );
-  }
-
-  // ── Internals ────────────────────────────────────────────────────────────
-
-  /**
-   * Sort records by slug and fields into the canonical order.
-   *
-   * @param array $credits
-   *
-   * @return array
-   */
-  private static function normalise(array $credits): array
-  {
-    ksort($credits);
-
-    $out = [];
-    foreach ($credits as $slug => $record) {
-      if (!is_array($record)) {
-        continue;
-      }
-
-      $ordered = [];
-      foreach (self::$field_order as $field) {
-        if (array_key_exists($field, $record)) {
-          $ordered[$field] = $record[$field];
-        }
-      }
-
-      // Anything unexpected keeps its place at the end, alphabetically.
-      $extra = array_diff_key($record, array_flip(self::$field_order));
-      ksort($extra);
-
-      $out[$slug] = array_merge($ordered, $extra);
-    }
-
-    return $out;
-  }
-
-  /**
-   * Create a directory. This class only runs with WordPress loaded (the CLI
-   * curator bootstraps wp-load.php), so wp_mkdir_p() is always there.
-   *
-   * @param string $dir
-   *
-   * @return bool
-   */
-  private static function mkdir(string $dir): bool
-  {
-    return (bool) wp_mkdir_p($dir);
   }
 }

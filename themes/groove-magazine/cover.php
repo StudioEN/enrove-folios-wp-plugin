@@ -69,6 +69,13 @@ class Cover extends Base_Theme
             $version,
             true
         );
+
+        // The light/dark class goes on <html> before first paint, so a reader
+        // on a dark scheme never sees the light page flash first. A header
+        // handle of its own, since everything above prints in the footer.
+        wp_register_script('groove-magazine-scheme', false, [], $version, false);
+        wp_enqueue_script('groove-magazine-scheme');
+        wp_add_inline_script('groove-magazine-scheme', "(function () { try { var theme = localStorage.getItem('gm-theme'); var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; if (theme === 'dark' || (!theme && prefersDark)) document.documentElement.classList.add('gm-theme-dark'); else if (theme === 'light' || (!theme && !prefersDark)) document.documentElement.classList.add('gm-theme-light'); } catch (e) { } })();");
     }
 
     /**
@@ -216,7 +223,12 @@ class Cover extends Base_Theme
                     <?php else: ?>
                         <span class="gm-cover__copyright" aria-hidden="true"></span>
                     <?php endif; ?>
-                    <span class="gm-cover__powerby">Powered by Groove Folios</span>
+                    <?php
+                    // Credit, not rendered: "Powered by Groove Folios". WordPress.org
+                    // guideline 10 allows no public credit without the site admin
+                    // opting in. The empty cell keeps the footer's middle column.
+                    ?>
+                    <span class="gm-cover__powerby" aria-hidden="true"></span>
                     <?php if (!empty($latest_pages_date)): ?>
                         <span class="gm-cover__updated">
                             <?php
@@ -239,16 +251,6 @@ class Cover extends Base_Theme
             return;
         }
         ?>
-        <script>
-            (function () {
-                try {
-                    var theme = localStorage.getItem('gm-theme');
-                    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    if (theme === 'dark' || (!theme && prefersDark)) document.documentElement.classList.add('gm-theme-dark');
-                    else if (theme === 'light' || (!theme && !prefersDark)) document.documentElement.classList.add('gm-theme-light');
-                } catch (e) { }
-            })();
-        </script>
         <div class="gm gm-cover g-folio__theme-cover">
             <?php $this->display_nav() ?>
             <?php $this->display_hero() ?>

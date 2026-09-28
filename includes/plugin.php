@@ -278,36 +278,43 @@ class Plugin
 			}
 		}, 5);
 
-			add_action('save_post_groove_folio_page', function ($post_id, $post, $update) {
-				// Skip autosaves and new post creation (not updates).
-				if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id)) {
-					return;
-				}
-				if (!current_user_can('edit_post', $post_id)) {
-					return;
-				}
-
-			// Sync slug to the post title whenever a folio page is saved
-			// via the classic editor (REST-based block editor is handled separately below).
-				// phpcs:disable WordPress.Security.NonceVerification.Missing -- post_title only arrives from a classic-editor or Quick Edit save, and both requests verify their nonce (update-post_{ID}, inlineeditnonce) before save_post fires; edit_post is checked above.
-				if (isset($_POST['post_title']) && '' !== sanitize_text_field(wp_unslash($_POST['post_title']))) {
-					$title = sanitize_text_field(wp_unslash($_POST['post_title']));
-				// phpcs:enable WordPress.Security.NonceVerification.Missing
-					$new_slug = wp_unique_post_slug(
-						sanitize_title($title),
-					$post_id,
-					$post->post_status,
-					'groove_folio_page',
-					$post->post_parent
-				);
-				// Only update if the slug has actually changed to avoid recursion.
-				if ($new_slug !== $post->post_name) {
-					remove_action('save_post_groove_folio_page', __FUNCTION__, 10);
-					wp_update_post(array('ID' => $post_id, 'post_name' => $new_slug));
-					add_action('save_post_groove_folio_page', __FUNCTION__, 10, 3);
-				}
+		// Sync slug to the post title whenever a folio page is saved via the
+		// classic editor (the REST-based block editor is handled separately below).
+		// Held in a variable so the callback can unhook itself around its own
+		// wp_update_post(): __FUNCTION__ inside a closure is "{closure}", which
+		// names no registered callback, so the old remove_action() removed nothing.
+		$sync_page_slug = function ($post_id, $post, $update) use (&$sync_page_slug) {
+			// Skip autosaves and revisions.
+			if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id)) {
+				return;
 			}
-		}, 10, 3);
+			if (!current_user_can('edit_post', $post_id)) {
+				return;
+			}
+
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- post_title only arrives from a classic-editor or Quick Edit save, and both requests verify their nonce (update-post_{ID}, inlineeditnonce) before save_post fires; edit_post is checked above.
+			if (!isset($_POST['post_title']) || '' === sanitize_text_field(wp_unslash($_POST['post_title']))) {
+				return;
+			}
+			$title = sanitize_text_field(wp_unslash($_POST['post_title']));
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+			$new_slug = wp_unique_post_slug(
+				sanitize_title($title),
+				$post_id,
+				$post->post_status,
+				'groove_folio_page',
+				$post->post_parent
+			);
+			// Only update if the slug has actually changed, and unhooked while
+			// updating, so the save this triggers does not come back here.
+			if ($new_slug !== $post->post_name) {
+				remove_action('save_post_groove_folio_page', $sync_page_slug, 10);
+				wp_update_post(array('ID' => $post_id, 'post_name' => $new_slug));
+				add_action('save_post_groove_folio_page', $sync_page_slug, 10, 3);
+			}
+		};
+		add_action('save_post_groove_folio_page', $sync_page_slug, 10, 3);
 
 		// Block editor saves via REST API — fires after the post is fully written.
 		add_action('rest_after_insert_groove_folio_page', function ($post) {

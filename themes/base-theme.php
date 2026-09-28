@@ -42,11 +42,14 @@ abstract class Base_Theme extends Assets
 
   public function ensure_script()
   {
-    echo '<script>window.GROOVE_IS_PREVIEW = true</script>';
     show_admin_bar(false);
 
     // Shared plugin CSS (admin bar reset, global layout).
     wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], GROOVE_VERSION);
+    // The admin bar is off above, but its bump (`html { margin-top: 32px
+    // !important }`) is registered before this runs. `html:root` outranks
+    // that `html` whichever of the two prints last.
+    wp_add_inline_style('groove', 'html:root { margin-top: 0 !important; }');
 
     // The theme contract: the --folio-* slots every theme fills, with WordPress
     // admin-palette fallbacks. Loaded before theme CSS so a theme's own
@@ -58,7 +61,7 @@ abstract class Base_Theme extends Assets
       GROOVE_VERSION
     );
 
-    // Per-theme CSS (built-in or installed package).
+    // Per-theme CSS.
     $theme_css_path = $this->get_theme_css_path();
     $version = file_exists($theme_css_path) ? filemtime($theme_css_path) : GROOVE_VERSION;
 
@@ -72,6 +75,8 @@ abstract class Base_Theme extends Assets
     $this->enqueue_folio_fonts('groove-theme-' . static::get_id());
 
     wp_enqueue_script('groove', $this->get_js_assets_url('groove-main'), ['jquery'], GROOVE_VERSION, true);
+    // Tells groove-main.js it is running on a rendered folio, not in wp-admin.
+    wp_add_inline_script('groove', 'window.GROOVE_IS_PREVIEW = true;', 'before');
   }
 
   protected function get_folio_id_for_customization()

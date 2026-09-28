@@ -150,24 +150,24 @@ if (property_exists($theme, 'show_in_page_nav')) {
   $theme->show_in_page_nav = true;
 }
 
+// Disable all internal navigation links — this is a read-only preview. After
+// the theme's stylesheet, which it depends on, so it wins a tie.
+add_action('wp_enqueue_scripts', function () use ($theme) {
+  $theme_handle = 'groove-theme-' . $theme::get_id();
+  wp_register_style('groove-theme-picker-preview', false, wp_style_is($theme_handle, 'registered') ? [$theme_handle] : [], GROOVE_VERSION);
+  wp_enqueue_style('groove-theme-picker-preview');
+  wp_add_inline_style(
+    'groove-theme-picker-preview',
+    '.g-folio__theme-fields-submit, .g-folio__theme-page-nav-item-link, .g-folio__theme-nav-item-link, .g-folio__theme-page-prev a, .g-folio__theme-page-next a { pointer-events: none; cursor: default; }'
+  );
+}, 20);
+
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
   <meta charset="<?php bloginfo('charset'); ?>" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <?php wp_head(); ?>
-  <style>
-    html { margin-top: 0 !important; }
-    /* Disable all internal navigation links — this is a read-only preview */
-    .g-folio__theme-fields-submit,
-    .g-folio__theme-page-nav-item-link,
-    .g-folio__theme-nav-item-link,
-    .g-folio__theme-page-prev a,
-    .g-folio__theme-page-next a {
-      pointer-events: none;
-      cursor: default;
-    }
-  </style>
 </head>
 <body <?php body_class('groove'); ?>>
   <?php $theme->display_theme(); ?>

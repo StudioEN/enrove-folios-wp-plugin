@@ -106,6 +106,14 @@ class Module extends BaseModule
 		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery', 'groove-toast'], GROOVE_VERSION, true);
 		wp_enqueue_script('groove-inline-edit', $this->get_js_assets_url('groove-inline-edit'), ['jquery'], GROOVE_VERSION, true);
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
+		$current_page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+		if ($current_page === \Groove\Pages\Themes::PAGE_ID) {
+			$groove_themes_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-themes.js';
+			$groove_themes_js_version = file_exists($groove_themes_js_path) ? (string) filemtime($groove_themes_js_path) : GROOVE_VERSION;
+			wp_enqueue_script('groove-themes', $this->get_js_assets_url('groove-themes'), [], $groove_themes_js_version, true);
+		}
+
 		if ($this->is_in_block_editor_page()) {
 			$groove_breadcrumb_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-gutenberg-breadcrumb.js';
 			$groove_breadcrumb_js_version = file_exists($groove_breadcrumb_js_path) ? (string) filemtime($groove_breadcrumb_js_path) : GROOVE_VERSION;

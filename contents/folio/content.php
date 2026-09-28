@@ -94,30 +94,45 @@ class Content extends BaseContent
       'rewrite' => false,
     ));
 
-    register_post_meta('groove_folio', 'theme_id', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'subtitle', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'copyright', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'permission', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'fonts', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'header_font', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'body_font', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'show_byline', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_version', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_status', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_prepared_for', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_prepared_by', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_contact_email', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_contact_name', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_contact_role', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_contact_phone', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_contact_linkedin', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_contacts', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_client_name', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_client_logo_url', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_date', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_show_in_page_nav', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_color_scheme', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
-    register_post_meta('groove_folio', 'proposal_revision_log', array('show_in_rest' => true, 'single' => true, 'type' => 'string'));
+    // Explicit, though core's default already asks for edit_post on the folio
+    // before a REST request may write its meta.
+    $meta_args = array(
+      'show_in_rest' => true,
+      'single' => true,
+      'type' => 'string',
+      'auth_callback' => static function ($allowed, $meta_key, $post_id) {
+        return current_user_can('edit_post', (int) $post_id);
+      },
+    );
+
+    foreach (array(
+      'theme_id',
+      'subtitle',
+      'copyright',
+      'permission',
+      'fonts',
+      'header_font',
+      'body_font',
+      'show_byline',
+      'proposal_version',
+      'proposal_status',
+      'proposal_prepared_for',
+      'proposal_prepared_by',
+      'proposal_contact_email',
+      'proposal_contact_name',
+      'proposal_contact_role',
+      'proposal_contact_phone',
+      'proposal_contact_linkedin',
+      'proposal_contacts',
+      'proposal_client_name',
+      'proposal_client_logo_url',
+      'proposal_date',
+      'proposal_show_in_page_nav',
+      'proposal_color_scheme',
+      'proposal_revision_log',
+    ) as $meta_key) {
+      register_post_meta('groove_folio', $meta_key, $meta_args);
+    }
   }
 
   public function __construct()

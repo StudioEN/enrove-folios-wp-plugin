@@ -21,11 +21,10 @@ A Groove Folio theme is a **self-contained folder** that renders two views of a 
 Both classes extend `Groove\Themes\Base_Theme` ([base-theme.php](base-theme.php)), which handles data loading,
 asset enqueueing, font injection, and theme metadata. A theme subclass supplies **markup and styling only**.
 
-Themes ship two ways, and the code path is identical for both:
-
-- **Built-in** — a folder inside `themes/`, auto-discovered on every request.
-- **Installed package** — a ZIP uploaded via *Groove → Themes*, extracted to `wp-content/groove-themes/<theme-id>/`
-  and recorded in the `groove_installed_themes` option. Lives outside the plugin so it survives updates.
+Themes are built in: a folder inside `themes/`, auto-discovered on every request. Installing a theme from
+a ZIP on *Groove → Themes* was removed in 0.5.1, because it wrote the package's PHP into
+`wp-content/groove-themes/`, and WordPress.org does not allow a plugin to write executable code there.
+Support for third-party themes is coming back by a route that does not write files (see §10).
 
 ---
 
@@ -67,7 +66,7 @@ and cache-busted by `filemtime()`.
 
 ## 3. `setup.php` — the theme manifest
 
-Returns a plain array. **No side effects** — it is `include`d repeatedly (discovery, install validation,
+Returns a plain array. **No side effects** — it is `include`d repeatedly (discovery and
 `Base_Theme::get_setup_data()` caching).
 
 ```php
@@ -96,7 +95,7 @@ return [
 ```
 
 `features` is what the picker's details dialog lists under the description, and setup.php is the only
-place it is written — an installed package carries its own list, and nothing in the admin has to be kept
+place it is written — a theme carries its own list, and nothing in the admin has to be kept
 in step by hand. Keys from the shared vocabulary in `Themes_Manager::feature_label()` are translated:
 
 | Key | Shown as |
@@ -154,14 +153,14 @@ store and what the registry, the picker and migrations key on. Asset URLs are no
 `GROOVE_URL . 'themes/' . get_id() . '/'` only as a fallback for a plugin installed outside `wp-content`.
 **Renaming `name` renames the ID and orphans every folio that stored the old one** — see §9 for migrations.
 
-`version` is read only for installed packages (stored in the option, not exposed on the descriptor).
+`version` is informational: nothing reads it since the package installer was removed.
 
 ---
 
 ## 4. Registration and discovery
 
 [`Themes_Manager::register_defaults()`](themes-manager.php) runs once from `Plugin::__construct()`
-(includes/plugin.php:188) and does three things:
+(includes/plugin.php:213) and does two things:
 
 1. **`load_builtin_themes()`** — `glob()`s `themes/*` directories, `natsort()`s them, and for each folder
    with `setup.php` + `cover.php` + `page.php`: requires every declared `dependency`, requires cover/page,
@@ -172,9 +171,7 @@ store and what the registry, the picker and migrations key on. Asset URLs are no
    used to be ignored and the theme registered anyway, which produced a theme that looked healthy in every
    admin screen and fataled on the first visitor, because dependencies declare functions rather than
    classes and nothing downstream noticed.
-2. **`load_installed_themes()`** — same, driven by the `groove_installed_themes` option, and running the
-   same two class guards in the same order.
-3. **`run_migrations()`** — one-shot legacy `theme_id` remapping (see §9).
+2. **`run_migrations()`** — one-shot legacy `theme_id` remapping (see §9).
 
 The registry is a flat map: `theme_id => ['cover_class' => …, 'page_class' => …]`.
 
@@ -317,14 +314,16 @@ That call is what loads the data. Skipping it renders an empty theme.
 
 `Base_Theme::ensure_script()` runs on `wp_enqueue_scripts` and:
 
-- prints `window.GROOVE_IS_PREVIEW = true` and calls `show_admin_bar(false)`
-- enqueues `groove` (assets/css/groove-main.css) — the shared reset/layout
+- calls `show_admin_bar(false)`
+- enqueues `groove` (assets/css/groove-main.css) — the shared reset/layout — with an inline style
+  cancelling the admin bar's `margin-top` bump
 - enqueues `groove-folio-contract` (assets/css/folio-contract.css) — the `--folio-*` token
   contract and its fallbacks, dependent on `groove`
 - enqueues `groove-theme-<theme-id>` from `assets/css/theme.css`, dependent on `groove` and
   `groove-folio-contract`, versioned by `filemtime()`
 - calls `enqueue_folio_fonts()` (see below)
-- enqueues `groove` JS (assets/js/groove-main.js) with jQuery
+- enqueues `groove` JS (assets/js/groove-main.js) with jQuery, preceded by an inline
+  `window.GROOVE_IS_PREVIEW = true` that tells it it is on a folio rather than in wp-admin
 
 To add theme JS, **override and call `parent::ensure_script()` first** — in *both* `Cover` and `Page`:
 
@@ -347,18 +346,22 @@ public function ensure_script()
 ```
 
 Build the `filemtime()` path from `get_theme_assets_path()`, not from `GROOVE_PATH . 'themes/…'`: the
-latter exists only for a bundled theme, so an installed package silently falls back to `GROOVE_VERSION`
-and stops cache-busting its script. The bundled themes still use that older form; do not copy it.
+latter assumes the theme sits in this plugin's `themes/` folder, which a theme distributed some other way
+will not, and it then silently falls back to `GROOVE_VERSION` and stops cache-busting its script. The
+bundled themes still use that older form; do not copy it.
 
 Path helpers available: `get_theme_folder_path()`, `get_theme_folder_url()`, `get_theme_assets_path()`,
-`get_theme_assets_url()`, `get_theme_css_path()`, `get_theme_css_url()` — all resolve correctly for
-both plugin-bundled and `wp-content/groove-themes/` installs, so prefer them over `plugin_dir_url()`.
+`get_theme_assets_url()`, `get_theme_css_path()`, `get_theme_css_url()` — all resolve from the class
+file's real path, wherever the theme folder is, so prefer them over `plugin_dir_url()`.
 
 ### Fonts — declare them, never enqueue them
 
 **A theme must not load a font itself.** No `@import` in `theme.css`, no `wp_enqueue_style()` of a
 Google Fonts URL in `ensure_script()`, no hand-written `<link>`. Everything goes through
-`Groove\Themes\Font_Loader`, which is the single place in the plugin that touches a font CDN.
+`Groove\Themes\Font_Loader`, and a folio never loads a font from a CDN at all: a reader's browser asking
+Google for a font hands Google the reader's IP address, which WordPress.org counts as phoning home.
+`Groove\Themes\Font_Library` downloads every family into `uploads/groove-folios/fonts/` when an
+administrator presses *Download Fonts* on *Groove → Settings → Fonts*, and folios load those copies.
 
 Declare the theme's defaults in `setup.php` instead:
 
@@ -376,9 +379,10 @@ Declare the theme's defaults in `setup.php` instead:
 ```
 
 `google_family` is a `family=` fragment for the [css2 API](https://developers.google.com/fonts/docs/css2)
-— spaces as `+`, weights after the colon. Omit it (or leave it empty) for a system stack that needs no
-network request. Both values are sanitised, so an installed theme package cannot inject CSS or extra URL
-parameters. The block is optional; a theme that declares nothing simply falls back to the stacks written
+— spaces as `+`, weights after the colon — and it names what *Download Fonts* fetches. Omit it (or leave
+it empty) for a system stack that needs no download. Both values are sanitised, so a theme cannot inject
+CSS or extra URL parameters. Until the fonts are downloaded, the rest of `css_stack` applies, so end it
+in a system family. The block is optional; a theme that declares nothing simply falls back to the stacks written
 into its own CSS.
 
 **Resolution order, per role.** `Base_Theme::ensure_script()` calls `enqueue_folio_fonts()`, which asks
@@ -389,9 +393,9 @@ into its own CSS.
 2. the theme's `setup.php` default;
 3. nothing — the fallback stack in your CSS applies.
 
-Whatever wins, **both roles are fetched in one `css2` request** (duplicate families deduped), enqueued as
-the handle `groove-folio-fonts` with no `?ver=`, and paired with a `preconnect` to `fonts.gstatic.com`.
-Then these variables are injected on the theme handle:
+Whatever wins, each distinct family that has been downloaded is enqueued from uploads as its own
+stylesheet, handle `groove-folio-font-<slug>`; one that has not loads nothing. Then these variables are
+injected on the theme handle:
 
 ```css
 .g-folio__theme-cover,
@@ -430,7 +434,7 @@ renders a theme:
 | --- | --- |
 | Folio cover / page, published or `?groove_preview=1` | `Base_Theme::ensure_script()` |
 | Theme-picker preview (Add New → *Preview*) | same — the template instantiates the theme |
-| Password gate | `includes/folio-preview-template.php`, resolved by `Font_Loader`, linked by hand (it renders before `wp_head()`) |
+| Password gate | `includes/folio-preview-template.php`, resolved by `Font_Loader` and printed with `wp_print_styles()` (the gate is a bare document with no `wp_head()`) |
 | Block editor, folio pages | the theme's `blocks.php`, **gated on the edited folio actually using that theme** |
 
 Nothing loads a font on a plain admin screen, on another theme's folio, or plugin-wide. If you add an
@@ -800,6 +804,26 @@ Every dynamic value is escaped at output: `esc_html()`, `esc_attr()`, `esc_url()
 Only `get_content()` output (already block-rendered + `wp_kses`'d inside blocks) is echoed raw.
 All user-facing strings go through `__()` / `esc_html__()` with the `groove-folios` text domain.
 
+### What WordPress.org rejects
+
+A theme is plugin code, and the plugin is reviewed for WordPress.org as a whole. These came back from
+that review in 0.5.1, and the built-in themes were changed to meet them. A theme that breaks one of them
+cannot ship:
+
+- **No `<script>` or `<style>` tag in output.** Inline JS or CSS goes through `wp_add_inline_script()` /
+  `wp_add_inline_style()` on a handle; a handle registered with `false` as its source is fine when there
+  is no file to attach it to. See "Theme JS" in §9 for the dark-mode bootstrap.
+- **No public credit.** No "Powered by Groove Folios", no "Theme by …" line on a cover or page. WordPress.org
+  allows one only behind an opt-in the site admin turns on, and the plugin has none. The built-in themes
+  keep their old credit lines as PHP comments; the markup where a credit sat in a footer grid is an empty
+  `aria-hidden` cell, so the layout does not move.
+- **Nothing loaded from another server.** No font, script, stylesheet or image from a CDN. A reader's
+  browser making that request hands their IP address to a third party without their say. Fonts have their
+  own route (§6); ship anything else inside the theme folder.
+
+`bin/check-theme-contract.php` catches the font case only. For the rest, grep the rendered page — the
+Playbook's definition of done has the command.
+
 ---
 
 ## 8. Rendering page content
@@ -898,9 +922,20 @@ Editor scripts depend on `['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-com
 
 ### Theme JS
 
-`groove-magazine` and `groove-proposal` bootstrap a light/dark class on `<html>` inline in `display_theme()`
-(before paint, to avoid a flash), persist the choice in `localStorage`, and load a dependency-free IIFE from
-`assets/js/`. Magazine's script extracts a dominant colour from the feature image and derives a WCAG-checked
+`groove-magazine` and `groove-proposal` put a light/dark class on `<html>` before first paint, to avoid a
+flash, persist the choice in `localStorage`, and load a dependency-free IIFE from `assets/js/`. The
+bootstrap is a few lines of inline JS, attached in `ensure_script()` to a script handle of its own with no
+file, registered for the header rather than the footer:
+
+```php
+wp_register_script('my-theme-scheme', false, [], $version, false);   // false src, in <head>
+wp_enqueue_script('my-theme-scheme');
+wp_add_inline_script('my-theme-scheme', '/* read localStorage, add the class to <html> */');
+```
+
+It used to be echoed as a `<script>` tag at the top of `display_theme()`. WordPress.org rejects that
+(see "What WordPress.org rejects" in §7), and the handle does the same job: WordPress prints header
+scripts from `wp_head()`, which runs before any of the theme's markup. Magazine's script extracts a dominant colour from the feature image and derives a WCAG-checked
 palette into CSS custom properties.
 
 **A theme should rarely need its own drawer script.** `folio-starter` had one and no longer does — see
@@ -917,42 +952,19 @@ longer resolves is not silently swapped for another theme.
 
 ---
 
-## 10. Packaging a theme for distribution
+## 10. Distributing a theme
 
-`Themes_Manager::install_theme_from_zip()` validates, in order:
+Not possible yet. Until 0.5.1 `Themes_Manager::install_theme_from_zip()` took a ZIP on *Groove → Themes*
+and copied it to `wp-content/groove-themes/<theme-id>/`. WordPress.org does not allow a plugin to write
+executable code outside its own folder, so the installer, the replace and remove flows, and
+`load_installed_themes()` were removed. Support for third-party themes is coming; it will not work by
+writing PHP files, and a theme written to this spec today is what it will load.
 
-1. `setup.php` exists somewhere in the ZIP (its directory becomes the package root).
-2. It returns an array with a non-empty `name`.
-3. `cover.php` and `page.php` exist beside it.
-4. `cover_class` and `page_class` are declared.
-5. `dependencies`, if present, is an array (paths are rejected if empty or containing `..`).
-6. The derived theme ID is not already registered/installed, and neither class is already loaded
-   (prevents fatal redeclaration).
-
-Then it copies to `wp-content/groove-themes/<theme-id>/`, requires dependencies → cover → page, and checks:
-
-7. Both classes exist after loading.
-8. **Both reach `Base_Theme`.** `register()` opens with `$cover_class::get_id()`, so a class that does not
-   inherit it has no such method — this check is the difference between an error and a white screen on
-   `admin-post.php`. `load_builtin_themes()` has always had it; the install path only gained it later.
-
-Then it registers, and only then persists to `groove_installed_themes`. Any failure cleans up the
-destination.
-
-Every rejection is a `WP_Error` whose message says what is wrong and whose *data* says what to do about
-it — the admin screen pins the pair to the Install button rather than flashing it past. Keep both halves
-in mind if you add a validation: the message is the fault, the data is the fix.
-
-Once the package is in place, `check_theme_contract()` runs the rules in
-[bin/check-theme-contract.php](../bin/check-theme-contract.php) over it and reports what it finds as a
-notice on the Themes screen. None of that blocks the install — it is the class of mistake that produces no
-error at all, which is the class this document mostly describes. You can run the same rules yourself:
+The contract checker already runs on a theme folder anywhere, so a theme can be checked while it waits:
 
 ```bash
 php bin/check-theme-contract.php --dir=/path/to/your-theme
 ```
-
-`uninstall_theme()` refuses to touch built-in themes — only entries in the option.
 
 ---
 
@@ -1092,27 +1104,16 @@ through to the class guards, or it registers a half-initialised theme.
 
 **The fourth is the genuinely structural one.** `Cannot redeclare class X` is raised by the engine while
 compiling the included file, is not a `Throwable`, and no `try`/`catch` and no `set_error_handler` can
-intercept it. It cannot be contained after the fact, only prevented before it — which is what
-`install_theme_from_zip()`'s collision guards are for, and why they refuse rather than warn:
-
-- a package whose derived ID matches a **built-in** theme is refused outright — the fix is a different
-  `name` in `setup.php`, since the ID is derived from it;
-- a package declaring a `cover_class` or `page_class` already loaded by a **different** theme is refused;
-- a package matching an **installed** package is the safe case: it replaces it, after the operator
-  confirms. The replace path checks the incoming files *statically* — tokenised, never `require`d —
-  precisely because the outgoing version already holds those class names in this request.
+intercept it. It cannot be contained after the fact, only prevented before it: give every theme its own
+namespace, so no two theme folders declare the same class. Whatever brings third-party themes back
+(§10) has to refuse a theme whose classes are already loaded, rather than warn.
 
 Until the first three are wrapped, treat all four the same way operationally:
 
 1. **`php -l` every PHP file in a theme before it reaches a server.** `bin/check-theme-contract.php` will
    not do this for you: it tokenises rather than executes, which is what lets it run on a bare checkout
    with no WordPress, and a tokeniser accepts plenty the compiler rejects.
-2. **Install packages through *Groove → Themes*, never by unzipping into `wp-content/groove-themes/`.**
-   The installer requires the files inside an already-booted request, where a failure is a failed install
-   on one screen instead of a white page everywhere. Hand-dropping a folder there does not even get you a
-   broken theme — `load_installed_themes()` is driven by the `groove_installed_themes` option, not a
-   directory scan, so the folder is ignored entirely and the theme simply never appears.
-3. **Edit themes on local or staging.** Ordinary advice everywhere; here the cost of ignoring it is a
+2. **Edit themes on local or staging.** Ordinary advice everywhere; here the cost of ignoring it is a
    white screen on every URL of the site, and recovery is FTP or WP-CLI — delete the theme's folder, or
    rename it so it no longer holds a `setup.php`.
 
@@ -1121,7 +1122,7 @@ Until the first three are wrapped, treat all four the same way operationally:
 - **`themes/default-themes.php`** is a deprecated shim over `Themes_Manager::get_all_themes()`.
 - **Theme IDs are hardcoded** in folio.php's tab gating. The password gate no longer hardcodes any: a
   theme declares a `gate` block in `setup.php` (see §3), which is what made that rule satisfiable by a
-  packaged theme at all — the maps it replaced were plugin source with no filter to join.
+  theme from outside the plugin at all — the maps it replaced were plugin source with no filter to join.
 - **`newsletter_theme_preset`** meta is actively deleted on save (pages/folio.php:566); the preset helpers
   in `Utils` are vestigial.
 - **`themes/landing-page.html` and `landing-page-v8 2.html`** in this directory are marketing page drafts,

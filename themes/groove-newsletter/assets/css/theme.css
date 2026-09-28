@@ -2124,6 +2124,12 @@ body.groove .gn-page .g-folio__theme-page-mobile-nav-back {
     gap: 8px;
   }
 
+  /* An empty spacer for the desktop grid's middle column (the credit it held
+     is no longer rendered); stacked, it would only add a gap. */
+  body.groove .gn-page .g-folio__theme-page-powerby {
+    display: none;
+  }
+
   body.groove .gn-page .g-folio__theme-page-next,
   body.groove .gn-page .g-folio__theme-page-prev,
   body.groove .gn-page .g-folio__theme-page-powerby {

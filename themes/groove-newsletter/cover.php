@@ -149,9 +149,10 @@ class Cover extends Base_Theme
           </div>
         <?php endif; ?>
 
-        <div class="g-folio__theme-powerby">
-          <?php echo esc_html__('Powered by Groove Folios', 'groove-folios'); ?>
-        </div>
+        <?php
+        // Credit, not rendered: "Powered by Groove Folios". WordPress.org
+        // guideline 10 allows no public credit without the site admin opting in.
+        ?>
       </div>
     </div>
     <?php

@@ -46,7 +46,7 @@ class Add_New extends Page
 
       $themes = \Groove\Themes\Themes_Manager::get_all_themes();
       if (empty($themes)) {
-        wp_die(esc_html__('No themes are available. Install a theme first.', 'groove-folios'));
+        wp_die(esc_html__('No themes are available.', 'groove-folios'));
       }
 
       $default_theme_id = (string) get_option('groove_default_theme_id', '');

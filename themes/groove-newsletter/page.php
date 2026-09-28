@@ -296,7 +296,12 @@ class Page extends Base_Theme
         ?>
       </div>
 
-      <div class="g-folio__theme-page-powerby">Powered by Groove Folios</div>
+      <?php
+      // Credit, not rendered: "Powered by Groove Folios". WordPress.org
+      // guideline 10 allows no public credit without the site admin opting in.
+      // The empty cell stays: it is the middle column of the footer grid.
+      ?>
+      <div class="g-folio__theme-page-powerby" aria-hidden="true"></div>
 
       <div class="g-folio__theme-page-next">
         <?php

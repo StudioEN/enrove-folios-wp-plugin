@@ -51,16 +51,6 @@ abstract class Page extends Assets
 		add_action('admin_post_' . $action, [$this, $handle_name]);
 	}
 
-	/**
-	 * Register a POST action handler accessible to logged-out users.
-	 * Use sparingly! Usually only for public preview forms or auth callbacks.
-	 */
-	final public function add_public_post_action($action, $handle_name)
-	{
-		add_action('admin_post_' . $action, [$this, $handle_name]);
-		add_action('admin_post_nopriv_' . $action, [$this, $handle_name]);
-	}
-
 	final public function get_tabs()
 	{
 		$this->ensure_tabs();

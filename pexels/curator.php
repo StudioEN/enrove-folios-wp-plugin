@@ -23,6 +23,11 @@ if (!defined('ABSPATH')) {
  * Nothing here runs on a hook. It only executes when something explicitly
  * calls run().
  *
+ * Build-time only: bin/curate-pexels.php is its one caller, and neither file
+ * ships in the release zip. It writes into the plugin's own folder (the photos
+ * and credits.json it commits to the repository), which a plugin must never do
+ * on a live site, where an update replaces that folder.
+ *
  * @since 0.2.0
  */
 class Curator
@@ -36,6 +41,28 @@ class Curator
 
   /** Preference order when a slot's requested src size is missing. */
   const SRC_FALLBACKS = ['large2x', 'large', 'original', 'landscape', 'portrait', 'medium'];
+
+  /**
+   * credits.json field order, so re-running the curator produces clean diffs.
+   *
+   * @var string[]
+   */
+  private static $credit_field_order = [
+    'slug',
+    'file',
+    'pexels_id',
+    'pexels_url',
+    'photographer',
+    'photographer_url',
+    'alt',
+    'avg_color',
+    'query',
+    'src_size',
+    'src_url',
+    'width',
+    'height',
+    'downloaded_at',
+  ];
 
   /**
    * @var Client
@@ -215,7 +242,7 @@ class Curator
     $meta['width'] = (int) $size[0];
     $meta['height'] = (int) $size[1];
 
-    $recorded = Credits::put($slug, $this->credit_record($slug, $slot, $photo, $relative, $src_size, $meta));
+    $recorded = $this->write_credit($slug, $this->credit_record($slug, $slot, $photo, $relative, $src_size, $meta));
     if (!$recorded) {
       $meta['message'] = __('Image saved, but the credit could not be written to credits.json.', 'groove-folios');
     }
@@ -479,6 +506,65 @@ class Curator
   }
 
   // ── Records ──────────────────────────────────────────────────────────────
+
+  /**
+   * Merge one record into credits.json and write the whole manifest back,
+   * pretty-printed, sorted by slug and in the canonical field order.
+   *
+   * @param string $slug
+   * @param array  $record
+   *
+   * @return bool True on a successful write.
+   */
+  private function write_credit(string $slug, array $record): bool
+  {
+    $credits = Credits::all();
+    $credits[$slug] = array_merge(['slug' => $slug], $record);
+
+    ksort($credits);
+
+    $ordered_credits = [];
+    foreach ($credits as $key => $credit) {
+      if (!is_array($credit)) {
+        continue;
+      }
+
+      $ordered = [];
+      foreach (self::$credit_field_order as $field) {
+        if (array_key_exists($field, $credit)) {
+          $ordered[$field] = $credit[$field];
+        }
+      }
+
+      // Anything unexpected keeps its place at the end, alphabetically.
+      $extra = array_diff_key($credit, array_flip(self::$credit_field_order));
+      ksort($extra);
+
+      $ordered_credits[$key] = array_merge($ordered, $extra);
+    }
+
+    $path = Credits::path();
+    if (!is_dir(dirname($path)) && !wp_mkdir_p(dirname($path))) {
+      return false;
+    }
+
+    $json = wp_json_encode(
+      $ordered_credits,
+      JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    );
+
+    if (false === $json || null === $json) {
+      return false;
+    }
+
+    if (false === file_put_contents($path, $json . "\n", LOCK_EX)) {
+      return false;
+    }
+
+    Credits::flush_cache();
+
+    return true;
+  }
 
   /**
    * Build the credits.json record for a downloaded slot.

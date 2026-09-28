@@ -404,8 +404,12 @@ class List_Table extends \WP_List_Table
 				'theme_id' => isset($_REQUEST['theme_id']) ? sanitize_key(wp_unslash($_REQUEST['theme_id'])) : null
 			);
 
+			// The status's own label, already translated by whoever registered the
+			// status, plus the count. Not translate_nooped_plural($status->label_count):
+			// a string the translation parser cannot read is not a translatable one.
 			$status_label = sprintf(
-				translate_nooped_plural($status->label_count, $status_count),
+				'%1$s <span class="count">(%2$s)</span>',
+				esc_html($status->label),
 				number_format_i18n($status_count)
 			);
 

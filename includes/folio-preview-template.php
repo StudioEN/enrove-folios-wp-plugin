@@ -34,18 +34,34 @@ $theme = Themes_Manager::create_theme_for_current_request();
 
     // Resolve folio fonts through the same resolver the themes use, so the gate
     // is typeset like the folio behind it. This document is rendered before
-    // wp_head(), so the one combined stylesheet is printed on its own below.
+    // wp_head(), so its stylesheets are printed on their own below.
     $_pw_system_stack = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     $_pw_fonts = Font_Loader::resolve(
       (int) $password_post->ID,
       Themes_Manager::get_theme_default_fonts($_pw_theme_id)
     );
-    $_pw_fonts_url = Font_Loader::build_url($_pw_fonts);
 
+    // The stacks are from the fixed font list or Font_Loader::sanitize_css_stack()
+    // (letters, digits, space , ' - _ . only); the colours are hex, validated
+    // when the theme's gate block was read.
     $_pw_heading_stack = $_pw_fonts['header']['css_stack'] ?? $_pw_system_stack;
     $_pw_body_stack = $_pw_fonts['body']['css_stack'] ?? $_pw_system_stack;
 
     $_pw_bg = $_pw_gate['background'] ?? '#f0f0f1';
+
+    wp_register_style('groove-password-gate', false, [], GROOVE_VERSION);
+    wp_add_inline_style('groove-password-gate', implode("\n", array(
+      '* { box-sizing: border-box; margin: 0; padding: 0; }',
+      'body { font-family: ' . $_pw_body_stack . '; color: #1d2327; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; background: ' . $_pw_bg . '; }',
+      '.groove-password-wrap { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 40px; max-width: 420px; width: 100%; text-align: left; }',
+      '.groove-password-wrap h1 { font-family: ' . $_pw_heading_stack . '; font-size: 20px; font-weight: 600; margin-bottom: 24px; }',
+      '.groove-password-wrap p { font-size: 14px; color: #646970; margin-bottom: 24px; }',
+      '.groove-password-wrap label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }',
+      '.groove-password-wrap input[type="password"] { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #8c8f94; border-radius: 4px; margin-bottom: 16px; }',
+      '.groove-password-wrap input[type="password"]:focus { border-color: ' . $_pw_accent . '; box-shadow: 0 0 0 1px ' . $_pw_accent . '; outline: none; }',
+      '.groove-password-wrap input[type="submit"] { display: block; width: 100%; background: ' . $_pw_accent . '; color: #fff; border: none; border-radius: 4px; padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; }',
+      '.groove-password-wrap input[type="submit"]:hover { background: ' . $_pw_accent_hover . '; }',
+    )));
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -53,39 +69,7 @@ $theme = Themes_Manager::create_theme_for_current_request();
   <meta charset="<?php bloginfo('charset'); ?>" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?php echo esc_html($password_post->post_title); ?></title>
-  <?php if ($_pw_fonts_url !== ''): ?>
-    <link rel="preconnect" href="<?php echo esc_url(Font_Loader::API_HOST); ?>" />
-    <link rel="preconnect" href="<?php echo esc_url(Font_Loader::FILE_HOST); ?>" crossorigin />
-    <?php
-      // No version: on WordPress before 7.0 a `ver` is added with add_query_arg(),
-      // which keeps only the last of the css2 URL's repeated `family=` parameters.
-      wp_enqueue_style(Font_Loader::HANDLE, $_pw_fonts_url, [], null); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- CDN URL whose query string is the version; a `ver` drops families on WP < 7.0.
-      wp_print_styles(Font_Loader::HANDLE);
-    ?>
-  <?php endif; ?>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: <?php echo $_pw_body_stack; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS in a <style> element, where entities are not decoded; the stack is from the fixed font list or Font_Loader::sanitize_css_stack() (letters, digits, space , ' - _ . only). ?>;
-      color: #1d2327;
-      display: flex; align-items: center; justify-content: center;
-      min-height: 100vh; padding: 20px;
-      background: <?php echo esc_attr($_pw_bg); ?>;
-    }
-    .groove-password-wrap {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.1);
-      padding: 40px; max-width: 420px; width: 100%; text-align: left;
-    }
-    .groove-password-wrap h1 { font-family: <?php echo $_pw_heading_stack; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CSS in a <style> element, where entities are not decoded; the stack is from the fixed font list or Font_Loader::sanitize_css_stack() (letters, digits, space , ' - _ . only). ?>; font-size: 20px; font-weight: 600; margin-bottom: 24px; }
-    .groove-password-wrap p { font-size: 14px; color: #646970; margin-bottom: 24px; }
-    .groove-password-wrap label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
-    .groove-password-wrap input[type="password"] { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #8c8f94; border-radius: 4px; margin-bottom: 16px; }
-    .groove-password-wrap input[type="password"]:focus { border-color: <?php echo esc_attr($_pw_accent); ?>; box-shadow: 0 0 0 1px <?php echo esc_attr($_pw_accent); ?>; outline: none; }
-    .groove-password-wrap input[type="submit"] { display: block; width: 100%; background: <?php echo esc_attr($_pw_accent); ?>; color: #fff; border: none; border-radius: 4px; padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; }
-    .groove-password-wrap input[type="submit"]:hover { background: <?php echo esc_attr($_pw_accent_hover); ?>; }
-  </style>
+  <?php wp_print_styles(array_merge(Font_Loader::enqueue_files($_pw_fonts), array('groove-password-gate'))); ?>
 </head>
 <body>
   <div class="groove-password-wrap">
@@ -157,35 +141,19 @@ nocache_headers();
   <meta charset="<?php bloginfo('charset'); ?>" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?php echo esc_html($_gv_title); ?></title>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f0f0f1;
-      color: #1d2327;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-    .groove-notice {
-      max-width: 26rem;
-      padding: 2rem;
-      text-align: center;
-    }
-    .groove-notice h1 {
-      margin: 0 0 0.5rem;
-      font-size: 1.125rem;
-      font-weight: 600;
-    }
-    .groove-notice p {
-      margin: 0;
-      font-size: 0.9375rem;
-      line-height: 1.6;
-      color: #50575e;
-    }
-  </style>
+  <?php
+  // A bare document with no wp_head(), so the one stylesheet it needs is
+  // printed on its own.
+  wp_register_style('groove-folio-notice', false, [], GROOVE_VERSION);
+  wp_add_inline_style(
+    'groove-folio-notice',
+    "body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f0f0f1; color: #1d2327; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }"
+    . ' .groove-notice { max-width: 26rem; padding: 2rem; text-align: center; }'
+    . ' .groove-notice h1 { margin: 0 0 0.5rem; font-size: 1.125rem; font-weight: 600; }'
+    . ' .groove-notice p { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: #50575e; }'
+  );
+  wp_print_styles('groove-folio-notice');
+  ?>
 </head>
 
 <body>
@@ -217,11 +185,6 @@ status_header(200);
 <body <?php body_class('groove'); ?>>
   <?php $theme->display_theme(); ?>
   <?php wp_footer(); ?>
-  <style media="screen">
-    html {
-      margin-top: 0px !important;
-    }
-  </style>
 </body>
 
 </html>

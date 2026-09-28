@@ -10,9 +10,12 @@ if (!defined('ABSPATH')) {
 /**
  * Themes_Manager
  *
- * Central registry for all managed (built-in and installed) themes.
- * To add a new built-in theme, call static::register() from register_defaults().
- * To install a theme package uploaded via the admin UI, call install_theme_from_zip().
+ * Central registry for the folio themes the plugin ships in themes/.
+ *
+ * Themes are built-in only. Installing a theme from an uploaded .zip was
+ * removed in 0.5.1: it copied the package's PHP into wp-content/groove-themes/,
+ * and WordPress.org does not allow a plugin to write executable code there.
+ * Third-party themes will come back through a route that does not write files.
  *
  * @since 1.0.0
  */
@@ -49,7 +52,7 @@ class Themes_Manager extends Assets
     // ── Boot ───────────────────────────────────────────────────────────────
 
     /**
-     * Register all built-in themes and load any installed packages.
+     * Register all built-in themes.
      * Called once from Plugin::__construct().
      */
     public static function register_defaults()
@@ -62,7 +65,6 @@ class Themes_Manager extends Assets
         $initialized = true;
 
         static::load_builtin_themes();
-        static::load_installed_themes();
         static::run_migrations();
     }
 
@@ -98,19 +100,12 @@ class Themes_Manager extends Assets
             return false;
         }
 
-        // Two themes claiming one ID. The later one wins, which is the same
-        // answer an upload gets — a package the operator installed deliberately
-        // supersedes what was there — and load order makes "later" mean the
-        // installed package, since built-ins register first. What was missing
-        // was any sign of it: the displaced theme vanished from the picker with
-        // nothing said, and every folio storing that ID quietly rendered as
-        // something else.
-        //
-        // The record is filed against the theme that lost, because that is the
-        // one someone is looking for and cannot find. Install refuses this
-        // collision outright, so reaching here means the two arrived
-        // separately — a plugin update shipping a built-in whose name derives
-        // to an ID some installed package already answers to.
+        // Two theme folders claiming one ID — two `name`s that sanitize_title()
+        // to the same thing. The later one wins. What was missing was any sign
+        // of it: the displaced theme vanished from the picker with nothing
+        // said, and every folio storing that ID quietly rendered as something
+        // else. The record is filed against the theme that lost, because that
+        // is the one someone is looking for and cannot find.
         if (isset(self::$registry[$theme_id]) && self::$registry[$theme_id]['cover_class'] !== $cover_class) {
             static::record_skipped_theme($theme_id, 'builtin', 'shadowed', [
                 'class' => self::$registry[$theme_id]['cover_class'],
@@ -134,7 +129,7 @@ class Themes_Manager extends Assets
      * branch that was already going to skip, and that branch is never taken.
      *
      * @param string $folder Folder name, never an absolute path.
-     * @param string $kind   'builtin' or 'installed'.
+     * @param string $kind   'builtin' (the only kind since package installs were removed).
      * @param string $reason Stable code; describe_skipped_theme() turns it into words.
      * @param array  $detail Raw context for the sentence — a class name, a file.
      */
@@ -151,7 +146,7 @@ class Themes_Manager extends Assets
     /**
      * Every theme folder that did not register this request.
      *
-     * @param string|null $kind 'builtin', 'installed', or null for both.
+     * @param string|null $kind 'builtin', or null for every record.
      * @return array[]
      */
     public static function get_skipped_themes(?string $kind = null): array
@@ -169,10 +164,7 @@ class Themes_Manager extends Assets
      * Turn one record into the two things a person can act on: what went wrong,
      * and what to do about it.
      *
-     * Split the way install_theme_from_zip()'s rejections are — message is the
-     * fault, data is the fix — and where the fault is one the installer already
-     * names, deliberately the same words, so a theme that fails at upload and a
-     * theme that fails at load do not describe one problem two ways.
+     * Split in two — message is the fault, data is the fix.
      *
      * Lives here rather than in the loaders because this is where __() is safe.
      *
@@ -225,13 +217,8 @@ class Themes_Manager extends Assets
 
             case 'shadowed':
                 return new \WP_Error($reason,
-                    __('An installed theme package uses this ID and has taken it over.', 'groove-folios'),
-                    __('The built-in theme of that name is not available while the package is installed. Remove the package to get it back, or rename one of the two — the ID is derived from the name.', 'groove-folios'));
-
-            case 'package_gone':
-                return new \WP_Error($reason,
-                    __('The package files are no longer in wp-content/groove-themes/.', 'groove-folios'),
-                    __('Remove the theme to clear the entry, then install the package again.', 'groove-folios'));
+                    __('Another theme folder uses this ID and has taken it over.', 'groove-folios'),
+                    __('Rename one of the two in its setup.php — the ID is derived from the name.', 'groove-folios'));
         }
 
         return new \WP_Error('unknown', __('This folder did not register.', 'groove-folios'), '');
@@ -345,8 +332,7 @@ class Themes_Manager extends Assets
     /**
      * Normalised sample-content definition for a registered theme.
      *
-     * A theme opts in by shipping themes/<slug>/sample-content.php (built-in) or
-     * <groove-themes>/<slug>/sample-content.php (installed package). The file
+     * A theme opts in by shipping themes/<slug>/sample-content.php. The file
      * returns an array; anything missing or malformed is treated as "no sample
      * content" rather than an error, so a half-finished theme cannot break the
      * Add New screen.
@@ -961,124 +947,6 @@ class Themes_Manager extends Assets
         return null;
     }
 
-    // ── Installed theme management (packages uploaded by admins) ───────────
-
-    /**
-     * Absolute path to the directory that holds uploaded theme packages.
-     * Lives in wp-content so themes survive plugin updates.
-     *
-     * @return string  Path with trailing slash.
-     */
-    public static function get_themes_dir(): string
-    {
-        return WP_CONTENT_DIR . '/groove-themes/';
-    }
-
-    /**
-     * Public URL that maps to get_themes_dir().
-     *
-     * @return string  URL with trailing slash.
-     */
-    public static function get_themes_url(): string
-    {
-        return WP_CONTENT_URL . '/groove-themes/';
-    }
-
-    /**
-     * Return metadata stored in the WordPress option for all installed packages.
-     * Does NOT include built-in themes.
-     *
-     * @return array  [ theme_id => [ 'name', 'version', 'cover_class', 'page_class', ... ] ]
-     */
-    public static function get_installed_themes_meta(): array
-    {
-        return get_option('groove_installed_themes', []);
-    }
-
-    /**
-     * Include the PHP files for every installed package and register them.
-     * Called automatically from register_defaults().
-     */
-    public static function load_installed_themes(): void
-    {
-        $meta_list = static::get_installed_themes_meta();
-        $themes_dir = static::get_themes_dir();
-
-        foreach ($meta_list as $theme_id => $meta) {
-            $theme_path = $themes_dir . $theme_id . '/';
-            $cover_file = $theme_path . 'cover.php';
-            $page_file = $theme_path . 'page.php';
-            $setup_file = $theme_path . 'setup.php';
-            // Per iteration, not per loop: left outside, one package missing a
-            // dependency would skip every package loaded after it.
-            $missing_dependency = '';
-
-            // The row in groove_installed_themes outlives the files, so this
-            // is the one skip that leaves a stale entry behind. The report
-            // offers to clear it.
-            if (!is_readable($cover_file) || !is_readable($page_file)) {
-                static::record_skipped_theme((string) $theme_id, 'installed', 'package_gone');
-                continue;
-            }
-
-            if (is_readable($setup_file)) {
-                $setup = include $setup_file;
-                if (!empty($setup['dependencies']) && is_array($setup['dependencies'])) {
-                    foreach ($setup['dependencies'] as $dep) {
-                        $dep_file = $theme_path . $dep;
-                        if (!is_readable($dep_file)) {
-                            $missing_dependency = (string) $dep;
-                            break;
-                        }
-                        require_once $dep_file;
-                    }
-                }
-            }
-
-            // Same reasoning as the built-in loader above: a package missing a
-            // dependency it declares renders as a fatal, not as a broken theme.
-            if ($missing_dependency !== '') {
-                static::record_skipped_theme((string) $theme_id, 'installed', 'missing_dependency', ['dependency' => $missing_dependency]);
-                continue;
-            }
-
-            require_once $cover_file;
-            require_once $page_file;
-
-            $cover_class = $meta['cover_class'] ?? '';
-            $page_class = $meta['page_class'] ?? '';
-
-            foreach (['cover.php' => $cover_class, 'page.php' => $page_class] as $name => $class) {
-                if (!class_exists($class)) {
-                    static::record_skipped_theme((string) $theme_id, 'installed', 'class_missing', ['file' => $name, 'class' => $class]);
-                    continue 2;
-                }
-            }
-
-            // The same guard load_builtin_themes() has always had, and the one
-            // install_theme_from_zip() gained later. Without it this loader
-            // takes the whole site down, not just the theme: register() opens
-            // with $cover_class::get_id(), which a class that does not reach
-            // Base_Theme has no such method for, and the resulting Error is
-            // thrown while the plugin file is still being included — before
-            // plugins_loaded, with nothing above it to catch anything. Front
-            // end, wp-admin, REST and cron go together, so the operator cannot
-            // even reach this screen to remove the package that did it.
-            //
-            // Install validates this now, but that only covers packages
-            // installed since. A package already on disk, or one edited in
-            // place afterwards, arrives here unchecked.
-            foreach (['cover_class' => $cover_class, 'page_class' => $page_class] as $key => $class) {
-                if (!is_subclass_of($class, Base_Theme::class)) {
-                    static::record_skipped_theme((string) $theme_id, 'installed', 'not_base_theme', ['key' => $key, 'class' => $class]);
-                    continue 2;
-                }
-            }
-
-            static::register($cover_class, $page_class);
-        }
-    }
-
     /**
      * Discover built-in themes shipped inside plugin /themes/.
      * A valid theme folder must contain cover.php and page.php.
@@ -1190,582 +1058,6 @@ class Themes_Manager extends Assets
     }
 
     /**
-     * Swap a new version of an installed package into place.
-     *
-     * The outgoing version's classes are already declared in this request, so
-     * the incoming ones cannot be required to check them — PHP does not
-     * redeclare a class, and asking it to is a fatal. They are checked
-     * statically instead, by the same tokeniser bin/check-theme-contract.php
-     * uses, which reads the files rather than executing them.
-     *
-     * The working copy stays on disk until the new one is in place, so a swap
-     * that fails half way leaves the theme the site already had.
-     *
-     * @return true|\WP_Error
-     */
-    protected static function replace_installed_package(
-        string $package_root,
-        string $dest,
-        string $theme_id,
-        string $cover_class,
-        string $page_class,
-        array $dependencies
-    ) {
-        $themes_dir = static::get_themes_dir();
-        $staging = $themes_dir . $theme_id . '.incoming-' . uniqid() . '/';
-
-        wp_mkdir_p($staging);
-        $copied = copy_dir($package_root, $staging);
-        if (is_wp_error($copied)) {
-            static::cleanup_dir($staging);
-            return $copied;
-        }
-
-        $checked = static::check_package_files($staging, $cover_class, $page_class, $dependencies);
-        if (is_wp_error($checked)) {
-            static::cleanup_dir($staging);
-            return $checked;
-        }
-
-        $outgoing = $themes_dir . $theme_id . '.outgoing-' . uniqid() . '/';
-
-        // move() is rename() for a directory: both targets are known not to
-        // exist, so it neither overwrites nor falls back to a copy.
-        $fs = static::local_filesystem();
-
-        if (!$fs->move(untrailingslashit($dest), untrailingslashit($outgoing))) {
-            static::cleanup_dir($staging);
-            return new \WP_Error(
-                'replace_failed',
-                __('The installed copy of this theme could not be moved aside.', 'groove-folios'),
-                __('Nothing was changed. Check that the web server can write to wp-content/groove-themes/.', 'groove-folios')
-            );
-        }
-
-        if (!$fs->move(untrailingslashit($staging), untrailingslashit($dest))) {
-            // Put the working theme back before reporting anything.
-            $fs->move(untrailingslashit($outgoing), untrailingslashit($dest));
-            static::cleanup_dir($staging);
-            return new \WP_Error(
-                'replace_failed',
-                __('The new files could not be moved into place.', 'groove-folios'),
-                __('The version that was already installed has been left where it was. Check that the web server can write to wp-content/groove-themes/.', 'groove-folios')
-            );
-        }
-
-        static::cleanup_dir($outgoing);
-
-        return true;
-    }
-
-    /**
-     * Check an unpacked package without loading any of it.
-     *
-     * Same three failures install_theme_from_zip() catches by requiring the
-     * files — a dependency that is missing or climbs out of the folder, a view
-     * file that declares a different class than setup.php names, and a class
-     * that does not reach Base_Theme — reported with the same codes and the
-     * same wording, so a replace and a fresh install describe one problem the
-     * same way. Requiring is not available on a replace: the outgoing version
-     * holds those class names already.
-     *
-     * @return true|\WP_Error
-     */
-    protected static function check_package_files(
-        string $dir,
-        string $cover_class,
-        string $page_class,
-        array $dependencies
-    ) {
-        foreach ($dependencies as $dep) {
-            $dep = ltrim((string) $dep, '/\\');
-
-            if ($dep === '' || strpos($dep, '..') !== false) {
-                return new \WP_Error(
-                    'bad_dependency_path',
-                    sprintf(
-                        /* translators: %s: the offending dependency path */
-                        __('setup.php lists the dependency "%s", which is empty or climbs out of the theme folder.', 'groove-folios'),
-                        $dep
-                    ),
-                    __('Dependency paths are relative to the theme folder and may not contain "..".', 'groove-folios')
-                );
-            }
-
-            if (!is_readable($dir . $dep)) {
-                return new \WP_Error(
-                    'missing_dependency',
-                    sprintf(
-                        /* translators: %s: the dependency path declared in setup.php */
-                        __('setup.php lists the dependency "%s", which is not in the package.', 'groove-folios'),
-                        $dep
-                    ),
-                    __('Every dependency a theme declares has to ship inside it.', 'groove-folios')
-                );
-            }
-        }
-
-        if (!is_readable($dir . 'cover.php') || !is_readable($dir . 'page.php')) {
-            return new \WP_Error(
-                'missing_files',
-                __('cover.php and page.php copied across but cannot be read.', 'groove-folios'),
-                __('This is a file-permission problem on the server rather than anything wrong with the package.', 'groove-folios')
-            );
-        }
-
-        // No checker on disk means no static check. That is a reason to let the
-        // replace through, not to fail it: the loaders guard both class
-        // contracts on the next request, so the worst case is a theme that does
-        // not come back rather than one that breaks the site.
-        if (!static::load_contract_library()) {
-            return true;
-        }
-
-        $views = array(
-            'cover_class' => array($cover_class, 'cover.php'),
-            'page_class' => array($page_class, 'page.php'),
-        );
-
-        foreach ($views as $key => $view) {
-            list($fqcn, $file) = $view;
-            $short = (string) substr(strrchr('\\' . $fqcn, '\\'), 1);
-            $declared = groove_declared_classes((string) file_get_contents($dir . $file));
-
-            if ($short === '' || !isset($declared[$short])) {
-                return new \WP_Error(
-                    'class_not_found',
-                    sprintf(
-                        /* translators: 1: the file, 2: the class name setup.php names */
-                        __('%1$s does not declare %2$s.', 'groove-folios'),
-                        $file,
-                        $fqcn
-                    ),
-                    __('Check the names in setup.php against the classes in those files, including the namespace.', 'groove-folios')
-                );
-            }
-
-            if (!groove_reaches_base_theme($short, untrailingslashit($dir), $dependencies)) {
-                return new \WP_Error(
-                    'bad_base_class',
-                    sprintf(
-                        /* translators: 1: setup.php key (cover_class or page_class), 2: the class name */
-                        __('%1$s names %2$s, which does not extend Base_Theme.', 'groove-folios'),
-                        $key,
-                        $fqcn
-                    ),
-                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove-folios')
-                );
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Make bin/check-theme-contract.php's functions callable from here.
-     *
-     * The constant is what stops the CLI body running on a WordPress request;
-     * see the guard at the foot of that file. Returns false when the script is
-     * not on disk, which is not an error worth failing an install over — it
-     * ships today, but nothing guarantees a future packaging step keeps it.
-     */
-    protected static function load_contract_library(): bool
-    {
-        $checker = rtrim(GROOVE_PATH, '/\\') . '/bin/check-theme-contract.php';
-
-        if (!is_readable($checker)) {
-            return false;
-        }
-
-        if (!defined('GROOVE_THEME_CONTRACT_LIB')) {
-            define('GROOVE_THEME_CONTRACT_LIB', true);
-        }
-        require_once $checker;
-
-        return function_exists('groove_check_theme_dir')
-            && function_exists('groove_contract_slots')
-            && function_exists('groove_declared_classes')
-            && function_exists('groove_reaches_base_theme');
-    }
-
-    /**
-     * Run the theme contract checker over an unpacked theme folder.
-     *
-     * bin/check-theme-contract.php is the de-facto spec — its rules are exactly
-     * the ones that break a theme with no error, no warning and no log line.
-     * It was CLI-only and globbed this plugin's own themes/ directory, so it
-     * could never see an installed package: the one kind of theme whose author
-     * is least likely to have a checkout to run it from. Install is the single
-     * moment someone is looking at that package, so it runs here.
-     *
-     * Advisory by design — nothing this returns blocks an install. Two rules
-     * cannot be satisfied by a third-party theme at all (the password-gate
-     * colour maps are literal arrays in plugin source with no filter to join),
-     * and most of the rest describe a theme that works but misbehaves. The hard
-     * requirements are the WP_Errors above; these are things to go and fix.
-     *
-     * @param string $dir Absolute path to the theme folder.
-     * @return string[] Warnings, empty when clean or when the checker is absent.
-     */
-    public static function check_theme_contract(string $dir): array
-    {
-        $root = rtrim(GROOVE_PATH, '/\\');
-        $checker = $root . '/bin/check-theme-contract.php';
-        $contract = $root . '/assets/css/folio-contract.css';
-
-        // Both ship today, because there is no packaging step. If one is ever
-        // added and strips bin/, an install must still succeed — silence here
-        // is the right failure, not a broken upload.
-        if (!static::load_contract_library() || !is_readable($contract)) {
-            return [];
-        }
-
-        $slots = groove_contract_slots((string) file_get_contents($contract));
-        $row = groove_check_theme_dir(rtrim($dir, '/\\'), $root, groove_contract_core_slots($slots));
-
-        return empty($row['warn']) ? [] : array_values($row['warn']);
-    }
-
-    /**
-     * Validate, extract, and install a theme ZIP package.
-     *
-     * @param string $zip_path  Absolute path to the uploaded temporary ZIP file.
-     * @return string|\WP_Error  Theme name on success, WP_Error on failure.
-     */
-    public static function install_theme_from_zip(string $zip_path, bool $replace = false)
-    {
-        require_once ABSPATH . 'wp-admin/includes/file.php';
-        WP_Filesystem();
-
-        // 1. Extract to a temp directory.
-        $tmp_dir = get_temp_dir() . 'groove-theme-' . uniqid() . '/';
-        $result = unzip_file($zip_path, $tmp_dir);
-
-        if (is_wp_error($result)) {
-            return $result;
-        }
-
-        // 2. Find the package root (may be inside a sub-folder inside the zip).
-        $info_file = static::find_file_in_dir($tmp_dir, 'setup.php');
-
-        if (!$info_file) {
-            static::cleanup_dir($tmp_dir);
-            return new \WP_Error(
-                'missing_info',
-                __('No setup.php in the package.', 'groove-folios'),
-                __('It belongs at the top level of the zip, or one folder down. The zip must hold the theme folder, not a loose set of its files.', 'groove-folios')
-            );
-        }
-
-        $package_root = dirname($info_file) . '/';
-
-        // 3. Parse and validate setup.php.
-        $info = include $info_file;
-
-        if (!is_array($info) || !isset($info['name']) || '' === trim($info['name'])) {
-            static::cleanup_dir($tmp_dir);
-            return new \WP_Error(
-                'invalid_info',
-                __('setup.php must return an array with a "name".', 'groove-folios'),
-                __('The name is what the theme is called everywhere, and the ID every folio stores is derived from it.', 'groove-folios')
-            );
-        }
-
-        if (!file_exists($package_root . 'cover.php') || !file_exists($package_root . 'page.php')) {
-            static::cleanup_dir($tmp_dir);
-            return new \WP_Error(
-                'missing_files',
-                __('No cover.php and page.php beside setup.php.', 'groove-folios'),
-                __('All three files are required, and all three must sit in the same folder.', 'groove-folios')
-            );
-        }
-
-        // 4. Derive the theme ID from the name.
-        $theme_name = sanitize_text_field($info['name']);
-        $theme_id = sanitize_title($theme_name);
-
-        // 5. Read class names declared in setup.php.
-        $cover_class = $info['cover_class'] ?? null;
-        $page_class = $info['page_class'] ?? null;
-
-        if (!$cover_class || !$page_class) {
-            static::cleanup_dir($tmp_dir);
-            return new \WP_Error(
-                'bad_class',
-                __('setup.php must define cover_class and page_class.', 'groove-folios'),
-                __('Each is a fully-qualified class name, namespace included, declared in cover.php and page.php respectively.', 'groove-folios')
-            );
-        }
-
-        $dependencies = [];
-        if (!empty($info['dependencies'])) {
-            if (!is_array($info['dependencies'])) {
-                static::cleanup_dir($tmp_dir);
-                return new \WP_Error(
-                    'bad_dependencies',
-                    __('setup.php declares dependencies as something other than an array.', 'groove-folios'),
-                    __('It takes a list of file paths, each relative to the theme folder.', 'groove-folios')
-                );
-            }
-            $dependencies = $info['dependencies'];
-        }
-
-        $installed_meta = static::get_installed_themes_meta();
-        $replaces_package = isset($installed_meta[$theme_id]);
-
-        // A built-in cannot be replaced by an upload. Its files live inside the
-        // plugin, so a package sharing its ID could only shadow it at
-        // registration — and a shipped theme being taken over by an upload is
-        // not something to do behind a confirmation dialog.
-        if (static::has($theme_id) && !$replaces_package) {
-            static::cleanup_dir($tmp_dir);
-            return new \WP_Error(
-                'theme_exists',
-                sprintf(
-                    /* translators: %s: theme ID derived from the package's name */
-                    __('"%s" is a built-in theme, and this package\'s name derives to the same ID.', 'groove-folios'),
-                    $theme_id
-                ),
-                __('Built-in themes cannot be replaced by an upload. Give this one a different name in setup.php — the ID is derived from the name.', 'groove-folios')
-            );
-        }
-
-        // Replacing a package the site already has is an update, and the normal
-        // way to ship a revision. It is not something to do without asking,
-        // though: folios already using the theme change appearance. The caller
-        // confirms, then calls back with $replace.
-        if ($replaces_package && !$replace) {
-            static::cleanup_dir($tmp_dir);
-            return new \WP_Error(
-                'replace_confirm_required',
-                sprintf(
-                    /* translators: %s: name of the theme already installed */
-                    __('"%s" is already installed, and this package replaces it.', 'groove-folios'),
-                    (string) ($installed_meta[$theme_id]['name'] ?? $theme_id)
-                ),
-                array(
-                    'theme_id' => $theme_id,
-                    'incoming_name' => $theme_name,
-                    'incoming_version' => (string) ($info['version'] ?? '1.0.0'),
-                    'existing_name' => (string) ($installed_meta[$theme_id]['name'] ?? $theme_id),
-                    'existing_version' => (string) ($installed_meta[$theme_id]['version'] ?? ''),
-                )
-            );
-        }
-
-        // A class already loaded is only a conflict when it belongs to some
-        // other theme. On a replace it is the outgoing version of this one,
-        // which is exactly what we are here to supersede.
-        $own_classes = $replaces_package
-            ? array((string) ($installed_meta[$theme_id]['cover_class'] ?? ''), (string) ($installed_meta[$theme_id]['page_class'] ?? ''))
-            : array();
-
-        $conflicting = array_values(array_filter(array_unique(array(
-            class_exists($cover_class, false) && !in_array($cover_class, $own_classes, true) ? $cover_class : '',
-            class_exists($page_class, false) && !in_array($page_class, $own_classes, true) ? $page_class : '',
-        ))));
-
-        if ($conflicting) {
-            static::cleanup_dir($tmp_dir);
-            return new \WP_Error(
-                'class_conflict',
-                sprintf(
-                    /* translators: %s: one or both fully-qualified class names */
-                    __('This package declares %s, which is already loaded on this site.', 'groove-folios'),
-                    implode(', ', $conflicting)
-                ),
-                __('Two themes cannot share a class name. Give this one a namespace of its own.', 'groove-folios')
-            );
-        }
-
-        // 6. Move to the permanent themes directory.
-        $dest = static::get_themes_dir() . $theme_id . '/';
-
-        if ($replaces_package) {
-            $replaced = static::replace_installed_package(
-                $package_root,
-                $dest,
-                $theme_id,
-                $cover_class,
-                $page_class,
-                $dependencies
-            );
-            static::cleanup_dir($tmp_dir);
-
-            if (is_wp_error($replaced)) {
-                return $replaced;
-            }
-
-            // Deliberately not registered. The outgoing version's classes are
-            // declared in this request already and PHP will not replace them,
-            // so the new files take effect on the next load — which is how a
-            // plugin or theme update behaves in WordPress too.
-            $installed_meta[$theme_id] = array(
-                'name' => $theme_name,
-                'version' => $info['version'] ?? '1.0.0',
-                'description' => $info['description'] ?? '',
-                'author' => $info['author'] ?? '',
-                'cover_class' => $cover_class,
-                'page_class' => $page_class,
-                'contract_warnings' => static::check_theme_contract($dest),
-            );
-            update_option('groove_installed_themes', $installed_meta);
-
-            return $theme_name;
-        }
-
-        wp_mkdir_p($dest);
-        $copy_result = copy_dir($package_root, $dest);
-        static::cleanup_dir($tmp_dir);
-        if (is_wp_error($copy_result)) {
-            static::cleanup_dir($dest);
-            return $copy_result;
-        }
-
-        // Ensure dependency files are present before loading cover/page classes.
-        foreach ($dependencies as $dep) {
-            $dep = ltrim((string) $dep, '/\\');
-            if ($dep === '' || strpos($dep, '..') !== false) {
-                static::cleanup_dir($dest);
-                return new \WP_Error(
-                    'bad_dependency_path',
-                    sprintf(
-                        /* translators: %s: the offending dependency path */
-                        __('setup.php lists the dependency "%s", which is empty or climbs out of the theme folder.', 'groove-folios'),
-                        $dep
-                    ),
-                    __('Dependency paths are relative to the theme folder and may not contain "..".', 'groove-folios')
-                );
-            }
-
-            $dep_file = $dest . $dep;
-            if (!is_readable($dep_file)) {
-                static::cleanup_dir($dest);
-                return new \WP_Error(
-                    'missing_dependency',
-                    sprintf(
-                        /* translators: %s: the dependency path declared in setup.php */
-                        __('setup.php lists the dependency "%s", which is not in the package.', 'groove-folios'),
-                        $dep
-                    ),
-                    __('Every dependency a theme declares has to ship inside it.', 'groove-folios')
-                );
-            }
-
-            require_once $dep_file;
-        }
-
-        if (!is_readable($dest . 'cover.php') || !is_readable($dest . 'page.php')) {
-            static::cleanup_dir($dest);
-            return new \WP_Error(
-                'missing_files',
-                __('cover.php and page.php copied across but cannot be read.', 'groove-folios'),
-                __('This is a file-permission problem on the server rather than anything wrong with the package.', 'groove-folios')
-            );
-        }
-
-        // 7. Register immediately for the current request.
-        require_once $dest . 'cover.php';
-        require_once $dest . 'page.php';
-
-        if (!class_exists($cover_class, false) || !class_exists($page_class, false)) {
-            static::cleanup_dir($dest);
-            return new \WP_Error(
-                'class_not_found',
-                sprintf(
-                    /* translators: 1: cover_class value, 2: page_class value */
-                    __('cover.php and page.php loaded, but do not declare %1$s and %2$s.', 'groove-folios'),
-                    $cover_class,
-                    $page_class
-                ),
-                __('Check the names in setup.php against the classes in those files, including the namespace.', 'groove-folios')
-            );
-        }
-
-        // load_builtin_themes() has checked this since it was written; the
-        // install path never did. register() opens with $cover_class::get_id(),
-        // which a class that does not reach Base_Theme does not have, so a
-        // package that got this far used to take the whole request down with a
-        // fatal — no toast, no error text, just a white admin-post.php.
-        foreach (['cover_class' => $cover_class, 'page_class' => $page_class] as $key => $class) {
-            if (!is_subclass_of($class, Base_Theme::class)) {
-                static::cleanup_dir($dest);
-                return new \WP_Error(
-                    'bad_base_class',
-                    sprintf(
-                        /* translators: 1: setup.php key (cover_class or page_class), 2: the class name */
-                        __('%1$s names %2$s, which does not extend Base_Theme.', 'groove-folios'),
-                        $key,
-                        $class
-                    ),
-                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove-folios')
-                );
-            }
-        }
-
-        // Everything above is a hard requirement — the package cannot install
-        // without it. The contract check is the opposite: advisory, and run
-        // here because this is the only moment anyone sees the package. Its
-        // rules are the ones that fail in silence, so a theme that trips them
-        // installs, renders, and looks fine while ignoring the folio's fonts or
-        // shipping no stylesheet at all.
-        $contract_warnings = static::check_theme_contract($dest);
-
-        static::register($cover_class, $page_class);
-
-        // 8. Persist metadata only after successful load/registration.
-        $installed = static::get_installed_themes_meta();
-        $installed[$theme_id] = [
-            'name' => $theme_name,
-            'version' => $info['version'] ?? '1.0.0',
-            'description' => $info['description'] ?? '',
-            'author' => $info['author'] ?? '',
-            'cover_class' => $cover_class,
-            'page_class' => $page_class,
-            // Stored with the theme rather than handed to the next page load.
-            // These describe the package, not the upload: they stay true until
-            // its files change, and uninstalling clears them with the row. As a
-            // transient they were drained by the first render, so a reload lost
-            // them and a second admin never saw them at all.
-            'contract_warnings' => $contract_warnings,
-        ];
-        update_option('groove_installed_themes', $installed);
-
-        return $theme_name;
-    }
-
-    /**
-     * Delete an installed theme package and unregister it.
-     * Built-in themes cannot be uninstalled via this method.
-     *
-     * @param string $theme_id
-     * @return true|\WP_Error
-     */
-    public static function uninstall_theme(string $theme_id)
-    {
-        $installed = static::get_installed_themes_meta();
-
-        if (!isset($installed[$theme_id])) {
-            return new \WP_Error(
-                'not_found',
-                __('That theme is not an installed package.', 'groove-folios'),
-                __('Built-in themes ship with the plugin and cannot be removed from here.', 'groove-folios')
-            );
-        }
-
-        $theme_dir = static::get_themes_dir() . $theme_id . '/';
-        if (is_dir($theme_dir)) {
-            static::cleanup_dir($theme_dir);
-        }
-
-        unset($installed[$theme_id]);
-        update_option('groove_installed_themes', $installed);
-        static::unregister($theme_id);
-
-        return true;
-    }
-
-    /**
      * Run one-time migrations for theme data.
      * Fixes folios using legacy 'theme-1' IDs.
      */
@@ -1798,57 +1090,5 @@ class Themes_Manager extends Assets
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
         update_option('groove_theme_migration_v1', time());
-    }
-
-    // ── Private helpers ────────────────────────────────────────────────────
-
-    /**
-     * Recursively find a file by name inside a directory.
-     *
-     * @param string $dir
-     * @param string $filename
-     * @return string|null  Absolute path, or null if not found.
-     */
-    private static function find_file_in_dir(string $dir, string $filename): ?string
-    {
-        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir)) as $file) {
-            if ($file->getFilename() === $filename) {
-                return $file->getPathname();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Recursively delete a directory.
-     *
-     * @param string $dir
-     */
-    private static function cleanup_dir(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            return;
-        }
-        static::local_filesystem()->delete($dir, true);
-    }
-
-    /**
-     * WordPress's direct filesystem, for the local directories this class
-     * stages, swaps and deletes (the temp dir and wp-content/groove-themes/).
-     *
-     * Deliberately the direct class rather than the global $wp_filesystem:
-     * uninstall_theme() never initialises that, and on a site configured for
-     * FTP it would route these local paths through a connection that may need
-     * credentials. The direct methods are the same unlink/rmdir/rename calls
-     * this class made itself before.
-     *
-     * @return \WP_Filesystem_Direct
-     */
-    private static function local_filesystem(): \WP_Filesystem_Direct
-    {
-        require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
-        require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
-
-        return new \WP_Filesystem_Direct(null);
     }
 }

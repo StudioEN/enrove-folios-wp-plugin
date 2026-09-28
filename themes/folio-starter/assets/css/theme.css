@@ -1203,10 +1203,10 @@ html:has(.g-folio__theme-1-page) {
     row-gap: var(--fs-2);
   }
 
+  /* The credit that had its own row here is no longer rendered; the cell is
+     an empty spacer for the desktop grid's middle column. */
   .g-folio__theme-1-page .g-folio__theme-page-powerby {
-    grid-column: 1 / -1;
-    order: 1;
-    padding-top: 0;
+    display: none;
   }
 }
 

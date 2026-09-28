@@ -113,8 +113,11 @@ class Cover extends Base_Theme
       <div class="g-folio__theme-content">
         <?php $this->display_brief() ?>
       </div>
-      <div class="g-folio__theme-powerby">Powered by Groove Folios. Theme designed by <a class="g-folio__theme-site"
-          href="/"><?php echo esc_html(static::get_author()); ?></a></div>
+      <?php
+      // Credit, not rendered: "Powered by Groove Folios. Theme designed by
+      // {author}", the author linking to the site. WordPress.org guideline 10
+      // allows no public credit without the site admin opting in.
+      ?>
     </div>
     <?php
   }

@@ -33,6 +33,12 @@ class Page extends Base_Theme
       $version,
       true
     );
+
+    // In <head>, on a header handle of its own: everything above prints in
+    // the footer, which is too late to stop the flash.
+    wp_register_script('groove-proposal-scheme', false, [], $version, false);
+    wp_enqueue_script('groove-proposal-scheme');
+    wp_add_inline_script('groove-proposal-scheme', $this->theme_bootstrap_script());
   }
 
   public function get_data()
@@ -47,23 +53,13 @@ class Page extends Base_Theme
     $this->show_in_page_nav = $show_nav_meta !== '0';
   }
 
-  protected function display_theme_bootstrap_script(): void
+  /**
+   * The light/dark class, set on <html> before first paint so a reader on a
+   * dark scheme never sees the light page flash first.
+   */
+  protected function theme_bootstrap_script(): string
   {
-    ?>
-    <script>
-      (function () {
-        try {
-          var saved = localStorage.getItem('gp-theme');
-          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          var mode = saved === 'dark' || saved === 'light' ? saved : (prefersDark ? 'dark' : 'light');
-          document.documentElement.classList.remove('gp-theme-light', 'gp-theme-dark');
-          document.documentElement.classList.add(mode === 'dark' ? 'gp-theme-dark' : 'gp-theme-light');
-        } catch (error) {
-          document.documentElement.classList.add('gp-theme-light');
-        }
-      })();
-    </script>
-    <?php
+    return "(function () { try { var saved = localStorage.getItem('gp-theme'); var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; var mode = saved === 'dark' || saved === 'light' ? saved : (prefersDark ? 'dark' : 'light'); document.documentElement.classList.remove('gp-theme-light', 'gp-theme-dark'); document.documentElement.classList.add(mode === 'dark' ? 'gp-theme-dark' : 'gp-theme-light'); } catch (error) { document.documentElement.classList.add('gp-theme-light'); } })();";
   }
 
   public function get_html($html)
@@ -514,7 +510,6 @@ class Page extends Base_Theme
     $proposal_color_scheme = $this->get_proposal_color_scheme($folio_id);
     $palette_source_url = $this->get_palette_source_url($folio_id);
     ?>
-    <?php $this->display_theme_bootstrap_script(); ?>
     <div
       class="gp gp-page g-folio__theme-page"
       id="gp-page-top"

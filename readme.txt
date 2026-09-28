@@ -1,5 +1,5 @@
 === Groove Folios ===
-Contributors: studioenfrankw
+Contributors: studioen
 Tags: ebook, newsletter, portfolio, publishing, documents
 Requires at least: 5.9
 Tested up to: 7.1
@@ -24,7 +24,7 @@ Folios render through their own self-contained themes, not your site's WordPress
 * **Password-protected folios**, with a reading gate styled to match the theme.
 * **Collection tags** to organise folios, plus quick edit and duplication from the All Folios list.
 * **Configurable URLs:** folios live under a base path you choose, for example `/folio/your-title/`.
-* **Installable themes:** upload a folio theme as a ZIP from Groove → Themes. The plugin checks each package against the theme contract at install time and tells you what to fix. The full theme specification and a step-by-step playbook are built into the Themes screen.
+* **Theme documentation built in:** the full folio theme specification and a step-by-step playbook are on Groove → Themes. Support for third-party themes is coming soon.
 
 = Privacy =
 
@@ -36,7 +36,7 @@ This plugin uses two third-party services. Neither receives anything about your 
 
 = Google Fonts =
 
-Folio themes set their type in fonts served by Google Fonts. When someone views a published folio, **their browser** requests the stylesheet from `fonts.googleapis.com` and the font files from `fonts.gstatic.com`. Google receives the visitor's IP address and browser details, as with any web request. This happens on published folios and folio previews only, not on the rest of your site and not in the admin.
+Folio themes set their type in open-licence fonts from Google Fonts. Folios never load them from Google: they are served from your own site, so your readers' browsers do not contact Google. An administrator fetches them by pressing **Download Fonts** on Groove → Settings → Fonts. That sends one request per font family to `fonts.googleapis.com` and one per font file to `fonts.gstatic.com` (about 110 files, 4 MB) from **your server**. Google receives your server's IP address and the names of the fonts requested. Nothing is fetched until the button is pressed; until then, folios use system fonts. The fonts are then served from your own uploads folder.
 
 * Terms of service: https://developers.google.com/fonts/terms
 * Privacy policy: https://policies.google.com/privacy
@@ -54,7 +54,7 @@ Theme covers and the photos in sample content come from Pexels. Their licence do
 1. In your WordPress admin, go to Plugins → Add New Plugin and search for "Groove Folios", or upload the ZIP with Upload Plugin.
 2. Activate the plugin.
 3. Go to **Groove → Add New**, pick a theme, and tick the sample content box to start from a finished example.
-4. Optional: to see the sample content with its photos, press **Download Photos** on Groove → Settings → Imagery first.
+4. Optional: to see the themes in their own typefaces, press **Download Fonts** on Groove → Settings → Fonts. To see the sample content with its photos, press **Download Photos** on Groove → Settings → Imagery first.
 
 == Frequently Asked Questions ==
 
@@ -68,7 +68,11 @@ The sample photos come from Pexels, whose licence does not allow them to be redi
 
 = Can I make my own folio theme? =
 
-Yes. A folio theme is a small folder with a manifest, a cover template, a page template and a stylesheet. The full specification and a step-by-step playbook are on Groove → Themes, under the Spec and Playbook tabs. Upload the finished ZIP from the same screen.
+A folio theme is a small folder with a manifest, a cover template, a page template and a stylesheet. The full specification and a step-by-step playbook are on Groove → Themes, under the Spec and Playbook tabs. Installing a theme of your own is not possible yet; support for third-party themes is coming soon.
+
+= Why do my folios use system fonts? =
+
+The theme fonts have not been downloaded to your site yet. Press Download Fonts on Groove → Settings → Fonts. Folios load their fonts from your own site rather than from Google, so readers are never sent to a third party.
 
 = Where do folios live on my site? =
 
@@ -107,7 +111,7 @@ Groove Folios is licensed under the GPLv2 or later. It includes or uses:
 
 * **eicons** icon font (5.21.0) by Elementor, distributed under the GPLv3 as part of the Elementor plugin. Some glyphs are based on Font Awesome 4.7.0, licensed under the SIL Open Font License 1.1. https://github.com/elementor/elementor-icons
 * **Tailwind CSS**, compiled into assets/build, licensed under the MIT licence. https://tailwindcss.com
-* **Google Fonts** typefaces, loaded from Google at view time (not bundled), each under the SIL Open Font License or Apache License 2.0.
+* **Google Fonts** typefaces, fetched on request (not bundled) and served from your own site, each under the SIL Open Font License or Apache License 2.0.
 * **Pexels photos**, fetched on request (not bundled), under the Pexels licence. Each photo is credited to its photographer on Groove → Settings → Imagery.
 
 = Source code and build =

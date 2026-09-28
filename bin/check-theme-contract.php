@@ -17,10 +17,9 @@
  *   --theme=<slug>  Check one theme instead of all of them. (`--theme=` with no
  *                   slug is indistinguishable from omitting the flag, because
  *                   getopt drops it, so it checks everything.)
- *   --dir=<path>    Check a theme outside this plugin's themes/ folder — an
- *                   installed package in wp-content/groove-themes/, or a theme
- *                   being developed anywhere else. Point it at one theme folder
- *                   or at a folder of them.
+ *   --dir=<path>    Check a theme outside this plugin's themes/ folder — a
+ *                   theme being developed anywhere else. Point it at one theme
+ *                   folder or at a folder of them.
  *   --strict        Exit non-zero if any theme has a warning (for CI).
  *   --help          Show this help.
  *
@@ -800,9 +799,9 @@ $optional = groove_contract_optional_slots($slots);
 $core = groove_contract_core_slots($slots);
 
 // --dir points the checker at a theme that is not in this plugin's themes/
-// folder — which is every third-party theme, since an installed package lives
-// in wp-content/groove-themes/. Without it the only tool that knows these rules
-// could never be run against the artefact a theme author actually ships.
+// folder — which is every third-party theme. Without it the only tool that
+// knows these rules could never be run against the artefact a theme author
+// actually ships.
 // $root stays the plugin, because the cross-file checks (the password-gate
 // colour maps, Base_Theme's helper list) resolve against plugin source.
 if (isset($opts['dir'])) {
@@ -847,11 +846,9 @@ $rows = [];
 /**
  * Check one theme folder against the contract.
  *
- * Extracted from the CLI loop so something other than the CLI can call it:
- * Themes_Manager::install_theme_from_zip() runs it over a package it has just
- * unpacked. Before this, every rule here was reachable only by a script
- * globbing the plugin's own themes/ directory — the one place a third-party
- * theme never lives.
+ * Extracted from the CLI loop so something other than the CLI can call it.
+ * The package installer (removed in 0.5.1) ran it over each theme it unpacked;
+ * whatever brings third-party themes back should do the same.
  *
  * @param string $dir  Absolute path to the theme folder.
  * @param string $root Plugin root; what the cross-file checks resolve against.

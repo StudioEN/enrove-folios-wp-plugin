@@ -4,7 +4,7 @@ Two documents cover theme work, and they do not overlap:
 
 | Read | For |
 |---|---|
-| [README.md](README.md) | **The spec.** What the system is, organised by subsystem — `setup.php` keys, `Base_Theme` lifecycle, the `--folio-*` contract, routing, packaging. Cited below as §N. |
+| [README.md](README.md) | **The spec.** What the system is, organised by subsystem — `setup.php` keys, `Base_Theme` lifecycle, the `--folio-*` contract, routing, distribution. Cited below as §N. |
 | **This file** | **The order of work, and the traps.** What to do first, how to get the thing in front of your eyes, and the specific mistakes that cost real time. Written from building a theme end to end. |
 
 Everything either one refers to ships with the plugin. Where a claim here can be checked against code,
@@ -62,22 +62,14 @@ Pick a two-letter CSS prefix at the same time (`gd`, `gn`, `gm`, `gp`) and use B
 Copy structure, not class names: `folio-starter` and `groove-ebook` still use legacy bare
 `.g-folio__theme-1` / `-2` roots.
 
-### Bundled or packaged
+### Built in, for now
 
-| | Bundled in `themes/` | Installable package |
-|---|---|---|
-| Discovery | `load_builtin_themes()` globs `themes/*` | `groove_installed_themes` option, **not** a directory scan |
-| Folder name | You name it; must match the derived ID | The installer names it `sanitize_title(name)` |
-| Version shown | `last_updated` | `version` |
-| Install | Already there | *Groove → Themes → Install a Theme* |
-
-A package can never shadow a built-in — an ID collision with a bundled theme is refused outright,
-because a redeclared class is an engine fatal no `try`/`catch` can contain.
+Every theme is a folder in this plugin's `themes/`, found by `load_builtin_themes()` globbing
+`themes/*`. You name the folder, and it must match the derived ID. Installing a theme from a ZIP was
+removed in 0.5.1 (README §10); support for third-party themes is coming. Build to the spec anyway, and
+use the path helpers rather than `GROOVE_PATH . 'themes/…'`, so the theme does not assume where it lives.
 
 **Declare both `version` and `last_updated`** in anything you intend to distribute.
-
-**Never hand-drop a package folder into `wp-content/groove-themes/`.** Installed themes come from the
-option, not a scan, so the folder is ignored entirely — you get silence, not a broken theme.
 
 ---
 
@@ -218,26 +210,12 @@ curl -s "http://localhost:PORT/folio/smoke/page/one" \
 
 ```bash
 curl -s "<page url>" | grep -oE 'data-groove-drawer="[^"]*"|class="g-folio__theme-page-nav[^"]*"'
-curl -s "<page url>" | grep -oE 'fonts\.googleapis[^"]*|--g-folio-(header|body)-font: [^;]*'
+curl -s "<page url>" | grep -oE 'groove-folios/fonts/[^"]*|--g-folio-(header|body)-font: [^;]*'
 curl -s "<page url>" | grep -oE '<div class="<prefix> [^"]*"'   # root classes
 ```
 
 A screenshot proves paint, not behaviour. Drive the drawer by hand at least once: open it, press
 Escape, click outside, Tab into it while closed.
-
-### Test a package the way a user installs it
-
-Do not hand-sync files and call it verified.
-
-```php
-$tmp = wp_tempnam('theme.zip');
-copy('/path/to/theme.zip', $tmp);          // the installer consumes the file
-$r = Groove\Themes\Themes_Manager::install_theme_from_zip($tmp, false);
-echo is_wp_error($r) ? $r->get_error_code() . ' — ' . $r->get_error_message()
-                     : wp_json_encode(get_option('groove_installed_themes')['<id>']);
-```
-
-A clean install prints `"contract_warnings":[]`.
 
 ---
 
@@ -245,7 +223,7 @@ A clean install prints `"contract_warnings":[]`.
 
 ```bash
 php bin/check-theme-contract.php --theme=<id>            # a bundled theme
-php bin/check-theme-contract.php --dir=/path/to/theme    # a package, outside themes/
+php bin/check-theme-contract.php --dir=/path/to/theme    # a theme folder outside themes/
 php bin/check-theme-contract.php --theme=<id> --strict   # non-zero exit on warnings, for CI
 php bin/check-theme-contract-selftest.php                # the checker's own suite
 ```
@@ -261,7 +239,7 @@ Everything it catches, and what each one means:
 |---|---|
 | no `name` / `cover_class` / `page_class` | The theme cannot register and will not appear in the picker |
 | folder is X but ID derived from name is Y | Folios store the derived ID; the folder must match |
-| `dependencies` not an array / traversing path / not on disk | Install validation rejects it, or the loaders skip the theme |
+| `dependencies` not an array / traversing path / not on disk | The loaders skip the theme |
 | no usable `gate` | The password screen wears WordPress blue instead of your colours. All three keys must be hex — `sanitize_hex_color()` drops anything else |
 
 ### From the PHP — every one of these fails silently at runtime
@@ -378,8 +356,12 @@ re-pointing them is a no-op that breaks the chain. New themes use `.folio-scheme
 explicit dark, explicit light, and a system fallback whose `:not()` guard is load-bearing — it is what
 lets someone who chose light stay light on a machine set to dark.
 
-Print the bootstrap **inline at the top of `display_theme()`** so the class lands before first paint.
-A page that flashes bone before turning to ink is worse than no scheme at all.
+The class has to land before first paint: a page that flashes bone before turning to ink is worse than
+no scheme at all. Attach the bootstrap in `ensure_script()` with `wp_add_inline_script()`, on a handle
+of its own registered with a `false` source for the **header** (last argument `false`), so it prints
+from `wp_head()` ahead of your markup. Do not echo a `<script>` tag from `display_theme()`, which is
+where the bundled themes used to put it: WordPress.org rejected exactly that. The pattern is in §9 of
+README.md, under "Theme JS".
 
 ---
 
@@ -409,7 +391,7 @@ JS — `groove-magazine`, `groove-newsletter`, `groove-proposal` — build the `
 from `get_theme_assets_url()`. The URL half is portable; the path half only resolves for a theme
 bundled in the plugin.
 
-Nothing 404s, which is why this survives: for an installed package the path simply does not exist,
+Nothing 404s, which is why this survives: for a theme anywhere else the path simply does not exist,
 `file_exists()` returns false, and the version silently falls back to `GROOVE_VERSION`. The script
 loads — and then stops cache-busting, so your next edit to it reaches nobody who already has the old
 one. Use `get_theme_assets_path()` for the path, and the helpers generally:
@@ -425,13 +407,24 @@ than printing "Photo by  on Pexels".
 
 ### Fonts
 
-**`Font_Loader` dedupes `google_family` by exact string.** Two different weight specs for the same
-family put `family=Inter` twice in one `css2` URL and the second is dropped — taking whichever weights
-only it named. If both roles use one family, give them the **identical** string covering every weight
-the theme uses.
+**`Font_Loader` dedupes `google_family` by exact string.** Each distinct string is its own download
+and its own stylesheet, so two different weight specs for one family download that family twice. If
+both roles use one family, give them the **identical** string covering every weight the theme uses.
+
+**Fonts are local, and absent until someone downloads them.** A folio loads only the copies *Download
+Fonts* (Settings → Fonts) put in uploads, never Google's CDN. Press it before judging the type; until
+then you are looking at the fallback end of `css_stack`, which is also what a reader sees on a site that
+never pressed it — so make that end a sensible system family.
 
 Only two roles exist, `header` and `body`. A third voice — a monospace for code and labels — has to be
 a system stack in your own private token. That is usually the better answer anyway: no request.
+
+### WordPress.org review
+
+**Three things render perfectly and still fail review** (README.md §7, "What WordPress.org rejects"):
+a `<script>` or `<style>` tag anywhere in your output, a public credit line such as "Powered by" or
+"Theme by", and any font, script, stylesheet or image fetched from another server. Nothing on the page
+looks wrong, and the contract checker catches only the font case, so check the rendered HTML (§8).
 
 ### Behaviour
 
@@ -458,6 +451,11 @@ Mechanical, in order:
 - [ ] `php bin/check-theme-contract.php --theme=<id> --strict` — read the `!` lines
 - [ ] `php bin/check-theme-contract-selftest.php` if you touched the checker
 - [ ] No PHP notices in the rendered HTML of both views
+- [ ] Nothing WordPress.org rejects in the rendered HTML of both views (README.md §7):
+      `curl -s "<url>" | grep -oiE '<(script|style)[^>]*>|powered by|https?://[a-z0-9.-]+\.(googleapis|gstatic|jsdelivr|cloudflare|unpkg)[^"]*' | grep -viE 'src=|id="[^"]*-(js-(before|after|extra|translations)|inline-css)"'`
+      It drops the tags WordPress prints for an enqueued handle, so what is left was written by hand.
+      Core's `<script type="speculationrules">` is expected. Anything else is yours, the site
+      theme's or another plugin's; read it before assuming which.
 
 By eye, in all four combinations (light/dark × desktop/mobile):
 
@@ -500,7 +498,6 @@ records a reason code; the panel names the folder and the fault.
 | `class_missing` | The file loaded but declared no such class — usually a namespace disagreement |
 | `not_base_theme` | The class exists but does not extend `Base_Theme` |
 | `shadowed` | Another theme registered the same derived ID and won |
-| `package_gone` | An installed theme's option row outlived its files |
 
 A folder carrying **none** of the four marker files (`setup.php`, `cover.php`, `page.php`,
 `assets/css/theme.css`) is not reported at all — that is how stray files in `themes/` stay out.

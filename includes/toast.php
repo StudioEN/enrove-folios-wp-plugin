@@ -169,7 +169,9 @@ class Toast
 	 * Hook the footer printer the first time something is queued.
 	 *
 	 * Admin page callbacks run well before the footer, so a toast queued while
-	 * the screen renders still makes this pass.
+	 * the screen renders still makes this pass. admin_footer, not
+	 * admin_print_footer_scripts: the queue rides on the groove-toast handle
+	 * as an inline script, and core prints footer scripts on the latter.
 	 */
 	private static function hook()
 	{
@@ -178,7 +180,7 @@ class Toast
 		}
 
 		self::$hooked = true;
-		add_action('admin_print_footer_scripts', [__CLASS__, 'print_queue'], 20);
+		add_action('admin_footer', [__CLASS__, 'print_queue'], 99);
 	}
 
 	/**
@@ -197,16 +199,11 @@ class Toast
 
 		self::$queue = [];
 		self::$consumed_args = [];
-		?>
-<script>
-	(function () {
-		var payload = <?php echo wp_json_encode($payload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-		(window.GROOVE_TOASTS = window.GROOVE_TOASTS || []).push(payload);
-		if (window.grooveDrainToasts) {
-			window.grooveDrainToasts();
-		}
-	})();
-</script>
-		<?php
+
+		wp_add_inline_script(
+			'groove-toast',
+			'(window.GROOVE_TOASTS = window.GROOVE_TOASTS || []).push(' . wp_json_encode($payload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ');'
+			. 'if (window.grooveDrainToasts) { window.grooveDrainToasts(); }'
+		);
 	}
 }

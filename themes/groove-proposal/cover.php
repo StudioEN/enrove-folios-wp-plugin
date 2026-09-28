@@ -27,6 +27,12 @@ class Cover extends Base_Theme
       $version,
       true
     );
+
+    // In <head>, on a header handle of its own: everything above prints in
+    // the footer, which is too late to stop the flash.
+    wp_register_script('groove-proposal-scheme', false, [], $version, false);
+    wp_enqueue_script('groove-proposal-scheme');
+    wp_add_inline_script('groove-proposal-scheme', $this->theme_bootstrap_script());
   }
 
   public function get_page_data()
@@ -183,23 +189,13 @@ class Cover extends Base_Theme
     return $has_data ? [$single] : [];
   }
 
-  protected function display_theme_bootstrap_script(): void
+  /**
+   * The light/dark class, set on <html> before first paint so a reader on a
+   * dark scheme never sees the light page flash first.
+   */
+  protected function theme_bootstrap_script(): string
   {
-    ?>
-    <script>
-      (function () {
-        try {
-          var saved = localStorage.getItem('gp-theme');
-          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          var mode = saved === 'dark' || saved === 'light' ? saved : (prefersDark ? 'dark' : 'light');
-          document.documentElement.classList.remove('gp-theme-light', 'gp-theme-dark');
-          document.documentElement.classList.add(mode === 'dark' ? 'gp-theme-dark' : 'gp-theme-light');
-        } catch (error) {
-          document.documentElement.classList.add('gp-theme-light');
-        }
-      })();
-    </script>
-    <?php
+    return "(function () { try { var saved = localStorage.getItem('gp-theme'); var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; var mode = saved === 'dark' || saved === 'light' ? saved : (prefersDark ? 'dark' : 'light'); document.documentElement.classList.remove('gp-theme-light', 'gp-theme-dark'); document.documentElement.classList.add(mode === 'dark' ? 'gp-theme-dark' : 'gp-theme-light'); } catch (error) { document.documentElement.classList.add('gp-theme-light'); } })();";
   }
 
   protected function display_nav(): void
@@ -287,7 +283,6 @@ class Cover extends Base_Theme
     $palette_source_url = $this->get_palette_source_url();
     $cover_image_url = $palette_source_url;
     ?>
-    <?php $this->display_theme_bootstrap_script(); ?>
     <div
       class="gp gp-cover g-folio__theme-cover"
       data-gp-color-scheme="<?php echo esc_attr($proposal_color_scheme); ?>"
@@ -394,20 +389,22 @@ class Cover extends Base_Theme
                 class="gp-cover__hero-image"
                 crossorigin="anonymous"
               />
-              <figcaption class="gp-cover__hero-credit">
-                <?php echo esc_html__('Powered by Groove Folios', 'groove-folios'); ?>
-              </figcaption>
+              <?php
+              // Credit, not rendered: a "Powered by Groove Folios" caption
+              // (.gp-cover__hero-credit) sat on the hero's corner. WordPress.org
+              // guideline 10 allows no public credit without the site admin opting in.
+              ?>
             </figure>
           <?php endif; ?>
 
-          <?php if (!empty($this->copyright) || $cover_image_url === ''): ?>
+          <?php
+          // Credit, not rendered: with no hero image, "Powered by Groove Folios"
+          // sat in this footer instead. WordPress.org guideline 10 allows no
+          // public credit without the site admin opting in.
+          ?>
+          <?php if (!empty($this->copyright)): ?>
             <footer class="gp-cover__footer">
-              <?php if (!empty($this->copyright)): ?>
-                <span><?php echo esc_html($this->copyright); ?></span>
-              <?php endif; ?>
-              <?php if ($cover_image_url === ''): ?>
-                <span><?php echo esc_html__('Powered by Groove Folios', 'groove-folios'); ?></span>
-              <?php endif; ?>
+              <span><?php echo esc_html($this->copyright); ?></span>
             </footer>
           <?php endif; ?>
         </div><!-- .gp-cover__content-area -->

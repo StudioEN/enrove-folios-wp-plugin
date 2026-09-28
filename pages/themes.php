@@ -16,9 +16,9 @@ if (!defined('ABSPATH')) {
 /**
  * Themes admin page.
  *
- * Displays all registered themes (built-in + installed packages) and
- * provides a ZIP upload form so admins can install new managed theme packages
- * without touching any plugin files.
+ * Displays the built-in themes, and the Spec and Playbook documents that
+ * describe how a theme is built. Installing a theme from a .zip was removed
+ * in 0.5.1 (see Themes_Manager); third-party themes are coming back later.
  *
  * @since 1.0.0
  */
@@ -42,9 +42,9 @@ class Themes extends Page
 	 * The theme grid, then the two documents that describe how to build one.
 	 *
 	 * The docs are tabs here rather than a screen of their own because this is
-	 * where someone already is when they need them: the install panel, the
-	 * contract warnings and the list of folders that did not load all describe
-	 * a contract that, until now, only existed as a file path in a sentence.
+	 * where someone already is when they need them: the list of folders that
+	 * did not load describes a contract that, until now, only existed as a
+	 * file path in a sentence.
 	 */
 	public function create_tabs()
 	{
@@ -74,233 +74,9 @@ class Themes extends Page
 
 	public function __construct()
 	{
-		// Register POST action handlers (both priv — themes require manage_options).
-		$this->add_post_action('groove_install_theme', 'handle_install');
-		$this->add_post_action('groove_uninstall_theme', 'handle_uninstall');
-		$this->add_post_action('groove_replace_theme', 'handle_replace');
-		$this->add_post_action('groove_cancel_replace', 'handle_cancel_replace');
-
 		add_action('groove/menu/register', function (Menu_Manager $menu) {
 			$menu->register(static::PAGE_ID, new Themes_Menu_Item($this));
 		}, Overview::MENU_PRIORITY + 20);
-	}
-
-	// -----------------------------------------------------------------------
-	// Install handler
-	// -----------------------------------------------------------------------
-
-	/**
-	 * Handle a theme ZIP upload and install it.
-	 * Hooked to admin_post_groove_install_theme.
-	 */
-	public function handle_install()
-	{
-		check_admin_referer('groove_install_theme');
-
-		if (!current_user_can('manage_options')) {
-			wp_die(esc_html__('You do not have permission to install themes.', 'groove-folios'));
-		}
-
-		if (empty($_FILES['theme_zip']) || !isset($_FILES['theme_zip']['error'], $_FILES['theme_zip']['tmp_name']) || $_FILES['theme_zip']['error'] !== UPLOAD_ERR_OK) {
-			// This used to redirect with the literal string 'upload_failed',
-			// which is what the operator then read in the toast.
-			$this->redirect_with_failure(
-				__('The file did not finish uploading.', 'groove-folios'),
-				__('Check the package is a .zip and is smaller than this server\'s upload limit, then try again.', 'groove-folios'),
-				'#groove-theme-submit'
-			);
-			return;
-		}
-
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- tmp_name is the path PHP gave the upload, not browser input; wp_unslash() would break a Windows path, and unzip_file() only reads it.
-		$result = Themes_Manager::install_theme_from_zip($_FILES['theme_zip']['tmp_name']);
-
-		if (is_wp_error($result)) {
-			if ($result->get_error_code() === 'replace_confirm_required') {
-				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The $_FILES entry goes whole to wp_handle_upload(), which validates it (is_uploaded_file(), zip type) and sanitizes the name.
-				$this->park_upload_for_confirmation($_FILES['theme_zip'], (array) $result->get_error_data());
-				return;
-			}
-
-			$this->redirect_with_failure(
-				$result->get_error_message(),
-				(string) $result->get_error_data(),
-				'#groove-theme-submit'
-			);
-			return;
-		}
-
-		$this->redirect_with_notice('success', urlencode($result));
-	}
-
-	/**
-	 * Hold an upload that would replace an installed theme, and ask first.
-	 *
-	 * The zip has to outlive the request to survive the question, and PHP
-	 * deletes the upload's temp file at the end of one — so it is moved
-	 * somewhere of our own and the path kept in a per-user transient. The path
-	 * is generated here and never comes from the request, so nothing the
-	 * browser sends decides what gets unzipped on the way back.
-	 *
-	 * @param array $upload  The upload's $_FILES entry.
-	 * @param array $context Replace-confirmation details from Themes_Manager.
-	 */
-	private function park_upload_for_confirmation(array $upload, array $context)
-	{
-		// Discard anything the last question left behind. A parked upload is
-		// cleared by either button, but an operator who simply walks away
-		// leaves the zip on disk until the OS gets to it, and uploading again
-		// is the moment we know the old one is not wanted.
-		$key = 'groove_theme_pending_' . get_current_user_id();
-		$stale = get_transient($key);
-		if (!empty($stale['zip'])) {
-			wp_delete_file($stale['zip']);
-		}
-
-		// wp_handle_upload() moves the file into the uploads folder under the
-		// name the browser sent. Point it at the temp directory and a random
-		// name instead, as before: a theme package waiting on a question does
-		// not belong in a public, guessable URL.
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		$temp_dir = untrailingslashit(get_temp_dir());
-		$to_temp_dir = function ($uploads) use ($temp_dir) {
-			$uploads['path'] = $temp_dir;
-			$uploads['url'] = '';
-			$uploads['subdir'] = '';
-			$uploads['error'] = false;
-			return $uploads;
-		};
-		add_filter('upload_dir', $to_temp_dir);
-		$moved = wp_handle_upload($upload, array(
-			'test_form' => false,
-			'mimes' => array('zip' => 'application/zip'),
-			'unique_filename_callback' => function () {
-				return 'groove-pending-' . wp_generate_password(20, false) . '.zip';
-			},
-		));
-		remove_filter('upload_dir', $to_temp_dir);
-
-		$parked = isset($moved['file']) && empty($moved['error']) ? $moved['file'] : '';
-
-		if ($parked !== '') {
-			// wp_handle_upload() gives the file its directory's permissions, which
-			// in a shared temp directory means world-writable. Nobody else gets
-			// to swap the package between the question and the answer.
-			global $wp_filesystem;
-			if ($wp_filesystem) {
-				$wp_filesystem->chmod($parked, 0600);
-			}
-		}
-
-		if ($parked === '') {
-			$this->redirect_with_failure(
-				__('The upload could not be held while you confirmed.', 'groove-folios'),
-				__('Check that PHP can write to the server\'s temporary directory, then try again.', 'groove-folios'),
-				'#groove-theme-submit'
-			);
-			return;
-		}
-
-		set_transient($key, array_merge($context, array('zip' => $parked)), 15 * MINUTE_IN_SECONDS);
-
-		$this->redirect_with_notice('confirm_replace', '');
-	}
-
-	/**
-	 * Complete an upload the operator confirmed should replace what is there.
-	 */
-	public function handle_replace()
-	{
-		check_admin_referer('groove_replace_theme');
-
-		if (!current_user_can('manage_options')) {
-			wp_die(esc_html__('You do not have permission to install themes.', 'groove-folios'));
-		}
-
-		$key = 'groove_theme_pending_' . get_current_user_id();
-		$pending = get_transient($key);
-		delete_transient($key);
-
-		if (empty($pending['zip']) || !is_readable($pending['zip'])) {
-			$this->redirect_with_failure(
-				__('That upload is no longer waiting to be confirmed.', 'groove-folios'),
-				__('It is held for fifteen minutes. Upload the package again.', 'groove-folios'),
-				'#groove-theme-submit'
-			);
-			return;
-		}
-
-		$result = Themes_Manager::install_theme_from_zip($pending['zip'], true);
-		wp_delete_file($pending['zip']);
-
-		if (is_wp_error($result)) {
-			$this->redirect_with_failure(
-				$result->get_error_message(),
-				(string) $result->get_error_data(),
-				'#groove-theme-submit'
-			);
-			return;
-		}
-
-		$this->redirect_with_notice('replaced', urlencode($result));
-	}
-
-	/**
-	 * Discard an upload the operator decided not to go through with.
-	 */
-	public function handle_cancel_replace()
-	{
-		check_admin_referer('groove_cancel_replace');
-
-		if (!current_user_can('manage_options')) {
-			wp_die(esc_html__('You do not have permission to install themes.', 'groove-folios'));
-		}
-
-		$key = 'groove_theme_pending_' . get_current_user_id();
-		$pending = get_transient($key);
-		delete_transient($key);
-
-		if (!empty($pending['zip'])) {
-			wp_delete_file($pending['zip']);
-		}
-
-		$this->redirect_with_notice('replace_cancelled', '');
-	}
-
-	// -----------------------------------------------------------------------
-	// Uninstall handler
-	// -----------------------------------------------------------------------
-
-	/**
-	 * Handle a theme uninstall request.
-	 * Hooked to admin_post_groove_uninstall_theme.
-	 */
-	public function handle_uninstall()
-	{
-		check_admin_referer('groove_uninstall_theme');
-
-		if (!current_user_can('manage_options')) {
-			wp_die(esc_html__('You do not have permission to remove themes.', 'groove-folios'));
-		}
-
-		$theme_id = isset($_POST['theme_id']) ? sanitize_key($_POST['theme_id']) : '';
-
-		if (empty($theme_id)) {
-			$this->redirect_with_failure(
-				__('No theme was named in that request.', 'groove-folios'),
-				__('Open the theme from the grid and use Remove in its details dialog.', 'groove-folios')
-			);
-			return;
-		}
-
-		$result = Themes_Manager::uninstall_theme($theme_id);
-
-		if (is_wp_error($result)) {
-			$this->redirect_with_failure($result->get_error_message(), (string) $result->get_error_data());
-			return;
-		}
-
-		$this->redirect_with_notice('uninstalled', $theme_id);
 	}
 
 	// -----------------------------------------------------------------------
@@ -342,11 +118,6 @@ class Themes extends Page
 		$tabs = $this->get_tabs();
 		$tab_key = $this->current_tab();
 		$query = $this->parse_query();
-
-		// An outcome already reported once does not get reported again just
-		// because someone opened the spec — these are click outcomes, and
-		// carrying them across a tab switch would re-fire the toast.
-		unset($query['groove_notice'], $query['groove_value']);
 		?>
 		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Themes tabs', 'groove-folios'); ?>">
 			<?php
@@ -440,9 +211,7 @@ class Themes extends Page
 				<?php endif; ?>
 			</section>
 		<?php
-		if ($markdown !== '') {
-			$this->display_doc_script();
-		}
+		// The contents rail's current-section marker is in assets/js/groove-themes.js.
 	}
 
 	/**
@@ -488,167 +257,6 @@ class Themes extends Page
 	}
 
 	/**
-	 * Mark the section being read in the contents rail.
-	 *
-	 * Inline, like the dropzone and the details dialog on this screen, because it
-	 * runs on one tab of one page and nothing else can use it. Everything it adds
-	 * is an enhancement: with no JavaScript the rail is still a list of links to
-	 * anchors that exist, which is the part that makes the document navigable.
-	 */
-	private function display_doc_script()
-	{
-		?>
-		<script>
-			(function () {
-				var toc = document.querySelector('.g-docs__toc');
-				if (!toc || !window.IntersectionObserver) return;
-
-				var links = Array.prototype.slice.call(toc.querySelectorAll('.g-docs__toc-link'));
-				var headings = [];
-				var linkFor = {};
-
-				links.forEach(function (link) {
-					var id = decodeURIComponent(link.hash.slice(1));
-					var heading = id && document.getElementById(id);
-					if (!heading) return;
-					linkFor[id] = link;
-					headings.push(heading);
-				});
-
-				if (!headings.length) return;
-
-				var current = null;
-
-				// Raised while a click is scrolling the page. The observer keeps its
-				// bookkeeping up to date but stops marking, so the rail does not strobe
-				// through every section the scroll passes on its way down.
-				var travelling = false;
-				var settle = null;
-
-				function arrive() {
-					window.clearTimeout(settle);
-					settle = window.setTimeout(function () {
-						travelling = false;
-					}, 120);
-				}
-
-				function mark(heading) {
-					if (current === heading) return;
-					current = heading;
-
-					links.forEach(function (link) {
-						link.classList.remove('is-current');
-						link.removeAttribute('aria-current');
-					});
-
-					var link = linkFor[heading.id];
-					if (!link) return;
-
-					link.classList.add('is-current');
-					link.setAttribute('aria-current', 'true');
-
-					// Keep the marked entry inside the rail's own scroll box. Never
-					// scrollIntoView(): that scrolls the page as well, which would
-					// fight the scrolling that triggered this in the first place.
-					var entry = link.getBoundingClientRect();
-					var frame = toc.getBoundingClientRect();
-					if (entry.top < frame.top || entry.bottom > frame.bottom) {
-						toc.scrollTop += (entry.top - frame.top) - (frame.height / 3);
-					}
-				}
-
-				// A band across the top of the viewport. The section being read is the
-				// topmost heading inside it; when the band is empty — which is most of
-				// a long section — the last mark stands rather than clearing.
-				var inBand = [];
-				var observer = new IntersectionObserver(function (entries) {
-					entries.forEach(function (record) {
-						var at = inBand.indexOf(record.target);
-						if (record.isIntersecting && at === -1) {
-							inBand.push(record.target);
-						} else if (!record.isIntersecting && at !== -1) {
-							inBand.splice(at, 1);
-						}
-					});
-
-					if (travelling || !inBand.length) return;
-
-					inBand.sort(function (a, b) {
-						return headings.indexOf(a) - headings.indexOf(b);
-					});
-
-					mark(inBand[0]);
-				}, { rootMargin: '-52px 0px -72% 0px' });
-
-				headings.forEach(function (heading) {
-					observer.observe(heading);
-				});
-
-				// Before the first heading crosses the band, the reader is in the
-				// opening section, so say so rather than showing nothing marked.
-				mark(headings[0]);
-
-				// Glide to the section instead of cutting to it, so the reader keeps
-				// their bearings in a document this long. Delegated from the section
-				// rather than bound to the rail: a cross-reference in the prose is the
-				// same gesture and should not behave differently. Only bare '#anchor'
-				// hrefs are taken — a link to the other tab carries a query string and
-				// must navigate normally.
-				var docs = document.querySelector('.g-docs');
-				if (!docs || !document.body.closest) return;
-
-				docs.addEventListener('click', function (event) {
-					if (event.defaultPrevented || event.button !== 0) return;
-					if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-
-					var link = event.target.closest('a');
-					if (!link || !docs.contains(link)) return;
-
-					var href = link.getAttribute('href') || '';
-					if (href.charAt(0) !== '#' || href === '#') return;
-
-					var target = document.getElementById(decodeURIComponent(href.slice(1)));
-					if (!target) return;
-
-					event.preventDefault();
-
-					// Honoured live rather than read once, so turning the system setting
-					// on takes effect without a reload.
-					var still = window.matchMedia &&
-						window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-					travelling = true;
-					arrive();
-					mark(target);
-
-					target.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
-
-					// preventDefault() dropped the browser's own hash update along with
-					// its jump, and the address bar is how a reader copies a link to a
-					// section. replaceState, not pushState: Back should leave the
-					// document, not walk every section the reader visited inside it.
-					if (window.history && history.replaceState) {
-						history.replaceState(null, '', href);
-					}
-
-					// The jump moved the viewport but not the keyboard, which would
-					// otherwise resume from the rail. Headings are not focusable on
-					// their own, hence the tabindex.
-					if (!target.hasAttribute('tabindex')) {
-						target.setAttribute('tabindex', '-1');
-					}
-					target.focus({ preventScroll: true });
-				});
-
-				window.addEventListener('scroll', function () {
-					if (travelling) arrive();
-				}, true);
-			})();
-		</script>
-		<?php
-	}
-
-	/**
 	 * Filename => URL, so the cross-references the two documents already make to
 	 * each other become links between the two tabs instead of dead file paths.
 	 */
@@ -666,22 +274,13 @@ class Themes extends Page
 	private function display_tab_themes()
 	{
 		$all_themes = Themes_Manager::get_all_themes();
-		$installed_meta = Themes_Manager::get_installed_themes_meta();
 		$folio_counts = $this->get_folio_counts_by_theme();
 		$total_themes = count($all_themes);
-		$installed_count = count($installed_meta);
-		$builtin_count = max(0, $total_themes - $installed_count);
 		$default_theme_id = (string) get_option('groove_default_theme_id', '');
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only outcome parameters set by this page's own redirect after a nonce-checked action; they only choose which toast to show.
-		$notice_type = isset($_GET['groove_notice']) ? sanitize_key($_GET['groove_notice']) : '';
-		$notice_value = isset($_GET['groove_value']) ? sanitize_text_field(urldecode(wp_unslash($_GET['groove_value']))) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_text_field() runs on the urldecode()d value; running it first would strip the %-encoded octets urldecode() needs.
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		?>
 		<div class="space-y-4">
 
-			<?php $this->queue_notice_toast($notice_type, $notice_value); ?>
 			<?php $this->display_theme_problems($folio_counts); ?>
-			<?php $this->display_replace_confirmation($folio_counts); ?>
 
 			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
 				<div>
@@ -696,17 +295,15 @@ class Themes extends Page
 						} else {
 							printf(
 								esc_html(
-									/* translators: 1: total theme count, 2: built-in count, 3: installed package count */
+									/* translators: %s: number of themes */
 									_n(
-										'%1$s theme available — %2$s built-in, %3$s installed. Select one for details.',
-										'%1$s themes available — %2$s built-in, %3$s installed. Select one for details.',
+										'%s theme available. Select it for details.',
+										'%s themes available. Select one for details.',
 										$total_themes,
 										'groove-folios'
 									)
 								),
-								esc_html(number_format_i18n($total_themes)),
-								esc_html(number_format_i18n($builtin_count)),
-								esc_html(number_format_i18n($installed_count))
+								esc_html(number_format_i18n($total_themes))
 							);
 						}
 						?>
@@ -722,7 +319,7 @@ class Themes extends Page
 							echo esc_html(
 								Themes_Manager::get_skipped_themes()
 									? __('No themes loaded. Every theme folder on this site failed to register — see above.', 'groove-folios')
-									: __('No themes installed yet. Upload a theme package below.', 'groove-folios')
+									: __('No themes are available.', 'groove-folios')
 							);
 						?></p>
 					</div>
@@ -735,8 +332,7 @@ class Themes extends Page
 								data-theme-name="<?php echo esc_attr($theme['name']); ?>"
 								<?php /* The dialog's header wears the same badges this card stands for,
 								         so it takes them from the card rather than re-deriving them. */ ?>
-								data-theme-installed="<?php echo isset($installed_meta[$id]) ? '1' : '0'; ?>"
-								data-theme-badge="<?php echo esc_attr(isset($installed_meta[$id]) ? __('Installed', 'groove-folios') : __('Built-in', 'groove-folios')); ?>"
+								data-theme-badge="<?php echo esc_attr__('Built-in', 'groove-folios'); ?>"
 								data-theme-default="<?php echo ((string) $id === $default_theme_id) ? '1' : '0'; ?>"
 								aria-haspopup="dialog">
 								<span class="g-themes-card-thumb">
@@ -765,322 +361,18 @@ class Themes extends Page
 				<?php endif; ?>
 			</section>
 
-			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4 g-themes-upload-section">
-				<div>
-					<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Install a Theme', 'groove-folios'); ?></h2>
-					<p class="mt-1 mb-0 text-sm text-gray-600">
-						<?php esc_html_e('Upload a Groove theme package (.zip) provided by the Groove team or a trusted theme author.', 'groove-folios'); ?>
-					</p>
-				</div>
-
-				<?php /* Settings' thirds grid, with the spans the other way round: there
-				         the form is the narrow column, here it holds the dropzone and the
-				         package notes are the reference beside it. */ ?>
-				<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-					<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
-						enctype="multipart/form-data" class="g-themes-upload-form xl:col-span-2" id="groove-theme-upload-form">
-						<?php wp_nonce_field('groove_install_theme'); ?>
-						<input type="hidden" name="action" value="groove_install_theme" />
-
-						<div class="g-themes-dropzone" id="groove-theme-dropzone">
-							<div class="g-themes-dropzone-icon">📦</div>
-							<p class="g-themes-dropzone-label">
-								<?php esc_html_e('Drag and drop your theme .zip here', 'groove-folios'); ?>
-							</p>
-							<p class="g-themes-dropzone-sub">
-								<?php esc_html_e('or choose a file to upload', 'groove-folios'); ?>
-							</p>
-							<label for="theme_zip" class="button button-secondary g-themes-file-label">
-								<?php esc_html_e('Choose File', 'groove-folios'); ?>
-							</label>
-							<input type="file" name="theme_zip" id="theme_zip" accept=".zip" class="g-themes-file-input" />
-							<p class="g-themes-file-name" id="groove-theme-filename">
-								<?php esc_html_e('No file chosen', 'groove-folios'); ?>
-							</p>
-						</div>
-
-						<div class="g-themes-upload-actions">
-							<button type="submit" class="button button-primary" id="groove-theme-submit" disabled>
-								<?php esc_html_e('Install Theme', 'groove-folios'); ?>
-							</button>
-						</div>
-					</form>
-
-					<div class="g-themes-package-info xl:col-span-1">
-						<h3><?php esc_html_e('Package format', 'groove-folios'); ?></h3>
-						<p><?php esc_html_e('A valid Groove theme package is a .zip file with this structure:', 'groove-folios'); ?>
-						</p>
-						<pre class="g-themes-code">my-theme.zip
-├── setup.php
-├── cover.php
-├── page.php
-└── assets/
-    ├── css/
-    │   └── theme.css
-    └── images/
-        ├── theme-thumb.png
-        ├── theme-cover.jpg
-        └── theme-g-logo.png</pre>
-						<?php /* Three paragraphs of contract used to sit here, paraphrasing
-						         themes/README.md. That is how this panel came to describe a
-						         package that would not work: it asked for assets/thumbnail.png
-						         when images resolve from assets/images/, and an author who
-						         followed it exactly got broken pictures and nothing to say why.
-						         What is left is the two facts the tree cannot show and a
-						         packager cannot infer — both enforced in code a few lines
-						         apart, so neither can quietly stop being true — and a pointer
-						         to the spec rather than a retelling of it. */ ?>
-						<p>
-							<?php esc_html_e('setup.php, cover.php and page.php are required; everything under assets/ is optional. Image filenames are whatever setup.php declares, and are only ever looked for in assets/images/.', 'groove-folios'); ?>
-						</p>
-						<p>
-							<?php esc_html_e('The theme name in setup.php becomes its ID, so a package cannot be re-uploaded as an update — remove the installed theme first.', 'groove-folios'); ?>
-						</p>
-						<p>
-							<?php
-							printf(
-								/* translators: %s: path to the theme spec, rendered as a code element */
-								esc_html__('The full theme spec ships with this plugin at %s.', 'groove-folios'),
-								'<code>themes/README.md</code>'
-							);
-							?>
-						</p>
-					</div>
-				</div>
+			<?php /* An "Install a Theme" panel took a .zip here until 0.5.1. It copied
+			         the package's PHP into wp-content/groove-themes/, which WordPress.org
+			         does not allow a plugin to do, so it came out with the installer. */ ?>
+			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+				<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Third-Party Themes', 'groove-folios'); ?></h2>
+				<p class="mt-1 mb-0 text-sm text-gray-600">
+					<?php esc_html_e('Support for themes from other authors is coming soon. Until then, Groove Folios comes with the themes above.', 'groove-folios'); ?>
+				</p>
 			</section>
 		</div>
 
-		<?php $this->display_details_modal($all_themes, $installed_meta, $folio_counts); ?>
-
-		<script>
-			(function () {
-				var dropzone = document.getElementById('groove-theme-dropzone');
-				var input = document.getElementById('theme_zip');
-				var filename = document.getElementById('groove-theme-filename');
-				var submit = document.getElementById('groove-theme-submit');
-
-				function setFile(file) {
-					if (!file) return;
-					filename.textContent = file.name;
-					submit.disabled = false;
-					dropzone.classList.add('g-themes-dropzone--has-file');
-				}
-
-				input.addEventListener('change', function () {
-					setFile(this.files[0]);
-				});
-
-				dropzone.addEventListener('dragover', function (e) {
-					e.preventDefault();
-					dropzone.classList.add('g-themes-dropzone--over');
-				});
-				dropzone.addEventListener('dragleave', function () {
-					dropzone.classList.remove('g-themes-dropzone--over');
-				});
-				dropzone.addEventListener('drop', function (e) {
-					e.preventDefault();
-					dropzone.classList.remove('g-themes-dropzone--over');
-					var file = e.dataTransfer.files[0];
-					if (file && file.name.toLowerCase().endsWith('.zip')) {
-						// Attach to the real file input via DataTransfer.
-						var dt = new DataTransfer();
-						dt.items.add(file);
-						input.files = dt.files;
-						setFile(file);
-					} else if (window.grooveShowToast) {
-						window.grooveShowToast('Themes are installed from a .zip file.', 'error');
-					}
-				});
-			})();
-		</script>
-
-		<script>
-			// Theme details dialog. Every panel is rendered server-side and hidden;
-			// opening a card reveals its panel rather than rebuilding one in JS, so
-			// nonces, copy and per-theme forms all stay in PHP.
-			(function () {
-				var modal = document.getElementById('g-theme-details-modal');
-				if (!modal) return;
-
-				var titleEl = document.getElementById('g-theme-details-title');
-				var dialogEl = modal.querySelector('.g-theme-details__dialog');
-				var badgeEl = modal.querySelector('[data-groove-theme-badge]');
-				var defaultEl = modal.querySelector('[data-groove-theme-default]');
-				var panels = modal.querySelectorAll('[data-groove-theme-panel]');
-				var lastFocused = null;
-				var hideTimer = null;
-				var themeName = '';
-
-				// Each screen slides in from the side it sits on: the question from
-				// the right, the details back from the left (the .g-dialog-screen
-				// rules in groove-main.css, shared with the folio's Change theme).
-				// Restarted by class, so it runs every time, not only the first.
-				function enterScreen(screen, className) {
-					screen.classList.remove('is-entering-forward', 'is-entering-back');
-					void screen.offsetWidth;
-					screen.classList.add(className);
-				}
-
-				// While the question is up the header asks it, and the badges go:
-				// they describe the theme, and the title is no longer its name.
-				function setHeader(text, showBadges) {
-					titleEl.textContent = text;
-					badgeEl.hidden = !showBadges || badgeEl.textContent === '';
-					defaultEl.hidden = !showBadges || defaultEl.getAttribute('data-shown') !== '1';
-				}
-
-				function showDetails(panel, animate) {
-					var details = panel.querySelector('[data-groove-theme-screen]');
-					var confirmScreen = panel.querySelector('[data-groove-theme-danger-confirm]');
-					if (confirmScreen) {
-						confirmScreen.hidden = true;
-						confirmScreen.style.minHeight = '';
-					}
-					details.hidden = false;
-					setHeader(themeName, true);
-					if (animate) enterScreen(details, 'is-entering-back');
-				}
-
-				// The question stands where the details were and takes their
-				// height, so the dialog neither jumps nor shrinks to ask.
-				function showConfirm(panel) {
-					var details = panel.querySelector('[data-groove-theme-screen]');
-					var confirmScreen = panel.querySelector('[data-groove-theme-danger-confirm]');
-					var height = details.offsetHeight;
-
-					details.hidden = true;
-					confirmScreen.style.minHeight = height ? height + 'px' : '';
-					confirmScreen.hidden = false;
-					setHeader(confirmScreen.getAttribute('data-title') || themeName, false);
-					enterScreen(confirmScreen, 'is-entering-forward');
-					confirmScreen.querySelector('[data-groove-theme-danger-cancel]').focus();
-				}
-
-				// The card carries the theme's name and badges, so the header can be
-				// filled from the thing that was clicked rather than from a second copy
-				// of the same facts held in JS.
-				function open(card) {
-					// The replace confirmation is a question the upload is parked on, and
-					// it renders before this modal in the DOM — a card reached by keyboard
-					// behind it would open above the question, then clear the scroll lock
-					// on close and leave the page scrolling under a dialog still open.
-					if (document.body.classList.contains('g-theme-replace-open')) return;
-
-					var themeId = card.getAttribute('data-groove-theme-open');
-					var matched = null;
-					Array.prototype.forEach.call(panels, function (panel) {
-						var mine = panel.getAttribute('data-groove-theme-panel') === themeId;
-						panel.hidden = !mine;
-						if (mine) matched = panel;
-					});
-					if (!matched) return;
-
-					window.clearTimeout(hideTimer);
-					lastFocused = document.activeElement;
-					themeName = card.getAttribute('data-theme-name') || '';
-
-					var badge = card.getAttribute('data-theme-badge') || '';
-					var installed = card.getAttribute('data-theme-installed') === '1';
-					badgeEl.textContent = badge;
-					badgeEl.className = 'g-themes-tag ' + (installed ? 'g-themes-tag--installed' : 'g-themes-tag--builtin');
-					defaultEl.setAttribute('data-shown', card.getAttribute('data-theme-default') === '1' ? '1' : '0');
-					// Always opens on the details, whatever screen it closed on.
-					showDetails(matched, false);
-
-					modal.hidden = false;
-					// The lock is a class rather than an inline style: the theme
-					// preview overlay stacks above this dialog and clears its own
-					// inline lock on close, which would otherwise unlock the page
-					// while this dialog is still open.
-					document.body.classList.add('g-modal-open');
-					window.requestAnimationFrame(function () {
-						modal.classList.add('is-open');
-					});
-					// Focus the dialog itself: focusing the close button first paints a
-					// ring on the one control you are least likely to want.
-					modal.querySelector('.g-theme-details__body').scrollTop = 0;
-					dialogEl.focus();
-				}
-
-				function close() {
-					if (modal.hidden) return;
-
-					modal.classList.remove('is-open');
-					document.body.classList.remove('g-modal-open');
-					// Held in the DOM until the fade finishes; the timer also covers
-					// reduced motion, where no transition fires at all.
-					hideTimer = window.setTimeout(function () {
-						modal.hidden = true;
-					}, 260);
-
-					if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
-				}
-
-				// Everything visible inside the dialog, in document order.
-				function focusables() {
-					var found = modal.querySelectorAll('button, a[href], input:not([type="hidden"])');
-					return Array.prototype.filter.call(found, function (el) {
-						return el.offsetParent !== null;
-					});
-				}
-
-				document.addEventListener('click', function (e) {
-					var target = e.target instanceof Element ? e.target : null;
-					if (!target) return;
-
-					var card = target.closest('[data-groove-theme-open]');
-					if (card) {
-						open(card);
-						return;
-					}
-					if (target.closest('[data-groove-theme-close]')) {
-						close();
-						return;
-					}
-
-					var start = target.closest('[data-groove-theme-danger-start]');
-					if (start) {
-						showConfirm(start.closest('[data-groove-theme-panel]'));
-						return;
-					}
-
-					// Back returns to the details with focus on the control that
-					// asked, so a second thought is one keypress from where it began.
-					var cancel = target.closest('[data-groove-theme-danger-cancel]');
-					if (cancel) {
-						var owner = cancel.closest('[data-groove-theme-panel]');
-						showDetails(owner, true);
-						owner.querySelector('[data-groove-theme-danger-start]').focus();
-					}
-				});
-
-				document.addEventListener('keydown', function (e) {
-					if (e.key !== 'Escape' || modal.hidden) return;
-					// The live preview overlay stacks above this dialog and owns
-					// Escape while it is open.
-					var preview = document.getElementById('g-tpp-overlay');
-					if (preview && !preview.hidden) return;
-					e.preventDefault();
-					close();
-				});
-
-				modal.addEventListener('keydown', function (e) {
-					if (e.key !== 'Tab') return;
-					var items = focusables();
-					if (!items.length) return;
-
-					var first = items[0];
-					var last = items[items.length - 1];
-					if (e.shiftKey && document.activeElement === first) {
-						e.preventDefault();
-						last.focus();
-					} else if (!e.shiftKey && document.activeElement === last) {
-						e.preventDefault();
-						first.focus();
-					}
-				});
-			})();
-		</script>
+		<?php $this->display_details_modal($all_themes, $folio_counts); ?>
 		<?php
 	}
 
@@ -1092,17 +384,15 @@ class Themes extends Page
 	 * grid stays scannable and the actions stay in one place.
 	 *
 	 * @param array  $all_themes       Descriptors keyed by theme ID.
-	 * @param array  $installed_meta   Installed-package meta keyed by theme ID.
 	 * @param array  $folio_counts     Folio count keyed by theme ID.
 	 */
-	private function display_details_modal($all_themes, $installed_meta, $folio_counts)
+	private function display_details_modal($all_themes, $folio_counts)
 	{
 		if (empty($all_themes)) {
 			return;
 		}
 
 		$can_create = current_user_can('edit_posts');
-		$can_manage = current_user_can('manage_options');
 		?>
 		<div id="g-theme-details-modal" class="g-theme-details" role="dialog" aria-modal="true"
 			aria-labelledby="g-theme-details-title" hidden>
@@ -1126,11 +416,7 @@ class Themes extends Page
 				</div>
 				<div class="g-theme-details__body">
 					<?php foreach ($all_themes as $id => $theme):
-						$is_installed = isset($installed_meta[$id]);
 						$folio_count = isset($folio_counts[$id]) ? (int) $folio_counts[$id] : 0;
-						$version = $is_installed && !empty($installed_meta[$id]['version'])
-							? (string) $installed_meta[$id]['version']
-							: '';
 						$sample = Themes_Manager::get_sample_content((string) $id);
 						// setup.php declares last_updated as a bare ISO string. Anything that
 						// parses is shown in the site's date format; anything else is printed
@@ -1245,12 +531,6 @@ class Themes extends Page
 													<dd><?php echo esc_html($updated_label); ?></dd>
 												</div>
 											<?php endif; ?>
-											<?php if ($version !== ''): ?>
-												<div class="g-theme-details__stat">
-													<dt><?php esc_html_e('Version', 'groove-folios'); ?></dt>
-													<dd><?php echo esc_html($version); ?></dd>
-												</div>
-											<?php endif; ?>
 											<div class="g-theme-details__stat">
 												<dt><?php esc_html_e('Theme ID', 'groove-folios'); ?></dt>
 												<dd><code><?php echo esc_html($id); ?></code></dd>
@@ -1267,19 +547,10 @@ class Themes extends Page
 								 * gets seeded hangs off the same info button rather than widening the
 								 * row. Same classes, not a lookalike, so the two cannot drift.
 								 *
-								 * Removing the theme takes the leading edge, opposite the action that
-								 * builds something — the same row rather than a divided strip under
-								 * it, which is where wp-admin's own theme dialog keeps Delete, and
-								 * which leaves the dialog ending on the thing you came here to do.
-								 *
-								 * The <form> is the row itself, because the toggle has to post with
-								 * it. The remove trigger is a plain button inside that form; the
-								 * screen it opens is a sibling of this one, since it carries a form
-								 * of its own and forms cannot nest.
+								 * The <form> is the row itself, because the toggle has to post with it.
 								 */
 								$seed_field_id = 'g-theme-seed-' . sanitize_key($id);
 								$row_classes = 'g-folio__theme-button g-theme-details__actions';
-								$can_remove = ($is_installed && $can_manage);
 								?>
 								<?php if ($can_create): ?>
 									<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
@@ -1287,8 +558,6 @@ class Themes extends Page
 										<?php wp_nonce_field('groove_create_folio_action', 'groove_nonce'); ?>
 										<input type="hidden" name="action" value="groove_create_folio" />
 										<input type="hidden" name="themeId" value="<?php echo esc_attr($id); ?>" />
-
-										<?php $this->display_remove_trigger($can_remove); ?>
 
 										<?php if ($sample !== null): ?>
 											<div class="g-folio__sample-toggle">
@@ -1314,77 +583,9 @@ class Themes extends Page
 											<?php esc_html_e('Create a folio', 'groove-folios'); ?>
 										</button>
 									</form>
-								<?php elseif ($can_remove): ?>
-									<div class="<?php echo esc_attr($row_classes); ?>">
-										<?php $this->display_remove_trigger($can_remove); ?>
-									</div>
 								<?php endif; ?>
 							</div>
 
-							<?php if ($can_remove):
-								$confirm_id = 'g-theme-remove-' . sanitize_key($id);
-								?>
-								<?php /* Deleting the package files cannot be undone, so the dialog asks
-								         first, on a second screen in the same frame rather than a box
-								         under the buttons or a browser confirm over it. The script swaps
-								         the header for data-title, gives this screen the details
-								         screen's height and slides it in; Back slides the details back. */ ?>
-								<div class="g-dialog-screen g-dialog-confirm" data-groove-theme-danger-confirm hidden
-									role="group" aria-labelledby="<?php echo esc_attr($confirm_id . '-lead'); ?>"
-									aria-describedby="<?php echo esc_attr($confirm_id . '-list'); ?>"
-									data-title="<?php echo esc_attr(sprintf(
-										/* translators: %s: theme name */
-										__('Remove %s?', 'groove-folios'),
-										$theme['name']
-									)); ?>">
-									<div class="g-dialog-confirm__subject" aria-hidden="true">
-										<figure class="g-dialog-confirm__figure">
-											<img class="g-dialog-confirm__thumb" src="<?php echo esc_url($theme['thumbnail_url']); ?>" alt="" loading="lazy" />
-											<figcaption><?php echo esc_html($theme['name']); ?></figcaption>
-										</figure>
-									</div>
-									<div class="g-dialog-confirm__notice g-dialog-confirm__notice--danger">
-										<p id="<?php echo esc_attr($confirm_id . '-lead'); ?>" class="g-dialog-confirm__lead">
-											<?php esc_html_e('This can’t be undone.', 'groove-folios'); ?>
-										</p>
-										<ul id="<?php echo esc_attr($confirm_id . '-list'); ?>" class="g-dialog-confirm__list">
-											<li><?php esc_html_e('Its files are deleted from this site. To use it again, you’d upload its .zip file.', 'groove-folios'); ?></li>
-											<?php if ($folio_count > 0): ?>
-												<li>
-													<?php
-													printf(
-														/* translators: %s: number of folios using this theme */
-														esc_html(_n(
-															'%s folio uses it. Readers get a “Theme not found” page until you give that folio another theme.',
-															'%s folios use it. Readers get a “Theme not found” page until you give those folios another theme.',
-															$folio_count,
-															'groove-folios'
-														)),
-														esc_html(number_format_i18n($folio_count))
-													);
-													?>
-													<a href="<?php echo esc_url($folios_url); ?>"><?php esc_html_e('View them', 'groove-folios'); ?></a>
-												</li>
-											<?php else: ?>
-												<li><?php esc_html_e('No folios use it, so no reader sees a change.', 'groove-folios'); ?></li>
-											<?php endif; ?>
-										</ul>
-									</div>
-									<div class="g-folio__theme-button g-theme-details__actions g-dialog-confirm__actions">
-										<button type="button" class="button button-secondary" data-groove-theme-danger-cancel>
-											<?php esc_html_e('Back', 'groove-folios'); ?>
-										</button>
-										<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-											<?php wp_nonce_field('groove_uninstall_theme'); ?>
-											<input type="hidden" name="action" value="groove_uninstall_theme" />
-											<input type="hidden" name="theme_id" value="<?php echo esc_attr($id); ?>" />
-											<button type="submit" class="button g-dialog-confirm__destroy">
-												<?php esc_html_e('Remove theme', 'groove-folios'); ?>
-											</button>
-										</form>
-									</div>
-								</div>
-							<?php endif; ?>
 						</div>
 					<?php endforeach; ?>
 				</div>
@@ -1430,242 +631,13 @@ class Themes extends Page
 	// -----------------------------------------------------------------------
 
 	/**
-	 * The action row's leading edge: removing the installed package.
-	 *
-	 * Both branches of that row need it — the one that can create a folio and
-	 * the one that can only preview — and it is the same control in each, so it
-	 * lives here rather than in two places that could drift apart. The caller
-	 * passes its own verdict on whether there is anything to remove.
-	 *
-	 * @param bool $can_remove Whether this theme is an installed package the
-	 *                         current user may delete.
-	 */
-	private function display_remove_trigger($can_remove)
-	{
-		if (!$can_remove) {
-			return;
-		}
-		?>
-		<button type="button" class="g-theme-details__danger-start" data-groove-theme-danger-start>
-			<?php esc_html_e('Remove theme', 'groove-folios'); ?>
-		</button>
-		<?php
-	}
-
-	/**
-	 * Ask before an upload replaces a theme the site already has.
-	 *
-	 * Rendered server-side and already open, rather than shown by script: the
-	 * upload is parked on the server waiting for an answer, so the question has
-	 * to be answerable whether or not JavaScript ran. Both buttons are real
-	 * form submissions for the same reason, and either one clears the parked
-	 * file — there is no path that leaves it sitting in the temp directory
-	 * because someone walked away, beyond the fifteen minutes the transient
-	 * lives anyway.
-	 *
-	 * @param array $folio_counts Folios per theme ID, already computed for the grid.
-	 */
-	private function display_replace_confirmation(array $folio_counts)
-	{
-		$pending = get_transient('groove_theme_pending_' . get_current_user_id());
-
-		if (empty($pending['theme_id']) || empty($pending['zip'])) {
-			return;
-		}
-
-		$theme_id = (string) $pending['theme_id'];
-		$existing_name = (string) ($pending['existing_name'] ?? $theme_id);
-		$existing_version = (string) ($pending['existing_version'] ?? '');
-		$incoming_name = (string) ($pending['incoming_name'] ?? $existing_name);
-		$incoming_version = (string) ($pending['incoming_version'] ?? '');
-		$folio_count = isset($folio_counts[$theme_id]) ? (int) $folio_counts[$theme_id] : 0;
-		?>
-		<div class="g-theme-details is-open" role="dialog" aria-modal="true"
-			aria-labelledby="g-theme-replace-title">
-			<div class="g-theme-details__backdrop"></div>
-			<div class="g-theme-details__dialog" tabindex="-1">
-				<div class="g-theme-details__header">
-					<div class="g-theme-details__ident">
-						<h2 id="g-theme-replace-title" class="g-theme-details__title">
-							<?php esc_html_e('Replace this theme?', 'groove-folios'); ?>
-						</h2>
-					</div>
-					<?php /* Closing this dialog is cancelling, so the corner button submits the
-					         Cancel form rather than being a second, vaguer way to say it. It is
-					         the details dialog's button, which is also what stops this header
-					         standing shorter than that one. */ ?>
-					<button type="submit" form="g-theme-replace-cancel" class="g-theme-details__close"
-						aria-label="<?php esc_attr_e('Cancel replacing this theme', 'groove-folios'); ?>">
-						<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
-					</button>
-				</div>
-
-				<div class="g-theme-details__body g-theme-confirm">
-					<p>
-						<?php
-						printf(
-							/* translators: %s: name of the theme already installed, in bold */
-							esc_html__('%s is already installed, and the package you uploaded derives to the same theme ID. Installing it replaces the version that is there.', 'groove-folios'),
-							'<strong>' . esc_html($existing_name) . '</strong>'
-						);
-						?>
-					</p>
-
-					<?php
-					/*
-					 * Versions are the comparison, so they are the values. The names
-					 * are only worth the room when the two packages disagree about
-					 * them — they usually cannot, since matching IDs means the names
-					 * sanitise alike, and the sentence above has already said it.
-					 */
-					$names_differ = ($existing_name !== $incoming_name);
-					$no_version = __('No version declared', 'groove-folios');
-					?>
-					<dl class="g-theme-details__stats g-theme-confirm__facts">
-						<div class="g-theme-details__stat">
-							<dt><?php esc_html_e('Installed', 'groove-folios'); ?></dt>
-							<dd>
-								<?php echo esc_html($existing_version !== '' ? $existing_version : $no_version); ?>
-								<?php if ($names_differ): ?>
-									<span class="g-theme-confirm__fact-name"><?php echo esc_html($existing_name); ?></span>
-								<?php endif; ?>
-							</dd>
-						</div>
-						<div class="g-theme-details__stat">
-							<dt><?php esc_html_e('Uploaded', 'groove-folios'); ?></dt>
-							<dd>
-								<?php echo esc_html($incoming_version !== '' ? $incoming_version : $no_version); ?>
-								<?php if ($names_differ): ?>
-									<span class="g-theme-confirm__fact-name"><?php echo esc_html($incoming_name); ?></span>
-								<?php endif; ?>
-							</dd>
-						</div>
-						<div class="g-theme-details__stat g-theme-confirm__fact--id">
-							<dt><?php esc_html_e('Theme ID', 'groove-folios'); ?></dt>
-							<dd><code><?php echo esc_html($theme_id); ?></code></dd>
-						</div>
-					</dl>
-
-					<?php if ($folio_count > 0): ?>
-						<p class="g-theme-confirm__warning">
-							<?php
-							printf(
-								/* translators: %s: number of folios using this theme */
-								esc_html(_n(
-									'%s folio uses this theme and will change appearance.',
-									'%s folios use this theme and will change appearance.',
-									$folio_count,
-									'groove-folios'
-								)),
-								esc_html(number_format_i18n($folio_count))
-							);
-							?>
-							<a href="<?php echo esc_url(admin_url(
-								'admin.php?page=' . \Groove\Pages\All_Folios::PAGE_ID . '&theme_id=' . $theme_id
-							)); ?>"><?php esc_html_e('View them', 'groove-folios'); ?></a>
-						</p>
-					<?php else: ?>
-						<p class="g-theme-confirm__note">
-							<?php esc_html_e('No folios use this theme yet, so nothing published changes.', 'groove-folios'); ?>
-						</p>
-					<?php endif; ?>
-
-					<p class="g-theme-confirm__note">
-						<?php esc_html_e('The theme keeps its ID, so folios stay pointed at it. The replacement is live from the next page load.', 'groove-folios'); ?>
-					</p>
-
-					<?php
-					/*
-					 * The answers ride the rule the details dialog draws above its own action
-					 * row, in the body and inset by its padding — the same class, so the two
-					 * cannot drift. A footer outside the body would rule the full width of
-					 * the dialog, and the header's is the only edge-to-edge line in here.
-					 *
-					 * The Cancel form carries an ID because the header's close button submits
-					 * it from outside: both exits stay plain form posts, so the question is
-					 * still answerable with no JavaScript at all.
-					 */
-					?>
-					<div class="g-folio__theme-button g-theme-details__actions g-theme-confirm__answers">
-						<form id="g-theme-replace-cancel" method="post"
-							action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-							<?php wp_nonce_field('groove_cancel_replace'); ?>
-							<input type="hidden" name="action" value="groove_cancel_replace" />
-							<button type="submit" class="button button-secondary">
-								<?php esc_html_e('Cancel', 'groove-folios'); ?>
-							</button>
-						</form>
-						<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-							<?php wp_nonce_field('groove_replace_theme'); ?>
-							<input type="hidden" name="action" value="groove_replace_theme" />
-							<button type="submit" class="button button-primary">
-								<?php esc_html_e('Replace theme', 'groove-folios'); ?>
-							</button>
-						</form>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<script>
-			// The dialog is already open in the HTML — this only adds what markup
-			// cannot: the page behind it stops scrolling, the dialog takes focus so
-			// the question is what a keyboard lands on, and Escape answers it the way
-			// Escape answers the other dialogs on this screen. Every exit is still a
-			// form post, so none of this is load-bearing.
-			//
-			// A click on the backdrop is deliberately not an exit: Cancel here throws
-			// away an upload that has to be made again, which is more than a stray
-			// click outside a dialog should be able to decide.
-			(function () {
-				var dialog = document.querySelector('.g-theme-details.is-open .g-theme-details__dialog');
-				if (!dialog) return;
-
-				document.body.classList.add('g-modal-open', 'g-theme-replace-open');
-				dialog.focus();
-
-				document.addEventListener('keydown', function (e) {
-					if (e.key !== 'Escape' && e.key !== 'Esc') return;
-
-					var cancel = document.getElementById('g-theme-replace-cancel');
-					if (cancel) cancel.submit();
-				});
-
-				// Tab stays in here, like the details dialog: the grid behind this one
-				// is full of cards that open a dialog, and none of them is an answer.
-				dialog.addEventListener('keydown', function (e) {
-					if (e.key !== 'Tab') return;
-
-					var items = dialog.querySelectorAll('button, a[href]');
-					if (!items.length) return;
-
-					var first = items[0];
-					var last = items[items.length - 1];
-
-					if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
-						e.preventDefault();
-						last.focus();
-					} else if (!e.shiftKey && document.activeElement === last) {
-						e.preventDefault();
-						first.focus();
-					}
-				});
-			})();
-		</script>
-		<?php
-	}
-
-	/**
 	 * Everything wrong with the themes on this site, in one place.
 	 *
-	 * Two halves that answer the same question — why is a theme not behaving?
-	 * Folders that did not register at all, recomputed by the loaders on every
-	 * request; and contract findings on packages that did register but will
-	 * misbehave, stored on the theme's own row when it was installed.
+	 * Folders that did not register, recomputed by the loaders on every request.
 	 *
 	 * Standing, not a click outcome, which is what CLAUDE.md reserves an inline
 	 * notice for. Nothing here is dismissible: every row is derived from state
-	 * the loaders or the option already hold, so a row disappears the moment
+	 * the loaders already hold, so a row disappears the moment
 	 * the thing it describes is fixed, and a dismissal could only hide a true
 	 * statement. It is empty on a healthy site.
 	 *
@@ -1674,22 +646,13 @@ class Themes extends Page
 	private function display_theme_problems(array $folio_counts)
 	{
 		$skipped = Themes_Manager::get_skipped_themes();
-		$installed_meta = Themes_Manager::get_installed_themes_meta();
 
-		$flawed = array();
-		foreach ($installed_meta as $theme_id => $meta) {
-			if (!empty($meta['contract_warnings']) && is_array($meta['contract_warnings'])) {
-				$flawed[(string) $theme_id] = $meta;
-			}
-		}
-
-		if (empty($skipped) && empty($flawed)) {
+		if (empty($skipped)) {
 			return;
 		}
 		?>
 		<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
 
-			<?php if (!empty($skipped)): ?>
 				<div>
 					<h2 class="m-0 text-sm font-semibold text-gray-800">
 						<?php
@@ -1722,15 +685,12 @@ class Themes extends Page
 					<?php foreach ($skipped as $record):
 						$described = Themes_Manager::describe_skipped_theme($record);
 						$folder = (string) ($record['folder'] ?? '');
-						$is_installed = ($record['kind'] ?? '') === 'installed';
 						$folio_count = isset($folio_counts[$folder]) ? (int) $folio_counts[$folder] : 0;
 						?>
 						<li class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm space-y-1">
 							<div class="flex items-center gap-2">
 								<code class="text-gray-800"><?php echo esc_html($folder); ?></code>
-								<span class="g-themes-tag <?php echo $is_installed ? 'g-themes-tag--installed' : 'g-themes-tag--builtin'; ?>">
-									<?php echo esc_html($is_installed ? __('Installed', 'groove-folios') : __('Built-in', 'groove-folios')); ?>
-								</span>
+								<span class="g-themes-tag g-themes-tag--builtin"><?php esc_html_e('Built-in', 'groove-folios'); ?></span>
 							</div>
 							<div class="text-gray-800"><?php echo esc_html($described->get_error_message()); ?></div>
 							<?php $fix = (string) $described->get_error_data(); ?>
@@ -1756,152 +716,10 @@ class Themes extends Page
 									)); ?>"><?php esc_html_e('View them', 'groove-folios'); ?></a>
 								</div>
 							<?php endif; ?>
-							<?php if ($is_installed): ?>
-								<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="pt-1">
-									<?php wp_nonce_field('groove_uninstall_theme'); ?>
-									<input type="hidden" name="action" value="groove_uninstall_theme" />
-									<input type="hidden" name="theme_id" value="<?php echo esc_attr($folder); ?>" />
-									<?php /* A package whose files are gone has no card, so this row is
-									         the only place its stale entry can be cleared from. */ ?>
-									<button type="submit" class="button button-secondary g-themes-delete-btn">
-										<?php esc_html_e('Remove entry', 'groove-folios'); ?>
-									</button>
-								</form>
-							<?php endif; ?>
 						</li>
 					<?php endforeach; ?>
-			</ul>
-			<?php endif; ?>
-
-			<?php foreach ($flawed as $theme_id => $meta): ?>
-				<div class="space-y-1">
-					<p class="m-0 text-sm font-semibold text-gray-800">
-						<?php
-						printf(
-							/* translators: %s: theme name */
-							esc_html__('"%s" is installed and renders, but the contract check found things worth fixing.', 'groove-folios'),
-							esc_html((string) ($meta['name'] ?? $theme_id))
-						);
-						?>
-					</p>
-					<ul class="m-0 pl-5 list-disc space-y-1 text-sm text-gray-700">
-						<?php foreach ($meta['contract_warnings'] as $warning): ?>
-							<li><?php echo esc_html((string) $warning); ?></li>
-						<?php endforeach; ?>
-					</ul>
-					<p class="m-0 text-sm text-gray-600">
-						<?php esc_html_e('None of these stops the theme rendering — they are the mistakes that produce no error when it does. The full spec ships with the plugin at themes/README.md.', 'groove-folios'); ?>
-					</p>
-				</div>
-			<?php endforeach; ?>
+				</ul>
 		</section>
 		<?php
-	}
-
-	private function queue_notice_toast($type, $value)
-	{
-		if (empty($type)) {
-			return;
-		}
-
-		$consumed = array('groove_notice', 'groove_value');
-
-		switch ($type) {
-			case 'success':
-				\Groove\Toast::success(
-					sprintf(
-						/* translators: %s: theme name */
-						__('"%s" installed successfully.', 'groove-folios'),
-						$value
-					),
-					$consumed
-				);
-				break;
-			case 'replaced':
-				\Groove\Toast::success(
-					sprintf(
-						/* translators: %s: theme name */
-						__('"%s" replaced. The new version is live from the next page load.', 'groove-folios'),
-						$value
-					),
-					$consumed
-				);
-				break;
-			case 'replace_cancelled':
-				\Groove\Toast::info(__('Upload discarded. Nothing was changed.', 'groove-folios'), $consumed);
-				break;
-			case 'confirm_replace':
-				// The dialog says it all; a toast behind it would only repeat it.
-				break;
-			case 'uninstalled':
-				\Groove\Toast::info(__('Theme removed successfully.', 'groove-folios'), $consumed);
-				break;
-			case 'error':
-			default:
-				// Toast::failure(), not Toast::error(): an install that failed
-				// is something to go and fix, and CLAUDE.md reserves the pinned
-				// toggletip for exactly that. The old plain toast took the
-				// explanation away with it after six seconds, on a screen whose
-				// whole purpose is the action that just failed.
-				$failure_key = 'groove_theme_failure_' . get_current_user_id();
-				$failure = get_transient($failure_key);
-				if (is_array($failure) && !empty($failure['message'])) {
-					delete_transient($failure_key);
-					\Groove\Toast::failure(
-						(string) $failure['message'],
-						isset($failure['hint']) ? (string) $failure['hint'] : '',
-						isset($failure['anchor']) ? (string) $failure['anchor'] : '',
-						$consumed
-					);
-					break;
-				}
-
-				\Groove\Toast::error(
-					!empty($value) ? $value : __('An unknown error occurred.', 'groove-folios'),
-					$consumed
-				);
-				break;
-		}
-	}
-
-	/**
-	 * Redirect back to this screen reporting a failure the operator must act on.
-	 *
-	 * The message and its hint travel in a transient rather than the query
-	 * string. Both are sentences now, not slugs, and a URL is no place for
-	 * them — the old path put the whole error message in ?groove_value= and
-	 * then stripped it on arrival, so it survived exactly one page load and
-	 * could not be re-read by reloading. Keyed per user so two admins working
-	 * at once do not read each other's.
-	 */
-	private function redirect_with_failure($message, $hint = '', $anchor = '')
-	{
-		set_transient(
-			'groove_theme_failure_' . get_current_user_id(),
-			array(
-				'message' => (string) $message,
-				'hint' => (string) $hint,
-				// Empty for an uninstall: the Remove button lives inside the
-				// details dialog, which the redirect has closed, so there is no
-				// control left on screen to point at. The toggletip is skipped
-				// and the toast reports on its own.
-				'anchor' => (string) $anchor,
-			),
-			5 * MINUTE_IN_SECONDS
-		);
-
-		$this->redirect_with_notice('error', '');
-	}
-
-	private function redirect_with_notice($type, $value)
-	{
-		$url = add_query_arg([
-			'page' => static::PAGE_ID,
-			'groove_notice' => $type,
-			'groove_value' => $value,
-		], admin_url('admin.php'));
-
-		wp_safe_redirect($url);
-		exit;
 	}
 }

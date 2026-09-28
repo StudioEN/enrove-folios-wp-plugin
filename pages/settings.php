@@ -18,7 +18,7 @@ class Settings extends Page
 
   public function get_title()
   {
-    return 'Settings';
+    return esc_html__('Settings', 'groove-folios');
   }
 
   public function create_tabs()
@@ -36,6 +36,9 @@ class Settings extends Page
       'imagery' => [
         'label' => esc_html__('Imagery', 'groove-folios'),
       ],
+      'fonts' => [
+        'label' => esc_html__('Fonts', 'groove-folios'),
+      ],
       'privacy' => [
         'label' => esc_html__('Privacy', 'groove-folios'),
       ]
@@ -51,6 +54,7 @@ class Settings extends Page
     $this->add_post_action('delete_groove_pexels_key', 'handle_pexels_key_delete');
     $this->add_post_action('test_groove_pexels_connection', 'handle_pexels_connection_test');
     $this->add_post_action('download_groove_sample_photos', 'handle_sample_photos_download');
+    $this->add_post_action('download_groove_fonts', 'handle_fonts_download');
 
     add_action('groove/menu/register', function (Menu_Manager $menu) {
       $menu->register(static::PAGE_ID, new Settings_Menu_Item($this));
@@ -160,6 +164,11 @@ class Settings extends Page
     $this->redirect_to_settings_tab('imagery', $args);
   }
 
+  private function redirect_to_fonts_tab($args = array())
+  {
+    $this->redirect_to_settings_tab('fonts', $args);
+  }
+
   /**
    * The Pexels helpers live in pexels/ and are autoloaded on demand.
    * Guard on them so the settings screen still renders if they are absent.
@@ -189,16 +198,16 @@ class Settings extends Page
    * Stash a one-shot notice for the current user (avoids putting API results in the URL).
    *
    * A failure carries the next step and the button it belongs to as well, so
-   * the imagery tab can pin the explanation where the operator just pressed.
+   * the Imagery or Fonts tab can pin the explanation where the operator just pressed.
    *
    * @param string $status success|error|warning|info.
    * @param string $text   What happened.
    * @param string $hint   What to do about it. Failures only.
    * @param string $anchor CSS selector for the control to point at.
    */
-  private function set_pexels_notice($status, $text, $hint = '', $anchor = '')
+  private function set_tab_notice($status, $text, $hint = '', $anchor = '')
   {
-    set_transient('groove_pexels_notice_' . get_current_user_id(), array(
+    set_transient('groove_settings_notice_' . get_current_user_id(), array(
       'status' => $status,
       'text' => $text,
       'hint' => $hint,
@@ -206,9 +215,35 @@ class Settings extends Page
     ), MINUTE_IN_SECONDS);
   }
 
-  private function take_pexels_notice()
+  /**
+   * Report a notice taken with take_tab_notice() as a toast.
+   *
+   * @param array|null $notice
+   */
+  private function toast_tab_notice($notice)
   {
-    $key = 'groove_pexels_notice_' . get_current_user_id();
+    if (!$notice) {
+      return;
+    }
+
+    $notice_anchor = isset($notice['anchor']) ? (string) $notice['anchor'] : '';
+
+    if ($notice_anchor !== '') {
+      \Groove\Toast::failure(
+        $notice['text'],
+        isset($notice['hint']) ? (string) $notice['hint'] : '',
+        $notice_anchor,
+        array(),
+        $notice['status']
+      );
+    } else {
+      \Groove\Toast::add($notice['text'], $notice['status']);
+    }
+  }
+
+  private function take_tab_notice()
+  {
+    $key = 'groove_settings_notice_' . get_current_user_id();
     $notice = get_transient($key);
     if (!is_array($notice) || empty($notice['text'])) {
       return null;
@@ -420,22 +455,8 @@ class Settings extends Page
       </p>
     </div>
 
-    <script>
-      // Keep the placeholder honest: it previews the title a folio would get
-      // from the currently selected default theme, so an empty field is not a
-      // mystery. Purely cosmetic — the value is resolved server side on create.
-      (function () {
-        var themes = document.getElementById('groove-default-theme-id');
-        var title = document.getElementById('groove-default-folio-title');
-        if (!themes || !title) {
-          return;
-        }
-        themes.addEventListener('change', function () {
-          var option = themes.options[themes.selectedIndex];
-          title.placeholder = (option && option.getAttribute('data-default-title')) || title.placeholder;
-        });
-      })();
-    </script>
+    <?php /* The placeholder follows the Default Theme select; see "Default folio
+             title placeholder" in assets/js/groove-main.js. */ ?>
 
     <div>
       <button
@@ -626,7 +647,7 @@ class Settings extends Page
     }
 
     if ($this->pexels_is_available() && \Groove\Pexels\Key::is_locked_by_constant()) {
-      $this->set_pexels_notice(
+      $this->set_tab_notice(
         'warning',
         __('GROOVE_PEXELS_API_KEY is defined in wp-config.php, so the stored key was not changed.', 'groove-folios'),
         __('The constant wins over anything saved here. Remove it from wp-config.php if you want to manage the key from this screen.', 'groove-folios'),
@@ -638,7 +659,7 @@ class Settings extends Page
     $submitted = isset($_POST['pexels_api_key']) ? sanitize_text_field(wp_unslash($_POST['pexels_api_key'])) : '';
 
     if ($submitted === '') {
-      $this->set_pexels_notice('info', __('No key entered — the stored key was left unchanged.', 'groove-folios'));
+      $this->set_tab_notice('info', __('No key entered — the stored key was left unchanged.', 'groove-folios'));
       $this->redirect_to_imagery_tab();
     }
 
@@ -647,7 +668,7 @@ class Settings extends Page
     delete_option('groove_pexels_api_key');
     add_option('groove_pexels_api_key', $submitted, '', 'no');
 
-    $this->set_pexels_notice('success', __('Pexels API key saved.', 'groove-folios'));
+    $this->set_tab_notice('success', __('Pexels API key saved.', 'groove-folios'));
     $this->redirect_to_imagery_tab();
   }
 
@@ -664,7 +685,7 @@ class Settings extends Page
 
     delete_option('groove_pexels_api_key');
 
-    $this->set_pexels_notice('success', __('Stored Pexels API key removed.', 'groove-folios'));
+    $this->set_tab_notice('success', __('Stored Pexels API key removed.', 'groove-folios'));
     $this->redirect_to_imagery_tab();
   }
 
@@ -681,7 +702,7 @@ class Settings extends Page
     }
 
     if (!$this->pexels_is_available()) {
-      $this->set_pexels_notice(
+      $this->set_tab_notice(
         'error',
         __('The Pexels client is unavailable.', 'groove-folios'),
         __('The pexels/ helpers are missing from this copy of the plugin. Reinstall or update Groove Folios to restore them.', 'groove-folios'),
@@ -693,7 +714,7 @@ class Settings extends Page
     $client = new \Groove\Pexels\Client();
 
     if (!$client->has_key()) {
-      $this->set_pexels_notice(
+      $this->set_tab_notice(
         'error',
         __('No Pexels API key is configured.', 'groove-folios'),
         __('Paste a key into the field above and save it, then test the connection again.', 'groove-folios'),
@@ -705,7 +726,7 @@ class Settings extends Page
     $result = $client->verify();
 
     if (is_wp_error($result)) {
-      $this->set_pexels_notice(
+      $this->set_tab_notice(
         'error',
         sprintf(
           /* translators: %s: error message returned by the Pexels API. */
@@ -721,7 +742,7 @@ class Settings extends Page
     $remaining = is_array($result) && isset($result['remaining']) ? (int) $result['remaining'] : 0;
     $limit = is_array($result) && isset($result['limit']) ? (int) $result['limit'] : 0;
 
-    $this->set_pexels_notice('success', sprintf(
+    $this->set_tab_notice('success', sprintf(
       /* translators: 1: remaining requests, 2: hourly request limit. */
       __('Connected to Pexels. %1$s of %2$s requests remaining this hour.', 'groove-folios'),
       number_format_i18n($remaining),
@@ -747,7 +768,7 @@ class Settings extends Page
     $failed = count($result['failed']);
 
     if ($failed === 0) {
-      $this->set_pexels_notice('success', sprintf(
+      $this->set_tab_notice('success', sprintf(
         /* translators: %s: number of photos downloaded. */
         _n('Downloaded %s photo.', 'Downloaded %s photos.', $result['downloaded'], 'groove-folios'),
         number_format_i18n($result['downloaded'])
@@ -755,7 +776,7 @@ class Settings extends Page
       $this->redirect_to_imagery_tab();
     }
 
-    $this->set_pexels_notice(
+    $this->set_tab_notice(
       'error',
       sprintf(
         /* translators: 1: photos downloaded, 2: photos that failed. */
@@ -773,6 +794,109 @@ class Settings extends Page
     $this->redirect_to_imagery_tab();
   }
 
+  /**
+   * Download the folio fonts this site does not have yet. Only ever runs from
+   * an explicit button press; see \Groove\Themes\Font_Library for why folios
+   * do not load them from Google.
+   */
+  public function handle_fonts_download()
+  {
+    check_admin_referer('groove_download_fonts', 'groove_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
+    }
+
+    $result = \Groove\Themes\Font_Library::download_missing();
+    $failed = count($result['failed']);
+
+    if ($failed === 0 && $result['remaining'] === 0) {
+      $this->set_tab_notice('success', sprintf(
+        /* translators: %s: number of font families downloaded. */
+        _n('Downloaded %s font family.', 'Downloaded %s font families.', $result['downloaded'], 'groove-folios'),
+        number_format_i18n($result['downloaded'])
+      ));
+      $this->redirect_to_fonts_tab();
+    }
+
+    if ($failed === 0) {
+      $this->set_tab_notice(
+        'warning',
+        sprintf(
+          /* translators: 1: font families downloaded, 2: font families still to fetch. */
+          __('Downloaded %1$s font families; %2$s still to fetch.', 'groove-folios'),
+          number_format_i18n($result['downloaded']),
+          number_format_i18n($result['remaining'])
+        ),
+        __('This server took a while, so the download stopped before it could time out. Press Download Fonts again to fetch the rest.', 'groove-folios'),
+        '#groove-download-fonts'
+      );
+      $this->redirect_to_fonts_tab();
+    }
+
+    $this->set_tab_notice(
+      'error',
+      sprintf(
+        /* translators: 1: font families downloaded, 2: font families that failed. */
+        __('Downloaded %1$s font families; %2$s could not be fetched.', 'groove-folios'),
+        number_format_i18n($result['downloaded']),
+        number_format_i18n($failed)
+      ),
+      sprintf(
+        /* translators: %s: the first error message. */
+        __('First error: %s Press Download Fonts again to retry the ones that are missing.', 'groove-folios'),
+        (string) reset($result['failed'])
+      ),
+      '#groove-download-fonts'
+    );
+    $this->redirect_to_fonts_tab();
+  }
+
+  public function display_fonts_fields()
+  {
+    $fonts = \Groove\Themes\Font_Library::status();
+    $this->toast_tab_notice($this->take_tab_notice());
+    ?>
+<div class="space-y-4">
+  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
+    <div>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Folio Fonts', 'groove-folios'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600">
+        <?php esc_html_e('Folio themes are typeset in open-licence fonts from Google Fonts. Folios load them from your own site, never from Google, so your readers’ browsers do not contact Google. Download them once here; until then, folios fall back to system fonts.', 'groove-folios'); ?>
+      </p>
+    </div>
+
+    <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700">
+      <p class="m-0">
+        <?php
+        printf(
+          /* translators: 1: font families on this site, 2: font families in total. */
+          esc_html__('%1$s of %2$s font families are on this site.', 'groove-folios'),
+          esc_html(number_format_i18n($fonts['present'])),
+          esc_html(number_format_i18n($fonts['total']))
+        );
+        ?>
+      </p>
+    </div>
+
+    <?php if (!empty($fonts['missing'])): ?>
+    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+      <?php wp_nonce_field('groove_download_fonts', 'groove_nonce'); ?>
+      <input type="hidden" name="action" value="download_groove_fonts" />
+      <button type="submit" id="groove-download-fonts" class="button button-primary">
+        <?php esc_html_e('Download Fonts', 'groove-folios'); ?>
+      </button>
+    </form>
+    <?php endif; ?>
+
+    <p class="m-0 text-xs text-gray-500">
+      <?php esc_html_e('Downloads about 4 MB from fonts.googleapis.com and fonts.gstatic.com into your uploads folder. Google sees your server’s IP address for those requests, never a reader’s, and nothing is fetched until you press the button.', 'groove-folios'); ?>
+    </p>
+  </section>
+</div>
+<?php
+  }
+
   public function display_imagery_fields()
   {
     $available = $this->pexels_is_available();
@@ -781,7 +905,7 @@ class Settings extends Page
     $masked = $available ? \Groove\Pexels\Key::masked() : '';
     $has_key = $source !== '';
     $has_option_key = get_option('groove_pexels_api_key', '') !== '';
-    $notice = $this->take_pexels_notice();
+    $notice = $this->take_tab_notice();
 
     // The API key and the curation script only matter in a development checkout.
     // The WordPress.org package leaves bin/curate-pexels.php out, and without it
@@ -800,21 +924,7 @@ class Settings extends Page
     // failure also leaves its reason pinned to the button that produced it.
     // The "helpers are missing" warning below stays inline: it describes the
     // standing state of this screen, not something the operator just did.
-    if ($notice) {
-      $notice_anchor = isset($notice['anchor']) ? (string) $notice['anchor'] : '';
-
-      if ($notice_anchor !== '') {
-        \Groove\Toast::failure(
-          $notice['text'],
-          isset($notice['hint']) ? (string) $notice['hint'] : '',
-          $notice_anchor,
-          array(),
-          $notice['status']
-        );
-      } else {
-        \Groove\Toast::add($notice['text'], $notice['status']);
-      }
-    }
+    $this->toast_tab_notice($notice);
     ?>
 <div class="space-y-4">
   <?php if (!$available): ?>
@@ -1088,7 +1198,7 @@ class Settings extends Page
       </h4>
       <ul class="m-0 pl-5 list-disc space-y-1 text-sm text-gray-600">
         <li>
-          <?php esc_html_e('Google Fonts — when a folio is rendered, the reader’s browser fetches the theme’s typefaces from fonts.googleapis.com, which means Google sees the reader’s IP address. This happens on your published folios, not in the admin.', 'groove-folios'); ?>
+          <?php esc_html_e('Google Fonts — only when an administrator presses Download Fonts on the Fonts tab. The fonts are fetched once from fonts.googleapis.com and fonts.gstatic.com into your uploads folder, and Google sees your server’s IP address. Folios then load them from your own site, so readers never contact Google.', 'groove-folios'); ?>
         </li>
         <li>
           <?php esc_html_e('Pexels images — only when an administrator presses Download Photos on the Imagery tab. The photos are fetched once from images.pexels.com into your uploads folder, and Pexels sees your server’s IP address. After that they are served from your own site.', 'groove-folios'); ?>
@@ -1137,6 +1247,15 @@ class Settings extends Page
     ?>
 <div>
   <?php $this->display_imagery_fields(); ?>
+</div>
+<?php
+  }
+
+  public function display_tab_fonts()
+  {
+    ?>
+<div>
+  <?php $this->display_fonts_fields(); ?>
 </div>
 <?php
   }
@@ -1292,6 +1411,8 @@ class Settings extends Page
     <?php $this->display_tab_routing(); ?>
   <?php elseif ('imagery' === $tab_key): ?>
     <?php $this->display_tab_imagery(); ?>
+  <?php elseif ('fonts' === $tab_key): ?>
+    <?php $this->display_tab_fonts(); ?>
   <?php elseif ('privacy' === $tab_key): ?>
     <?php $this->display_tab_privacy(); ?>
   <?php else: ?>

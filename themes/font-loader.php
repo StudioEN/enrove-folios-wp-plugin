@@ -17,10 +17,12 @@ if (!defined('ABSPATH')) {
  *   2. The theme's declared defaults — the optional `fonts` block in the
  *      theme's setup.php (see themes/README.md).
  *
- * Whatever wins, the families for both roles are requested in ONE css2
- * stylesheet, enqueued through wp_enqueue_style() so WordPress can dedupe,
- * order and dns-prefetch it, and paired with a preconnect to the font-file
- * host. Nothing is ever loaded with @import or a hand-written <link>.
+ * Whatever wins, each family is loaded from this site, never from a font CDN:
+ * Font_Library downloads the files into uploads when an administrator asks,
+ * and this class enqueues the local stylesheet for each family that is there.
+ * A family that is not downloaded yet loads nothing, and the rest of its
+ * css_stack applies. Nothing is ever loaded with @import or a hand-written
+ * <link>.
  *
  * Fonts are only ever loaded on a surface that actually renders a theme:
  * a folio cover/page (published or previewed), the theme-picker preview, the
@@ -29,22 +31,14 @@ if (!defined('ABSPATH')) {
  */
 class Font_Loader
 {
-  /** Handle of the combined Google Fonts stylesheet. */
-  const HANDLE = 'groove-folio-fonts';
-
-  /** The CSS API host, and the second origin the font files themselves come from. */
-  const API_HOST  = 'https://fonts.googleapis.com';
-  const API_BASE  = self::API_HOST . '/css2';
-  const FILE_HOST = 'https://fonts.gstatic.com';
+  /** Handle prefix of the per-family local stylesheets. */
+  const HANDLE = 'groove-folio-font';
 
   /** Roots the CSS variables are injected on when a theme renders. */
   const FRONTEND_SELECTOR = '.g-folio__theme-cover, body.groove [class*="g-folio__theme-"][class$="-page"]';
 
   /** The two typographic roles a folio can set. */
   const ROLES = ['header', 'body'];
-
-  /** @var bool Whether the preconnect hint has been registered this request. */
-  protected static $hinted = false;
 
   // ── Theme defaults ─────────────────────────────────────────────────────
 
@@ -163,12 +157,12 @@ class Font_Loader
   }
 
   /**
-   * One css2 request covering every family the resolved roles need.
+   * The distinct family fragments the resolved roles need.
    *
    * @param array $resolved Output of resolve().
-   * @return string Empty when nothing needs fetching (all system stacks).
+   * @return string[] Empty when every role is a system stack.
    */
-  public static function build_url(array $resolved): string
+  public static function families(array $resolved): array
   {
     $families = [];
 
@@ -179,11 +173,31 @@ class Font_Loader
       }
     }
 
-    if (empty($families)) {
-      return '';
+    return $families;
+  }
+
+  /**
+   * Enqueue the local stylesheet of every resolved family that has been
+   * downloaded. The rest load nothing; see the class comment.
+   *
+   * @param array $resolved Output of resolve().
+   * @return string[] The handles enqueued, for a document that prints its own.
+   */
+  public static function enqueue_files(array $resolved): array
+  {
+    $handles = [];
+
+    foreach (static::families($resolved) as $family) {
+      if (!Font_Library::has($family)) {
+        continue;
+      }
+
+      $handle = self::HANDLE . '-' . Font_Library::slug($family);
+      wp_enqueue_style($handle, Font_Library::css_url($family), [], (string) filemtime(Font_Library::css_path($family)));
+      $handles[] = $handle;
     }
 
-    return self::API_BASE . '?family=' . implode('&family=', $families) . '&display=swap';
+    return $handles;
   }
 
   /**
@@ -233,15 +247,7 @@ class Font_Loader
       return;
     }
 
-    $url = self::build_url($resolved);
-
-    if ($url !== '') {
-      // No version on a CDN URL: the query string is the version. Adding one is
-      // not harmless either: before WordPress 7.0 the `ver` goes on through
-      // add_query_arg(), which keeps only the last repeated `family=` parameter.
-      wp_enqueue_style(self::HANDLE, $url, [], null); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- CDN URL whose query string is the version; a `ver` drops families on WP < 7.0.
-      self::add_preconnect();
-    }
+    static::enqueue_files($resolved);
 
     $inline_css = self::build_inline_css($resolved, $selector);
     if ($inline_css === '') {
@@ -254,40 +260,5 @@ class Font_Loader
 
     wp_enqueue_style($inline_handle);
     wp_add_inline_style($inline_handle, $inline_css);
-  }
-
-  /**
-   * Preconnect to the font-file host. WordPress already dns-prefetches
-   * fonts.googleapis.com for us once the stylesheet above is enqueued, but the
-   * woff2 files come from a second origin that nothing hints at.
-   *
-   * Registered only when a stylesheet was actually enqueued, and only once.
-   */
-  protected static function add_preconnect(): void
-  {
-    if (self::$hinted) {
-      return;
-    }
-
-    self::$hinted = true;
-
-    add_filter('wp_resource_hints', [__CLASS__, 'filter_resource_hints'], 10, 2);
-  }
-
-  /**
-   * @param array  $urls
-   * @param string $relation_type
-   * @return array
-   */
-  public static function filter_resource_hints($urls, $relation_type)
-  {
-    if ('preconnect' === $relation_type) {
-      $urls[] = [
-        'href'        => self::FILE_HOST,
-        'crossorigin' => 'anonymous',
-      ];
-    }
-
-    return $urls;
   }
 }

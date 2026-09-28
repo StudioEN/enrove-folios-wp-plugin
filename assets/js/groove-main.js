@@ -1856,4 +1856,20 @@ jQuery(function () {
       })
     }
   }
+
+  // Default folio title placeholder (Settings → General). Keep the placeholder
+  // honest: it previews the title a folio would get from the currently
+  // selected default theme, so an empty field is not a mystery. Purely
+  // cosmetic — the value is resolved server side on create.
+  ;(function () {
+    const themes = document.getElementById('groove-default-theme-id')
+    const title = document.getElementById('groove-default-folio-title')
+    if (!themes || !title) {
+      return
+    }
+    themes.addEventListener('change', function () {
+      const option = themes.options[themes.selectedIndex]
+      title.placeholder = (option && option.getAttribute('data-default-title')) || title.placeholder
+    })
+  })()
 })
