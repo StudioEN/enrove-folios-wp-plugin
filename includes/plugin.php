@@ -13,6 +13,7 @@ use Groove\Pages\Themes;
 use Groove\Menu\Menu_Manager;
 use Groove\Themes\Themes_Manager;
 use Groove\Themes\Theme_Blocks;
+use Groove\Themes\Site_Theme_Isolation;
 use Groove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
@@ -211,6 +212,7 @@ class Plugin
 		// Boot the theme registry immediately so it is available everywhere.
 		Themes_Manager::register_defaults();
 		Theme_Blocks::register();
+		Site_Theme_Isolation::register();
 
 		add_filter('admin_body_class', function ($classes) {
 			$classes .= ' groove';
@@ -242,6 +244,7 @@ class Plugin
 		add_action('template_redirect', function () {
 			// Theme picker preview — admin-only, nonce verified inside the template.
 			if (isset($_GET['groove_theme_preview'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Routing check only; theme-picker-preview-template.php verifies the nonce and capability before rendering.
+				Site_Theme_Isolation::isolate_front_end();
 				require_once plugin_dir_path(__FILE__) . 'theme-picker-preview-template.php';
 				exit;
 			}
@@ -267,6 +270,8 @@ class Plugin
 			}
 
 			if ($is_query_preview || $is_query_groove_context || preg_match($pattern, $current_path)) {
+				// A folio is its own document: nothing of the site's theme.
+				Site_Theme_Isolation::isolate_front_end();
 				$plugin_dir = plugin_dir_path(__FILE__);
 				require_once $plugin_dir . 'folio-preview-template.php';
 				exit; // Stop WP execution, we've handled the template

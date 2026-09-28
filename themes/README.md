@@ -238,6 +238,19 @@ template_redirect (prio 5) in includes/plugin.php
 3. Otherwise emits a bare document: `<head>` + `wp_head()`, `<body class="… groove">`, `$theme->display_theme()`,
    `wp_footer()`. **The active WordPress site theme is bypassed entirely.**
 
+Bypassing the site theme's templates is not enough on its own, because `wp_head()` would still bring its
+styles in. So before either template runs, `Site_Theme_Isolation::isolate_front_end()`
+([`site-theme-isolation.php`](site-theme-isolation.php)) keeps them out of the request: the theme's
+`theme.json` and a parent theme's, the Site Editor's saved styles, the editor theme supports, the
+Customizer's Additional CSS, and every stylesheet and script the theme enqueues from its own folder.
+Global styles fall back to core's defaults, so a folio renders the same whichever theme the site runs.
+The block editor gets the same treatment on a folio page's edit screen, with a plain canvas
+(`assets/css/folio-editor-canvas.css`) in place of the site theme's: white ground, dark text, and your
+fonts wherever your `blocks.php` loads them into the editor. Two things follow for a theme. There are no
+site `--wp--preset--*` colours or sizes to lean on, only core's. And what the site theme prints straight
+from a `wp_head` callback, such as a font preload or an inline script, cannot be told apart from anyone
+else's output, so it still arrives.
+
 `create_theme_for_current_request()` resolves the folio like this:
 
 - `Utils::get_groove_post_id()` / `get_groove_post_type()` identify the requested post.
@@ -601,12 +614,13 @@ three-state logic — explicit dark, explicit light, and a system-preference fal
 #### Interaction states are not optional
 
 **A folio renders through the site's own WordPress front end.**
-`includes/folio-preview-template.php` calls `wp_head()`, so the active site theme's stylesheet loads
-alongside yours. Anything your theme leaves unsaid about a link, *some other stylesheet says instead* —
-and a great many WordPress themes ship `a:hover { text-decoration: none }`. That is not a hypothetical:
-it is exactly how `groove-ebook` came to remove a link's underline on hover without a single `:hover`
-rule anywhere in the theme. Silence is not neutrality; it is a delegation to a stylesheet you have
-never seen.
+`includes/folio-preview-template.php` calls `wp_head()`. The site theme's own styles are kept out now
+(§5), but core's block styles and every other plugin's front-end stylesheets still load alongside
+yours. Anything your theme leaves unsaid about a link, *some other stylesheet says instead*. Before the
+site theme was kept out, that stylesheet was often the theme's own, and a great many WordPress themes
+ship `a:hover { text-decoration: none }`. That is not a hypothetical: it is exactly how `groove-ebook`
+came to remove a link's underline on hover without a single `:hover` rule anywhere in the theme.
+Silence is not neutrality; it is a delegation to a stylesheet you have never seen.
 
 So state your own, and state them by this rule: **hover and focus ADD affordance, they never subtract
 it.** Removing an underline on hover inverts the signal and fails WCAG 1.4.1, which is why colour alone
