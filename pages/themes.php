@@ -390,15 +390,34 @@ class Themes extends Page
 						?>
 					</p>
 				<?php else: ?>
-					<p class="g-docs__source">
-						<?php
-						printf(
-							/* translators: %s: path to the documentation file, relative to the plugin folder */
-							esc_html__('Rendered from %s, which ships with the plugin. Edit that file to change this page.', 'groove-folios'),
-							'<code>' . esc_html($relative) . '</code>'
-						);
-						?>
-					</p>
+					<?php
+					/* The download sits on the line that names the file, so what it
+					   downloads is never in doubt. A plain same-origin link: the file
+					   is already public in the plugin folder, and `download` keeps its
+					   own name, which is the name the two documents use for each other. */
+					$file_name = basename($relative);
+					/* translators: %s: file name of the documentation, e.g. README.md */
+					$download_label = sprintf(__('Download %s', 'groove-folios'), $file_name);
+					?>
+					<div class="g-docs__source">
+						<p class="g-docs__source-text">
+							<?php
+							printf(
+								/* translators: %s: path to the documentation file, relative to the plugin folder */
+								esc_html__('Rendered from %s, which ships with the plugin. Edit that file to change this page.', 'groove-folios'),
+								'<code>' . esc_html($relative) . '</code>'
+							);
+							?>
+						</p>
+						<a href="<?php echo esc_url(GROOVE_URL . $relative); ?>"
+							download="<?php echo esc_attr($file_name); ?>"
+							class="button button-secondary g-page-header__icon-button g-tooltip-button g-docs__download"
+							aria-label="<?php echo esc_attr($download_label); ?>"
+							data-tooltip-text="<?php esc_attr_e('Download', 'groove-folios'); ?>"
+							data-tooltip-keeps-label>
+							<span class="dashicons dashicons-download" aria-hidden="true"></span>
+						</a>
+					</div>
 					<?php
 					/* One $args for both passes. `outline()` re-reads the source rather
 					   than watching `render()` work, so they agree only while they are

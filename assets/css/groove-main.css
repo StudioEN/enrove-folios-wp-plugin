@@ -3188,12 +3188,35 @@ body.groove .g-docs blockquote {
 }
 
 body.groove .g-docs__source {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   margin: 0 0 22px;
   padding: 0 0 16px;
   border-bottom: 1px solid var(--g-border);
   color: var(--g-text-muted);
   font-size: 12px;
   line-height: 1.6;
+}
+
+/* A <p>, so core's p rule (13px, 1em margins) has to be answered here. */
+body.groove .g-docs__source-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* The end of the row, past the text's reading measure. Square at 32px: the
+   40px the shared button style sets is sized for header rows, and on this
+   12px caption line it stands as a slab. */
+body.groove .g-docs__download {
+  flex: none;
+  margin-inline-start: auto;
+  height: 32px;
+  min-height: 32px;
+  line-height: 30px;
 }
 
 body.groove .g-docs__p {

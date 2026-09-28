@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- A download button on the Spec and Playbook tabs of Groove → Themes. It sits at the end of the "Rendered from…" line, beside the name of the file it downloads, and saves that Markdown file (`README.md` or `BUILDING-A-THEME.md`) under its own name, the name the two documents use when they point at each other. It is an icon button like Copy link in the folio editor, with a one-word "Download" tooltip and the full name for screen readers, "Download README.md". A tab whose file is missing from disk shows no button, as there is nothing to download.
+
 ### Changed
 - A folio page's block inserter offers only the blocks its folio's theme can style. Every theme's blocks used to be offered on every page, so a Groove Magazine page listed Groove Proposal's pricing table and Groove eBook's epigraph, which render there without any styling because their CSS lives only in their own theme. Other themes' blocks are now out of the inserter, the slash menu and the block search. They are hidden, not removed: a page that already holds one, after a theme switch, still opens and edits it, and switching back brings it all back. Such a block now carries a quiet one-line note above it in the editor, such as "Groove Proposal block: Groove Magazine doesn't style it, so readers see it unstyled." This matters because the block still looks finished in the editor, where its own editor styles load, while readers get it plain. The note is editor-only and never saved into the page. A block belongs to a theme when its name starts with the theme's ID (`groove-proposal/…`), the same rule the Change theme dialog uses to count what a switch would affect. A folio with no theme set follows the default theme, as it does for readers. Core and third-party blocks are offered on every theme as before.
 

@@ -133,11 +133,16 @@ jQuery(function () {
       tooltipBtn.append(tooltipArrow)
     }
 
+    // The tooltip text doubles as the accessible name, unless the control
+    // opts out with data-tooltip-keeps-label: then the tooltip can be a word
+    // for the eye while aria-label stays the full name.
+    const keepsLabel = tooltipBtn.is('[data-tooltip-keeps-label]')
+
     function setTooltipText(text) {
       const normalizedText = String(text || '')
       tooltipBubble.text(normalizedText)
       tooltipBtn.attr('data-tooltip-text', normalizedText)
-      if (normalizedText) {
+      if (normalizedText && !keepsLabel) {
         tooltipBtn.attr('aria-label', normalizedText)
       }
     }
@@ -1711,6 +1716,11 @@ jQuery(function () {
   // the Add New picker and the Themes screen's details dialog both render one
   // per theme, and only the visible one is ever on screen.
   jQuery('.g-folio__sample-info').each(function () {
+    createAdaptiveTooltip(this)
+  })
+
+  // Themes → Spec / Playbook: the icon-only download beside the file's name.
+  jQuery('.g-docs__download').each(function () {
     createAdaptiveTooltip(this)
   })
 
