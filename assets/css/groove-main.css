@@ -650,6 +650,20 @@ body.groove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible
   flex: 0 0 auto;
 }
 
+/* No feature image and no theme cover (a WordPress.org install whose photos
+   are not downloaded): the frame shows the gradient a cover falls back to,
+   rather than a broken image. */
+.g-folio__media-preview-frame:has(> img[src=""]) {
+  background:
+    radial-gradient(90% 80% at 20% 20%, rgba(var(--g-accent-rgb), 0.28), transparent 70%),
+    radial-gradient(80% 90% at 85% 90%, rgba(var(--g-accent-rgb), 0.16), transparent 70%),
+    var(--g-surface-alt);
+}
+
+.g-folio__media-preview-image[src=""] {
+  display: none;
+}
+
 .g-folio__media-preview-image {
   display: block;
   width: auto;
@@ -1231,7 +1245,9 @@ body.g-modal-open {
   flex-direction: column;
   width: 700px;
   max-width: 100%;
-  max-height: calc(100vh - 60px);
+  /* 48px clear above and below, the same for every Groove dialog. */
+  max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
   overflow: hidden;
   border-radius: 8px;
   background: var(--g-surface);
@@ -1478,6 +1494,425 @@ body.g-modal-open {
   }
 }
 
+/* ── First-run setup ─────────────────────────────────────────────────────
+   The fonts-and-photos dialog (\Groove\Setup\First_Run) wears the theme
+   details frame, narrower, and the two ways back to it once it is closed:
+   the Overview panel and the header button. Everything that lands on a text
+   element is component CSS here rather than utilities, which core's p, h2
+   and legend rules would beat. */
+
+.g-setup__dialog {
+  width: 640px;
+}
+
+.g-setup__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Docked: the actions stay in view however far the body scrolls. */
+.g-theme-details__footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 14px 20px;
+  border-top: 1px solid var(--g-border);
+  background: var(--g-surface);
+}
+
+.g-theme-details__footer [hidden] {
+  display: none;
+}
+
+body.groove .g-setup__intro,
+body.groove .g-setup__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--g-text-muted);
+}
+
+body.groove .g-setup__note {
+  font-size: 12px;
+}
+
+.g-setup__item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  background: var(--g-surface);
+  transition: border-color 0.2s ease;
+}
+
+.g-setup__item.is-error {
+  border-color: var(--g-red-40);
+}
+
+/* A legend sits on the fieldset's border by default; floated, it becomes an
+   ordinary first line of the card. */
+body.groove .g-setup__item-title {
+  float: left;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+body.groove .g-setup__item-title + * {
+  clear: both;
+}
+
+body.groove .g-setup__item-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+.g-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.g-choices[hidden],
+.g-setup__progress[hidden],
+.g-setup__bar[hidden] {
+  display: none;
+}
+
+body.groove .g-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--g-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.g-choice:hover {
+  background: var(--g-surface-alt);
+}
+
+.g-choice:has(input:checked) {
+  border-color: var(--g-accent);
+  background: rgba(var(--g-accent-rgb), 0.04);
+}
+
+.g-choice:has(input:disabled) {
+  cursor: default;
+  opacity: 0.6;
+}
+
+body.groove .g-choice input[type="radio"] {
+  flex: 0 0 auto;
+  margin: 2px 0 0;
+}
+
+.g-choice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.g-choice__label {
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--g-text);
+}
+
+.g-choice__hint {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--g-text-muted);
+}
+
+.g-setup__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.g-setup__bar {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--g-surface-alt);
+}
+
+.g-setup__bar-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--g-accent);
+  transition: width 0.4s ease;
+}
+
+.g-setup__item[data-state="ready"] .g-setup__bar-fill {
+  background: var(--g-green-40);
+}
+
+body.groove .g-setup__status {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--g-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.g-setup__item[data-state="ready"] .g-setup__status,
+.g-setup__item[data-state="declined"] .g-setup__status {
+  color: var(--g-text);
+}
+
+.g-setup__item[data-state="ready"] .g-setup__status::before {
+  content: "\f147";
+  font-family: dashicons;
+  font-size: 16px;
+  line-height: 1;
+  vertical-align: -3px;
+  margin-right: 4px;
+  color: var(--g-green-40);
+}
+
+.g-setup__item.is-error .g-setup__status {
+  color: var(--g-red-50);
+}
+
+/* Overview: the panel that stands in for the dialog once it is closed. */
+.g-setup-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(var(--g-accent-rgb), 0.07), transparent 60%),
+    var(--g-surface);
+}
+
+.g-setup-panel__text {
+  min-width: 0;
+}
+
+body.groove .g-setup-panel__title {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+body.groove .g-setup-panel__desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+.g-setup-panel .button {
+  flex: 0 0 auto;
+}
+
+/* Every other screen: a quiet button in the header. */
+body.groove .g-setup-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+}
+
+.g-setup-entry__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--g-accent);
+}
+
+/* Folio editor: why the font pickers may not match what readers see. */
+body.groove .g-font-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+body.groove .g-font-hint .dashicons {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: var(--g-text-muted);
+}
+
+/* Settings: removing what was downloaded. Set apart from the actions above by
+   a rule, so undoing the download does not read as another way to do it. */
+.g-settings-remove {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--g-border);
+}
+
+body.groove .g-settings-remove__button {
+  color: var(--g-red-50);
+  border-color: var(--g-red-40);
+}
+
+body.groove .g-settings-remove__button:hover,
+body.groove .g-settings-remove__button:focus {
+  color: var(--g-red-60);
+  border-color: var(--g-red-50);
+  background: var(--g-red-0);
+}
+
+body.groove .g-settings-remove__note {
+  margin: 0;
+  max-width: 64ch;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+/* Reset (Settings → Reset). The dialog posts, so a form wraps the frame's
+   header, body and footer; display: contents keeps them the frame's own flex
+   children, so the body still scrolls between a docked header and footer. */
+.g-dialog-form {
+  display: contents;
+}
+
+.g-reset__dialog {
+  width: 600px;
+}
+
+body.groove .g-reset-list {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+body.groove .g-reset-list li {
+  margin: 0 0 2px;
+}
+
+.g-reset__content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+body.groove .g-reset__legend {
+  float: left;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+body.groove .g-reset__legend + * {
+  clear: both;
+}
+
+body.groove .g-dialog-confirm .g-reset__desc {
+  color: var(--g-text-muted);
+}
+
+/* The answer that deletes reads as such once chosen. */
+.g-choice--danger:has(input:checked) {
+  border-color: var(--g-red-40);
+  background: var(--g-red-0);
+}
+
+/* Core draws the radio itself (appearance: none), so accent-color does
+   nothing; recolour core's own parts. Current core fills a checked radio with
+   the admin colour and puts a white dot on it, older core a coloured dot on
+   white. Filling it red with a white dot looks right under both. */
+body.groove .g-choice--danger input[type="radio"]:checked {
+  background: var(--g-red-50);
+  border-color: var(--g-red-50);
+}
+
+body.groove .g-choice--danger input[type="radio"]:checked::before {
+  background-color: #fff;
+}
+
+body.groove .g-choice--danger input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px var(--g-surface), 0 0 0 4px var(--g-red-50);
+}
+
+/* Settings: a row of forms whose buttons read as one group. */
+.g-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.g-settings-actions:empty {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .g-setup-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .g-choices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .g-theme-details__footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-setup__bar-fill,
+  .g-setup__item,
+  .g-choice {
+    transition: none;
+  }
+}
+
 /* ── Theme Selection in Folio Editor ─────────────────────────────────── */
 
 .g-theme-selection-grid {
@@ -1650,7 +2085,9 @@ body.groove .g-theme-picker-modal__frame {
   flex-direction: column;
   width: 100%;
   max-width: 1120px;
-  max-height: 90vh;
+  /* 48px clear above and below, the same for every Groove dialog. */
+  max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
   overflow: hidden;
   border-radius: 12px;
   background: var(--g-surface);
@@ -2088,7 +2525,9 @@ body.groove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
   width: 700px;
   max-width: calc(100vw - 40px);
-  max-height: calc(100vh - 60px);
+  /* 48px clear above and below, the same for every Groove dialog. */
+  max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
   display: flex;
   flex-direction: column;
   overflow: hidden;

@@ -361,7 +361,9 @@ Google Fonts URL in `ensure_script()`, no hand-written `<link>`. Everything goes
 `Groove\Themes\Font_Loader`, and a folio never loads a font from a CDN at all: a reader's browser asking
 Google for a font hands Google the reader's IP address, which WordPress.org counts as phoning home.
 `Groove\Themes\Font_Library` downloads every family into `uploads/groove-folios/fonts/` when an
-administrator presses *Download Fonts* on *Groove → Settings → Fonts*, and folios load those copies.
+administrator chooses to — in the setup dialog the first Groove screen offers, or with *Download Fonts* on
+*Groove → Settings → Fonts* — and folios load those copies. The administrator can choose system fonts
+instead, and then no folio loads a downloaded family even if it is on disk.
 
 Declare the theme's defaults in `setup.php` instead:
 
@@ -381,9 +383,12 @@ Declare the theme's defaults in `setup.php` instead:
 `google_family` is a `family=` fragment for the [css2 API](https://developers.google.com/fonts/docs/css2)
 — spaces as `+`, weights after the colon — and it names what *Download Fonts* fetches. Omit it (or leave
 it empty) for a system stack that needs no download. Both values are sanitised, so a theme cannot inject
-CSS or extra URL parameters. Until the fonts are downloaded, the rest of `css_stack` applies, so end it
-in a system family. The block is optional; a theme that declares nothing simply falls back to the stacks written
-into its own CSS.
+CSS or extra URL parameters. While a family is not usable — not downloaded yet, or the site chose system
+fonts — `Font_Loader::resolve()` replaces the role's whole `css_stack` with a system stack, picked by the
+stack's last, generic family: `serif` gets Georgia, and anything else gets the stack the WordPress
+dashboard uses. So end `css_stack` in the right generic family; the named families before it are not
+used as a fallback. The block is optional; a theme that declares nothing simply falls back to the stacks
+written into its own CSS.
 
 **Resolution order, per role.** `Base_Theme::ensure_script()` calls `enqueue_folio_fonts()`, which asks
 `Font_Loader::resolve()` for each of `header` and `body`:
@@ -446,6 +451,16 @@ Merriweather, Montserrat, Noto Sans, Noto Serif, Nunito Sans, Poppins, Roboto).
 
 ### Other helpers
 
+- `get_cover_background_style($property = 'background-image')` and `get_cover_fallback_class()` — for
+  the element that carries the theme's cover photo. A built-in theme's cover is a Pexels photo, which a
+  WordPress.org install has only once an administrator downloads it, so `$theme_cover_url` may be empty.
+  The style is `''` then, and the class adds `g-folio__cover-fallback`, which
+  `assets/css/folio-contract.css` paints as a soft gradient from your `--folio-*` slots. Use both on the
+  same element; set `--folio-cover-fallback` on your cover root for a gradient of your own:
+  ```php
+  <div class="my-cover__photo<?php echo esc_attr($this->get_cover_fallback_class()); ?>"
+    style="<?php echo esc_attr($this->get_cover_background_style()); ?>"></div>
+  ```
 - `get_navigation_context($args)` — resolves `folio_id`, `title`, `title_url`, `pages`, `current_page_id`
   with fallbacks. `title_url` is empty when the folio's cover is disabled, so nav titles do not link to a
   cover that redirects.

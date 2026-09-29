@@ -104,6 +104,11 @@ class Module extends BaseModule
 		wp_enqueue_script('groove-toast', $this->get_js_assets_url('groove-toast'), ['groove-toggletip'], GROOVE_VERSION, true);
 		wp_enqueue_script('groove-form-state', $this->get_js_assets_url('groove-form-state'), ['groove-toggletip'], GROOVE_VERSION, true);
 		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery', 'groove-toast'], GROOVE_VERSION, true);
+		// The one dialog behaviour every Groove dialog shares: open, close,
+		// Escape, focus trap and the counted scroll lock.
+		$groove_dialog_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-dialog.js';
+		$groove_dialog_js_version = file_exists($groove_dialog_js_path) ? (string) filemtime($groove_dialog_js_path) : GROOVE_VERSION;
+		wp_enqueue_script('groove-dialog', $this->get_js_assets_url('groove-dialog'), [], $groove_dialog_js_version, true);
 		wp_enqueue_script('groove-inline-edit', $this->get_js_assets_url('groove-inline-edit'), ['jquery'], GROOVE_VERSION, true);
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
@@ -111,7 +116,31 @@ class Module extends BaseModule
 		if ($current_page === \Groove\Pages\Themes::PAGE_ID) {
 			$groove_themes_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-themes.js';
 			$groove_themes_js_version = file_exists($groove_themes_js_path) ? (string) filemtime($groove_themes_js_path) : GROOVE_VERSION;
-			wp_enqueue_script('groove-themes', $this->get_js_assets_url('groove-themes'), [], $groove_themes_js_version, true);
+			wp_enqueue_script('groove-themes', $this->get_js_assets_url('groove-themes'), ['groove-dialog'], $groove_themes_js_version, true);
+		}
+
+		// The reset confirmation, on its Settings tab only.
+		if ($current_page === \Groove\Pages\Settings::PAGE_ID) {
+			$groove_reset_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-reset.js';
+			$groove_reset_js_version = file_exists($groove_reset_js_path) ? (string) filemtime($groove_reset_js_path) : GROOVE_VERSION;
+			wp_enqueue_script('groove-reset', $this->get_js_assets_url('groove-reset'), ['groove-dialog'], $groove_reset_js_version, true);
+		}
+
+		// First-run setup, on Groove's own admin pages (not the list tables or
+		// the block editor) while fonts or photos are still unsettled.
+		if ($current_page !== '' && \Groove\Setup\First_Run::should_offer()) {
+			$groove_setup_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-setup.js';
+			$groove_setup_js_version = file_exists($groove_setup_js_path) ? (string) filemtime($groove_setup_js_path) : GROOVE_VERSION;
+			wp_enqueue_script('groove-setup', $this->get_js_assets_url('groove-setup'), ['groove-dialog', 'groove-toast'], $groove_setup_js_version, true);
+
+			// Not over the Add New dialog that All Folios opens from a link.
+			$auto_open = empty($_GET['open_add_new']) && \Groove\Setup\First_Run::take_auto_open(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Presence check only, to avoid stacking two dialogs; the value is not used.
+			wp_add_inline_script(
+				'groove-setup',
+				'window.GROOVE_SETUP = ' . wp_json_encode(\Groove\Setup\First_Run::script_settings($auto_open)) . ';',
+				'before'
+			);
+			add_action('admin_footer', ['\Groove\Setup\First_Run', 'render_dialog']);
 		}
 
 		if ($this->is_in_block_editor_page()) {

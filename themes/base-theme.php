@@ -919,6 +919,35 @@ abstract class Base_Theme extends Assets
     }
   }
 
+  /**
+   * The inline style that paints the theme's cover photo, or '' when there is
+   * no photo (see resolve_cover_url()). Pair it with get_cover_fallback_class()
+   * on the same element, so an empty cover shows a gradient, not a blank pane.
+   *
+   * @param string $property 'background-image', or 'background' for a theme
+   *                         that has always used the shorthand.
+   * @return string Unescaped CSS; echo it through esc_attr().
+   */
+  protected function get_cover_background_style(string $property = 'background-image'): string
+  {
+    if ((string) $this->theme_cover_url === '') {
+      return '';
+    }
+
+    return $property . ': url(' . esc_url($this->theme_cover_url) . ')';
+  }
+
+  /**
+   * ' g-folio__cover-fallback' when the cover has no photo, else ''. The class
+   * is defined in assets/css/folio-contract.css.
+   *
+   * @return string With its leading space, for appending to a class list.
+   */
+  protected function get_cover_fallback_class(): string
+  {
+    return (string) $this->theme_cover_url === '' ? ' g-folio__cover-fallback' : '';
+  }
+
   function get_data()
   {
     if ($this->is_preview_mode) { return; }

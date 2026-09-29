@@ -51,6 +51,16 @@ class Font_Library
    */
   const TIME_BUDGET = 20;
 
+  /**
+   * Option recording the administrator's answer to "use Google's fonts?":
+   * 'google', 'system', or '' for not asked yet. 'system' is a real choice,
+   * not a missing download: folios then use the system fonts WordPress's own
+   * dashboard uses, even for families that happen to be on disk.
+   */
+  const SOURCE_OPTION = 'groove_font_source';
+  const SOURCE_GOOGLE = 'google';
+  const SOURCE_SYSTEM = 'system';
+
   // ── Where ──────────────────────────────────────────────────────────────
 
   /**
@@ -128,6 +138,42 @@ class Font_Library
     return $path !== '' && is_readable($path);
   }
 
+  /**
+   * The administrator's font choice; see SOURCE_OPTION.
+   *
+   * @return string 'google', 'system' or ''.
+   */
+  public static function source(): string
+  {
+    $source = (string) get_option(self::SOURCE_OPTION, '');
+
+    return in_array($source, array(self::SOURCE_GOOGLE, self::SOURCE_SYSTEM), true) ? $source : '';
+  }
+
+  /**
+   * Record the administrator's font choice.
+   *
+   * @param string $source SOURCE_GOOGLE or SOURCE_SYSTEM.
+   */
+  public static function set_source(string $source): void
+  {
+    if (in_array($source, array(self::SOURCE_GOOGLE, self::SOURCE_SYSTEM), true)) {
+      update_option(self::SOURCE_OPTION, $source, true);
+    }
+  }
+
+  /**
+   * Whether a folio may load this family: it is on this site, and the
+   * administrator has not chosen system fonts instead.
+   *
+   * @param string $family
+   * @return bool
+   */
+  public static function is_usable(string $family): bool
+  {
+    return static::source() !== self::SOURCE_SYSTEM && static::has($family);
+  }
+
   // ── What ───────────────────────────────────────────────────────────────
 
   /**
@@ -178,11 +224,13 @@ class Font_Library
    * Fetch every family this site does not have yet.
    *
    * Runs only from an explicit button press. Stops starting new families once
-   * TIME_BUDGET has passed; those come back as `remaining`, for the next press.
+   * the time budget has passed; those come back as `remaining`, for the next
+   * press — or the next step, when the setup dialog drives it in batches.
    *
+   * @param int $time_budget Seconds before no new family is started.
    * @return array{downloaded: int, failed: array<string, string>, remaining: int}
    */
-  public static function download_missing(): array
+  public static function download_missing(int $time_budget = self::TIME_BUDGET): array
   {
     $result = array('downloaded' => 0, 'failed' => array(), 'remaining' => 0);
     $missing = static::status()['missing'];
@@ -206,7 +254,7 @@ class Font_Library
     $started = microtime(true);
 
     foreach ($missing as $index => $family) {
-      if (microtime(true) - $started > self::TIME_BUDGET) {
+      if (microtime(true) - $started > $time_budget) {
         $result['remaining'] = count($missing) - $index;
         break;
       }
@@ -330,6 +378,32 @@ class Font_Library
     }
 
     return '';
+  }
+
+  /**
+   * Delete every downloaded family and forget the font choice, which puts the
+   * site back where a fresh install starts: nothing on disk, nothing asked, so
+   * the setup dialog's entry points offer the choice again. Only this plugin's
+   * own folder under uploads is touched.
+   *
+   * @return int The number of families that were on this site.
+   */
+  public static function remove_downloaded(): int
+  {
+    $removed = count(array_filter(static::families(), static function ($family) {
+      return static::has($family);
+    }));
+
+    $dir = static::dir();
+    // dir() is built from UPLOAD_SUBDIR; the check keeps a recursive delete
+    // from ever reaching anything else should that change.
+    if ($dir !== '' && substr($dir, -strlen(self::UPLOAD_SUBDIR . '/')) === self::UPLOAD_SUBDIR . '/' && is_dir($dir)) {
+      static::filesystem()->delete($dir, true);
+    }
+
+    delete_option(self::SOURCE_OPTION);
+
+    return $removed;
   }
 
   /**

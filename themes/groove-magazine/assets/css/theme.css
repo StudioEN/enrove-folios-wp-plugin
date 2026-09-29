@@ -60,6 +60,22 @@
   --gm-overlay: var(--folio-overlay);
 }
 
+/* The folio's fonts arrive as --g-folio-header-font / --g-folio-body-font on
+   the cover and page roots (themes/font-loader.php), not on :root. A custom
+   property resolves where it is declared, so the :root chain above can never
+   see them: it froze on its own fallbacks, and neither a folio's font choice
+   nor the system stack used when the fonts are not downloaded ever reached
+   the page. Re-declared on the theme root, the element the loader writes to,
+   the same way groove-proposal does on .gp. Slots first, then the aliases,
+   which would otherwise inherit the value :root already worked out. The :root
+   pair stays for anything drawn outside .gm. */
+.gm {
+  --folio-font-heading: var(--g-folio-header-font, 'STIX Two Text', Georgia, 'Times New Roman', serif);
+  --folio-font-body: var(--g-folio-body-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  --gm-font-heading: var(--folio-font-heading);
+  --gm-font-body: var(--folio-font-body);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --folio-ground: #0F172A;

@@ -648,6 +648,56 @@ class Folio extends Page
     return esc_html__('Folio', 'groove-folios');
   }
 
+  protected function shows_setup_entry()
+  {
+    return false;
+  }
+
+  /**
+   * A line under the font pickers when the fonts they name are not what a
+   * reader will see: not downloaded yet, or the site uses system fonts.
+   */
+  private function display_font_availability_hint()
+  {
+    $system = \Groove\Themes\Font_Library::source() === \Groove\Themes\Font_Library::SOURCE_SYSTEM;
+    $missing = !$system && !empty(\Groove\Themes\Font_Library::status()['missing']);
+
+    if (!$system && !$missing) {
+      return;
+    }
+
+    $can_manage = current_user_can('manage_options');
+    $fonts_url = add_query_arg(array('page' => 'groove-settings', 'tab_key' => 'fonts'), admin_url('admin.php'));
+    // The setup dialog is on this screen while fonts are unsettled; the link
+    // opens it there and falls back to the Fonts tab without script.
+    $opens_setup = $missing && \Groove\Setup\First_Run::should_offer();
+    ?>
+    <p class="g-font-hint"<?php echo $opens_setup ? ' data-groove-setup-entry' : ''; ?>>
+      <span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
+      <span>
+        <?php
+        if ($system) {
+          esc_html_e('This site uses system fonts, so folios show the fonts the WordPress dashboard uses rather than these.', 'groove-folios');
+        } else {
+          esc_html_e('These fonts are not on this site yet, so folios show system fonts for now.', 'groove-folios');
+        }
+        ?>
+        <?php if ($can_manage): ?>
+        <a href="<?php echo esc_url($fonts_url); ?>"<?php echo $opens_setup ? ' data-groove-setup-open' : ''; ?>>
+          <?php
+          if ($system) {
+            esc_html_e('Change in Settings', 'groove-folios');
+          } else {
+            esc_html_e('Download fonts', 'groove-folios');
+          }
+          ?>
+        </a>
+        <?php endif; ?>
+      </span>
+    </p>
+    <?php
+  }
+
   private function get_collection_tag_names($folio_id)
   {
     $terms = get_the_terms((int) $folio_id, 'groove_collection_tag');
@@ -1135,6 +1185,7 @@ class Folio extends Page
           </div>
           <p class="m-0 text-xs text-gray-500">Primary font styles titles and headings. Secondary font styles the body text.
           </p>
+          <?php $this->display_font_availability_hint(); ?>
         </div>
         <div>
           <label for="g-on-this-page-label"

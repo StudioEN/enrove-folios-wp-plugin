@@ -2,6 +2,7 @@
 namespace Groove\Pages;
 
 use Groove\Pages\Page;
+use Groove\Setup\First_Run;
 
 
 if (!defined('ABSPATH')) {
@@ -21,6 +22,11 @@ class Overview extends Page
   public function create_tabs()
   {
     return array();
+  }
+
+  protected function shows_setup_entry()
+  {
+    return false;
   }
 
   public function register_admin_menu()
@@ -180,15 +186,53 @@ class Overview extends Page
 <?php
   }
 
+  /**
+   * The outcome of a reset (Settings → Reset), which lands here: a fresh
+   * install starts on Overview.
+   */
+  private function toast_reset_outcome()
+  {
+    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only outcome flags set by the nonce-checked reset handler's own redirect; they only choose which sentence to show.
+    $outcome = isset($_GET['groove_reset']) ? sanitize_key(wp_unslash($_GET['groove_reset'])) : '';
+    $folios = isset($_GET['groove_reset_folios']) ? absint(wp_unslash($_GET['groove_reset_folios'])) : 0;
+    $pages = isset($_GET['groove_reset_pages']) ? absint(wp_unslash($_GET['groove_reset_pages'])) : 0;
+    $tags = isset($_GET['groove_reset_tags']) ? absint(wp_unslash($_GET['groove_reset_tags'])) : 0;
+    // phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+    $consumed = array('groove_reset', 'groove_reset_folios', 'groove_reset_pages', 'groove_reset_tags');
+
+    if ($outcome === 'none') {
+      \Groove\Toast::success(__('Groove Folios was reset.', 'groove-folios'), $consumed);
+    } elseif ($outcome === 'kept') {
+      \Groove\Toast::success(__('Groove Folios was reset. Your folios were kept.', 'groove-folios'), $consumed);
+    } elseif ($outcome === 'deleted') {
+      \Groove\Toast::success(sprintf(
+        /* translators: 1: number of folios, 2: number of folio pages, 3: number of collection tags — each already a phrase such as "3 folios". */
+        __('Groove Folios was reset. Deleted %1$s, %2$s and %3$s.', 'groove-folios'),
+        /* translators: %s: number of folios. */
+        sprintf(_n('%s folio', '%s folios', $folios, 'groove-folios'), number_format_i18n($folios)),
+        /* translators: %s: number of folio pages. */
+        sprintf(_n('%s page', '%s pages', $pages, 'groove-folios'), number_format_i18n($pages)),
+        /* translators: %s: number of collection tags. */
+        sprintf(_n('%s collection tag', '%s collection tags', $tags, 'groove-folios'), number_format_i18n($tags))
+      ), $consumed);
+    }
+  }
+
   public function display_content()
   {
+    $this->toast_reset_outcome();
     ?>
 <div class="space-y-6">
+  <?php if (First_Run::should_offer()): ?>
+  <?php First_Run::display_overview_panel(); ?>
+  <?php else: ?>
   <div class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
     <p class="m-0 text-sm text-indigo-900">
       <?php esc_html_e('Welcome to Groove Folios. Manage your folios, review recent changes, and create new work from here.', 'groove-folios'); ?>
     </p>
   </div>
+  <?php endif; ?>
 
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
     <div class="lg:col-span-2">

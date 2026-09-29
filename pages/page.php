@@ -193,17 +193,31 @@ abstract class Page extends Assets
 	{
 	}
 
+	/**
+	 * Whether this screen's header carries the "Finish setup" button while
+	 * first-run setup is unsettled. Overview has a panel for it instead, and
+	 * the folio editor keeps its header for the folio's own actions.
+	 *
+	 * @return bool
+	 */
+	protected function shows_setup_entry()
+	{
+		return true;
+	}
+
 	public function display_nav()
 	{
 		$tabs = $this->get_tabs();
+		$setup_entry = $this->shows_setup_entry() && \Groove\Setup\First_Run::should_offer();
 		?>
 		<div class="g-page-header">
 			<div class="g-page-header__left">
 				<h1 class="wp-heading-inline g-page-header__title"><?php echo esc_html($this->get_title()); ?></h1>
 				<?php $this->display_left_button_items(); ?>
 			</div>
-			<?php if (!empty($this->right_button_items)): ?>
+			<?php if (!empty($this->right_button_items) || $setup_entry): ?>
 			<div class="g-page-header__right">
+				<?php if ($setup_entry) { \Groove\Setup\First_Run::display_header_entry(); } ?>
 				<?php $this->display_right_button_items(); ?>
 			</div>
 			<?php endif; ?>

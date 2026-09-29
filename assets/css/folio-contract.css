@@ -153,3 +153,27 @@
    Themes honour reduced motion themselves, in their own stylesheet, at their
    own specificity. folio-starter is the reference: it kills transitions with
    `transition-duration: 1ms !important` rather than by retiming a token. */
+
+/* ── Cover fallback ─────────────────────────────────────────────────────────
+   A built-in theme's cover photo is a Pexels photo, which the WordPress.org
+   package cannot carry, so on a site that has not downloaded the photos —
+   or chose not to — the cover has no image at all. Rather than a blank pane,
+   Base_Theme::get_cover_fallback_class() puts this class on whatever element
+   would have carried the photo, and it paints a slow, soft wash in the theme's
+   own colours.
+
+   The gradient is written in the rule, not in a :root token, on purpose: a
+   custom property that reads other custom properties resolves where it is
+   declared, so a :root gradient would freeze the :root fallbacks above and
+   ignore every theme's slots. Here it resolves on the element, inside the
+   theme. A theme that wants its own wash sets --folio-cover-fallback (any
+   background-image value) on its cover root. */
+.g-folio__cover-fallback {
+  background-color: var(--folio-surface-alt);
+  background-image: var(--folio-cover-fallback,
+    radial-gradient(70% 80% at 18% 22%, color-mix(in srgb, var(--folio-accent) 42%, transparent), transparent 72%),
+    radial-gradient(60% 70% at 86% 78%, color-mix(in srgb, var(--folio-accent-2) 30%, transparent), transparent 70%),
+    linear-gradient(160deg, var(--folio-accent-soft), var(--folio-surface-alt)));
+  background-repeat: no-repeat;
+  background-size: cover;
+}

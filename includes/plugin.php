@@ -145,6 +145,12 @@ class Plugin
 		$this->modules_manager = new Modules_Manager();
 		$this->contents_manager = new Contents_Manager();
 
+		// Registers the setup dialog's AJAX handlers; the dialog itself is
+		// printed by the groove-main module on Groove's own screens.
+		if (is_admin()) {
+			\Groove\Setup\First_Run::instance();
+		}
+
 		$this->menu_manager->register_actions();
 	}
 

@@ -41,7 +41,10 @@ class Settings extends Page
       ],
       'privacy' => [
         'label' => esc_html__('Privacy', 'groove-folios'),
-      ]
+      ],
+      'reset' => [
+        'label' => esc_html__('Reset', 'groove-folios'),
+      ],
     ];
   }
 
@@ -55,6 +58,10 @@ class Settings extends Page
     $this->add_post_action('test_groove_pexels_connection', 'handle_pexels_connection_test');
     $this->add_post_action('download_groove_sample_photos', 'handle_sample_photos_download');
     $this->add_post_action('download_groove_fonts', 'handle_fonts_download');
+    $this->add_post_action('set_groove_font_source', 'handle_font_source');
+    $this->add_post_action('remove_groove_fonts', 'handle_fonts_remove');
+    $this->add_post_action('remove_groove_sample_photos', 'handle_sample_photos_remove');
+    $this->add_post_action('reset_groove_folios', 'handle_plugin_reset');
 
     add_action('groove/menu/register', function (Menu_Manager $menu) {
       $menu->register(static::PAGE_ID, new Settings_Menu_Item($this));
@@ -764,15 +771,31 @@ class Settings extends Page
       wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
     }
 
+    \Groove\Pexels\Library::set_source(\Groove\Pexels\Library::SOURCE_PEXELS);
     $result = \Groove\Pexels\Library::download_missing();
     $failed = count($result['failed']);
 
-    if ($failed === 0) {
+    if ($failed === 0 && $result['remaining'] === 0) {
       $this->set_tab_notice('success', sprintf(
         /* translators: %s: number of photos downloaded. */
         _n('Downloaded %s photo.', 'Downloaded %s photos.', $result['downloaded'], 'groove-folios'),
         number_format_i18n($result['downloaded'])
       ));
+      $this->redirect_to_imagery_tab();
+    }
+
+    if ($failed === 0) {
+      $this->set_tab_notice(
+        'warning',
+        sprintf(
+          /* translators: 1: photos downloaded, 2: photos still to fetch. */
+          _n('Downloaded %1$s photos; %2$s still to fetch.', 'Downloaded %1$s photos; %2$s still to fetch.', $result['remaining'], 'groove-folios'),
+          number_format_i18n($result['downloaded']),
+          number_format_i18n($result['remaining'])
+        ),
+        __('This server took a while, so the download stopped before it could time out. Press Download Photos again to fetch the rest.', 'groove-folios'),
+        '#groove-download-sample-photos'
+      );
       $this->redirect_to_imagery_tab();
     }
 
@@ -807,6 +830,9 @@ class Settings extends Page
       wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
     }
 
+    // Downloading is choosing Google's fonts, including over an earlier
+    // choice of system fonts.
+    \Groove\Themes\Font_Library::set_source(\Groove\Themes\Font_Library::SOURCE_GOOGLE);
     $result = \Groove\Themes\Font_Library::download_missing();
     $failed = count($result['failed']);
 
@@ -852,9 +878,119 @@ class Settings extends Page
     $this->redirect_to_fonts_tab();
   }
 
+  /**
+   * Switch between the downloaded fonts and system fonts. Nothing is fetched
+   * or deleted: choosing system fonts leaves any downloaded files in place, so
+   * switching back is instant.
+   */
+  public function handle_font_source()
+  {
+    check_admin_referer('groove_set_font_source', 'groove_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
+    }
+
+    $source = isset($_POST['font_source']) ? sanitize_key(wp_unslash($_POST['font_source'])) : '';
+    if (!in_array($source, array(\Groove\Themes\Font_Library::SOURCE_GOOGLE, \Groove\Themes\Font_Library::SOURCE_SYSTEM), true)) {
+      wp_die(esc_html__('Unknown font source.', 'groove-folios'));
+    }
+    \Groove\Themes\Font_Library::set_source($source);
+
+    $this->set_tab_notice('success', $source === \Groove\Themes\Font_Library::SOURCE_SYSTEM
+      ? __('Folios now use system fonts.', 'groove-folios')
+      : __('Folios now use their theme fonts.', 'groove-folios'));
+    $this->redirect_to_fonts_tab();
+  }
+
+  /**
+   * Delete the downloaded fonts and forget the font choice. Cheap to undo — a
+   * press of Download Fonts brings them back — so there is no confirmation
+   * step; the button's own note says what happens.
+   */
+  public function handle_fonts_remove()
+  {
+    check_admin_referer('groove_remove_fonts', 'groove_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
+    }
+
+    $removed = \Groove\Themes\Font_Library::remove_downloaded();
+
+    $this->set_tab_notice('success', sprintf(
+      /* translators: %s: number of font families removed. */
+      _n('Removed %s font family. Folios use system fonts until you download them again.', 'Removed %s font families. Folios use system fonts until you download them again.', $removed, 'groove-folios'),
+      number_format_i18n($removed)
+    ));
+    $this->redirect_to_fonts_tab();
+  }
+
+  /**
+   * Delete the downloaded photos and forget the photo choice; see
+   * handle_fonts_remove() for why it does not ask first.
+   */
+  public function handle_sample_photos_remove()
+  {
+    check_admin_referer('groove_remove_sample_photos', 'groove_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
+    }
+
+    $removed = \Groove\Pexels\Library::remove_downloaded();
+
+    $this->set_tab_notice('success', sprintf(
+      /* translators: %s: number of photos removed. */
+      _n('Removed %s photo.', 'Removed %s photos.', $removed, 'groove-folios'),
+      number_format_i18n($removed)
+    ));
+    $this->redirect_to_imagery_tab();
+  }
+
+  /**
+   * Reset the plugin (\Groove\Setup\Reset), keeping the folios unless the
+   * confirmation dialog's answer was to delete them. Lands on Overview, where a
+   * fresh install starts, so the setup dialog greets the administrator again.
+   */
+  public function handle_plugin_reset()
+  {
+    check_admin_referer('groove_reset_plugin', 'groove_nonce');
+
+    if (!current_user_can('manage_options')) {
+      wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
+    }
+
+    // Anything but an explicit "delete" keeps the content.
+    $content = isset($_POST['groove_reset_content']) ? sanitize_key(wp_unslash($_POST['groove_reset_content'])) : 'keep';
+    $keep = $content !== 'delete';
+
+    // With nothing to keep or delete, the outcome says neither.
+    $had_content = array_sum(\Groove\Setup\Reset::content_counts()) > 0;
+    $deleted = \Groove\Setup\Reset::run($keep);
+
+    $outcome = 'none';
+    if ($had_content) {
+      $outcome = $keep ? 'kept' : 'deleted';
+    }
+
+    wp_safe_redirect(add_query_arg(
+      array(
+        'page' => Overview::PAGE_ID,
+        'groove_reset' => $outcome,
+        'groove_reset_folios' => $deleted['folios'],
+        'groove_reset_pages' => $deleted['pages'],
+        'groove_reset_tags' => $deleted['tags'],
+      ),
+      admin_url('admin.php')
+    ));
+    exit;
+  }
+
   public function display_fonts_fields()
   {
     $fonts = \Groove\Themes\Font_Library::status();
+    $system = \Groove\Themes\Font_Library::source() === \Groove\Themes\Font_Library::SOURCE_SYSTEM;
     $this->toast_tab_notice($this->take_tab_notice());
     ?>
 <div class="space-y-4">
@@ -862,13 +998,17 @@ class Settings extends Page
     <div>
       <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Folio Fonts', 'groove-folios'); ?></h3>
       <p class="mt-1 mb-0 text-sm text-gray-600">
-        <?php esc_html_e('Folio themes are typeset in open-licence fonts from Google Fonts. Folios load them from your own site, never from Google, so your readers’ browsers do not contact Google. Download them once here; until then, folios fall back to system fonts.', 'groove-folios'); ?>
+        <?php esc_html_e('Folio themes are typeset in open-licence fonts from Google Fonts. Folios load them from your own site, never from Google, so your readers’ browsers do not contact Google. Download them once here, or use system fonts instead; until the fonts are here, folios use system fonts.', 'groove-folios'); ?>
       </p>
     </div>
 
     <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700">
       <p class="m-0">
         <?php
+        if ($system) {
+          esc_html_e('Folios use system fonts — the ones the WordPress dashboard uses.', 'groove-folios');
+          echo ' ';
+        }
         printf(
           /* translators: 1: font families on this site, 2: font families in total. */
           esc_html__('%1$s of %2$s font families are on this site.', 'groove-folios'),
@@ -879,19 +1019,58 @@ class Settings extends Page
       </p>
     </div>
 
-    <?php if (!empty($fonts['missing'])): ?>
-    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-      <?php wp_nonce_field('groove_download_fonts', 'groove_nonce'); ?>
-      <input type="hidden" name="action" value="download_groove_fonts" />
-      <button type="submit" id="groove-download-fonts" class="button button-primary">
-        <?php esc_html_e('Download Fonts', 'groove-folios'); ?>
-      </button>
-    </form>
-    <?php endif; ?>
+    <div class="g-settings-actions">
+      <?php if (!empty($fonts['missing'])): ?>
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+        <?php wp_nonce_field('groove_download_fonts', 'groove_nonce'); ?>
+        <input type="hidden" name="action" value="download_groove_fonts" />
+        <button type="submit" id="groove-download-fonts" class="button button-primary">
+          <?php esc_html_e('Download Fonts', 'groove-folios'); ?>
+        </button>
+      </form>
+      <?php elseif ($system): ?>
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+        <?php wp_nonce_field('groove_set_font_source', 'groove_nonce'); ?>
+        <input type="hidden" name="action" value="set_groove_font_source" />
+        <input type="hidden" name="font_source" value="<?php echo esc_attr(\Groove\Themes\Font_Library::SOURCE_GOOGLE); ?>" />
+        <button type="submit" class="button button-primary">
+          <?php esc_html_e('Use Theme Fonts', 'groove-folios'); ?>
+        </button>
+      </form>
+      <?php endif; ?>
 
+      <?php if (!$system): ?>
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+        <?php wp_nonce_field('groove_set_font_source', 'groove_nonce'); ?>
+        <input type="hidden" name="action" value="set_groove_font_source" />
+        <input type="hidden" name="font_source" value="<?php echo esc_attr(\Groove\Themes\Font_Library::SOURCE_SYSTEM); ?>" />
+        <button type="submit" class="button button-secondary">
+          <?php esc_html_e('Use System Fonts', 'groove-folios'); ?>
+        </button>
+      </form>
+      <?php endif; ?>
+    </div>
+
+    <?php if (!empty($fonts['missing'])): ?>
     <p class="m-0 text-xs text-gray-500">
       <?php esc_html_e('Downloads about 4 MB from fonts.googleapis.com and fonts.gstatic.com into your uploads folder. Google sees your server’s IP address for those requests, never a reader’s, and nothing is fetched until you press the button.', 'groove-folios'); ?>
     </p>
+    <?php endif; ?>
+
+    <?php if ($fonts['present'] > 0): ?>
+    <div class="g-settings-remove">
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+        <?php wp_nonce_field('groove_remove_fonts', 'groove_nonce'); ?>
+        <input type="hidden" name="action" value="remove_groove_fonts" />
+        <button type="submit" class="button button-secondary g-settings-remove__button">
+          <?php esc_html_e('Remove Downloaded Fonts', 'groove-folios'); ?>
+        </button>
+      </form>
+      <p class="g-settings-remove__note">
+        <?php esc_html_e('Deletes the font files from your uploads folder and forgets your font choice, so Groove Folios asks again. Folios use system fonts until the fonts are downloaded again.', 'groove-folios'); ?>
+      </p>
+    </div>
+    <?php endif; ?>
   </section>
 </div>
 <?php
@@ -912,6 +1091,7 @@ class Settings extends Page
     // the key has nothing to do, so neither section is shown.
     $can_curate = is_readable(GROOVE_PATH . 'bin/curate-pexels.php');
     $photos = $available ? \Groove\Pexels\Library::status() : array('total' => 0, 'present' => 0, 'missing' => array());
+    $photos_downloaded = $available ? \Groove\Pexels\Library::downloaded_count() : 0;
 
     $credits = array();
     $credits_exist = false;
@@ -951,6 +1131,13 @@ class Settings extends Page
           esc_html(number_format_i18n($photos['present'])),
           esc_html(number_format_i18n($photos['total']))
         );
+        // A development checkout carries the photos in the plugin, so there
+        // is nothing downloaded to remove — say so, or the missing Remove
+        // button reads as a fault.
+        if ($photos['present'] > 0 && $photos_downloaded === 0) {
+          echo ' ';
+          esc_html_e('They come with this copy of the plugin, so there is nothing to download or remove.', 'groove-folios');
+        }
         ?>
       </p>
     </div>
@@ -965,9 +1152,26 @@ class Settings extends Page
     </form>
     <?php endif; ?>
 
+    <?php if (!empty($photos['missing'])): ?>
     <p class="m-0 text-xs text-gray-500">
       <?php esc_html_e('Downloads about 4 MB from images.pexels.com into your uploads folder. Nothing is sent to Pexels beyond the requests for the photos, and nothing is fetched until you press the button. Folios seeded before the download pick the photos up once they are here.', 'groove-folios'); ?>
     </p>
+    <?php endif; ?>
+
+    <?php if ($photos_downloaded > 0): ?>
+    <div class="g-settings-remove">
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+        <?php wp_nonce_field('groove_remove_sample_photos', 'groove_nonce'); ?>
+        <input type="hidden" name="action" value="remove_groove_sample_photos" />
+        <button type="submit" class="button button-secondary g-settings-remove__button">
+          <?php esc_html_e('Remove Downloaded Photos', 'groove-folios'); ?>
+        </button>
+      </form>
+      <p class="g-settings-remove__note">
+        <?php esc_html_e('Deletes the downloaded photos from your uploads folder and forgets your photo choice, so Groove Folios asks again. Covers show gradients, and pictures inside sample folios go missing, until the photos are downloaded again. Featured images already in the Media Library stay.', 'groove-folios'); ?>
+      </p>
+    </div>
+    <?php endif; ?>
   </section>
   <?php endif; ?>
 
@@ -976,7 +1180,13 @@ class Settings extends Page
     <div>
       <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Pexels API Key', 'groove-folios'); ?></h3>
       <p class="mt-1 mb-0 text-sm text-gray-600">
-        <?php esc_html_e('Used only when curating imagery from the command line. Folios never call the Pexels API when they are viewed or edited.', 'groove-folios'); ?>
+        <?php
+        printf(
+          /* translators: %s: the curation command. */
+          esc_html__('Used only by the imagery curation script in a development checkout (%s), which picks the covers and sample photos and records where each can be downloaded from. Folios never call the Pexels API when they are viewed or edited.', 'groove-folios'),
+          '<code>php bin/curate-pexels.php --help</code>'
+        );
+        ?>
       </p>
     </div>
 
@@ -1062,16 +1272,6 @@ class Settings extends Page
     <p class="m-0 text-xs text-gray-500">
       <?php esc_html_e('Testing the connection is the only action on this screen that contacts Pexels, and it only happens when you press the button.', 'groove-folios'); ?>
     </p>
-  </section>
-
-  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
-    <div>
-      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Curating Imagery', 'groove-folios'); ?></h3>
-      <p class="mt-1 mb-0 text-sm text-gray-600">
-        <?php esc_html_e('Theme covers and sample-content placeholders are chosen and downloaded from the command line in a development checkout, which also records where each one can be fetched from.', 'groove-folios'); ?>
-      </p>
-    </div>
-    <pre class="m-0 overflow-x-auto rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-800">php bin/curate-pexels.php --help</pre>
   </section>
   <?php endif; ?>
 
@@ -1198,10 +1398,10 @@ class Settings extends Page
       </h4>
       <ul class="m-0 pl-5 list-disc space-y-1 text-sm text-gray-600">
         <li>
-          <?php esc_html_e('Google Fonts — only when an administrator presses Download Fonts on the Fonts tab. The fonts are fetched once from fonts.googleapis.com and fonts.gstatic.com into your uploads folder, and Google sees your server’s IP address. Folios then load them from your own site, so readers never contact Google.', 'groove-folios'); ?>
+          <?php esc_html_e('Google Fonts — only when an administrator chooses to download them, in the setup dialog or on the Fonts tab. The fonts are fetched once from fonts.googleapis.com and fonts.gstatic.com into your uploads folder, and Google sees your server’s IP address. Folios then load them from your own site, so readers never contact Google.', 'groove-folios'); ?>
         </li>
         <li>
-          <?php esc_html_e('Pexels images — only when an administrator presses Download Photos on the Imagery tab. The photos are fetched once from images.pexels.com into your uploads folder, and Pexels sees your server’s IP address. After that they are served from your own site.', 'groove-folios'); ?>
+          <?php esc_html_e('Pexels images — only when an administrator chooses to download them, in the setup dialog or on the Imagery tab. The photos are fetched once from images.pexels.com into your uploads folder, and Pexels sees your server’s IP address. After that they are served from your own site.', 'groove-folios'); ?>
         </li>
         <?php if (is_readable(GROOVE_PATH . 'bin/curate-pexels.php')): ?>
         <li>
@@ -1256,6 +1456,167 @@ class Settings extends Page
     ?>
 <div>
   <?php $this->display_fonts_fields(); ?>
+</div>
+<?php
+  }
+
+  /**
+   * Reset tab: what a reset does, and the button that asks first.
+   */
+  public function display_tab_reset()
+  {
+    $counts = \Groove\Setup\Reset::content_counts();
+    $has_content = $counts['folios'] > 0 || $counts['pages'] > 0 || $counts['tags'] > 0;
+    $has_stored_key = get_option('groove_pexels_api_key', '') !== '';
+    ?>
+<div class="space-y-4">
+  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
+    <div>
+      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Reset Groove Folios', 'groove-folios'); ?></h3>
+      <p class="mt-1 mb-0 text-sm text-gray-600">
+        <?php esc_html_e('Puts the plugin back the way it was when it was first installed. Useful for troubleshooting, or to go through the first-run setup again.', 'groove-folios'); ?>
+      </p>
+    </div>
+
+    <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 space-y-2">
+      <p class="m-0 text-sm font-medium text-gray-800"><?php esc_html_e('A reset:', 'groove-folios'); ?></p>
+      <ul class="g-reset-list">
+        <?php $this->display_reset_effects($has_stored_key); ?>
+      </ul>
+      <p class="m-0 text-sm text-gray-600">
+        <?php
+        if ($has_content) {
+          echo esc_html($this->describe_reset_content($counts));
+          echo ' ';
+          esc_html_e('You choose whether to keep them before anything happens.', 'groove-folios');
+        } else {
+          esc_html_e('There are no folios on this site, so no content is affected.', 'groove-folios');
+        }
+        ?>
+      </p>
+    </div>
+
+    <div>
+      <button type="button" class="button button-secondary g-settings-remove__button" data-groove-reset-open aria-haspopup="dialog">
+        <?php esc_html_e('Reset Groove Folios…', 'groove-folios'); ?>
+      </button>
+    </div>
+  </section>
+</div>
+<?php
+    $this->display_reset_dialog($counts, $has_content, $has_stored_key);
+  }
+
+  /**
+   * The list of what a reset clears, shared by the tab and its dialog so the
+   * two cannot drift apart.
+   *
+   * @param bool $has_stored_key Whether a Pexels key is stored in the plugin's own setting.
+   */
+  private function display_reset_effects($has_stored_key)
+  {
+    ?>
+        <li>
+          <?php
+          if ($has_stored_key) {
+            esc_html_e('Returns every setting on these tabs to its default, including the stored Pexels API key.', 'groove-folios');
+          } else {
+            esc_html_e('Returns every setting on these tabs to its default.', 'groove-folios');
+          }
+          ?>
+        </li>
+        <li><?php esc_html_e('Deletes the downloaded fonts and photos from your uploads folder and forgets your choices about them.', 'groove-folios'); ?></li>
+        <li><?php esc_html_e('Shows the setup dialog to every administrator again.', 'groove-folios'); ?></li>
+<?php
+  }
+
+  /**
+   * "3 folios, 12 pages and 4 collection tags are on this site."
+   *
+   * @param array{folios: int, pages: int, tags: int} $counts
+   * @return string
+   */
+  private function describe_reset_content($counts)
+  {
+    return sprintf(
+      /* translators: 1: number of folios, 2: number of folio pages, 3: number of collection tags. */
+      __('This site has %1$s, %2$s and %3$s.', 'groove-folios'),
+      /* translators: %s: number of folios. */
+      sprintf(_n('%s folio', '%s folios', $counts['folios'], 'groove-folios'), number_format_i18n($counts['folios'])),
+      /* translators: %s: number of folio pages. */
+      sprintf(_n('%s page', '%s pages', $counts['pages'], 'groove-folios'), number_format_i18n($counts['pages'])),
+      /* translators: %s: number of collection tags. */
+      sprintf(_n('%s collection tag', '%s collection tags', $counts['tags'], 'groove-folios'), number_format_i18n($counts['tags']))
+    );
+  }
+
+  /**
+   * The confirmation. A reset cannot be undone, so it asks, names what goes,
+   * and — when there are folios — makes keeping them the default answer.
+   *
+   * @param array{folios: int, pages: int, tags: int} $counts
+   * @param bool $has_content
+   * @param bool $has_stored_key
+   */
+  private function display_reset_dialog($counts, $has_content, $has_stored_key)
+  {
+    ?>
+<div id="g-reset-modal" class="g-theme-details g-reset" role="dialog" aria-modal="true"
+  aria-labelledby="g-reset-title" hidden>
+  <div class="g-theme-details__backdrop" data-groove-reset-close></div>
+  <div class="g-theme-details__dialog g-reset__dialog" tabindex="-1">
+    <form class="g-dialog-form" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" data-groove-reset-form>
+      <?php wp_nonce_field('groove_reset_plugin', 'groove_nonce'); ?>
+      <input type="hidden" name="action" value="reset_groove_folios" />
+      <div class="g-theme-details__header">
+        <h2 id="g-reset-title" class="g-theme-details__title"><?php esc_html_e('Reset Groove Folios?', 'groove-folios'); ?></h2>
+        <button type="button" class="g-theme-details__close" data-groove-reset-close
+          aria-label="<?php esc_attr_e('Close', 'groove-folios'); ?>">
+          <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="g-theme-details__body g-dialog-confirm g-reset__body">
+        <p class="g-dialog-confirm__lead"><?php esc_html_e('The plugin goes back to the way it was when it was first installed. This:', 'groove-folios'); ?></p>
+        <ul class="g-dialog-confirm__list">
+          <?php $this->display_reset_effects($has_stored_key); ?>
+        </ul>
+
+        <?php if ($has_content): ?>
+        <fieldset class="g-reset__content">
+          <legend class="g-reset__legend"><?php esc_html_e('Your folios', 'groove-folios'); ?></legend>
+          <p class="g-reset__desc"><?php echo esc_html($this->describe_reset_content($counts)); ?></p>
+          <div class="g-choices">
+            <label class="g-choice">
+              <input type="radio" name="groove_reset_content" value="keep" checked />
+              <span class="g-choice__text">
+                <span class="g-choice__label"><?php esc_html_e('Keep them', 'groove-folios'); ?></span>
+                <span class="g-choice__hint"><?php esc_html_e('Folios, pages and collection tags stay exactly as they are.', 'groove-folios'); ?></span>
+              </span>
+            </label>
+            <label class="g-choice g-choice--danger">
+              <input type="radio" name="groove_reset_content" value="delete" />
+              <span class="g-choice__text">
+                <span class="g-choice__label"><?php esc_html_e('Delete them too', 'groove-folios'); ?></span>
+                <span class="g-choice__hint"><?php esc_html_e('Permanently, trash included. Images in the Media Library stay.', 'groove-folios'); ?></span>
+              </span>
+            </label>
+          </div>
+        </fieldset>
+        <?php endif; ?>
+
+        <div class="g-dialog-confirm__notice g-dialog-confirm__notice--danger" data-groove-reset-warning<?php echo $has_content ? ' hidden' : ''; ?>>
+          <p><?php echo $has_content ? esc_html__('The folios, their pages and collection tags are deleted for good. This can’t be undone.', 'groove-folios') : esc_html__('The settings and downloads are gone for good. This can’t be undone.', 'groove-folios'); ?></p>
+        </div>
+      </div>
+      <div class="g-theme-details__footer">
+        <button type="button" class="button button-secondary" data-groove-reset-close><?php esc_html_e('Cancel', 'groove-folios'); ?></button>
+        <button type="submit" class="button g-dialog-confirm__destroy" data-groove-reset-submit
+          data-label-keep="<?php esc_attr_e('Reset Groove Folios', 'groove-folios'); ?>"
+          data-label-delete="<?php esc_attr_e('Reset and delete folios', 'groove-folios'); ?>"
+          data-label-busy="<?php esc_attr_e('Resetting…', 'groove-folios'); ?>"><?php esc_html_e('Reset Groove Folios', 'groove-folios'); ?></button>
+      </div>
+    </form>
+  </div>
 </div>
 <?php
   }
@@ -1415,6 +1776,8 @@ class Settings extends Page
     <?php $this->display_tab_fonts(); ?>
   <?php elseif ('privacy' === $tab_key): ?>
     <?php $this->display_tab_privacy(); ?>
+  <?php elseif ('reset' === $tab_key && current_user_can('manage_options')): ?>
+    <?php $this->display_tab_reset(); ?>
   <?php else: ?>
     <?php $this->display_tab_general(); ?>
   <?php endif; ?>

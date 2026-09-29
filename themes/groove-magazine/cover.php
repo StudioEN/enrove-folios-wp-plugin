@@ -153,6 +153,9 @@ class Cover extends Base_Theme
 
             <!-- Slideshow layers -->
             <div class="gm-cover__slideshow">
+                <?php if (empty($slideshow_images)): ?>
+                    <div class="gm-cover__slide gm-cover__slide--active g-folio__cover-fallback"></div>
+                <?php endif; ?>
                 <?php foreach ($slideshow_images as $i => $img): ?>
                     <div class="gm-cover__slide<?php echo $i === 0 ? ' gm-cover__slide--active' : ''; ?>" data-gm-slide-index="<?php echo (int) $i; ?>"
                         style="background-image: url(<?php echo esc_url($img['url']); ?>)">

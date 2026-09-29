@@ -43,6 +43,22 @@ class Library
   const TIMEOUT = 20;
 
   /**
+   * Seconds one press may spend before it stops starting new photos, the way
+   * Font_Library does, so a slow host finishes on a second press rather than
+   * hitting max_execution_time half way through.
+   */
+  const TIME_BUDGET = 20;
+
+  /**
+   * Option recording the administrator's answer to "download the photos?":
+   * 'pexels', 'none', or '' for not asked yet. 'none' only means "do not ask
+   * again" — covers without a photo fall back to a gradient either way.
+   */
+  const SOURCE_OPTION = 'groove_photo_source';
+  const SOURCE_PEXELS = 'pexels';
+  const SOURCE_NONE = 'none';
+
+  /**
    * Absolute path of the photo shipped inside the plugin, whether or not it exists.
    *
    * Covers live in their theme's folder; credits.json records where. Everything
@@ -82,6 +98,63 @@ class Library
     }
 
     return trailingslashit($uploads['basedir']) . self::UPLOAD_SUBDIR . '/' . $slug . '.jpg';
+  }
+
+  /**
+   * The folder downloaded photos live in, with a trailing slash.
+   *
+   * @return string '' when the uploads folder cannot be resolved.
+   */
+  public static function downloaded_dir(): string
+  {
+    $uploads = wp_get_upload_dir();
+
+    return empty($uploads['basedir']) ? '' : trailingslashit($uploads['basedir']) . self::UPLOAD_SUBDIR . '/';
+  }
+
+  /**
+   * How many photos this site has downloaded, as opposed to carrying in the
+   * plugin (a development checkout carries them all and downloads none).
+   *
+   * @return int
+   */
+  public static function downloaded_count(): int
+  {
+    $count = 0;
+
+    foreach (array_keys(Credits::all()) as $slug) {
+      $path = static::downloaded_path((string) $slug);
+      if ($path !== '' && is_readable($path)) {
+        $count++;
+      }
+    }
+
+    return $count;
+  }
+
+  /**
+   * Delete every downloaded photo and forget the photo choice, which puts the
+   * site back where a fresh install starts. Photos carried in the plugin are
+   * untouched, and so are sample images already copied into the Media Library.
+   *
+   * @return int The number of photos removed.
+   */
+  public static function remove_downloaded(): int
+  {
+    $removed = static::downloaded_count();
+
+    $dir = static::downloaded_dir();
+    // downloaded_dir() is built from UPLOAD_SUBDIR; the check keeps a
+    // recursive delete from ever reaching anything else should that change.
+    if ($dir !== '' && substr($dir, -strlen(self::UPLOAD_SUBDIR . '/')) === self::UPLOAD_SUBDIR . '/' && is_dir($dir)) {
+      require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+      require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
+      (new \WP_Filesystem_Direct(null))->delete($dir, true);
+    }
+
+    delete_option(self::SOURCE_OPTION);
+
+    return $removed;
   }
 
   /**
@@ -155,6 +228,30 @@ class Library
   }
 
   /**
+   * The administrator's photo choice; see SOURCE_OPTION.
+   *
+   * @return string 'pexels', 'none' or ''.
+   */
+  public static function source(): string
+  {
+    $source = (string) get_option(self::SOURCE_OPTION, '');
+
+    return in_array($source, array(self::SOURCE_PEXELS, self::SOURCE_NONE), true) ? $source : '';
+  }
+
+  /**
+   * Record the administrator's photo choice.
+   *
+   * @param string $source SOURCE_PEXELS or SOURCE_NONE.
+   */
+  public static function set_source(string $source): void
+  {
+    if (in_array($source, array(self::SOURCE_PEXELS, self::SOURCE_NONE), true)) {
+      update_option(self::SOURCE_OPTION, $source, true);
+    }
+  }
+
+  /**
    * Every photo credits.json knows about, and which of them this site has.
    *
    * @return array{total: int, present: int, missing: string[]}
@@ -186,13 +283,15 @@ class Library
    *
    * Runs only from an explicit button press. Each file is checked to be a real
    * image before it is moved into place, so a failed or truncated response never
-   * leaves a broken photo behind for sample content to point at.
+   * leaves a broken photo behind for sample content to point at. Stops starting
+   * new photos once the time budget has passed; those come back as `remaining`.
    *
-   * @return array{downloaded: int, failed: array<string, string>}
+   * @param int $time_budget Seconds before no new photo is started.
+   * @return array{downloaded: int, failed: array<string, string>, remaining: int}
    */
-  public static function download_missing(): array
+  public static function download_missing(int $time_budget = self::TIME_BUDGET): array
   {
-    $result = array('downloaded' => 0, 'failed' => array());
+    $result = array('downloaded' => 0, 'failed' => array(), 'remaining' => 0);
     $status = static::status();
 
     if (empty($status['missing'])) {
@@ -211,7 +310,14 @@ class Library
       return $result;
     }
 
-    foreach ($status['missing'] as $slug) {
+    $started = microtime(true);
+
+    foreach ($status['missing'] as $index => $slug) {
+      if (microtime(true) - $started > $time_budget) {
+        $result['remaining'] = count($status['missing']) - $index;
+        break;
+      }
+
       $error = static::download($slug);
       if ($error === '') {
         $result['downloaded']++;

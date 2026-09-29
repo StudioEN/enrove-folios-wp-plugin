@@ -100,7 +100,7 @@ class Cover extends Base_Theme
       return;
     }
     ?>
-    <div class="g-folio__theme-2 g-folio__theme-cover" style="background: url(<?php echo esc_url($this->theme_cover_url); ?>)">
+    <div class="g-folio__theme-2 g-folio__theme-cover<?php echo esc_attr($this->get_cover_fallback_class()); ?>" style="<?php echo esc_attr($this->get_cover_background_style('background')); ?>">
       <button type="button" class="g-folio__theme-nav-button"
         aria-label="<?php echo esc_attr__('Open navigation', 'groove-folios'); ?>" aria-expanded="false">
         <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">

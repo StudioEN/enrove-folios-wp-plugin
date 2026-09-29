@@ -20,9 +20,10 @@ if (!defined('ABSPATH')) {
  * Whatever wins, each family is loaded from this site, never from a font CDN:
  * Font_Library downloads the files into uploads when an administrator asks,
  * and this class enqueues the local stylesheet for each family that is there.
- * A family that is not downloaded yet loads nothing, and the rest of its
- * css_stack applies. Nothing is ever loaded with @import or a hand-written
- * <link>.
+ * A family that is not on this site — not downloaded yet, or the administrator
+ * chose system fonts — loads nothing, and its role takes the system stack
+ * WordPress's own dashboard uses instead (see fallback_stack()). Nothing is
+ * ever loaded with @import or a hand-written <link>.
  *
  * Fonts are only ever loaded on a surface that actually renders a theme:
  * a folio cover/page (published or previewed), the theme-picker preview, the
@@ -39,6 +40,24 @@ class Font_Loader
 
   /** The two typographic roles a folio can set. */
   const ROLES = ['header', 'body'];
+
+  /**
+   * The stack wp-admin/css/common.css sets on the dashboard, for a role whose
+   * web font is not on this site. It names only fonts the reader's system
+   * already has, so the folio looks the same on every visit rather than
+   * picking up whichever of the theme's families a reader happens to have
+   * installed.
+   */
+  const SYSTEM_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif";
+
+  /**
+   * WordPress has no serif of its own, so a serif role keeps to the two serifs
+   * every desktop system carries rather than turning sans.
+   */
+  const SYSTEM_SERIF = "Georgia, 'Times New Roman', serif";
+
+  /** And a monospace role stays monospace. */
+  const SYSTEM_MONO = "ui-monospace, Menlo, Consolas, monospace";
 
   // ── Theme defaults ─────────────────────────────────────────────────────
 
@@ -141,19 +160,60 @@ class Font_Loader
       $chosen = Utils::get_primary_font_data($folio_keys[$role] ?? '');
 
       if ($chosen) {
-        $resolved[$role] = [
+        $resolved[$role] = static::usable([
           'css_stack'     => $chosen['css_stack'],
           'google_family' => $chosen['google_family'],
-        ];
+        ]);
         continue;
       }
 
       if (!empty($theme_fonts[$role])) {
-        $resolved[$role] = $theme_fonts[$role];
+        $resolved[$role] = static::usable($theme_fonts[$role]);
       }
     }
 
     return $resolved;
+  }
+
+  /**
+   * A resolved role as this site can actually render it: unchanged when its
+   * family is here and allowed, otherwise the system stack with no family.
+   *
+   * @param array $font ['css_stack' => string, 'google_family' => string]
+   * @return array Same shape.
+   */
+  protected static function usable(array $font): array
+  {
+    $family = (string) ($font['google_family'] ?? '');
+
+    if ($family === '' || Font_Library::is_usable($family)) {
+      return $font;
+    }
+
+    return [
+      'css_stack'     => static::fallback_stack((string) ($font['css_stack'] ?? '')),
+      'google_family' => '',
+    ];
+  }
+
+  /**
+   * The system stack for a web-font stack, chosen by its generic family: serif
+   * stays serif, monospace stays monospace, and everything else becomes
+   * WordPress's dashboard stack.
+   *
+   * @param string $css_stack e.g. "'Fraunces', Georgia, serif".
+   * @return string
+   */
+  public static function fallback_stack(string $css_stack): string
+  {
+    $parts = array_map('trim', explode(',', $css_stack));
+    $generic = strtolower(trim((string) end($parts), " '\""));
+
+    if ($generic === 'serif') {
+      return self::SYSTEM_SERIF;
+    }
+
+    return $generic === 'monospace' ? self::SYSTEM_MONO : self::SYSTEM_SANS;
   }
 
   /**

@@ -164,15 +164,21 @@
 // all stay in PHP.
 (function () {
   var modal = document.getElementById('g-theme-details-modal');
-  if (!modal) return;
+  if (!modal || typeof window.grooveDialog !== 'function') return;
 
   var titleEl = document.getElementById('g-theme-details-title');
-  var dialogEl = modal.querySelector('.g-theme-details__dialog');
   var badgeEl = modal.querySelector('[data-groove-theme-badge]');
   var defaultEl = modal.querySelector('[data-groove-theme-default]');
   var panels = modal.querySelectorAll('[data-groove-theme-panel]');
-  var lastFocused = null;
-  var hideTimer = null;
+
+  var dialog = window.grooveDialog(modal, {
+    // The live preview overlay stacks above this dialog and owns Escape
+    // while it is open.
+    canEscape: function () {
+      var preview = document.getElementById('g-tpp-overlay');
+      return !(preview && !preview.hidden);
+    },
+  });
 
   // The card carries the theme's name and badges, so the header can be
   // filled from the thing that was clicked rather than from a second copy
@@ -187,49 +193,13 @@
     });
     if (!matched) return;
 
-    window.clearTimeout(hideTimer);
-    lastFocused = document.activeElement;
     titleEl.textContent = card.getAttribute('data-theme-name') || '';
     badgeEl.textContent = card.getAttribute('data-theme-badge') || '';
     badgeEl.className = 'g-themes-tag g-themes-tag--builtin';
     badgeEl.hidden = badgeEl.textContent === '';
     defaultEl.hidden = card.getAttribute('data-theme-default') !== '1';
 
-    modal.hidden = false;
-    // The lock is a class rather than an inline style: the theme
-    // preview overlay stacks above this dialog and clears its own
-    // inline lock on close, which would otherwise unlock the page
-    // while this dialog is still open.
-    document.body.classList.add('g-modal-open');
-    window.requestAnimationFrame(function () {
-      modal.classList.add('is-open');
-    });
-    // Focus the dialog itself: focusing the close button first paints a
-    // ring on the one control you are least likely to want.
-    modal.querySelector('.g-theme-details__body').scrollTop = 0;
-    dialogEl.focus();
-  }
-
-  function close() {
-    if (modal.hidden) return;
-
-    modal.classList.remove('is-open');
-    document.body.classList.remove('g-modal-open');
-    // Held in the DOM until the fade finishes; the timer also covers
-    // reduced motion, where no transition fires at all.
-    hideTimer = window.setTimeout(function () {
-      modal.hidden = true;
-    }, 260);
-
-    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
-  }
-
-  // Everything visible inside the dialog, in document order.
-  function focusables() {
-    var found = modal.querySelectorAll('button, a[href], input:not([type="hidden"])');
-    return Array.prototype.filter.call(found, function (el) {
-      return el.offsetParent !== null;
-    });
+    dialog.open();
   }
 
   document.addEventListener('click', function (e) {
@@ -242,33 +212,7 @@
       return;
     }
     if (target.closest('[data-groove-theme-close]')) {
-      close();
-    }
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key !== 'Escape' || modal.hidden) return;
-    // The live preview overlay stacks above this dialog and owns
-    // Escape while it is open.
-    var preview = document.getElementById('g-tpp-overlay');
-    if (preview && !preview.hidden) return;
-    e.preventDefault();
-    close();
-  });
-
-  modal.addEventListener('keydown', function (e) {
-    if (e.key !== 'Tab') return;
-    var items = focusables();
-    if (!items.length) return;
-
-    var first = items[0];
-    var last = items[items.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
+      dialog.close();
     }
   });
 })();
