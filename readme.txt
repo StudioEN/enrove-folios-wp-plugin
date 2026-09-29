@@ -82,6 +82,16 @@ Under a base path, `/folio/` by default. You can change it on Groove → Setting
 
 == Changelog ==
 
+= 0.5.1 =
+* Folios load their fonts from your own site, never from Google. Download them once from Groove → Settings → Fonts, or use system fonts.
+* A setup dialog the first time an administrator opens a Groove screen offers the theme fonts and sample photos, and a Reset tab on Settings starts over.
+* Covers without a photo show a soft gradient in the theme's colours.
+* No "Powered by" credit appears on folios.
+* Installing themes from a .zip is removed; support for third-party themes is coming soon.
+* A folio page's block inserter offers only the blocks its theme styles, and the site's WordPress theme no longer leaks into folios or the folio page editor.
+* Security: Contributors submit folios for review instead of publishing them, can open only folios they may edit, and can no longer add pages to other people's folios.
+* Fixed: Groove Magazine now honours a folio's font choices.
+
 = 0.5.0 =
 * Change theme in the folio editor uses the same dialog as choosing a theme for a new folio.
 * Switching a folio's theme asks first when the new theme would hide blocks or proposal details, and nothing is applied until you press Switch theme.
@@ -100,6 +110,9 @@ Under a base path, `/folio/` by default. You can change it on Groove → Setting
 * CHANGELOG.md in the plugin folder has the full history.
 
 == Upgrade Notice ==
+
+= 0.5.1 =
+Security fix: Contributors could publish folios. Fonts are now served from your own site; press Download Fonts once on Groove → Settings → Fonts to get the theme fonts back.
 
 = 0.5.0 =
 Theme switches and theme removal now ask before hiding content, and publishing a folio no longer clears its collection tags.
