@@ -57,18 +57,35 @@ class Folio extends Page
       ? __('Link copied', 'groove-folios')
       : __('Preview link copied', 'groove-folios');
 
-    $preview_text = $is_published ? 'View' : 'Preview';
+    $preview_text = $is_published ? __('View', 'groove-folios') : __('Preview', 'groove-folios');
     $preview_tooltip_text = $is_published ? __('View Folio', 'groove-folios') : __('Preview Folio', 'groove-folios');
     $preview_link = $is_published
       ? $folio_copy_link
       : Utils::get_folio_permalink_by_id(Utils::get_groove_post_id());
-    $publish_button_text = $is_published ? 'Unpublish' : 'Publish';
     $publish_button_type = $is_published ? 'secondary' : 'primary';
     $publish_button_action = $is_published ? 'save_groove_folio_unpublish' : 'save_groove_folio';
+    if ($is_published) {
+      $publish_button_text = __('Unpublish', 'groove-folios');
+      $publish_button_labels = array(__('Unpublishing...', 'groove-folios'), __('Unpublished', 'groove-folios'), __('Unpublish failed', 'groove-folios'));
+    } elseif (self::can_publish_folios()) {
+      $publish_button_text = __('Publish', 'groove-folios');
+      $publish_button_labels = array(__('Publishing...', 'groove-folios'), __('Published', 'groove-folios'), __('Publish failed', 'groove-folios'));
+    } else {
+      // save_folio() turns their Publish into Pending, so the button says so.
+      $publish_button_text = __('Submit for Review', 'groove-folios');
+      $publish_button_labels = array(__('Submitting...', 'groove-folios'), __('Submitted', 'groove-folios'), __('Submit failed', 'groove-folios'));
+    }
+    // What the button says while it works and after; read by groove-main.js.
+    $publish_button_attrs = array(
+      'form' => 'g-folio-form',
+      'data-saving-text' => $publish_button_labels[0],
+      'data-saved-text' => $publish_button_labels[1],
+      'data-error-text' => $publish_button_labels[2],
+    );
 
     $this->left_button_items = [
       array(
-        'text' => 'Add Page',
+        'text' => __('Add Page', 'groove-folios'),
         'type' => '',
         'link' => add_query_arg(
           array(
@@ -95,7 +112,7 @@ class Folio extends Page
         ),
       ),
       array(
-        'text' => 'Save',
+        'text' => __('Save', 'groove-folios'),
         'type' => 'secondary',
         'ui' => 'wp',
         'action' => 'save_groove_folio_manual',
@@ -110,9 +127,7 @@ class Folio extends Page
         'type' => $publish_button_type,
         'ui' => 'wp',
         'action' => $publish_button_action,
-        'attrs' => array(
-          'form' => 'g-folio-form',
-        ),
+        'attrs' => $publish_button_attrs,
       ),
       array(
         'text' => __('Copy link', 'groove-folios'),
@@ -330,7 +345,9 @@ class Folio extends Page
         );
         $wp_query = new \WP_Query($args);
 
-        if (!$wp_query->have_posts()) {
+        // The screen needs only edit_posts, so a Contributor reaches it; as in
+        // core, they may open only folios they can edit, not others' drafts.
+        if (!$wp_query->have_posts() || !current_user_can('edit_post', $wp_query->post->ID)) {
           $this->redirect_to_all_folios();
         } else {
           $this->folio = $wp_query->post;
@@ -422,6 +439,12 @@ class Folio extends Page
     if (!$folio_post || $folio_post->post_type !== 'groove_folio') {
       wp_send_json(array('code' => 404, 'message' => 'Folio not found.'));
       return;
+    }
+
+    // edit_post is not permission to publish. As in core, a Contributor's
+    // Publish is a submission for review, and their pages stay as they are.
+    if ($post_status === 'publish' && !self::can_publish_folios()) {
+      $post_status = 'pending';
     }
 
     $fields = new FolioFields($folio_post);
@@ -611,7 +634,7 @@ class Folio extends Page
 
       if ($pages_query->have_posts()) {
         foreach ($pages_query->posts as $child_page) {
-          if ($child_page->post_status !== 'publish') {
+          if ($child_page->post_status !== 'publish' && self::can_publish_page($child_page)) {
             wp_update_post(array(
               'ID' => $child_page->ID,
               'post_status' => 'publish'
@@ -1076,7 +1099,10 @@ class Folio extends Page
           <?php if ($total > $visible_limit) : ?>
             <button type="button"
               class="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer bg-transparent border-0 p-0"
-              onclick="document.querySelectorAll('.g-revision-row-hidden').forEach(function(r){r.classList.toggle('hidden')});this.textContent=this.textContent==='<?php echo esc_js(__('Show all', 'groove-folios')); ?>'?'<?php echo esc_js(__('Show less', 'groove-folios')); ?>':'<?php echo esc_js(__('Show all', 'groove-folios')); ?>'">
+              data-groove-revisions-toggle
+              aria-expanded="false"
+              data-show-all="<?php esc_attr_e('Show all', 'groove-folios'); ?>"
+              data-show-less="<?php esc_attr_e('Show less', 'groove-folios'); ?>">
               <?php esc_html_e('Show all', 'groove-folios'); ?>
             </button>
           <?php endif; ?>
@@ -1588,7 +1614,7 @@ class Folio extends Page
             data-title="<?php echo esc_attr(
               /* translators: %s: theme name. Keep the placeholder as %s. */
               __('Switch to %s?', 'groove-folios')); ?>"
-            data-proposal-details="<?php echo esc_attr(__('The proposal details stop showing: client, contacts, date and cover button text.', 'groove-folios')); ?>"
+            data-proposal-details="<?php esc_attr_e('The proposal details stop showing: client, contacts, date and cover button text.', 'groove-folios'); ?>"
             data-proposal-details-stored="<?php echo $this->has_proposal_details() ? '1' : '0'; ?>"
             data-proposal-detail-fields="<?php echo esc_attr(implode(',', self::PROPOSAL_DETAIL_KEYS)); ?>">
             <div class="g-dialog-confirm__subject" aria-hidden="true">
@@ -1719,6 +1745,41 @@ class Folio extends Page
       default:
         return esc_html__('All', 'groove-folios');
     }
+  }
+
+  /**
+   * Whether the current user may publish folios: the post type's
+   * publish_posts cap, which Contributors lack.
+   *
+   * The constructor asks before the post types are registered (Plugin::init()
+   * runs on init priority 0, the CPTs on 10), so without the type object this
+   * falls back to publish_posts, which is what capability_type 'post' maps to.
+   *
+   * @return bool
+   */
+  public static function can_publish_folios()
+  {
+    $post_type = get_post_type_object('groove_folio');
+
+    return current_user_can($post_type ? $post_type->cap->publish_posts : 'publish_posts');
+  }
+
+  /**
+   * Whether the current user may publish this folio page along with its
+   * folio: they must be able to edit it and to publish pages. A page someone
+   * else linked to this folio stays as it is unless the publisher could have
+   * published it themselves.
+   *
+   * @param \WP_Post $page
+   * @return bool
+   */
+  private static function can_publish_page($page)
+  {
+    $post_type = get_post_type_object($page->post_type);
+
+    return $post_type
+      && current_user_can('edit_post', $page->ID)
+      && current_user_can($post_type->cap->publish_posts);
   }
 
   private function get_folio_status_label($status)

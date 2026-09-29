@@ -68,6 +68,12 @@ class Add_New extends Page
         $default_status = 'draft';
       }
 
+      // The default is a site setting, not permission to publish: a user who
+      // may only edit (a Contributor) starts a draft, as core would give them.
+      if ($default_status === 'publish' && !\Groove\Pages\Folio::can_publish_folios()) {
+        $default_status = 'draft';
+      }
+
       // Seeded folios are scaffolding, not finished work. Even when the default
       // folio status is `publish`, starting from sample content forces a draft
       // so placeholder copy and stand-in imagery never go live by accident.

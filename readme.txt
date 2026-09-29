@@ -36,14 +36,16 @@ This plugin uses two third-party services. Neither receives anything about your 
 
 = Google Fonts =
 
-Folio themes set their type in open-licence fonts from Google Fonts. Folios never load them from Google: they are served from your own site, so your readers' browsers do not contact Google. An administrator fetches them by pressing **Download Fonts** on Groove → Settings → Fonts. That sends one request per font family to `fonts.googleapis.com` and one per font file to `fonts.gstatic.com` (about 110 files, 4 MB) from **your server**. Google receives your server's IP address and the names of the fonts requested. Nothing is fetched until the button is pressed; until then, folios use system fonts. The fonts are then served from your own uploads folder.
+Folio themes set their type in open-licence fonts from Google Fonts. Folios never load them from Google: they are served from your own site, so your readers' browsers do not contact Google. An administrator fetches them by pressing **Download Fonts** on Groove → Settings → Fonts, or by choosing to download them in the **Finish setting up Groove Folios** dialog that opens the first time an administrator visits a Groove screen. That sends one request per font family to `fonts.googleapis.com` and one per font file to `fonts.gstatic.com` (about 110 files, 4 MB) from **your server**. Google receives your server's IP address and the names of the fonts requested. The dialog only offers the download: nothing is fetched until one of those buttons is pressed, and until then folios use system fonts. The fonts are then served from your own uploads folder.
 
 * Terms of service: https://developers.google.com/fonts/terms
 * Privacy policy: https://policies.google.com/privacy
 
 = Pexels (sample photos) =
 
-Theme covers and the photos in sample content come from Pexels. Their licence does not allow them to be packaged with the plugin, so the plugin does not include them. An administrator can fetch them by pressing **Download Photos** on Groove → Settings → Imagery. That sends one request per photo (46 in total, about 4 MB) from **your server** to `images.pexels.com`. Pexels receives your server's IP address and the addresses of the photos requested. Nothing else is sent, no account or API key is involved, and nothing is fetched until the button is pressed. The photos are then served from your own uploads folder.
+Theme covers and the photos in sample content come from Pexels. Their licence does not allow them to be packaged with the plugin, so the plugin does not include them. An administrator can fetch them by pressing **Download Photos** on Groove → Settings → Imagery, or in the same setup dialog. That sends one request per photo (46 in total, about 4 MB) from **your server** to `images.pexels.com`. Pexels receives your server's IP address and the addresses of the photos requested. Nothing else is sent, no account or API key is involved, and nothing is fetched until one of those buttons is pressed. The photos are then served from your own uploads folder.
+
+The plugin also contains a client for the Pexels API (`api.pexels.com`), which the developers use with their own API key and a curation script to choose these photos. The script is not part of the released plugin and its settings are not shown without it, so the released plugin never contacts the Pexels API.
 
 * Pexels licence: https://www.pexels.com/license/
 * Terms of service: https://www.pexels.com/terms-of-service/

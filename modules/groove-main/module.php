@@ -103,7 +103,9 @@ class Module extends BaseModule
 		wp_enqueue_script('groove-toggletip', $this->get_js_assets_url('groove-toggletip'), [], GROOVE_VERSION, true);
 		wp_enqueue_script('groove-toast', $this->get_js_assets_url('groove-toast'), ['groove-toggletip'], GROOVE_VERSION, true);
 		wp_enqueue_script('groove-form-state', $this->get_js_assets_url('groove-form-state'), ['groove-toggletip'], GROOVE_VERSION, true);
-		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery', 'groove-toast'], GROOVE_VERSION, true);
+		$groove_main_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-main.js';
+		$groove_main_js_version = file_exists($groove_main_js_path) ? (string) filemtime($groove_main_js_path) : GROOVE_VERSION;
+		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery', 'groove-toast'], $groove_main_js_version, true);
 		// The one dialog behaviour every Groove dialog shares: open, close,
 		// Escape, focus trap and the counted scroll lock.
 		$groove_dialog_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-dialog.js';

@@ -135,7 +135,9 @@ abstract class Base_Theme extends Assets
       $path_folio_id = (int) Utils::get_folio_id_from_current_path();
 
       if ($path_folio_id > 0) {
-        if ($post_id > 0 && $meta_folio_id <= 0) {
+        // Repairs a missing link, but only for someone who may edit the page:
+        // an anonymous reader's request must not write to the database.
+        if ($post_id > 0 && $meta_folio_id <= 0 && current_user_can('edit_post', $post_id)) {
           update_post_meta($post_id, 'folio_id', $path_folio_id);
         }
 

@@ -53,9 +53,14 @@ class Settings extends Page
     $this->add_post_action('save_groove_settings', 'handle_save');
     $this->add_post_action('save_groove_collection_tag', 'handle_collection_tag_save');
     $this->add_post_action('delete_groove_collection_tag', 'handle_collection_tag_delete');
-    $this->add_post_action('save_groove_pexels_key', 'handle_pexels_key_save');
-    $this->add_post_action('delete_groove_pexels_key', 'handle_pexels_key_delete');
-    $this->add_post_action('test_groove_pexels_connection', 'handle_pexels_connection_test');
+    // The API key only serves the curation script, which the WordPress.org
+    // package leaves out; without it these handlers are not registered, so
+    // the released plugin has no way to reach api.pexels.com.
+    if (is_readable(GROOVE_PATH . 'bin/curate-pexels.php')) {
+      $this->add_post_action('save_groove_pexels_key', 'handle_pexels_key_save');
+      $this->add_post_action('delete_groove_pexels_key', 'handle_pexels_key_delete');
+      $this->add_post_action('test_groove_pexels_connection', 'handle_pexels_connection_test');
+    }
     $this->add_post_action('download_groove_sample_photos', 'handle_sample_photos_download');
     $this->add_post_action('download_groove_fonts', 'handle_fonts_download');
     $this->add_post_action('set_groove_font_source', 'handle_font_source');
@@ -471,7 +476,7 @@ class Settings extends Page
         id="groove-save-general"
         class="button button-primary"
         data-groove-save
-        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove-folios')); ?>"><?php esc_html_e('Save Changes', 'groove-folios'); ?></button>
+        data-groove-save-idle="<?php esc_attr_e('Nothing to save — these settings already match what is stored.', 'groove-folios'); ?>"><?php esc_html_e('Save Changes', 'groove-folios'); ?></button>
     </div>
   </section>
 </form>
@@ -524,7 +529,7 @@ class Settings extends Page
         id="groove-save-routing"
         class="button button-primary"
         data-groove-save
-        data-groove-save-idle="<?php echo esc_attr(__('Nothing to save — these settings already match what is stored.', 'groove-folios')); ?>"><?php esc_html_e('Save Changes', 'groove-folios'); ?></button>
+        data-groove-save-idle="<?php esc_attr_e('Nothing to save — these settings already match what is stored.', 'groove-folios'); ?>"><?php esc_html_e('Save Changes', 'groove-folios'); ?></button>
     </div>
   </section>
 </form>
@@ -624,7 +629,7 @@ class Settings extends Page
                   <a href="<?php echo esc_url($this->get_settings_tab_url('collections', array('edit_collection_tag' => (int) $term->term_id))); ?>">
                     <?php esc_html_e('Edit', 'groove-folios'); ?>
                   </a>
-                  <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="inline-block ml-3" onsubmit="return window.confirm('<?php echo esc_js(__('Delete this collection tag?', 'groove-folios')); ?>');">
+                  <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="inline-block ml-3" data-groove-confirm="<?php esc_attr_e('Delete this collection tag?', 'groove-folios'); ?>">
                     <?php wp_nonce_field('groove_delete_collection_tag', 'groove_nonce'); ?>
                     <input type="hidden" name="action" value="delete_groove_collection_tag" />
                     <input type="hidden" name="collection_tag_id" value="<?php echo esc_attr((string) $term->term_id); ?>" />
@@ -1261,7 +1266,7 @@ class Settings extends Page
       </form>
 
       <?php if ($has_option_key): ?>
-      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" onsubmit="return window.confirm('<?php echo esc_js(__('Remove the stored Pexels API key?', 'groove-folios')); ?>');">
+      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" data-groove-confirm="<?php esc_attr_e('Remove the stored Pexels API key?', 'groove-folios'); ?>">
         <?php wp_nonce_field('groove_delete_pexels_key', 'groove_nonce'); ?>
         <input type="hidden" name="action" value="delete_groove_pexels_key" />
         <button type="submit" class="button-link delete"><?php esc_html_e('Remove Key', 'groove-folios'); ?></button>

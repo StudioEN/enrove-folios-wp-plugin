@@ -405,8 +405,9 @@ class List_Table extends \WP_List_Table
 			);
 
 			// The status's own label, already translated by whoever registered the
-			// status, plus the count. Not translate_nooped_plural($status->label_count):
-			// a string the translation parser cannot read is not a translatable one.
+			// status, plus the count. Not the status's plural label_count: handing
+			// that to a gettext function passes a variable, which the translation
+			// parser cannot read, so it is not a translatable string.
 			$status_label = sprintf(
 				'%1$s <span class="count">(%2$s)</span>',
 				esc_html($status->label),

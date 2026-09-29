@@ -1,6 +1,23 @@
 jQuery(function () {
   const settings = window.GROOVE_SETTINGS || {}
 
+  // A form that asks before it submits; the question is its data-groove-confirm.
+  jQuery(document).on('submit', 'form[data-groove-confirm]', function (e) {
+    if (!window.confirm(String(jQuery(this).attr('data-groove-confirm') || ''))) {
+      e.preventDefault()
+    }
+  })
+
+  // The folio's revision log: Show all / Show less for the older rows.
+  jQuery(document).on('click', '[data-groove-revisions-toggle]', function () {
+    const toggle = jQuery(this)
+    const expanded = toggle.attr('aria-expanded') === 'true'
+    jQuery('.g-revision-row-hidden').toggleClass('hidden', expanded)
+    toggle
+      .attr('aria-expanded', expanded ? 'false' : 'true')
+      .text(String(toggle.attr(expanded ? 'data-show-all' : 'data-show-less') || ''))
+  })
+
   function setThemeSectionVisibility(section, isVisible) {
     const $section = jQuery(section)
     const shouldDisableHiddenFields = String($section.data('disable-hidden-fields') || '') === '1'
@@ -682,9 +699,10 @@ jQuery(function () {
       const action = publishBtn.val()
       const isUnpublish = action === 'save_groove_folio_unpublish'
       const originalLabel = publishBtn.text()
-      const savingLabel = isUnpublish ? 'Unpublishing...' : 'Publishing...'
-      const savedLabel = isUnpublish ? 'Unpublished' : 'Published'
-      const errorLabel = isUnpublish ? 'Unpublish failed' : 'Publish failed'
+      // A user who cannot publish gets Submit for Review, with its own labels.
+      const savingLabel = publishBtn.data('saving-text') || (isUnpublish ? 'Unpublishing...' : 'Publishing...')
+      const savedLabel = publishBtn.data('saved-text') || (isUnpublish ? 'Unpublished' : 'Published')
+      const errorLabel = publishBtn.data('error-text') || (isUnpublish ? 'Unpublish failed' : 'Publish failed')
 
       e.preventDefault()
       isManualSave = true
