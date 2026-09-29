@@ -320,6 +320,21 @@ function groove_attribute_is_dynamic(string $value): bool
 }
 
 /**
+ * A class attribute with Base_Theme's own class helpers taken out. Their output
+ * is known: get_cover_fallback_class() returns '' or ' g-folio__cover-fallback',
+ * which can neither supply nor remove the tokens the root rules look for. Left
+ * in, the echo made every theme using it "dynamic", and its root went unchecked.
+ */
+function groove_without_known_class_helpers(string $value): string
+{
+    return (string) preg_replace(
+        '/<\?php\s+echo\s+(?:esc_attr\s*\(\s*)?\$this->get_cover_fallback_class\s*\(\s*\)\s*\)?\s*;?\s*\?>/',
+        '',
+        $value
+    );
+}
+
+/**
  * The class attribute of the element a view actually roots itself in: the first
  * one inside display_theme().
  *
@@ -604,9 +619,10 @@ function groove_php_warnings(string $dir, string $root): array
     //     to satisfy it.
     if (isset($sources['cover'])) {
         $root_class = groove_root_class_attribute($sources['cover'], $classes_of['cover'] ?? null);
+        $root_known = $root_class === null ? null : groove_without_known_class_helpers($root_class);
 
-        if ($root_class !== null && !groove_attribute_is_dynamic($root_class)
-            && !str_contains($root_class, 'g-folio__theme-cover')) {
+        if ($root_known !== null && !groove_attribute_is_dynamic($root_known)
+            && !str_contains($root_known, 'g-folio__theme-cover')) {
             $warn[] = "cover.php roots itself in class=\"{$root_class}\", which does not carry "
                 . 'g-folio__theme-cover — Font_Loader injects the folio\'s fonts into that selector, so the '
                 . 'cover silently ignores the font pickers';
@@ -619,9 +635,10 @@ function groove_php_warnings(string $dir, string $root): array
         // listed has to end in -page. No rtrim here — a trailing space in the
         // attribute breaks $= for real, and reporting it is the point.
         $root_class = groove_root_class_attribute($sources['page'], $classes_of['page'] ?? null);
+        $root_known = $root_class === null ? null : groove_without_known_class_helpers($root_class);
 
-        if ($root_class !== null && !groove_attribute_is_dynamic($root_class)
-            && !(str_contains($root_class, 'g-folio__theme-') && str_ends_with($root_class, '-page'))) {
+        if ($root_known !== null && !groove_attribute_is_dynamic($root_known)
+            && !(str_contains($root_known, 'g-folio__theme-') && str_ends_with($root_known, '-page'))) {
             $warn[] = "page.php roots itself in class=\"{$root_class}\", which must both contain "
                 . 'g-folio__theme- and END in -page — that is Font_Loader\'s selector, so the page silently '
                 . 'ignores the font pickers';
