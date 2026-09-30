@@ -93,6 +93,8 @@ All admin pages get `body.groove` via an `admin_body_class` filter — the CSS s
 
 Use `\Groove\Toast` ([includes/toast.php](includes/toast.php)) for action outcomes (`Toast::success/error/failure`); `Toast::failure()` also pins a toggletip hint to the button that was pressed. Reserve inline notices for standing conditions, not click outcomes.
 
+**Every notification that is not pinned to a control goes through the one toast stack**, bottom-right (`.g-toast-container`): `\Groove\Toast` from PHP, `window.grooveShowToast()` from JS, and `window.grooveStatusToast()` ([assets/js/groove-toast.js](assets/js/groove-toast.js)) for an operation that reports as it runs. That one is a single pill rewritten in place ("Saving…" → "Saved"); the folio editor's save status uses it. Never add a fixed-position element of your own for a message. The folio save status used to be exactly that, a separate bottom-centre pill, and the toast stack was parked in the corner to dodge it, so notifications turned up in two places. If the stack lacks something a message needs, extend `groove-toast.js`. Feedback that belongs to one control stays at that control: toggletips for failures, the Copy link button's "Link copied" tooltip, a dialog's own status line while it is open, and Quick Edit's in-row error (as core does it).
+
 ## Conventions
 
 - Tabs for indentation in PHP in most files (the repo is mixed; match the file you're in). `.editorconfig` covers JSON/YAML/Markdown only.
