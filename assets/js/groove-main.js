@@ -669,8 +669,52 @@ jQuery(function () {
       })
     }
 
+    // Publish and Unpublish change every page's status too, so the header
+    // button asks first (Folio::display_publish_dialog()); the dialog's
+    // confirm runs the save the button would have.
+    const publishDialogEl = document.getElementById('g-publish-modal')
+    let publishDialog = null
+    let pendingPublishBtn = null
+
+    if (publishDialogEl) {
+      publishDialogEl.addEventListener('click', function (e) {
+        const target = e.target instanceof Element ? e.target : null
+        if (!target || !publishDialog) {
+          return
+        }
+        if (target.closest('[data-groove-publish-close]')) {
+          pendingPublishBtn = null
+          publishDialog.close()
+        } else if (target.closest('[data-groove-publish-go]')) {
+          const btn = pendingPublishBtn
+          pendingPublishBtn = null
+          publishDialog.close()
+          if (btn) {
+            runPublish(btn)
+          }
+        }
+      })
+    }
+
     jQuery('button[value="save_groove_folio"], button[value="save_groove_folio_unpublish"]').click(function (e) {
+      e.preventDefault()
       const publishBtn = jQuery(this)
+
+      if (publishDialogEl && publishBtn.is('[data-groove-publish-confirm]') && typeof window.grooveDialog === 'function') {
+        publishDialog = publishDialog || window.grooveDialog(publishDialogEl, {
+          onClose: function () {
+            pendingPublishBtn = null
+          }
+        })
+        pendingPublishBtn = publishBtn
+        publishDialog.open()
+        return
+      }
+
+      runPublish(publishBtn)
+    })
+
+    function runPublish(publishBtn) {
       const action = publishBtn.val()
       const isUnpublish = action === 'save_groove_folio_unpublish'
       const originalLabel = publishBtn.text()
@@ -679,7 +723,6 @@ jQuery(function () {
       const savedLabel = publishBtn.data('saved-text') || (isUnpublish ? 'Unpublished' : 'Published')
       const errorLabel = publishBtn.data('error-text') || (isUnpublish ? 'Unpublish failed' : 'Publish failed')
 
-      e.preventDefault()
       isManualSave = true
       clearTimeout(autosaveTimer)
       publishBtn.text(savingLabel)
@@ -694,7 +737,7 @@ jQuery(function () {
         isManualSave = false
         publishBtn.text(originalLabel)
       })
-    })
+    }
 
     jQuery('button[value="save_groove_folio_manual"], button[value="save_groove_folio_draft"]').click(function (e) {
       const saveBtn = jQuery(this)

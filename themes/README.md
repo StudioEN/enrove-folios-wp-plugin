@@ -281,7 +281,7 @@ call `Utils::get_folio_base_slug()`.
 |----------|--------|
 | `$id`, `$post_type` | Current request (`Utils::get_groove_post_id/type`) |
 | `$title`, `$content`, `$author`, `$feature_image`, `$page` | `get_page_data()` — a `WP_Query` over the current post |
-| `$pages` | `get_pages_data($id)` — sibling `groove_folio_page`s ordered by `menu_order ASC`, filtered by `folio_id` meta |
+| `$pages` | `get_pages_data($id)` — sibling `groove_folio_page`s ordered by `menu_order ASC`, filtered by `folio_id` meta. Only published pages in a published folio, for editors too; every page an editor may preview in an unpublished one. A theme listing pages itself uses `Utils::get_listed_page_statuses($folio_id)` for the same rule |
 | `$theme_id`, `$theme_name`, `$theme_cover_url`, `$theme_logo_url`, `$show_logo` | `get_theme_data()` — resolved through `Themes_Manager` |
 | `$copyright` | `copyright` meta on the folio |
 | `$is_preview_mode` | `true` only under the theme-picker preview |

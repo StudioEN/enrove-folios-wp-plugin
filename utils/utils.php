@@ -61,6 +61,26 @@ class Utils
     return array('publish');
   }
 
+  /**
+   * The statuses of the pages a folio lists: its navigation, previous and
+   * next, and the first page. A published folio lists only its published
+   * pages (and, to someone who may read them, private ones), whoever is
+   * looking: a page taken down drops out of the folio for its editors too.
+   * An unpublished folio is a preview, so a signed-in editor sees every page
+   * in it, drafts included, as before.
+   *
+   * @param int $folio_id
+   * @return string[]
+   */
+  static function get_listed_page_statuses($folio_id)
+  {
+    if (!\Groove\Contents\FolioPage\Publishing::is_folio_live($folio_id)) {
+      return Utils::get_viewable_post_statuses();
+    }
+
+    return current_user_can('read_private_posts') ? array('publish', 'private') : array('publish');
+  }
+
   static function can_current_request_view_post($post)
   {
     if (!$post instanceof \WP_Post) {
@@ -354,7 +374,7 @@ class Utils
     $query = new \WP_Query(array(
       'post_type' => 'groove_folio_page',
       'posts_per_page' => 1,
-      'post_status' => Utils::get_viewable_post_statuses(),
+      'post_status' => Utils::get_listed_page_statuses($folio_id),
       'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the page-to-folio link; the query is limited to one folio's pages.
         array(
           'key' => 'folio_id',

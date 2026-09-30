@@ -2,6 +2,7 @@
 namespace Groove\List;
 use Groove\List\List_Table;
 use Groove\Pages\Folio;
+use Groove\Contents\FolioPage\Publishing;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -12,6 +13,15 @@ class Folio_Page_List_Table extends List_Table
   function __construct(Folio $page, $post_type)
   {
     parent::__construct($page, $post_type);
+  }
+
+  /**
+   * A folio's pages go live with it (Contents\FolioPage\Publishing), so
+   * Quick Edit offers no live status while the folio is unpublished.
+   */
+  protected function rows_can_go_live()
+  {
+    return Publishing::is_folio_live($this->page->get_folio_id());
   }
 
   public function get_columns()

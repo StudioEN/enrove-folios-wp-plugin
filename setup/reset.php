@@ -18,7 +18,8 @@ if (!defined('ABSPATH')) {
  *
  * What it leaves alone, on purpose:
  * - the markers of one-time migrations and clean-ups (_groove_installed_time,
- *   _groove_removed_features_cleaned, groove_theme_migration_v1). They record
+ *   _groove_removed_features_cleaned, groove_theme_migration_v1,
+ *   groove_page_publishing_migration_v1). They record
  *   that old data was already converted, and clearing them would only run the
  *   conversions again over folios that do not need it;
  * - Media Library items, including sample images copied there when a folio

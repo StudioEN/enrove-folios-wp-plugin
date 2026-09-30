@@ -8,19 +8,37 @@
    .editor-styles-wrapper selector sets the two variables below). It is loaded into the canvas iframe only, on a
    groove_folio_page edit screen only.
 
-   Everything is wrapped in :where() so a theme's editor styles win without
-   having to out-specify this file.
+   Everything but the side padding is wrapped in :where() so a theme's editor
+   styles win without having to out-specify this file.
    ────────────────────────────────────────────────────────────────────── */
 
-:where(.editor-styles-wrapper) {
+/* html :where(), not a bare :where(): on a classic site theme core loads its
+   editor reset (block-library/reset.css), whose html :where(.editor-styles-wrapper)
+   sets serif, medium and normal and outranks a zero-specificity rule. This
+   ties with it and comes later; a theme's .editor-styles-wrapper still wins. */
+html :where(.editor-styles-wrapper) {
   background-color: #ffffff;
   color: #1d2327;
   font-family: var(--g-folio-body-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
   font-size: 1.125rem;
   line-height: 1.6;
+  /* The column widths a constrained layout reads. On a block theme the canvas
+     root is the post content, alignfull and constrained, so its blocks take
+     their width from these; with the site theme's theme.json hidden nothing
+     else sets them, and every block ran edge to edge. */
+  --wp--style--global--content-size: 46rem;
+  --wp--style--global--wide-size: 72rem;
+}
+
+/* Not in :where(): core's global styles print body { padding: 0 } into the
+   canvas, which a zero-specificity rule loses to. No folio theme pads the
+   canvas itself. */
+.editor-styles-wrapper {
   padding: 2rem clamp(1rem, 4vw, 3rem);
 }
 
+/* The title, and on a classic site theme the whole canvas root (a block
+   theme's root is alignfull, and core keeps it full width). */
 :where(.editor-styles-wrapper) :where(.editor-visual-editor__post-title-wrapper, .is-root-container) {
   max-width: 46rem;
   margin-inline: auto;

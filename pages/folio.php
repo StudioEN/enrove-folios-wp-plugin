@@ -9,6 +9,7 @@ use Groove\List\Folio_Page_List_Table;
 use Groove\List\Folio_List_Table;
 use Groove\Themes\Default_Themes;
 use Groove\Contents\FolioPage\Content as Folio_Page_Content;
+use Groove\Contents\FolioPage\Publishing as Folio_Page_Publishing;
 use Groove\Utils\Request;
 use Groove\Utils\Utils;
 
@@ -24,9 +25,18 @@ class Folio extends Page
   const POST_TYPE = 'groove_folio_page';
   /** save_folio() status for Save and autosave: whatever the folio has now. */
   const KEEP_STATUS = '__keep__';
+  /**
+   * The pages that publishing a folio publishes. Not private or scheduled
+   * ones: a page someone made private stays private, and a scheduled one
+   * keeps its date (neither can exist before the folio is live, but either
+   * may once it has been).
+   */
+  const PAGE_STATUSES_TO_PUBLISH = array('draft', 'pending');
 
   private $folio;
   private $fields;
+  /** What the header's Publish/Unpublish confirms: kind and page count; see create_header_buttons(). */
+  private $publish_confirm = null;
 
   public function __construct()
   {
@@ -140,6 +150,29 @@ class Folio extends Page
       'data-saved-text' => $publish_button_labels[1],
       'data-error-text' => $publish_button_labels[2],
     );
+
+    // Publishing and unpublishing change every page's status as well
+    // (Contents\FolioPage\Publishing), so both ask first and say how many.
+    // A Contributor's Submit for Review changes no page, and does not.
+    if ($folio_id > 0 && ($is_published || self::can_publish_folios())) {
+      if ($is_published) {
+        $page_count = count(Folio_Page_Publishing::get_page_ids($folio_id, Folio_Page_Publishing::LIVE_PAGE_STATUSES));
+      } else {
+        $page_count = 0;
+        foreach (Folio_Page_Publishing::get_page_ids($folio_id, self::PAGE_STATUSES_TO_PUBLISH) as $page_id) {
+          $page = get_post($page_id);
+          if ($page && self::can_publish_page($page)) {
+            $page_count++;
+          }
+        }
+      }
+      $this->publish_confirm = array(
+        'kind' => $is_published ? 'unpublish' : 'publish',
+        'count' => $page_count,
+      );
+      $publish_button_attrs['data-groove-publish-confirm'] = '';
+      $publish_button_attrs['aria-haspopup'] = 'dialog';
+    }
 
     $this->left_button_items = [
       array(
@@ -269,6 +302,18 @@ class Folio extends Page
       $data['post_status'] = $data['_status'];
     }
 
+    // A page goes live with its folio (Contents\FolioPage\Publishing), which
+    // would save this as a draft; the row says why instead.
+    $requested_status = sanitize_key((string) $data['post_status']);
+    if (
+      $post['post_type'] === 'groove_folio_page'
+      && in_array($requested_status, Folio_Page_Publishing::LIVE_PAGE_STATUSES, true)
+      && !Folio_Page_Publishing::is_folio_live((int) get_post_meta($post_id, 'folio_id', true))
+    ) {
+      esc_html_e('Publish the folio first. Its pages go live with it.', 'groove-folios');
+      wp_die();
+    }
+
     if (empty($data['comment_status'])) {
       $data['comment_status'] = 'closed';
     }
@@ -352,6 +397,18 @@ class Folio extends Page
     }
 
     return $this->fields;
+  }
+
+  /**
+   * The open folio's ID, once get_folio_fields() has verified it; else 0.
+   *
+   * @return int
+   */
+  public function get_folio_id()
+  {
+    $this->get_folio_fields();
+
+    return $this->folio instanceof \WP_Post ? (int) $this->folio->ID : 0;
   }
 
   /**
@@ -455,6 +512,11 @@ class Folio extends Page
     if ($post_status === 'publish' && !self::can_publish_folios()) {
       $post_status = 'pending';
     }
+
+    // Publishing it publishes its pages; saving a folio that is already
+    // published leaves each page as it is, since each can be taken down on
+    // its own once the folio is live.
+    $was_published = $folio_post->post_status === 'publish';
 
     $fields = new FolioFields($folio_post);
 
@@ -627,28 +689,14 @@ class Folio extends Page
     // Newsletter colors are now generated per-visitor from local time.
     delete_post_meta($id, 'newsletter_theme_preset');
 
-    if ($post_status === 'publish' && !is_wp_error($folio_result)) {
-      $pages_query = new \WP_Query(array(
-        'post_type' => 'groove_folio_page',
-        'post_status' => 'any',
-        'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the page-to-folio link; this fetches one folio's pages to publish them with it.
-          array(
-            'key' => 'folio_id',
-            'value' => $id,
-            'compare' => '='
-          )
-        ),
-        'posts_per_page' => -1
-      ));
-
-      if ($pages_query->have_posts()) {
-        foreach ($pages_query->posts as $child_page) {
-          if ($child_page->post_status !== 'publish' && self::can_publish_page($child_page)) {
-            wp_update_post(array(
-              'ID' => $child_page->ID,
-              'post_status' => 'publish'
-            ));
-          }
+    if ($post_status === 'publish' && !$was_published && !is_wp_error($folio_result)) {
+      foreach (Folio_Page_Publishing::get_page_ids($id, self::PAGE_STATUSES_TO_PUBLISH) as $page_id) {
+        $child_page = get_post($page_id);
+        if ($child_page && self::can_publish_page($child_page)) {
+          wp_update_post(array(
+            'ID' => $child_page->ID,
+            'post_status' => 'publish'
+          ));
         }
       }
     }
@@ -2453,6 +2501,7 @@ class Folio extends Page
       unset($item);
 
       parent::display_page();
+      $this->display_publish_dialog();
 
       $this->right_button_items = $original_right_buttons;
       return;
@@ -2463,6 +2512,77 @@ class Folio extends Page
       <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
       <?php parent::display_page() ?>
     </form>
+    <?php
+    $this->display_publish_dialog();
+  }
+
+  /**
+   * The confirmation behind the header's Publish or Unpublish: what happens
+   * to the folio's pages. groove-main.js opens it, and its confirm button
+   * runs the save the header button would have.
+   */
+  private function display_publish_dialog()
+  {
+    if (!$this->publish_confirm) {
+      return;
+    }
+
+    $count = (int) $this->publish_confirm['count'];
+    if ($this->publish_confirm['kind'] === 'unpublish') {
+      $title = __('Unpublish this folio?', 'groove-folios');
+      $lead = $count > 0
+        ? sprintf(
+          /* translators: %s: number of published pages. */
+          _n('The folio goes offline, and its %s published page goes back to draft.', 'The folio goes offline, and its %s published pages go back to draft.', $count, 'groove-folios'),
+          number_format_i18n($count)
+        )
+        : __('The folio goes offline.', 'groove-folios');
+      $notes = array(
+        __('While the folio is unpublished, its pages can’t be published on their own.', 'groove-folios'),
+        __('Publishing the folio again publishes all its pages.', 'groove-folios'),
+      );
+      $confirm = __('Unpublish folio', 'groove-folios');
+    } else {
+      $title = __('Publish this folio?', 'groove-folios');
+      $lead = $count > 0
+        ? sprintf(
+          /* translators: %s: number of pages. */
+          _n('The folio goes live, and its %s page is published with it.', 'The folio goes live, and its %s pages are published with it.', $count, 'groove-folios'),
+          number_format_i18n($count)
+        )
+        : __('The folio goes live.', 'groove-folios');
+      $notes = array(
+        __('Once it’s live, each page can be unpublished or published on its own.', 'groove-folios'),
+        __('Unpublishing the folio later returns all its pages to draft.', 'groove-folios'),
+      );
+      $confirm = __('Publish folio', 'groove-folios');
+    }
+    ?>
+    <div id="g-publish-modal" class="g-theme-details g-publish" role="dialog" aria-modal="true"
+      aria-labelledby="g-publish-title" aria-describedby="g-publish-desc" hidden>
+      <div class="g-theme-details__backdrop" data-groove-publish-close></div>
+      <div class="g-theme-details__dialog g-publish__dialog" tabindex="-1">
+        <div class="g-theme-details__header">
+          <h2 id="g-publish-title" class="g-theme-details__title"><?php echo esc_html($title); ?></h2>
+          <button type="button" class="g-theme-details__close" data-groove-publish-close
+            aria-label="<?php esc_attr_e('Close', 'groove-folios'); ?>">
+            <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div id="g-publish-desc" class="g-theme-details__body g-dialog-confirm">
+          <p class="g-dialog-confirm__lead"><?php echo esc_html($lead); ?></p>
+          <ul class="g-dialog-confirm__list">
+            <?php foreach ($notes as $note): ?>
+              <li><?php echo esc_html($note); ?></li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+        <div class="g-theme-details__footer">
+          <button type="button" class="button button-secondary" data-groove-publish-close><?php esc_html_e('Cancel', 'groove-folios'); ?></button>
+          <button type="button" class="button button-primary" data-groove-publish-go><?php echo esc_html($confirm); ?></button>
+        </div>
+      </div>
+    </div>
     <?php
   }
 }

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Changed
+- A folio's pages now go live with their folio, never ahead of it. While a folio is unpublished, none of its pages can be published, scheduled or made private: the page editor says so in a notice at the top, with a link to the folio, and offers only Draft and Pending, with Submit for Review as its main button, the way it does for a Contributor (a publish sent some other way fails with the reason rather than quietly saving a draft); Quick Edit on the Pages tab no longer offers Published, Scheduled or Private. Unpublishing a folio, from its editor, Quick Edit, Bulk Edit or the trash, returns its published and scheduled pages to draft. Publishing a folio still publishes its draft and pending pages, but only when it goes live: once it is live, each page can be unpublished or published on its own, and saving the folio (or its autosave) no longer publishes pages that were taken down. Private folios count as published. A page taken down in a published folio also leaves the folio for everyone, its editors included: signed-in editors used to see the folio's draft and pending pages in its navigation, previous and next links and table of contents, so a page they had unpublished still looked part of it. An unpublished folio still previews with all its pages for its editors. Updating from an earlier version, a site whose unpublished folios still have published or scheduled pages (Unpublish used to leave them as they were) has those pages returned to draft once, the first time the plugin loads.
+- Publish and Unpublish in the folio editor now ask first, in a dialog that says how many pages go live or back to draft with the folio. A Contributor's Submit for Review changes no page and does not ask.
+
+### Fixed
+- The folio page editor's content ran edge to edge, with no side padding and no reading column, on a site whose WordPress theme is a block theme (Twenty Twenty-Five, the default on a new site, among them). Core's global styles reset the canvas padding and widen the post content to the full width, and with the site theme's `theme.json` kept out of the editor nothing set the content width back. The canvas now sets the column width a block theme's layout reads, and its side padding holds against core's reset. On a classic site theme the canvas text had also fallen back to the browser's serif at its default size and line height, because core's editor reset outranked the canvas's own type; it now ties with the reset and wins.
+
 ## [0.5.1] - 2026-09-29
 
 ### Added

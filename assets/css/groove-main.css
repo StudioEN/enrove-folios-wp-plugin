@@ -1765,6 +1765,12 @@ body.groove .g-settings-remove__note {
   width: 600px;
 }
 
+/* The folio editor's Publish / Unpublish confirmation: a sentence and two
+   notes, so narrower than Reset. */
+.g-publish__dialog {
+  width: 520px;
+}
+
 body.groove .g-reset-list {
   margin: 0;
   padding-left: 18px;

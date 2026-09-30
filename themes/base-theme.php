@@ -797,7 +797,7 @@ abstract class Base_Theme extends Assets
       'post_type' => 'groove_folio_page',
       'orderby' => 'menu_order',
       'order' => 'ASC',
-      'post_status' => Utils::get_viewable_post_statuses(),
+      'post_status' => Utils::get_listed_page_statuses((int) $id),
       'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the only link from a page to its folio; the query is bounded to one folio's pages.
         array(
           'key' => 'folio_id',

@@ -351,6 +351,17 @@ class List_Table extends \WP_List_Table
 		}
 	}
 
+	/**
+	 * Whether the rows this table edits may be published, scheduled or made
+	 * private. Folio_Page_List_Table says no while the folio is unpublished.
+	 *
+	 * @return bool
+	 */
+	protected function rows_can_go_live()
+	{
+		return true;
+	}
+
 	public function inline_edit()
 	{
 		global $mode, $post;
@@ -414,6 +425,8 @@ class List_Table extends \WP_List_Table
 
 		$m = (isset($mode) && 'excerpt' === $mode) ? 'excerpt' : 'list';
 		$can_publish = current_user_can($post_type_object->cap->publish_posts);
+		// Published, Scheduled and Private: only where a row may go live.
+		$can_go_live = $can_publish && $this->rows_can_go_live();
 		$core_columns = array(
 			'cb' => true,
 			'date' => true,
@@ -559,6 +572,7 @@ class List_Table extends \WP_List_Table
 																class="inline-edit-password-input" value="" /></span>
 													</label>
 
+													<?php if ($can_go_live): ?>
 													<span class="alignleft inline-edit-or">
 														<?php
 														/* translators: Between password field and private checkbox on post quick edit interface. */
@@ -571,6 +585,7 @@ class List_Table extends \WP_List_Table
 															<?php esc_html_e('Private', 'groove-folios'); ?>
 														</span>
 													</label>
+													<?php endif; ?>
 												</div>
 
 											<?php endif; ?>
@@ -820,7 +835,7 @@ class List_Table extends \WP_List_Table
 															</option>
 														<?php endif; // $bulk ?>
 
-														<?php if ($can_publish):  // Contributors only get "Unpublished" and "Pending Review". ?>
+														<?php if ($can_go_live):  // Contributors only get "Unpublished" and "Pending Review". ?>
 															<option value="publish"><?php esc_html_e('Published', 'groove-folios'); ?>
 															</option>
 															<option value="future">
