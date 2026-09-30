@@ -6,6 +6,7 @@ use Groove\Menu\All_Folios_Menu_Item;
 use Groove\Menu\Menu_Manager;
 use Groove\Pages\Overview;
 use Groove\Pages\Page;
+use Groove\Utils\Request;
 use Groove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
@@ -16,6 +17,8 @@ class All_Folios extends Page
 {
 	const PAGE_ID = 'groove-all-folios';
 	const POST_TYPE = 'groove_folio';
+	/** Nonce action on the Duplicate row action. */
+	const DUPLICATE_NONCE = 'groove_duplicate_folio';
 
 	public function get_title()
 	{
@@ -84,7 +87,8 @@ class All_Folios extends Page
 			return;
 		}
 
-		if (!isset($_GET['page']) || sanitize_key(wp_unslash($_GET['page'])) !== static::PAGE_ID) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only: only checks which admin screen this is.
+		global $plugin_page;
+		if ($plugin_page !== static::PAGE_ID) {
 			return;
 		}
 
@@ -136,7 +140,8 @@ class All_Folios extends Page
 	 */
 	public function handle_bulk_action()
 	{
-		if (!isset($_GET['page']) || $_GET['page'] !== static::PAGE_ID) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only: only checks which admin screen this is; process_bulk_action() verifies the bulk nonce before acting.
+		global $plugin_page;
+		if ($plugin_page !== static::PAGE_ID) {
 			return;
 		}
 
@@ -149,25 +154,40 @@ class All_Folios extends Page
 		);
 	}
 
+	/**
+	 * The Duplicate row action: a link naming the folio in groove_duplicate,
+	 * with a nonce that is verified before the ID is read.
+	 *
+	 * @param int   $post_id
+	 * @param array $view_args List state to come back to.
+	 * @return string Unescaped.
+	 */
+	public static function get_duplicate_url($post_id, array $view_args = array())
+	{
+		// add_query_arg(), not wp_nonce_url(), which returns the URL HTML-escaped.
+		return add_query_arg(
+			'_wpnonce',
+			wp_create_nonce(self::DUPLICATE_NONCE),
+			Request::admin_url(static::PAGE_ID, array_merge($view_args, array('groove_duplicate' => (int) $post_id)))
+		);
+	}
+
 	public function handle_duplicate_action()
 	{
-		if (!isset($_GET['page']) || $_GET['page'] !== static::PAGE_ID) {
+		global $plugin_page;
+		if ($plugin_page !== static::PAGE_ID || !isset($_GET['groove_duplicate'])) {
 			return;
 		}
-		if (!isset($_GET['action']) || $_GET['action'] !== 'groove_duplicate_folio' || !isset($_GET['post'])) {
-			return;
-		}
+		check_admin_referer(self::DUPLICATE_NONCE);
 
-		$post_id = (int) $_GET['post'];
-		check_admin_referer('groove_duplicate_folio_' . $post_id);
-
+		$post_id = absint(wp_unslash($_GET['groove_duplicate']));
 		if (get_post_type($post_id) !== static::POST_TYPE || !current_user_can('edit_post', $post_id)) {
 			return;
 		}
 
 		$new_id = $this->duplicate_folio($post_id);
-		$status = isset($_GET['post_status']) ? sanitize_key(wp_unslash($_GET['post_status'])) : 'all';
-		$search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+		$status = $this->get_current_status();
+		$search = $this->get_search_term();
 
 		$redirect_args = array_filter(array(
 			'post_status' => $status !== 'all' ? $status : null,
@@ -185,38 +205,17 @@ class All_Folios extends Page
 
 	private function get_current_status()
 	{
-		$status = isset($_GET['post_status']) ? sanitize_key(wp_unslash($_GET['post_status'])) : 'all'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
-		$allowed_statuses = array('all', 'publish', 'draft', 'pending', 'private', 'trash');
-
-		if (!in_array($status, $allowed_statuses, true)) {
-			return 'all';
-		}
-
-		return $status;
+		return Request::choice('post_status', array('all', 'publish', 'draft', 'pending', 'private', 'trash'), 'all');
 	}
 
 	private function get_search_term()
 	{
-		return isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
+		return Request::text('s');
 	}
 
 	private function get_current_collection_tags()
 	{
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
-		if (!isset($_GET['collection_tag'])) {
-			return array();
-		}
-
-		$raw_tags = wp_unslash($_GET['collection_tag']); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized element by element with sanitize_title() just below; it may be a string or an array.
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-		if (!is_array($raw_tags)) {
-			$raw_tags = array($raw_tags);
-		}
-
-		$tags = array_values(array_unique(array_filter(array_map('sanitize_title', $raw_tags))));
-		return array_values(array_filter($tags, function ($tag) {
-			return $tag !== '';
-		}));
+		return Request::slugs('collection_tag');
 	}
 
 	private function get_collection_tag_query_arg($tags)
@@ -290,25 +289,26 @@ class All_Folios extends Page
 
 	private function get_current_paged()
 	{
-		return max(1, isset($_GET['paged']) ? (int) $_GET['paged'] : 1); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
+		return max(1, Request::int('paged', 1));
 	}
 
 	private function get_current_orderby()
 	{
-		$orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash($_GET['orderby'])) : 'modified'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
-		$allowed_orderby = array('title', 'modified', 'page_count', 'theme_name');
-
-		if (!in_array($orderby, $allowed_orderby, true)) {
-			return 'modified';
-		}
-
-		return $orderby;
+		return Request::choice('orderby', array('title', 'modified', 'page_count', 'theme_name'), 'modified');
 	}
 
 	private function get_current_order()
 	{
-		$order = isset($_GET['order']) ? strtoupper(sanitize_key(wp_unslash($_GET['order']))) : 'DESC'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
-		return $order === 'ASC' ? 'ASC' : 'DESC';
+		return strtoupper(Request::key('order')) === 'ASC' ? 'ASC' : 'DESC';
+	}
+
+	/**
+	 * The theme filter (from a theme card's Folios link on Groove → Themes),
+	 * or '' for every theme.
+	 */
+	private function get_current_theme_filter()
+	{
+		return Request::key('theme_id');
 	}
 
 	private function get_status_counts()
@@ -352,13 +352,7 @@ class All_Folios extends Page
 
 	private function build_page_url($args = array())
 	{
-		return add_query_arg(
-			array_merge(
-				array('page' => static::PAGE_ID),
-				$args
-			),
-			admin_url('admin.php')
-		);
+		return Request::admin_url(static::PAGE_ID, $args);
 	}
 
 	private function get_folios_query($status, $search, $paged, $orderby, $order, $per_page = 20)
@@ -381,12 +375,13 @@ class All_Folios extends Page
 			$query_args['s'] = $search;
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written. theme_id is how a folio names its theme; filtering by it is a meta query by design.
-		if (isset($_GET['theme_id']) && $_GET['theme_id'] !== '') {
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- theme_id is how a folio names its theme; filtering by it is a meta query by design.
+		$theme_filter = $this->get_current_theme_filter();
+		if ($theme_filter !== '') {
 			$query_args['meta_key'] = 'theme_id';
-			$query_args['meta_value'] = sanitize_key($_GET['theme_id']);
+			$query_args['meta_value'] = $theme_filter;
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
 		$collection_tags = $this->get_current_collection_tags();
 		if (!empty($collection_tags)) {
@@ -470,12 +465,13 @@ class All_Folios extends Page
 			$ids_query_args['s'] = $search;
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written. theme_id is how a folio names its theme; filtering by it is a meta query by design.
-		if (isset($_GET['theme_id']) && $_GET['theme_id'] !== '') {
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- theme_id is how a folio names its theme; filtering by it is a meta query by design.
+		$theme_filter = $this->get_current_theme_filter();
+		if ($theme_filter !== '') {
 			$ids_query_args['meta_key'] = 'theme_id';
-			$ids_query_args['meta_value'] = sanitize_key($_GET['theme_id']);
+			$ids_query_args['meta_value'] = $theme_filter;
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
 		$collection_tags = $this->get_current_collection_tags();
 		if (!empty($collection_tags)) {
@@ -542,7 +538,7 @@ class All_Folios extends Page
 			's' => $search !== '' ? $search : null,
 			'orderby' => $column,
 			'order' => $next_order,
-			'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
+			'theme_id' => $this->get_current_theme_filter(),
 			'collection_tag' => $this->get_collection_tag_query_arg($this->get_current_collection_tags()),
 		), function ($value) {
 			return $value !== null;
@@ -564,36 +560,23 @@ class All_Folios extends Page
 		);
 	}
 
-	private function get_current_bulk_action()
-	{
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Only reads which bulk action was chosen; process_bulk_action() runs check_admin_referer('groove_bulk_folios_action') before acting on it.
-		$action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '-1';
-		$action2 = isset($_REQUEST['action2']) ? sanitize_key(wp_unslash($_REQUEST['action2'])) : '-1';
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-		if ($action !== '-1') {
-			return $action;
-		}
-		if ($action2 !== '-1') {
-			return $action2;
-		}
-
-		return false;
-	}
-
 	private function process_bulk_action($status, $search, $orderby, $order, $paged)
 	{
-		$action = $this->get_current_bulk_action();
-		if (!$action) {
+		// Only the list form carries this nonce. It is verified before the
+		// chosen action or the selected folios are read.
+		if (!isset($_REQUEST['_groove_bulk_nonce'])) {
 			return;
 		}
+		check_admin_referer('groove_bulk_folios_action', '_groove_bulk_nonce');
 
+		$action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '-1';
+		if ($action === '-1') {
+			$action = isset($_REQUEST['action2']) ? sanitize_key(wp_unslash($_REQUEST['action2'])) : '-1';
+		}
 		$available_actions = $this->get_available_bulk_actions($status);
 		if (!isset($available_actions[$action])) {
 			return;
 		}
-
-		check_admin_referer('groove_bulk_folios_action', '_groove_bulk_nonce');
 
 		$post_ids = isset($_REQUEST['post']) ? array_map('intval', (array) wp_unslash($_REQUEST['post'])) : array();
 		$post_ids = array_values(array_filter($post_ids));
@@ -606,7 +589,8 @@ class All_Folios extends Page
 			if (get_post_type($post_id) !== static::POST_TYPE) {
 				continue;
 			}
-			if (!current_user_can('delete_post', $post_id)) {
+			$capability = $action === 'duplicate' ? 'edit_post' : 'delete_post';
+			if (!current_user_can($capability, $post_id)) {
 				continue;
 			}
 
@@ -640,7 +624,7 @@ class All_Folios extends Page
 			'orderby' => $orderby !== 'modified' ? $orderby : null,
 			'order' => $order !== 'DESC' ? $order : null,
 			'paged' => $paged > 1 ? $paged : null,
-			'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null,
+			'theme_id' => $this->get_current_theme_filter(),
 			'collection_tag' => $this->get_collection_tag_query_arg($this->get_current_collection_tags()),
 			'bulk_action' => $action,
 			'bulk_count' => $updated_count,
@@ -661,15 +645,13 @@ class All_Folios extends Page
 	 */
 	private function queue_bulk_toast()
 	{
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only outcome parameters set by this page's own redirect after a nonce-checked bulk action; they only choose the toast.
-		if (!isset($_GET['bulk_action']) || !isset($_GET['bulk_count'])) {
-			return;
+		if (Request::key('groove_notice') === 'folio_link') {
+			\Groove\Toast::info(__('That folio link has expired. Open the folio from this list.', 'groove-folios'), array('groove_notice'), 6000);
 		}
 
-		$action = sanitize_key(wp_unslash($_GET['bulk_action']));
-		$count = intval(wp_unslash($_GET['bulk_count']));
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-		if ($count < 1) {
+		$action = Request::key('bulk_action');
+		$count = Request::int('bulk_count');
+		if ($action === '' || $count < 1) {
 			return;
 		}
 
@@ -1030,13 +1012,7 @@ class All_Folios extends Page
 
 	private function get_folio_pages_url($folio_id)
 	{
-		return add_query_arg(
-			array(
-				'page' => 'groove-folio',
-				'folio_id' => (int) $folio_id,
-			),
-			admin_url('admin.php')
-		);
+		return Folio::get_edit_url($folio_id);
 	}
 
 	private function get_post_status_display_label($post_status)
@@ -1093,6 +1069,7 @@ class All_Folios extends Page
 				<input type="hidden" name="collection_tag[]" value="<?php echo esc_attr($collection_tag); ?>" />
 			<?php endforeach; ?>
 			<?php wp_nonce_field('groove_bulk_folios_action', '_groove_bulk_nonce'); ?>
+			<?php Request::nonce_field(); ?>
 
 			<div class="g-all-folios__filters-row">
 				<?php if (!empty($collection_tag_terms)): ?>
@@ -1137,7 +1114,7 @@ class All_Folios extends Page
 						's' => $search !== '' ? $search : null,
 						'orderby' => $orderby !== 'modified' ? $orderby : null,
 						'order' => $order !== 'DESC' ? $order : null,
-						'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
+						'theme_id' => $this->get_current_theme_filter(),
 						'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 					), function ($value) {
 						return $value !== null;
@@ -1187,7 +1164,7 @@ class All_Folios extends Page
 							's' => $search !== '' ? $search : null,
 							'orderby' => $orderby !== 'modified' ? $orderby : null,
 							'order' => $order !== 'DESC' ? $order : null,
-							'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
+							'theme_id' => $this->get_current_theme_filter(),
 							'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 							'paged' => '%#%',
 						), function ($value) {
@@ -1297,14 +1274,7 @@ class All_Folios extends Page
 							$post_status = (string) get_post_status($post_id);
 							$title = get_the_title($post_id);
 							$theme_id = (string) get_post_meta($post_id, 'theme_id', true);
-							$edit_url = add_query_arg(
-								array(
-									'page' => 'groove-folio',
-									'folio_id' => (int) $post_id,
-									'theme_id' => sanitize_key($theme_id),
-								),
-								admin_url('admin.php')
-							);
+							$edit_url = Folio::get_edit_url($post_id);
 							$pages_url = $this->get_folio_pages_url($post_id);
 							$page_count = (int) ($page_counts[$post_id] ?? 0);
 							$view_url = Utils::get_folio_permalink_by_id($post_id);
@@ -1355,9 +1325,7 @@ class All_Folios extends Page
 										<?php endif; ?>
 										<?php if ($post_status !== 'trash'): ?>
 											<span class="duplicate">
-												<a href="<?php echo esc_url(wp_nonce_url($this->build_page_url(array_filter(array(
-													'action' => 'groove_duplicate_folio',
-													'post' => $post_id,
+												<a href="<?php echo esc_url(self::get_duplicate_url($post_id, array_filter(array(
 													'post_status' => $status !== 'all' ? $status : null,
 													's' => $search !== '' ? $search : null,
 													'orderby' => $orderby !== 'modified' ? $orderby : null,
@@ -1365,7 +1333,7 @@ class All_Folios extends Page
 													'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 												), function ($value) {
 													return $value !== null;
-												})), 'groove_duplicate_folio_' . $post_id)); ?>"><?php esc_html_e('Duplicate', 'groove-folios'); ?></a> |
+												}))); ?>"><?php esc_html_e('Duplicate', 'groove-folios'); ?></a> |
 											</span>
 										<?php endif; ?>
 										<span class="view">
@@ -1516,7 +1484,7 @@ class All_Folios extends Page
 							's' => $search !== '' ? $search : null,
 							'orderby' => $orderby !== 'modified' ? $orderby : null,
 							'order' => $order !== 'DESC' ? $order : null,
-							'theme_id' => isset($_GET['theme_id']) && $_GET['theme_id'] !== '' ? sanitize_key($_GET['theme_id']) : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the table; nothing is written.
+							'theme_id' => $this->get_current_theme_filter(),
 							'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 							'paged' => '%#%',
 						), function ($value) {

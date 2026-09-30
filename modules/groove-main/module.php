@@ -2,6 +2,7 @@
 namespace Groove\Modules\GrooveMain;
 
 use Groove\Modules\BaseModule;
+use Groove\Utils\Request;
 
 if (!defined('ABSPATH')) {
 	exit;
@@ -22,27 +23,23 @@ class Module extends BaseModule
 
 	private function is_in_block_editor_page()
 	{
+		global $pagenow;
+
+		// post.php and post-new.php set the global post before any script is
+		// enqueued, so the screen is known without reading the request.
 		$post = get_post();
 
-		if (!use_block_editor_for_post($post)) {
-			return false;
-		}
+		return $post && in_array($pagenow, array('post.php', 'post-new.php'), true) && use_block_editor_for_post($post);
+	}
 
-		$request_uri = isset($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
+	/**
+	 * The admin page slug of this request (core's $plugin_page), or ''.
+	 */
+	private function current_page()
+	{
+		global $plugin_page;
 
-		// Check if it's a new post/page in the block editor
-		if (strpos($request_uri, 'post-new.php') !== false) {
-			return true;
-		}
-
-		// Check if it's an existing post/page being edited in the block editor
-		if (isset($_GET['post']) && strpos($request_uri, 'post.php') !== false) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Presence check only, to detect the post editor screen; the value is not used.
-			return true;
-		}
-
-
-
-		return false;
+		return is_string($plugin_page) ? $plugin_page : '';
 	}
 
 	private function enqueue_scripts()
@@ -101,7 +98,11 @@ class Module extends BaseModule
 		// anything on the page reaches for it. Toggletips come first of all:
 		// the toast drain opens one for any outcome that names an anchor.
 		wp_enqueue_script('groove-toggletip', $this->get_js_assets_url('groove-toggletip'), [], GROOVE_VERSION, true);
-		wp_enqueue_script('groove-toast', $this->get_js_assets_url('groove-toast'), ['groove-toggletip'], GROOVE_VERSION, true);
+		// Versioned by filemtime like groove-main, which calls grooveStatusToast():
+		// a cached older copy of this file would leave the folio save status mute.
+		$groove_toast_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-toast.js';
+		$groove_toast_js_version = file_exists($groove_toast_js_path) ? (string) filemtime($groove_toast_js_path) : GROOVE_VERSION;
+		wp_enqueue_script('groove-toast', $this->get_js_assets_url('groove-toast'), ['groove-toggletip'], $groove_toast_js_version, true);
 		wp_enqueue_script('groove-form-state', $this->get_js_assets_url('groove-form-state'), ['groove-toggletip'], GROOVE_VERSION, true);
 		$groove_main_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-main.js';
 		$groove_main_js_version = file_exists($groove_main_js_path) ? (string) filemtime($groove_main_js_path) : GROOVE_VERSION;
@@ -113,8 +114,7 @@ class Module extends BaseModule
 		wp_enqueue_script('groove-dialog', $this->get_js_assets_url('groove-dialog'), [], $groove_dialog_js_version, true);
 		wp_enqueue_script('groove-inline-edit', $this->get_js_assets_url('groove-inline-edit'), ['jquery'], GROOVE_VERSION, true);
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
-		$current_page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+		$current_page = $this->current_page();
 		if ($current_page === \Groove\Pages\Themes::PAGE_ID) {
 			$groove_themes_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-themes.js';
 			$groove_themes_js_version = file_exists($groove_themes_js_path) ? (string) filemtime($groove_themes_js_path) : GROOVE_VERSION;
@@ -136,7 +136,7 @@ class Module extends BaseModule
 			wp_enqueue_script('groove-setup', $this->get_js_assets_url('groove-setup'), ['groove-dialog', 'groove-toast'], $groove_setup_js_version, true);
 
 			// Not over the Add New dialog that All Folios opens from a link.
-			$auto_open = empty($_GET['open_add_new']) && \Groove\Setup\First_Run::take_auto_open(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Presence check only, to avoid stacking two dialogs; the value is not used.
+			$auto_open = !Request::has('open_add_new') && \Groove\Setup\First_Run::take_auto_open();
 			wp_add_inline_script(
 				'groove-setup',
 				'window.GROOVE_SETUP = ' . wp_json_encode(\Groove\Setup\First_Run::script_settings($auto_open)) . ';',
@@ -159,11 +159,8 @@ class Module extends BaseModule
 		$folio_name = '';
 		$folio_setup_url = '';
 		$editor_theme_color_source_url = '';
+		global $pagenow;
 		$post = get_post();
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only admin view parameters (the post being edited, the admin page); they only choose what settings to hand the page's JS.
-		if (!$post && !empty($_GET['post'])) {
-			$post = get_post(intval(wp_unslash($_GET['post'])));
-		}
 
 		if ($post && $post->post_type === 'groove_folio_page') {
 			$page_featured_image_id = (int) get_post_thumbnail_id($post->ID);
@@ -174,29 +171,22 @@ class Module extends BaseModule
 				}
 			}
 
-			$folio_id = get_post_meta($post->ID, 'folio_id', true);
-			if (!$folio_id && !empty($_GET['folio_id'])) {
-				$folio_id = intval(wp_unslash($_GET['folio_id']));
-			}
-			if ($folio_id) {
+			// The link is made when post-new.php creates the page, so a new page
+			// from Add Page already has it here; no folio ID is read from the URL.
+			$folio_id = (int) get_post_meta($post->ID, 'folio_id', true);
+			if ($folio_id && current_user_can('edit_post', $folio_id)) {
 				$folio_post = get_post($folio_id);
 				if ($folio_post) {
 					$folio_name = $folio_post->post_title;
 				}
-				$folio_setup_url = add_query_arg(
-					array(
-						'page' => 'groove-folio',
-						'folio_id' => (int) $folio_id,
-						'tab_key' => 'pages',
-					),
-					admin_url('admin.php')
-				);
+				$folio_setup_url = \Groove\Pages\Folio::get_edit_url($folio_id, array('tab_key' => 'pages'));
 			}
 		}
 
-		$post_action = isset($_GET['action']) ? sanitize_key(wp_unslash($_GET['action'])) : 'create';
+		// post.php edits an existing post; everything else is a new one.
+		$post_action = $pagenow === 'post.php' ? 'edit' : 'create';
 
-		$current_page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+		$current_page = $this->current_page();
 		$theme_preview_base_url = '';
 		$theme_preview_nonce = '';
 		$open_add_new_modal = false;
@@ -204,10 +194,9 @@ class Module extends BaseModule
 			$theme_preview_base_url = add_query_arg([], site_url('/'));
 			$theme_preview_nonce    = wp_create_nonce('groove_theme_preview');
 		}
-		if ($current_page === 'groove-all-folios' && !empty($_GET['open_add_new'])) {
+		if ($current_page === 'groove-all-folios' && Request::has('open_add_new')) {
 			$open_add_new_modal = true;
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$settings = array(
 			'screenId' => $this->get_scrren_id() ?? '',
@@ -295,8 +284,7 @@ class Module extends BaseModule
 			return true;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check.
-		$page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+		$page = $this->current_page();
 
 		return $page !== '' && in_array($page, $this->get_groove_page_slugs(), true);
 	}

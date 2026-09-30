@@ -1,6 +1,8 @@
 <?php
 namespace Groove\List;
 use Groove\List\List_Table;
+use Groove\Pages\All_Folios;
+use Groove\Pages\Folio;
 use Groove\Pages\Page;
 use Groove\Utils\Utils;
 
@@ -15,26 +17,9 @@ class Folio_List_Table extends List_Table {
     add_filter('get_edit_post_link', [$this, 'edit_link'], 10, 2);
   }
 
-  public function count_posts () {
-    $post_type = $this->screen->post_type;
-    return wp_count_posts($post_type);
-  }
-
   function edit_link( $url, $post_id ) {
-    $post_type = get_post_type( $post_id );
-    $meta = get_post_meta( $post_id );
-    $theme_id = isset($meta['theme_id'][0]) ? $meta['theme_id'][0] : '';
-
-    if ( $this->post_type === $post_type ) {
-      $url = add_query_arg(
-        array(
-          'page' => 'groove-folio',
-          'folio_id' => (int) $post_id,
-          'theme_id' => sanitize_key($theme_id),
-        ),
-        admin_url('admin.php')
-      );
-      return esc_url($url);
+    if ( $this->post_type === get_post_type( $post_id ) ) {
+      return esc_url(Folio::get_edit_url((int) $post_id));
     }
 
     return $url;
@@ -105,13 +90,7 @@ class Folio_List_Table extends List_Table {
           'folio_id',
           $post_id
         ));
-        $pages_url = add_query_arg(
-          array(
-            'page' => 'groove-folio',
-            'folio_id' => $post_id,
-          ),
-          admin_url('admin.php')
-        );
+        $pages_url = Folio::get_edit_url((int) $post_id);
         return '<a href="' . esc_url($pages_url) . '">' . esc_html(number_format_i18n($count)) . '</a>';
 
       case 'publish_status':
@@ -176,17 +155,7 @@ class Folio_List_Table extends List_Table {
     }
 
     if ($can_edit_post && 'trash' !== $post->post_status) {
-      $duplicate_url = wp_nonce_url(
-        add_query_arg(
-          array(
-            'page' => 'groove-all-folios',
-            'action' => 'groove_duplicate_folio',
-            'post' => $post_id,
-          ),
-          admin_url('admin.php')
-        ),
-        'groove_duplicate_folio_' . $post_id
-      );
+      $duplicate_url = All_Folios::get_duplicate_url($post_id);
       $actions['duplicate'] = sprintf(
         '<a href="%s" aria-label="%s">%s</a>',
         esc_url($duplicate_url),

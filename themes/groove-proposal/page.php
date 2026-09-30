@@ -38,7 +38,7 @@ class Page extends Base_Theme
     // the footer, which is too late to stop the flash.
     wp_register_script('groove-proposal-scheme', false, [], $version, false);
     wp_enqueue_script('groove-proposal-scheme');
-    wp_add_inline_script('groove-proposal-scheme', $this->theme_bootstrap_script());
+    wp_add_inline_script('groove-proposal-scheme', "(function () { try { var saved = localStorage.getItem('gp-theme'); var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; var mode = saved === 'dark' || saved === 'light' ? saved : (prefersDark ? 'dark' : 'light'); document.documentElement.classList.remove('gp-theme-light', 'gp-theme-dark'); document.documentElement.classList.add(mode === 'dark' ? 'gp-theme-dark' : 'gp-theme-light'); } catch (error) { document.documentElement.classList.add('gp-theme-light'); } })();");
   }
 
   public function get_data()
@@ -51,15 +51,6 @@ class Page extends Base_Theme
 
     $show_nav_meta = (string) get_post_meta((int) $this->folio_id, 'proposal_show_in_page_nav', true);
     $this->show_in_page_nav = $show_nav_meta !== '0';
-  }
-
-  /**
-   * The light/dark class, set on <html> before first paint so a reader on a
-   * dark scheme never sees the light page flash first.
-   */
-  protected function theme_bootstrap_script(): string
-  {
-    return "(function () { try { var saved = localStorage.getItem('gp-theme'); var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; var mode = saved === 'dark' || saved === 'light' ? saved : (prefersDark ? 'dark' : 'light'); document.documentElement.classList.remove('gp-theme-light', 'gp-theme-dark'); document.documentElement.classList.add(mode === 'dark' ? 'gp-theme-dark' : 'gp-theme-light'); } catch (error) { document.documentElement.classList.add('gp-theme-light'); } })();";
   }
 
   public function get_html($html)
@@ -535,7 +526,7 @@ class Page extends Base_Theme
                 <?php endif; ?>
                 <h1 class="g-folio__theme-page-title gp-page__title"><?php echo esc_html($this->title); ?></h1>
                 <div class="g-folio__theme-page-content gp-page__content">
-                  <?php echo $this->get_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block-rendered post content, escaped by core; kses would strip embed iframes. ?>
+                  <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
                 </div>
                 <?php $this->display_footer(); ?>
               </article>

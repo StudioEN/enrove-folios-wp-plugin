@@ -245,11 +245,17 @@ class Plugin
 		}, 10, 3);
 
 
+		// The front end's routing parameters are public query vars, like core's
+		// ?p=: WordPress parses them, and nothing here reads $_GET for them.
+		add_filter('query_vars', function ($vars) {
+			return array_merge($vars, Utils::ROUTE_QUERY_VARS);
+		});
+
 		// Run before redirect_canonical (priority 10) to prevent WP from
 		// "helpfully" redirecting 404s (drafts) to the homepage.
 		add_action('template_redirect', function () {
 			// Theme picker preview — admin-only, nonce verified inside the template.
-			if (isset($_GET['groove_theme_preview'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Routing check only; theme-picker-preview-template.php verifies the nonce and capability before rendering.
+			if ((string) get_query_var('groove_theme_preview') !== '') {
 				Site_Theme_Isolation::isolate_front_end();
 				require_once plugin_dir_path(__FILE__) . 'theme-picker-preview-template.php';
 				exit;
@@ -258,11 +264,9 @@ class Plugin
 			$current_path = Utils::get_current_path();
 			$base_slug = Utils::get_folio_base_slug();
 			$pattern = '#^/' . preg_quote($base_slug, '#') . '/#';
-			// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only front-end routing: public query vars that pick which folio to render, like core's ?p=; nothing is written.
-			$is_query_preview = isset($_GET['groove_preview']) && '1' === $_GET['groove_preview'];
-			$query_folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0;
-			$query_post_id = isset($_GET['p']) ? intval(wp_unslash($_GET['p'])) : 0;
-			// phpcs:enable WordPress.Security.NonceVerification.Recommended
+			$is_query_preview = '1' === (string) get_query_var('groove_preview');
+			$query_folio_id = absint(get_query_var('folio_id'));
+			$query_post_id = absint(get_query_var('p'));
 
 			$is_query_groove_context = false;
 			if ($query_folio_id && get_post_type($query_folio_id) === 'groove_folio') {
@@ -284,8 +288,8 @@ class Plugin
 			}
 		}, 5);
 
-		// Sync slug to the post title whenever a folio page is saved via the
-		// classic editor (the REST-based block editor is handled separately below).
+		// Sync slug to the post title whenever a folio page is saved (the
+		// REST-based block editor is also handled separately below).
 		// Held in a variable so the callback can unhook itself around its own
 		// wp_update_post(): __FUNCTION__ inside a closure is "{closure}", which
 		// names no registered callback, so the old remove_action() removed nothing.
@@ -298,12 +302,15 @@ class Plugin
 				return;
 			}
 
-			// phpcs:disable WordPress.Security.NonceVerification.Missing -- post_title only arrives from a classic-editor or Quick Edit save, and both requests verify their nonce (update-post_{ID}, inlineeditnonce) before save_post fires; edit_post is checked above.
-			if (!isset($_POST['post_title']) || '' === sanitize_text_field(wp_unslash($_POST['post_title']))) {
+			// The title as saved, not the request's: nothing here reads $_POST.
+			// An auto-draft's placeholder title names nothing yet.
+			if ($post->post_status === 'auto-draft') {
 				return;
 			}
-			$title = sanitize_text_field(wp_unslash($_POST['post_title']));
-			// phpcs:enable WordPress.Security.NonceVerification.Missing
+			$title = sanitize_text_field($post->post_title);
+			if ($title === '') {
+				return;
+			}
 
 			$new_slug = wp_unique_post_slug(
 				sanitize_title($title),
@@ -339,58 +346,9 @@ class Plugin
 			}
 		});
 
-		// ── folio_id meta injection ─────────────────────────────────────────────
-		// When a new folio page is created via "Add Page" the folio_id is in the URL
-		// but never automatically saved to post meta. Both hooks below handle this:
-		// classic editor via save_post (POST data), block editor via REST (query string).
-
-			add_action('save_post_groove_folio_page', function ($post_id, $post, $update) {
-				// Only care about the very first save (not an update).
-				if ($update) {
-					return;
-				}
-				if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id)) {
-					return;
-				}
-				if (!current_user_can('edit_post', $post_id)) {
-					return;
-				}
-
-				// Classic editor passes folio_id in the URL / POST.
-				// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing -- A first save is either core's auto-draft on opening post-new.php (a screen load core runs without a nonce) or a save whose request verified its own nonce; edit_post is checked above, and the int must name a groove_folio. It only links the new page to that folio.
-				$folio_id = 0;
-				if (!empty($_GET['folio_id'])) {
-					$folio_id = intval(wp_unslash($_GET['folio_id']));
-				} elseif (!empty($_POST['folio_id'])) {
-					$folio_id = intval(wp_unslash($_POST['folio_id']));
-				}
-				// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.NonceVerification.Missing
-
-			if ($folio_id && get_post_type($folio_id) === 'groove_folio') {
-				update_post_meta($post_id, 'folio_id', $folio_id);
-			}
-		}, 20, 3);
-
-		// Block editor creates posts via REST — the folio_id comes from the Referer header.
-			add_action('rest_after_insert_groove_folio_page', function ($post, $request) {
-				if (get_post_meta($post->ID, 'folio_id', true)) {
-					return; // Already set — nothing to do.
-				}
-
-			// The block editor opens a URL like post-new.php?post_type=groove_folio_page&folio_id=X
-			// The Referer header carries that URL into REST requests.
-				$referer = wp_get_referer();
-				if ($referer) {
-				$query = wp_parse_url($referer, PHP_URL_QUERY);
-				parse_str((string) $query, $params);
-				if (!empty($params['folio_id'])) {
-					$folio_id = (int) $params['folio_id'];
-					if ($folio_id && get_post_type($folio_id) === 'groove_folio') {
-						update_post_meta($post->ID, 'folio_id', $folio_id);
-					}
-				}
-			}
-		}, 10, 2);
+		// A page joins its folio when post-new.php creates it, from a nonce-checked
+		// Add Page link: see Contents\FolioPage\Content::verify_add_page_link().
+		// No save hook here reads a folio ID from the request or the Referer.
 
 		add_action('init', [$this, 'init'], 0);
 	}

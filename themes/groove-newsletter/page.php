@@ -372,7 +372,7 @@ class Page extends Base_Theme
                 <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
               </header>
               <article class="g-folio__theme-page-content">
-                <?php echo $this->get_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block-rendered post content, escaped by core; kses would strip embed iframes. ?>
+                <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
               </article>
               <?php $this->display_footer() ?>
             </div>

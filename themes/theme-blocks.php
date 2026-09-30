@@ -56,18 +56,13 @@ class Theme_Blocks
     }
 
     /**
-     * The folio a page in the block editor belongs to. URL first, meta second,
-     * as everywhere else: every link into the editor carries ?folio_id=, and
-     * the meta goes stale after duplicate-then-delete.
+     * The folio a page in the block editor belongs to: its folio_id meta. The
+     * editor has no folio path to read, and the meta is set when post-new.php
+     * creates the page from an Add Page link (Contents\FolioPage\Content), so
+     * nothing is read from the editor's URL.
      */
     public static function get_editor_folio_id(\WP_Post $page): int
     {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only editor parameter naming the page's folio; it only decides which blocks the inserter offers.
-        $query_folio_id = isset($_GET['folio_id']) ? absint(wp_unslash($_GET['folio_id'])) : 0;
-        if ($query_folio_id && get_post_type($query_folio_id) === 'groove_folio') {
-            return $query_folio_id;
-        }
-
         return (int) get_post_meta($page->ID, 'folio_id', true);
     }
 
@@ -132,7 +127,7 @@ class Theme_Blocks
         );
         wp_add_inline_script(
             self::SCRIPT_HANDLE,
-            'window.GROOVE_BLOCK_SCOPE = ' . wp_json_encode(['notes' => $notes]) . ';',
+            'window.GROOVE_BLOCK_SCOPE = ' . wp_json_encode(['notes' => $notes], JSON_HEX_TAG | JSON_HEX_AMP) . ';',
             'before'
         );
     }

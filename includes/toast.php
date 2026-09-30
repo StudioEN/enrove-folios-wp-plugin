@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
  * Toast notifications.
  *
  * Groove admin screens report the outcome of an action as a transient pill at
- * the bottom of the viewport rather than a block of copy pushed into the page.
+ * the bottom-right corner rather than a block of copy pushed into the page.
  * An inline notice reflows the layout it lands in and stays there long after
  * it has been read; a toast reports and gets out of the way, so the content
  * below it never moves.

@@ -451,42 +451,17 @@ jQuery(function () {
     let isManualSave = false
     let lastAutosaveHash = ''
     const saveIndicatorAutoHideMs = 3000
-    let saveIndicatorResetTimer = null
-    let saveIndicator = jQuery('#g-folio-save-indicator')
-
-    if (!saveIndicator.length) {
-      saveIndicator = jQuery('<div id="g-folio-save-indicator" aria-live="polite"></div>')
-      jQuery('body').append(saveIndicator)
-    }
-
-    function hideSaveStatus() {
-      if (!saveIndicator.length) {
-        return
-      }
-
-      clearTimeout(saveIndicatorResetTimer)
-      saveIndicator
-        .removeClass('is-visible is-saving is-saved is-error')
-        .text('')
-    }
+    // Saving, then Saved or the failure, in the one toast stack every Groove
+    // notification uses: one pill, rewritten in place as the save runs.
+    const saveStatus = typeof window.grooveStatusToast === 'function' ? window.grooveStatusToast() : null
+    const saveStatusTypes = { saving: 'info', saved: 'success', error: 'error' }
 
     function setSaveStatus(state, message, autoHideMs = 0) {
-      if (!saveIndicator.length) {
+      if (!saveStatus) {
         return
       }
 
-      clearTimeout(saveIndicatorResetTimer)
-      saveIndicator
-        .removeClass('is-saving is-saved is-error')
-        .addClass('is-visible')
-        .addClass('is-' + state)
-        .text(message)
-
-      if (autoHideMs > 0) {
-        saveIndicatorResetTimer = setTimeout(function () {
-          hideSaveStatus()
-        }, autoHideMs)
-      }
+      saveStatus.set(message, saveStatusTypes[state] || 'info', autoHideMs)
     }
 
     function getFields() {

@@ -3,6 +3,7 @@ namespace Groove\Pages;
 
 use Groove\Pages\Page;
 use Groove\Setup\First_Run;
+use Groove\Utils\Request;
 
 
 if (!defined('ABSPATH')) {
@@ -101,7 +102,7 @@ class Overview extends Page
 <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('At a Glance', 'groove-folios'); ?></h2>
-    <a class="button button-primary" href="<?php echo esc_url(admin_url('admin.php?page=groove-all-folios&open_add_new=1')); ?>">
+    <a class="button button-primary" href="<?php echo esc_url(Request::admin_url(All_Folios::PAGE_ID, array('open_add_new' => 1))); ?>">
       <?php esc_html_e('Add New Folio', 'groove-folios'); ?>
     </a>
   </div>
@@ -166,7 +167,7 @@ class Overview extends Page
         <?php
           $title = get_the_title($post);
           $title = $title ? $title : esc_html__('(no title)', 'groove-folios');
-          $link = admin_url('admin.php?page=groove-folio&folio_id=' . $post->ID);
+          $link = Folio::get_edit_url((int) $post->ID);
           $status_object = get_post_status_object($post->post_status);
           $status_label = $status_object ? $status_object->label : ucfirst($post->post_status);
           ?>
@@ -192,12 +193,11 @@ class Overview extends Page
    */
   private function toast_reset_outcome()
   {
-    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only outcome flags set by the nonce-checked reset handler's own redirect; they only choose which sentence to show.
-    $outcome = isset($_GET['groove_reset']) ? sanitize_key(wp_unslash($_GET['groove_reset'])) : '';
-    $folios = isset($_GET['groove_reset_folios']) ? absint(wp_unslash($_GET['groove_reset_folios'])) : 0;
-    $pages = isset($_GET['groove_reset_pages']) ? absint(wp_unslash($_GET['groove_reset_pages'])) : 0;
-    $tags = isset($_GET['groove_reset_tags']) ? absint(wp_unslash($_GET['groove_reset_tags'])) : 0;
-    // phpcs:enable WordPress.Security.NonceVerification.Recommended
+    // Set by the reset handler's own signed redirect (Utils\Request).
+    $outcome = Request::key('groove_reset');
+    $folios = Request::int('groove_reset_folios');
+    $pages = Request::int('groove_reset_pages');
+    $tags = Request::int('groove_reset_tags');
 
     $consumed = array('groove_reset', 'groove_reset_folios', 'groove_reset_pages', 'groove_reset_tags');
 

@@ -7,6 +7,7 @@ use Groove\Menu\Menu_Manager;
 use Groove\Menu\Themes_Menu_Item;
 use Groove\Themes\Themes_Manager;
 use Groove\Utils\Markdown;
+use Groove\Utils\Request;
 use Groove\Utils\Theme_Docs;
 
 if (!defined('ABSPATH')) {
@@ -64,10 +65,7 @@ class Themes extends Page
 	 */
 	public function tab_url($tab_key, $anchor = '')
 	{
-		$url = add_query_arg(
-			['page' => static::PAGE_ID, 'tab_key' => $tab_key],
-			admin_url('admin.php')
-		);
+		$url = Request::admin_url(static::PAGE_ID, ['tab_key' => $tab_key]);
 
 		return $anchor === '' ? $url : $url . '#' . $anchor;
 	}
@@ -95,7 +93,7 @@ class Themes extends Page
 	 */
 	private function current_tab()
 	{
-		$tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: picks which tab to show.
+		$tab_key = Request::key('tab_key');
 
 		return Theme_Docs::exists($tab_key) ? $tab_key : self::TAB_THEMES;
 	}
@@ -117,14 +115,12 @@ class Themes extends Page
 	{
 		$tabs = $this->get_tabs();
 		$tab_key = $this->current_tab();
-		$query = $this->parse_query();
 		?>
 		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Themes tabs', 'groove-folios'); ?>">
 			<?php
 			foreach ($tabs as $tab_id => $tab) {
 				$active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
-				$query['tab_key'] = $tab_id;
-				$tab_url = add_query_arg($query, admin_url('admin.php'));
+				$tab_url = $this->tab_url($tab_id);
 				echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . esc_attr($active_class) . '">'
 					. esc_html($tab['label']) . '</a>';
 			}
@@ -199,12 +195,10 @@ class Themes extends Page
 						<?php $this->display_doc_contents(Markdown::outline($markdown, $args)); ?>
 						<div class="g-docs__body">
 							<?php
-							/* Markdown::render() escapes every value at the point it becomes
-							   text and emits a fixed, closed tag vocabulary — no branch in it
-							   passes source through as markup — so the result is echoed rather
-							   than run through wp_kses_post(), which would strip the heading
-							   ids every anchor on this page depends on. */
-							echo Markdown::render($markdown, $args); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markdown::render() escapes every value itself and emits a fixed tag set; see the comment above.
+							/* Escaped again at the echo, against the fixed tag set render()
+							   emits (Markdown::allowed_html()); wp_kses_post() would drop the
+							   task-list checkboxes. */
+							echo wp_kses(Markdown::render($markdown, $args), Markdown::allowed_html());
 							?>
 						</div>
 					</div>
@@ -424,7 +418,7 @@ class Themes extends Page
 						$updated = !empty($theme['last_updated']) ? (string) $theme['last_updated'] : '';
 						$updated_ts = $updated !== '' ? strtotime($updated) : false;
 						$updated_label = $updated_ts ? date_i18n(get_option('date_format'), $updated_ts) : $updated;
-						$folios_url = admin_url('admin.php?page=' . \Groove\Pages\All_Folios::PAGE_ID . '&theme_id=' . $id);
+						$folios_url = Request::admin_url(All_Folios::PAGE_ID, ['theme_id' => (string) $id]);
 						?>
 						<div class="g-theme-details__panel" data-groove-theme-panel="<?php echo esc_attr($id); ?>" hidden>
 							<div class="g-dialog-screen" data-groove-theme-screen>
@@ -711,9 +705,7 @@ class Themes extends Page
 										esc_html(number_format_i18n($folio_count))
 									);
 									?>
-									<a href="<?php echo esc_url(admin_url(
-										'admin.php?page=' . \Groove\Pages\All_Folios::PAGE_ID . '&theme_id=' . $folder
-									)); ?>"><?php esc_html_e('View them', 'groove-folios'); ?></a>
+									<a href="<?php echo esc_url(Request::admin_url(All_Folios::PAGE_ID, ['theme_id' => (string) $folder])); ?>"><?php esc_html_e('View them', 'groove-folios'); ?></a>
 								</div>
 							<?php endif; ?>
 						</li>

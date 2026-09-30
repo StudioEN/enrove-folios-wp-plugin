@@ -32,7 +32,7 @@ class Cover extends Base_Theme
     // the footer, which is too late to stop the flash.
     wp_register_script('groove-proposal-scheme', false, [], $version, false);
     wp_enqueue_script('groove-proposal-scheme');
-    wp_add_inline_script('groove-proposal-scheme', $this->theme_bootstrap_script());
+    wp_add_inline_script('groove-proposal-scheme', "(function () { try { var saved = localStorage.getItem('gp-theme'); var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; var mode = saved === 'dark' || saved === 'light' ? saved : (prefersDark ? 'dark' : 'light'); document.documentElement.classList.remove('gp-theme-light', 'gp-theme-dark'); document.documentElement.classList.add(mode === 'dark' ? 'gp-theme-dark' : 'gp-theme-light'); } catch (error) { document.documentElement.classList.add('gp-theme-light'); } })();");
   }
 
   public function get_page_data()
@@ -187,15 +187,6 @@ class Cover extends Base_Theme
     }
 
     return $has_data ? [$single] : [];
-  }
-
-  /**
-   * The light/dark class, set on <html> before first paint so a reader on a
-   * dark scheme never sees the light page flash first.
-   */
-  protected function theme_bootstrap_script(): string
-  {
-    return "(function () { try { var saved = localStorage.getItem('gp-theme'); var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; var mode = saved === 'dark' || saved === 'light' ? saved : (prefersDark ? 'dark' : 'light'); document.documentElement.classList.remove('gp-theme-light', 'gp-theme-dark'); document.documentElement.classList.add(mode === 'dark' ? 'gp-theme-dark' : 'gp-theme-light'); } catch (error) { document.documentElement.classList.add('gp-theme-light'); } })();";
   }
 
   protected function display_nav(): void

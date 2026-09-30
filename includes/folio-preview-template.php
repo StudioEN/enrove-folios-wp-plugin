@@ -29,9 +29,6 @@ $theme = Themes_Manager::create_theme_for_current_request();
     $_pw_theme_id = (string) get_post_meta($password_post->ID, 'theme_id', true);
     $_pw_gate = Themes_Manager::get_theme_gate_colors($_pw_theme_id);
 
-    $_pw_accent = $_pw_gate['accent'] ?? '#2271b1';
-    $_pw_accent_hover = $_pw_gate['accent_hover'] ?? '#135e96';
-
     // Resolve folio fonts through the same resolver the themes use, so the gate
     // is typeset like the folio behind it. This document is rendered before
     // wp_head(), so its stylesheets are printed on their own below.
@@ -41,16 +38,38 @@ $theme = Themes_Manager::create_theme_for_current_request();
       Themes_Manager::get_theme_default_fonts($_pw_theme_id)
     );
 
-    // The stacks are from the fixed font list or Font_Loader::sanitize_css_stack()
-    // (letters, digits, space , ' - _ . only); the colours are hex, validated
-    // when the theme's gate block was read.
-    $_pw_heading_stack = $_pw_fonts['header']['css_stack'] ?? $_pw_system_stack;
-    $_pw_body_stack = $_pw_fonts['body']['css_stack'] ?? $_pw_system_stack;
+    // Every value is validated again here, where it is interpolated into the
+    // CSS, and not only when it was read: each stack is rebuilt family by
+    // family, and each colour must be a hex colour or it takes the default.
+    $_pw_heading_stack = Font_Loader::sanitize_css_stack($_pw_fonts['header']['css_stack'] ?? '');
+    if ($_pw_heading_stack === '') {
+      $_pw_heading_stack = $_pw_system_stack;
+    }
 
-    $_pw_bg = $_pw_gate['background'] ?? '#f0f0f1';
+    $_pw_body_stack = Font_Loader::sanitize_css_stack($_pw_fonts['body']['css_stack'] ?? '');
+    if ($_pw_body_stack === '') {
+      $_pw_body_stack = $_pw_system_stack;
+    }
+
+    $_pw_accent = sanitize_hex_color((string) ($_pw_gate['accent'] ?? ''));
+    if (!$_pw_accent) {
+      $_pw_accent = '#2271b1';
+    }
+
+    $_pw_accent_hover = sanitize_hex_color((string) ($_pw_gate['accent_hover'] ?? ''));
+    if (!$_pw_accent_hover) {
+      $_pw_accent_hover = '#135e96';
+    }
+
+    $_pw_bg = sanitize_hex_color((string) ($_pw_gate['background'] ?? ''));
+    if (!$_pw_bg) {
+      $_pw_bg = '#f0f0f1';
+    }
 
     wp_register_style('groove-password-gate', false, [], GROOVE_VERSION);
-    wp_add_inline_style('groove-password-gate', implode("\n", array(
+    // wp_strip_all_tags() is the late escape for a <style> element: no tag,
+    // </style> included, can survive it.
+    wp_add_inline_style('groove-password-gate', wp_strip_all_tags(implode("\n", array(
       '* { box-sizing: border-box; margin: 0; padding: 0; }',
       'body { font-family: ' . $_pw_body_stack . '; color: #1d2327; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; background: ' . $_pw_bg . '; }',
       '.groove-password-wrap { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 40px; max-width: 420px; width: 100%; text-align: left; }',
@@ -61,7 +80,7 @@ $theme = Themes_Manager::create_theme_for_current_request();
       '.groove-password-wrap input[type="password"]:focus { border-color: ' . $_pw_accent . '; box-shadow: 0 0 0 1px ' . $_pw_accent . '; outline: none; }',
       '.groove-password-wrap input[type="submit"] { display: block; width: 100%; background: ' . $_pw_accent . '; color: #fff; border: none; border-radius: 4px; padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; }',
       '.groove-password-wrap input[type="submit"]:hover { background: ' . $_pw_accent_hover . '; }',
-    )));
+    ))));
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>

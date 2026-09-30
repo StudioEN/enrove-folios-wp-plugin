@@ -8,6 +8,11 @@ if (!defined('ABSPATH')) {
 
 class Content extends BaseContent
 {
+  /** Nonce action on every Add Page link (get_add_page_url()). */
+  const ADD_PAGE_NONCE = 'groove_add_folio_page';
+
+  /** The folio a verified Add Page link names, until its page is created. */
+  private $add_page_folio_id = 0;
 
   public function get_key()
   {
@@ -68,9 +73,86 @@ class Content extends BaseContent
   }
 
   /**
+   * The Add Page URL for a folio: post-new.php naming the folio, with a nonce.
+   * It is the only way the editor links a page to a folio; see
+   * verify_add_page_link().
+   *
+   * @param int $folio_id
+   * @return string Unescaped; escape it where it is printed.
+   */
+  public static function get_add_page_url($folio_id)
+  {
+    return add_query_arg(
+      array(
+        'post_type' => 'groove_folio_page',
+        'folio_id' => (int) $folio_id,
+        '_wpnonce' => wp_create_nonce(self::ADD_PAGE_NONCE),
+      ),
+      admin_url('post-new.php')
+    );
+  }
+
+  /**
+   * An Add Page link is checked on load-post-new.php, before core creates the
+   * page's auto-draft: the nonce first, then that the folio it names exists
+   * and the user may edit it. A stale link (a nonce lives 12 to 24 hours, and
+   * ends with the login session) gets core's "The link you followed has
+   * expired" screen, whose "Please try again" goes back to the folio, so no
+   * page is ever created outside the folio it was meant for. Only a request
+   * that passes hooks link_new_page().
+   */
+  public function verify_add_page_link()
+  {
+    global $typenow;
+
+    // Presence only: a folio_id marks an Add Page link. Its value is read
+    // after check_admin_referer() below.
+    if ($typenow !== 'groove_folio_page' || !isset($_GET['folio_id'])) {
+      return;
+    }
+    check_admin_referer(self::ADD_PAGE_NONCE);
+
+    $folio_id = absint(wp_unslash($_GET['folio_id']));
+    if (!$folio_id || get_post_type($folio_id) !== 'groove_folio' || !current_user_can('edit_post', $folio_id)) {
+      wp_die(
+        esc_html__('Sorry, you are not allowed to add a page to that folio.', 'groove-folios'),
+        '',
+        array('response' => 403, 'back_link' => true)
+      );
+    }
+
+    $this->add_page_folio_id = $folio_id;
+    add_action('save_post_groove_folio_page', array($this, 'link_new_page'), 10, 3);
+  }
+
+  /**
+   * Links the auto-draft that post-new.php creates to the folio its Add Page
+   * link named, once. Hooked only by verify_add_page_link(), so it reads no
+   * request data: every later save (classic post.php, the block editor's
+   * REST requests) finds the link already made and leaves it alone.
+   *
+   * @param int      $post_id
+   * @param \WP_Post $post
+   * @param bool     $update
+   */
+  public function link_new_page($post_id, $post, $update)
+  {
+    if ($update || $post->post_status !== 'auto-draft' || !current_user_can('edit_post', $post_id)) {
+      return;
+    }
+    remove_action('save_post_groove_folio_page', array($this, 'link_new_page'), 10);
+
+    $folio_id = $this->add_page_folio_id;
+    $this->add_page_folio_id = 0;
+    if ($folio_id > 0 && current_user_can('edit_post', $folio_id)) {
+      update_post_meta($post_id, 'folio_id', $folio_id);
+    }
+  }
+
+  /**
    * A page joins a folio only when the user may edit that folio. Publishing a
    * folio publishes its pages, so without this a Contributor could attach a
-   * page to anyone's folio (REST meta, or ?folio_id= on a first save) and have
+   * page to anyone's folio (REST meta, or a forged Add Page link) and have
    * it go live with that folio, unreviewed. This covers add and update by key;
    * guard_folio_link_by_mid() covers core's writes by meta ID, and
    * guard_rest_folio_link() answers REST with a 403. With no user signed in
@@ -190,6 +272,7 @@ class Content extends BaseContent
   public function __construct()
   {
     add_action('init', [$this, 'create_posttype']);
+    add_action('load-post-new.php', [$this, 'verify_add_page_link']);
     add_filter('add_post_metadata', [$this, 'guard_folio_link'], 10, 4);
     add_filter('update_post_metadata', [$this, 'guard_folio_link'], 10, 4);
     add_filter('update_post_metadata_by_mid', [$this, 'guard_folio_link_by_mid'], 10, 4);

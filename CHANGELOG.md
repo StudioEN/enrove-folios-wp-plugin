@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Changed
+- Links inside Groove's admin screens now carry a short-lived signature, and a screen reads which folio, tab, filter, search, sort or page to show only from a signed link. Every link and form the plugin draws is signed, so nothing changes in use. A link that is not, such as a bookmark, one older than a day, or one saved before logging out, opens the screen's default view instead: the list unfiltered, the Setup tab, or, for a folio, All Folios with a note that the link has expired. This answers WordPress.org's review, which asks that every request parameter be checked against a nonce before it is read. The front end is unchanged: published and preview folio URLs are public, and their `?folio_id=`, `?p=` and `?groove_preview=` are now registered as query vars and read the way WordPress reads its own.
+- A folio page's body is now escaped where it is printed, against the markup WordPress's post editor allows plus what rendering adds: embed iframes (YouTube, Vimeo, Spotify, SoundCloud, WordPress posts), the icons of social links and the image lightbox, the Search block's form, `<source>`, and a featured image's `srcset`. Two things readers may notice. Embeds that need their provider's script to draw (X, Instagram, TikTok) now show the provider's own fallback, the quoted post with a link to it, rather than the live card. And a `<script>` or `<style>` inside a Custom HTML block no longer reaches the published folio. A theme can widen the allowed markup with the `groove_folios_content_allowed_html` filter.
+- The CSS that sets a folio's fonts, and the password gate's colours and fonts, are checked again where they are written into the page: each font family must be a plain or quoted name, so one with a stray quote is dropped on its own rather than breaking the rest of the rule, and each colour must be a hex colour.
+- A new folio page joins its folio when Add Page opens the editor, from a link whose signature is checked before the folio is read, and only when you may edit that folio. An Add Page link opened after it has expired shows WordPress's "The link you followed has expired" screen, whose link back leads to the folio for a fresh one. No save hook reads a folio from the request or the Referer header any more, and the block editor, the breadcrumb back to the folio and the theme's block list all read the page's own stored folio.
+
+### Fixed
+- Move to Trash, Restore and Delete Permanently on a folio's Pages tab did the work, but ran after the screen had started drawing, too late for the redirect back to the list, so the screen could stop part-way instead of showing the updated list and its toast. The action now runs before anything is drawn, as it already did on All Folios.
+- Duplicate in the All Folios bulk menu checked whether you could delete each folio rather than edit it, unlike the row's own Duplicate link. Both now ask for the right to edit the folio being copied.
+- Viewing a folio page no longer writes to the database at all. A page missing its link to a folio used to have it filled in from the URL when an editor viewed it; nothing needs that now that a page is linked when it is created.
+- The block editor no longer shows the title of whatever folio a hand-edited `?folio_id=` names; it shows the page's own folio, and only to someone who may edit that folio.
+
 ## [0.5.1] - 2026-09-28
 
 ### Added

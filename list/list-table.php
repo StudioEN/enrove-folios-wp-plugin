@@ -11,7 +11,6 @@ class List_Table extends \WP_List_Table
 	protected $page;
 	/** Hierarchy depth for the title's em-dash pad. Core declares it on WP_Posts_List_Table, not WP_List_Table, so reading it undeclared was a PHP deprecation. */
 	protected $current_level = 0;
-	protected $wp_query;
 	protected $post_type;
 
 	function __construct(Page $page, $post_type)
@@ -169,16 +168,33 @@ class List_Table extends \WP_List_Table
 
 	protected function column_cb($item)
 	{
-		return sprintf('<input type="checkbox" name="bulk-delete[]" value="%s" />', $item->ID);
+		return sprintf('<input type="checkbox" name="bulk-delete[]" value="%s" />', absint($item->ID));
+	}
+
+	/**
+	 * The markup the Quick Edit author and parent dropdowns may print, for the
+	 * wp_kses() they are echoed through: core's wp_dropdown_users() and
+	 * wp_dropdown_pages() output, in the label this table wraps it in.
+	 *
+	 * @return array Allowed-HTML array for wp_kses().
+	 */
+	protected static function dropdown_allowed_html()
+	{
+		return array(
+			'label'  => array('class' => true, 'for' => true),
+			'span'   => array('class' => true),
+			'select' => array('name' => true, 'id' => true, 'class' => true),
+			'option' => array('value' => true, 'selected' => true, 'class' => true),
+		);
 	}
 
 	protected function _column_title($post, $classes, $data, $primary)
 	{
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $data is the data-colname attribute WP_List_Table::single_row_columns() builds with esc_attr().
-		echo '<td class="' . esc_attr($classes) . ' page-title" ', $data, '>';
+		// $data is the data-colname="…" attribute WP_List_Table::single_row_columns() builds.
+		echo '<td class="' . esc_attr($classes) . ' page-title" ' . wp_kses_one_attr($data, 'td') . '>';
 		$this->column_title($post);
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Row-action links built from escaped parts in handle_row_actions() and passed through core's row-action filters, printed unescaped as WP_Posts_List_Table does; kses would requote row_actions()' attributes.
-		echo $this->handle_row_actions($post, 'title', $primary);
+		// Row actions pass through core's row-action filters, so other plugins' links arrive here too.
+		echo wp_kses_post($this->handle_row_actions($post, 'title', $primary));
 		echo '</td>';
 	}
 
@@ -191,16 +207,16 @@ class List_Table extends \WP_List_Table
 
 			if ($lock_holder) {
 				$lock_holder = get_userdata($lock_holder);
-				$locked_avatar = get_avatar($lock_holder->ID, 18);
 				/* translators: %s: Display name of the user editing the post. */
 				$locked_text = sprintf(__('%s is currently editing', 'groove-folios'), $lock_holder->display_name);
 			} else {
-				$locked_avatar = '';
 				$locked_text = '';
 			}
 
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $locked_avatar is get_avatar() markup, which escapes its own attributes; kses would requote them.
-			echo '<div class="locked-info"><span class="locked-avatar">' . $locked_avatar . '</span> <span class="locked-text">' . esc_html($locked_text) . "</span></div>\n";
+			echo '<div class="locked-info"><span class="locked-avatar">';
+			// get_avatar() straight into the echo: wp_kses_post() would strip the avatar's srcset and decoding.
+			echo $lock_holder ? get_avatar($lock_holder->ID, 18) : '';
+			echo '</span> <span class="locked-text">' . esc_html($locked_text) . "</span></div>\n";
 		}
 
 		$pad = str_repeat('&#8212; ', $this->current_level);
@@ -238,225 +254,6 @@ class List_Table extends \WP_List_Table
 		get_inline_data($post);
 	}
 
-
-	protected function get_bulk_actions()
-	{
-		$actions = array();
-		$post_type_obj = get_post_type_object($this->screen->post_type);
-
-		if (current_user_can($post_type_obj->cap->edit_posts)) {
-			if ($this->is_trash) {
-				$actions['untrash'] = __('Restore', 'groove-folios');
-			} else {
-				$actions['edit'] = __('Edit', 'groove-folios');
-			}
-		}
-
-		if (current_user_can($post_type_obj->cap->delete_posts)) {
-			if ($this->is_trash || !EMPTY_TRASH_DAYS) {
-				$actions['delete'] = __('Delete permanently', 'groove-folios');
-			} else {
-				$actions['trash'] = __('Move to Trash', 'groove-folios');
-			}
-		}
-
-		return $actions;
-	}
-
-	protected function count_posts()
-	{
-		global $wpdb;
-
-		$post_type = $this->screen->post_type;
-		$meta_key = 'folio_id';
-		$counts = array_fill_keys(get_post_stati(), 0);
-
-		if (isset($_REQUEST['folio_id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are counted.
-			$meta_value = absint(wp_unslash($_REQUEST['folio_id'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are counted.
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Per-status page counts for one folio; core has no API that counts posts by meta value, and the counts must be fresh after each bulk action.
-			$results = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT p.post_status, COUNT(*) AS num_posts
-						FROM $wpdb->posts AS p
-						INNER JOIN $wpdb->postmeta AS pm ON p.ID = pm.post_id
-						WHERE p.post_type = %s
-						AND pm.meta_key = %s
-						AND pm.meta_value = %d
-						GROUP BY p.post_status",
-					$post_type,
-					$meta_key,
-					$meta_value
-				)
-			);
-
-			foreach ((array) $results as $result) {
-				if (!isset($result->post_status) || !isset($result->num_posts)) {
-					continue;
-				}
-
-				$counts[$result->post_status] = (int) $result->num_posts;
-			}
-		}
-
-		return $counts;
-	}
-
-	protected function get_views()
-	{
-		$post_type = $this->screen->post_type;
-		$avail_post_stati = get_available_post_statuses($post_type);
-
-		$status_links = array();
-		$num_posts = (array) $this->count_posts();
-		$total_posts = array_sum($num_posts);
-		$class = '';
-
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- get_views() only reads view parameters (folio, theme, tab, status, author) to build filter links; it changes nothing.
-		$current_user_id = get_current_user_id();
-		$all_args = array(
-			'page' => $this->page::PAGE_ID,
-			'folio_id' => isset($_REQUEST['folio_id']) ? absint(wp_unslash($_REQUEST['folio_id'])) : null,
-			'theme_id' => isset($_REQUEST['theme_id']) ? sanitize_key(wp_unslash($_REQUEST['theme_id'])) : null,
-			'tab_key' => isset($_REQUEST['tab_key']) ? sanitize_key(wp_unslash($_REQUEST['tab_key'])) : null,
-		);
-		$mine = '';
-
-		// Subtract post types that are not included in the admin all list.
-		foreach (get_post_stati(array('show_in_admin_all_list' => false)) as $state) {
-			$total_posts -= isset($num_posts[$state]) ? $num_posts[$state] : 0;
-		}
-
-		if ($this->user_posts_count && $this->user_posts_count !== $total_posts) {
-			if (isset($_GET['author']) && ($current_user_id === (int) $_GET['author'])) {
-				$class = 'current';
-			}
-
-			$mine_args = array(
-				'post_type' => $post_type,
-				'author' => $current_user_id,
-				'theme_id' => isset($_REQUEST['theme_id']) ? sanitize_key(wp_unslash($_REQUEST['theme_id'])) : null,
-				'folio_id' => isset($_REQUEST['folio_id']) ? absint(wp_unslash($_REQUEST['folio_id'])) : null,
-				'tab_key' => isset($_REQUEST['tab_key']) ? sanitize_key(wp_unslash($_REQUEST['tab_key'])) : null,
-			);
-
-			$mine_inner_html = sprintf(
-				/* translators: %s: Number of posts. */
-				_nx(
-					'Mine <span class="count">(%s)</span>',
-					'Mine <span class="count">(%s)</span>',
-					$this->user_posts_count,
-					'posts'
-				, 'groove-folios'),
-				number_format_i18n($this->user_posts_count)
-			);
-
-			$mine = array(
-				'url' => esc_url(add_query_arg($mine_args, 'edit.php')),
-				'label' => $mine_inner_html,
-				'current' => isset($_GET['author']) && ($current_user_id === (int) $_GET['author']),
-			);
-
-			$all_args['all_posts'] = 1;
-			$class = '';
-		}
-
-		$all_inner_html = sprintf(
-			/* translators: %s: Number of posts. */
-			_nx(
-				'All <span class="count">(%s)</span>',
-				'All <span class="count">(%s)</span>',
-				$total_posts,
-				'posts'
-			, 'groove-folios'),
-			number_format_i18n($total_posts)
-		);
-
-		$status_links['all'] = array(
-			'url' => esc_url(add_query_arg($all_args, 'admin.php')),
-			'label' => $all_inner_html,
-			'current' => empty($class) && ($this->is_base_request() || isset($_REQUEST['all_posts'])),
-		);
-
-		if ($mine) {
-			$status_links['mine'] = $mine;
-		}
-
-		foreach (get_post_stati(array('show_in_admin_status_list' => true), 'objects') as $status) {
-			$class = '';
-
-			$status_name = $status->name;
-			$status_count = isset($num_posts[$status_name]) ? $num_posts[$status_name] : 0;
-
-			if (!in_array($status_name, $avail_post_stati, true) || empty($status_count)) {
-				continue;
-			}
-
-			if (isset($_REQUEST['post_status']) && $status_name === $_REQUEST['post_status']) {
-				$class = 'current';
-			}
-
-			$status_args = array(
-				'post_status' => $status_name,
-				'page' => $this->page::PAGE_ID,
-				'tab_key' => isset($_REQUEST['tab_key']) ? sanitize_key(wp_unslash($_REQUEST['tab_key'])) : null,
-				'folio_id' => isset($_REQUEST['folio_id']) ? absint(wp_unslash($_REQUEST['folio_id'])) : null,
-				'theme_id' => isset($_REQUEST['theme_id']) ? sanitize_key(wp_unslash($_REQUEST['theme_id'])) : null
-			);
-
-			// The status's own label, already translated by whoever registered the
-			// status, plus the count. Not the status's plural label_count: handing
-			// that to a gettext function passes a variable, which the translation
-			// parser cannot read, so it is not a translatable string.
-			$status_label = sprintf(
-				'%1$s <span class="count">(%2$s)</span>',
-				esc_html($status->label),
-				number_format_i18n($status_count)
-			);
-
-			$status_links[$status_name] = array(
-				'url' => esc_url(add_query_arg($status_args, 'admin.php')),
-				'label' => $status_label,
-				'current' => isset($_REQUEST['post_status']) && $status_name === $_REQUEST['post_status'],
-			);
-		}
-
-		if (!empty($this->sticky_posts_count)) {
-			$class = !empty($_REQUEST['show_sticky']) ? 'current' : '';
-
-			$sticky_args = array(
-				'post_type' => $post_type,
-				'show_sticky' => 1,
-			);
-
-			$sticky_inner_html = sprintf(
-				/* translators: %s: Number of posts. */
-				_nx(
-					'Sticky <span class="count">(%s)</span>',
-					'Sticky <span class="count">(%s)</span>',
-					$this->sticky_posts_count,
-					'posts'
-				, 'groove-folios'),
-				number_format_i18n($this->sticky_posts_count)
-			);
-
-			$sticky_link = array(
-				'sticky' => array(
-					'url' => esc_url(add_query_arg($sticky_args, 'edit.php')),
-					'label' => $sticky_inner_html,
-					'current' => !empty($_REQUEST['show_sticky']),
-				),
-			);
-
-			// Sticky comes after Publish, or if not listed, after All.
-			$split = 1 + array_search((isset($status_links['publish']) ? 'publish' : 'all'), array_keys($status_links), true);
-			$status_links = array_merge(array_slice($status_links, 0, $split), $sticky_link, array_slice($status_links, $split));
-		}
-
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-		return $this->get_views_links($status_links);
-	}
 
 	protected function get_primary_column_name()
 	{
@@ -507,100 +304,6 @@ class List_Table extends \WP_List_Table
 		}
 
 		return $post[$column_name];
-	}
-
-	public function get_query_args()
-	{
-		$args = array(
-			'post_type' => $this->post_type
-		);
-
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only view parameters (sort column, sort direction, status filter) that only shape the list query.
-		if (isset($_REQUEST['orderby'])) {
-			$args['orderby'] = sanitize_text_field(wp_unslash($_REQUEST['orderby']));
-		}
-
-		if (isset($_REQUEST['order'])) {
-			$args['order'] = sanitize_key(wp_unslash($_REQUEST['order']));
-		}
-
-		if (isset($_REQUEST['post_status'])) {
-			$args['post_status'] = sanitize_key(wp_unslash($_REQUEST['post_status']));
-		}
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-		return $args;
-	}
-
-	public function get_wp_query()
-	{
-		$args = $this->get_query_args();
-		$wp_query = new \WP_Query($args);
-
-		return $wp_query;
-	}
-
-	public function prepare_items()
-	{
-		$this->wp_query = $this->get_wp_query();
-
-		$avail_post_stati = wp_edit_posts_query();
-		$post_status = isset($_REQUEST['post_status']) ? sanitize_key(wp_unslash($_REQUEST['post_status'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the status filter.
-
-		$this->set_hierarchical_display(
-			is_post_type_hierarchical($this->screen->post_type)
-			&& 'menu_order title' === $this->wp_query->query['orderby']
-		);
-
-		$post_type = $this->screen->post_type;
-		$per_page = $this->get_items_per_page('edit_' . $post_type . '_per_page');
-
-		$per_page = apply_filters('edit_posts_per_page', $per_page, $post_type); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core's posts-per-page hook, applied deliberately so the screen honours the same setting as core posts lists.
-
-		if ($this->hierarchical_display) {
-			$total_items = $this->wp_query->post_count;
-		} elseif ($this->wp_query->found_posts || $this->get_pagenum() === 1) {
-			$total_items = $this->wp_query->found_posts;
-		} else {
-			$post_counts = (array) wp_count_posts($post_type, 'readable');
-
-			if ('' !== $post_status && in_array($post_status, $avail_post_stati, true)) {
-				$total_items = isset($post_counts[$post_status]) ? $post_counts[$post_status] : 0;
-			} elseif (!empty($_REQUEST['show_sticky'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the sticky-posts filter.
-				$total_items = $this->sticky_posts_count;
-			} elseif (isset($_GET['author']) && get_current_user_id() === (int) $_GET['author']) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the author filter.
-				$total_items = $this->user_posts_count;
-			} else {
-				$total_items = array_sum($post_counts);
-
-				// Subtract post types that are not included in the admin all list.
-				foreach (get_post_stati(array('show_in_admin_all_list' => false)) as $state) {
-					$total_items -= isset($post_counts[$state]) ? $post_counts[$state] : 0;
-				}
-			}
-		}
-
-		$this->is_trash = 'trash' === $post_status;
-
-		$this->set_pagination_args(
-			array(
-				'total_items' => $total_items,
-				'per_page' => $per_page,
-			)
-		);
-
-		$this->items = $this->wp_query->posts;
-
-		unset($this->wp_query);
-	}
-
-	public function no_items()
-	{
-		if (isset($_REQUEST['post_status']) && 'trash' === $_REQUEST['post_status']) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the status filter.
-			echo esc_html(get_post_type_object($this->screen->post_type)->labels->not_found_in_trash);
-		} else {
-			echo esc_html(get_post_type_object($this->screen->post_type)->labels->not_found);
-		}
 	}
 
 	public function single_row($post)
@@ -840,7 +543,7 @@ class List_Table extends \WP_List_Table
 												} // current_user_can( 'edit_others_posts' )
 								
 												if (!$bulk) {
-													echo $authors_dropdown; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Label built above from escaped parts around wp_dropdown_users() markup, which core escapes; kses would requote its attributes.
+													echo wp_kses($authors_dropdown, self::dropdown_allowed_html());
 												}
 											} // post_type_supports( ... 'author' )
 											?>
@@ -904,7 +607,7 @@ class List_Table extends \WP_List_Table
 
 											<?php
 											if (post_type_supports($screen->post_type, 'author') && $bulk) {
-												echo $authors_dropdown; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Label built above from escaped parts around wp_dropdown_users() markup, which core escapes; kses would requote its attributes.
+												echo wp_kses($authors_dropdown, self::dropdown_allowed_html());
 											}
 											?>
 
@@ -943,7 +646,9 @@ class List_Table extends \WP_List_Table
 														 */
 														$dropdown_args = apply_filters('quick_edit_dropdown_pages_args', $dropdown_args, $bulk); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core's quick_edit_dropdown_pages_args hook, applied deliberately so this Quick Edit panel behaves like core's for other plugins.
 
-														wp_dropdown_pages($dropdown_args); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- wp_dropdown_pages() prints markup it escapes itself.
+														// Returned rather than printed, so it is escaped where it is echoed.
+														$dropdown_args['echo'] = 0;
+														echo wp_kses(wp_dropdown_pages($dropdown_args), self::dropdown_allowed_html());
 														?>
 													</label>
 

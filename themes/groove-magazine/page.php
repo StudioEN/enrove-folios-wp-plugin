@@ -278,7 +278,7 @@ class Page extends Base_Theme
                                 <?php echo esc_html($this->title); ?>
                             </h1>
                             <div class="gm-page__content">
-                                <?php echo $this->get_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block-rendered post content, escaped by core; kses would strip embed iframes. ?>
+                                <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
                             </div>
                             <?php $this->display_footer() ?>
                         </article>

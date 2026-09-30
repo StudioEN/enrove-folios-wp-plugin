@@ -12,16 +12,6 @@ class Folio_Page_List_Table extends List_Table
   function __construct(Folio $page, $post_type)
   {
     parent::__construct($page, $post_type);
-
-    add_filter('get_edit_post_link', [$this, 'edit_post_link'], 10, 3);
-  }
-
-  public function edit_post_link($link, $post_id, $context)
-  {
-    if ($context === 'display' && isset($_REQUEST['folio_id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are listed.
-      $link = $link . '&folio_id=' . (int) $_REQUEST['folio_id']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are listed.
-    }
-    return $link;
   }
 
   public function get_columns()
@@ -87,16 +77,16 @@ class Folio_Page_List_Table extends List_Table
 
       if ($lock_holder) {
         $lock_holder = get_userdata($lock_holder);
-        $locked_avatar = get_avatar($lock_holder->ID, 18);
         /* translators: %s: Display name of the user editing the page. */
         $locked_text = sprintf(__('%s is currently editing', 'groove-folios'), $lock_holder->display_name);
       } else {
-        $locked_avatar = '';
         $locked_text = '';
       }
 
-      // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $locked_avatar is get_avatar() markup, which escapes its own attributes; kses would requote them.
-      echo '<div class="locked-info"><span class="locked-avatar">' . $locked_avatar . '</span> <span class="locked-text">' . esc_html($locked_text) . "</span></div>\n";
+      echo '<div class="locked-info"><span class="locked-avatar">';
+      // get_avatar() straight into the echo: wp_kses_post() would strip the avatar's srcset and decoding.
+      echo $lock_holder ? get_avatar($lock_holder->ID, 18) : '';
+      echo '</span> <span class="locked-text">' . esc_html($locked_text) . "</span></div>\n";
     }
 
     $pad = str_repeat('&#8212; ', $this->current_level);
@@ -131,25 +121,6 @@ class Folio_Page_List_Table extends List_Table
     echo "</strong>\n";
 
     get_inline_data($post);
-  }
-
-  public function get_query_args()
-  {
-    $args = parent::get_query_args();
-
-    if (isset($_REQUEST['folio_id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are listed.
-      // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- A page belongs to its folio only through folio_id post meta, so filtering by folio needs a meta query.
-      $args['meta_query'] = array(
-        array(
-          'key' => 'folio_id',
-          'value' => absint(wp_unslash($_REQUEST['folio_id'])), // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio whose pages are listed.
-          'compare' => '=',
-          'type' => 'NUMERIC'
-        )
-      );
-    }
-
-    return $args;
   }
 }
 ?>

@@ -7,6 +7,13 @@ if (!defined('ABSPATH')) {
 
 class Utils
 {
+  /**
+   * Public query vars the front end routes on (registered in Plugin): a
+   * folio by ID for drafts and previews, and the theme picker's preview.
+   * WordPress parses them, so routing reads get_query_var(), never $_GET.
+   */
+  const ROUTE_QUERY_VARS = array('folio_id', 'groove_preview', 'groove_theme_preview');
+
   static function can_preview_unpublished_posts()
   {
     if (is_admin() || (is_user_logged_in() && current_user_can('edit_posts'))) {
@@ -558,7 +565,8 @@ class Utils
       }
     }
     else {
-      return isset($_GET['post_type']) ? sanitize_key(wp_unslash($_GET['post_type'])) : 'groove_folio'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only front-end routing parameter; nothing is written.
+      $post_type = get_query_var('post_type');
+      return is_string($post_type) && $post_type !== '' ? sanitize_key($post_type) : 'groove_folio';
     }
   }
 
@@ -566,15 +574,15 @@ class Utils
   {
     // Prefer explicit ID params over slug-based lookup so ?folio_id=N URLs
     // work reliably for drafts (which have no post_name in the DB).
-    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only front-end routing: public query vars that pick which folio to render, like core's ?p=; nothing is written.
-    if (!empty($_GET['folio_id'])) {
-      return intval(wp_unslash($_GET['folio_id']));
+    $query_folio_id = absint(get_query_var('folio_id'));
+    if ($query_folio_id > 0) {
+      return $query_folio_id;
     }
 
-    if (!empty($_GET['p'])) {
-      return intval(wp_unslash($_GET['p']));
+    $query_post_id = absint(get_query_var('p'));
+    if ($query_post_id > 0) {
+      return $query_post_id;
     }
-    // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
     if (Utils::is_groove_post_name_url()) {
       $post = Utils::get_groove_post_by_post_type_and_post_name();

@@ -70,7 +70,18 @@ That template resolves the theme, renders the password gate or a 404, and otherw
 
 ### Folio ↔ page linkage
 
-A `groove_folio_page` belongs to a folio via `folio_id` post meta, which `includes/plugin.php` backfills from the URL on classic saves (`save_post_groove_folio_page`) and from the Referer header on block-editor saves (`rest_after_insert_groove_folio_page`); the same hooks keep the slug in sync with the title. That meta goes stale after duplicate-then-delete, so **resolution is URL-first, meta second** — use `Base_Theme::resolve_page_folio_id()` in `Page` subclasses rather than reading the meta directly. Page order within a folio is `menu_order`.
+A `groove_folio_page` belongs to a folio via `folio_id` post meta. It is written once, when post-new.php creates the page's auto-draft from an Add Page link: `Contents\FolioPage\Content::verify_add_page_link()` (on `load-post-new.php`) checks that link's nonce before reading `folio_id`, then `edit_post` on the folio. Build the link with `Content::get_add_page_url()`. No save hook reads a folio from the request or the Referer, and admin code (the block editor, `Theme_Blocks::get_editor_folio_id()`) reads the meta. On the front end **resolution is URL-first, meta second**: use `Base_Theme::resolve_page_folio_id()` in `Page` subclasses rather than reading the meta directly. `includes/plugin.php` keeps the slug in sync with the title. Page order within a folio is `menu_order`.
+
+### Request parameters
+
+WordPress.org review asks for a nonce check before any `$_GET`/`$_POST`/`$_REQUEST` read, read-only view parameters included; phpcs:ignore justifications were not accepted. So on admin screens:
+
+- **View parameters** (which folio, tab, list filter/search/sort/page, and action outcomes such as `bulk_action`) are read only through `Groove\Utils\Request` ([utils/request.php](utils/request.php)), which verifies a `_groove_view` nonce before reading. Build every admin link that carries one with `Request::admin_url()` (or `Folio::get_edit_url()`), add `Request::nonce_field()` to a GET form, and sign redirects the same way. An unsigned link reads as the default view.
+- **Which screen this is**: core's `global $plugin_page` / `$pagenow`, not `$_GET['page']`.
+- **Handlers** verify their nonce first, before reading any field (bulk forms: check `isset()` of the nonce field, `check_admin_referer()`, then read `action`), then check a capability on the object the input names.
+- **Front-end routing** (`folio_id`, `p`, `groove_preview`, `groove_theme_preview`) uses registered query vars and `get_query_var()` (`Utils::ROUTE_QUERY_VARS`); public URLs cannot carry nonces.
+
+`php <plugin-check>/vendor/bin/phpcs --standard=WordPress --sniffs=WordPress.Security.NonceVerification --ignore-annotations` over the shipped files should report nothing.
 
 ### Admin assets
 
@@ -86,7 +97,7 @@ Use `\Groove\Toast` ([includes/toast.php](includes/toast.php)) for action outcom
 
 - Tabs for indentation in PHP in most files (the repo is mixed; match the file you're in). `.editorconfig` covers JSON/YAML/Markdown only.
 - Every PHP file starts with an `if (!defined('ABSPATH')) exit;` guard. The one exception is theme `setup.php`: the contract requires a literal array with no calls, and a direct request to one prints nothing.
-- Code must pass WordPress.org's Plugin Check. That means no `<?=` short echo tags (write `<?php echo …; ?>`), no heredoc/nowdoc, output escaped late in the right context, `/* translators: */` comments on placeholder strings, and `wp_unslash()` plus sanitising on every `$_GET`/`$_POST` read. Folio page body content is the exception to escaping: it is block-rendered by core, and `wp_kses_post` would strip the embed iframes. A `phpcs:ignore` must name the exact sniff and give a true reason. The local `.claude/scripts/pcp-lint.sh FILE…` runs the same sniffs in seconds (when present; it is not tracked).
+- Code must pass WordPress.org's Plugin Check. That means no `<?=` short echo tags (write `<?php echo …; ?>`), no heredoc/nowdoc, output escaped late in the right context, `/* translators: */` comments on placeholder strings, and `wp_unslash()` plus sanitising on every `$_GET`/`$_POST` read. Folio page body content is escaped too, with `wp_kses($this->get_content(), static::get_content_allowed_html())` in every `page.php` (the post allowlist plus embed iframes, SVG, `<source>`, the Search form); review rejected a `phpcs:ignore` on it. A value written into inline CSS is validated where it is interpolated and the CSS passed through `wp_strip_all_tags()` at the `wp_add_inline_style()` call. A `phpcs:ignore` must name the exact sniff and give a true reason, and is no defence for escaping or nonces: review reads past them (see Request parameters). The local `.claude/scripts/pcp-lint.sh FILE…` runs the same sniffs in seconds (when present; it is not tracked).
 - Text domain is `groove-folios` (it must equal the WordPress.org slug) for all i18n, including strings copied from core. Translations load just in time; there is no `load_plugin_textdomain()` call.
 - Managers and singletons follow the same `instance()` / `__clone()` / `__wakeup()` shape — copy an existing one when adding a module or content type.
 - `CHANGELOG.md` is kept in prose-heavy Keep-a-Changelog form under `## [Unreleased]`; add entries there for user-visible changes.

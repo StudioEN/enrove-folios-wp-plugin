@@ -1006,53 +1006,6 @@ body.groove .g-folio__sample-info .dashicons {
 
 .g-folio__footer-version {}
 
-#g-folio-save-indicator {
-  position: fixed;
-  left: 50%;
-  bottom: 22px;
-  right: auto;
-  z-index: 9999;
-  background: var(--g-blue-0);
-  border: 1px solid var(--g-border-strong);
-  border-radius: 999px;
-  color: var(--g-text);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  padding: 10px 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  pointer-events: none;
-  opacity: 0;
-  visibility: hidden;
-  transform: translate(-50%, 8px);
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-#g-folio-save-indicator.is-visible {
-  opacity: 1;
-  visibility: visible;
-  transform: translate(-50%, 0);
-}
-
-#g-folio-save-indicator.is-saving {
-  background: var(--g-yellow-0);
-  border-color: var(--g-yellow-30);
-  color: var(--g-yellow-70);
-}
-
-#g-folio-save-indicator.is-saved,
-#g-folio-save-indicator.is-visible:not(.is-saving):not(.is-error):not(.is-saved) {
-  background: var(--g-green-0);
-  border-color: var(--g-green-40);
-  color: var(--g-green-70);
-}
-
-#g-folio-save-indicator.is-error {
-  background: var(--g-red-0);
-  border-color: var(--g-red-40);
-  color: var(--g-red-70);
-}
-
 .g-folio__blocks {
   width: 650px;
 }
@@ -3049,10 +3002,11 @@ body.groove .button.g-dialog-confirm__destroy:focus {
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
-  /* Parked in the corner rather than centred: the bottom of the viewport is
-     already spoken for by #g-folio-save-indicator, and an outcome that lands
-     in the same place the operator is working reads as an interruption.
-     Never reach past the admin menu on a narrow screen. */
+  /* Parked in the corner rather than centred: an outcome that lands where the
+     operator is working reads as an interruption. Every Groove notification
+     not pinned to a control uses this stack, the folio editor's save status
+     included (grooveStatusToast). Never reach past the admin menu on a narrow
+     screen. */
   max-width: calc(100vw - 48px);
   /* Only the pills themselves take the pointer. */
   pointer-events: none;

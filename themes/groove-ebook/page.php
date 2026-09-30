@@ -77,9 +77,9 @@ class Page extends Base_Theme
     $content = $this->content;
     $blocks = parse_blocks($content);
 
-    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- get_the_post_thumbnail() markup, escaped by core; kses would strip its srcset/sizes/decoding attributes.
-    echo $this->feature_image;
-    $results = '';
+    // The thumbnail leads the body, and reaches the page through the same
+    // wp_kses() as the blocks after it.
+    $results = (string) $this->feature_image;
 
     foreach ($blocks as $block) {
       if ($block['blockName'] === 'core/heading') {
@@ -271,7 +271,7 @@ class Page extends Base_Theme
             <div class="g-folio__theme-page-container">
               <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
               <div class="g-folio__theme-page-content">
-                <?php echo $this->get_content(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Block-rendered post content, escaped by core; kses would strip embed iframes. ?>
+                <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
               </div>
               <?php $this->display_footer() ?>
             </div>

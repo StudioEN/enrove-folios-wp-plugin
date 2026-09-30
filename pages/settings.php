@@ -6,6 +6,7 @@ use Groove\Menu\Settings_Menu_Item;
 use Groove\Pages\Overview;
 use Groove\Pages\Page;
 use Groove\Themes\Themes_Manager;
+use Groove\Utils\Request;
 use Groove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
@@ -116,16 +117,17 @@ class Settings extends Page
 
   private function get_settings_tab_url($tab, $args = array())
   {
-    return add_query_arg(
-      array_merge(
-        array(
-          'page' => static::PAGE_ID,
-          'tab_key' => $tab,
-        ),
-        $args
-      ),
-      admin_url('admin.php')
-    );
+    return Request::admin_url(static::PAGE_ID, array_merge(array('tab_key' => $tab), $args));
+  }
+
+  /**
+   * The open tab: one this screen has, or General.
+   *
+   * @return string
+   */
+  private function current_tab()
+  {
+    return Request::choice('tab_key', array_keys((array) $this->get_tabs()), 'general');
   }
 
   private function can_manage_collection_tags()
@@ -147,7 +149,7 @@ class Settings extends Page
 
   private function get_collection_tag_edit_term()
   {
-    $term_id = isset($_GET['edit_collection_tag']) ? intval(wp_unslash($_GET['edit_collection_tag'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tag to open in the edit form; saving it is nonce-checked in handle_collection_tag_save().
+    $term_id = Request::int('edit_collection_tag');
     if ($term_id <= 0) {
       return null;
     }
@@ -979,15 +981,14 @@ class Settings extends Page
       $outcome = $keep ? 'kept' : 'deleted';
     }
 
-    wp_safe_redirect(add_query_arg(
+    wp_safe_redirect(Request::admin_url(
+      Overview::PAGE_ID,
       array(
-        'page' => Overview::PAGE_ID,
         'groove_reset' => $outcome,
         'groove_reset_folios' => $deleted['folios'],
         'groove_reset_pages' => $deleted['pages'],
         'groove_reset_tags' => $deleted['tags'],
-      ),
-      admin_url('admin.php')
+      )
     ));
     exit;
   }
@@ -1762,11 +1763,10 @@ class Settings extends Page
 
   public function display_content()
   {
-    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only view parameters: the tab to show and the outcome code this page's own redirect set after a nonce-checked save.
-    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'general';
-    $message = isset($_GET['message']) ? sanitize_key(wp_unslash($_GET['message'])) : '';
-    $error_code = isset($_GET['error_code']) ? sanitize_key(wp_unslash($_GET['error_code'])) : '';
-    // phpcs:enable WordPress.Security.NonceVerification.Recommended
+    $tab_key = $this->current_tab();
+    // Outcome codes from this screen's own signed redirect after a save.
+    $message = Request::key('message');
+    $error_code = Request::key('error_code');
 
     $this->toast_message($message, $error_code);
     ?>
@@ -1793,15 +1793,13 @@ class Settings extends Page
   public function display_tabs()
   {
     $tabs = $this->get_tabs();
-    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'general'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tab to highlight.
-    $q = $this->parse_query();
+    $tab_key = $this->current_tab();
     ?>
 <nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Settings tabs', 'groove-folios'); ?>">
   <?php
     foreach ($tabs as $tab_id => $tab) {
       $active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
-      $q['tab_key'] = $tab_id;
-      $tab_url = add_query_arg($q, admin_url('admin.php'));
+      $tab_url = $this->get_settings_tab_url($tab_id);
       echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . esc_attr($active_class) . '">' . esc_html($tab['label']) . '</a>';
     }
     ?>

@@ -21,26 +21,9 @@ abstract class Page extends Assets
 	abstract protected function create_tabs();
 	abstract protected function get_title();
 
-	final public static function parse_query()
-	{
-		$query_string = isset($_SERVER['QUERY_STRING']) ? wp_unslash($_SERVER['QUERY_STRING']) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Parsed into an array that callers only pass back through add_query_arg() and esc_url() to rebuild the current admin URL with another tab; sanitize_text_field() would strip %-encoded values before parse_str() decodes them.
-		$query = array();
-		parse_str($query_string, $query);
-
-		return $query;
-	}
-
 	final public static function get_url()
 	{
 		return admin_url('admin.php?page=' . static::PAGE_ID);
-	}
-
-	public function __construct()
-	{
-		$option_page = isset($_POST['option_page']) ? sanitize_key(wp_unslash($_POST['option_page'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only decides whether to register this page's settings fields; wp-admin/options.php verifies the {$option_page}-options nonce before saving anything.
-		if (!empty($option_page) && static::PAGE_ID === $option_page) {
-			add_action('admin_init', [$this, 'register_fields']);
-		}
 	}
 
 	/**
@@ -80,6 +63,89 @@ abstract class Page extends Assets
 		$this->display_button_items($button_items);
 	}
 
+	/**
+	 * Print extra attributes, each escaped where it is printed. A name that is
+	 * not a plain attribute name is skipped, as is a null or false value.
+	 *
+	 * @param array $attrs Attribute name => value.
+	 */
+	protected function print_attributes($attrs)
+	{
+		if (empty($attrs) || !is_array($attrs)) {
+			return;
+		}
+
+		foreach ($attrs as $attr_name => $attr_value) {
+			if (!is_string($attr_name) || !preg_match('/^[a-zA-Z_:][a-zA-Z0-9:._-]*$/', $attr_name)) {
+				continue;
+			}
+			if ($attr_value === null || $attr_value === false) {
+				continue;
+			}
+
+			echo ' ' . esc_attr($attr_name) . '="' . esc_attr((string) $attr_value) . '"';
+		}
+	}
+
+	/**
+	 * A header button's label: its text, or a dashicon with the text kept for
+	 * screen readers.
+	 *
+	 * @param string   $text         Button text.
+	 * @param string[] $icon_classes Sanitised icon classes; empty for a text button.
+	 */
+	protected function print_button_content($text, array $icon_classes)
+	{
+		if (empty($icon_classes)) {
+			echo esc_html($text);
+			return;
+		}
+
+		echo '<span class="' . esc_attr(implode(' ', $icon_classes)) . '" aria-hidden="true"></span>';
+		if ($text !== '') {
+			echo '<span class="screen-reader-text">' . esc_html($text) . '</span>';
+		}
+	}
+
+	/**
+	 * One header button, an <a> for a link item and a <button> for an action item.
+	 *
+	 * @param array    $button_item  The item.
+	 * @param string   $classes      Its class list, unescaped.
+	 * @param string   $text         Button text.
+	 * @param string[] $icon_classes Sanitised icon classes; empty for a text button.
+	 */
+	protected function print_button_item($button_item, $classes, $text, array $icon_classes)
+	{
+		$attrs = isset($button_item['attrs']) ? $button_item['attrs'] : array();
+
+		if (isset($button_item['link'])) {
+			echo '<a href="' . esc_url($button_item['link']) . '" class="' . esc_attr($classes) . '"';
+			$this->print_attributes($attrs);
+			echo '>';
+			$this->print_button_content($text, $icon_classes);
+			echo '</a>';
+			return;
+		}
+
+		if (!isset($button_item['action'])) {
+			return;
+		}
+
+		$button_type = 'submit';
+		if (isset($button_item['button_type']) && in_array($button_item['button_type'], array('submit', 'button'), true)) {
+			$button_type = $button_item['button_type'];
+		}
+
+		echo '<button type="' . esc_attr($button_type) . '" name="action" value="' . esc_attr($button_item['action']) . '" class="' . esc_attr($classes) . '"';
+		$this->print_attributes($attrs);
+		echo '>';
+		$this->print_button_content($text, $icon_classes);
+		echo '</button>';
+	}
+
+	// pages/folio.php display_tabs() loop body:
+
 	public function display_button_items($button_items)
 	{
 		if (!empty($button_items)) {
@@ -92,25 +158,9 @@ abstract class Page extends Assets
 				$text = isset($button_item['text']) ? (string) $button_item['text'] : '';
 				$icon = isset($button_item['icon']) ? trim((string) $button_item['icon']) : '';
 				$has_icon = $icon !== '';
-				$attributes = '';
-
-				if (!empty($button_item['attrs']) && is_array($button_item['attrs'])) {
-					foreach ($button_item['attrs'] as $attr_name => $attr_value) {
-						if (!is_string($attr_name) || !preg_match('/^[a-zA-Z_:][a-zA-Z0-9:._-]*$/', $attr_name)) {
-							continue;
-						}
-						if ($attr_value === null || $attr_value === false) {
-							continue;
-						}
-
-						$attributes .= ' ' . esc_attr($attr_name) . '="' . esc_attr((string) $attr_value) . '"';
-					}
-				}
-
-				$content = esc_html($text);
+				$icon_classes = array();
 				if ($has_icon) {
 					$icon_parts = preg_split('/\s+/', $icon);
-					$icon_classes = array();
 
 					if (!empty($icon_parts)) {
 						foreach ($icon_parts as $icon_part) {
@@ -123,11 +173,6 @@ abstract class Page extends Assets
 
 					if (!in_array('dashicons', $icon_classes, true)) {
 						array_unshift($icon_classes, 'dashicons');
-					}
-
-					$content = '<span class="' . esc_attr(implode(' ', $icon_classes)) . '" aria-hidden="true"></span>';
-					if ($text !== '') {
-						$content .= '<span class="screen-reader-text">' . esc_html($text) . '</span>';
 					}
 				}
 
@@ -155,15 +200,7 @@ abstract class Page extends Assets
 						}
 					}
 
-					if (isset($button_item['link'])) {
-						echo '<a href="' . esc_url($button_item['link']) . '" class="' . esc_attr($wp_classes) . '"' . $attributes . '>' . $content . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $attributes and $content are assembled above from esc_attr()/esc_html()-escaped parts only.
-					} else if (isset($button_item['action'])) {
-						$button_type = 'submit';
-						if (isset($button_item['button_type']) && in_array($button_item['button_type'], array('submit', 'button'), true)) {
-							$button_type = $button_item['button_type'];
-						}
-						echo '<button type="' . esc_attr($button_type) . '" name="action" value="' . esc_attr($button_item['action']) . '" class="' . esc_attr($wp_classes) . '"' . $attributes . '>' . $content . '</button>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $attributes and $content are assembled above from esc_attr()/esc_html()-escaped parts only.
-					}
+					$this->print_button_item($button_item, $wp_classes, $text, $icon_classes);
 					continue;
 				}
 
@@ -175,15 +212,7 @@ abstract class Page extends Assets
 					$classes = $base_classes . ' border border-gray-300 bg-white text-gray-700 hover:bg-gray-50';
 				}
 
-					if (isset($button_item['link'])) {
-						echo '<a href="' . esc_url($button_item['link']) . '" class="g-tailwind-link-reset ' . esc_attr($classes) . '"' . $attributes . '>' . $content . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $attributes and $content are assembled above from esc_attr()/esc_html()-escaped parts only.
-					} else if (isset($button_item['action'])) {
-						$button_type = 'submit';
-						if (isset($button_item['button_type']) && in_array($button_item['button_type'], array('submit', 'button'), true)) {
-							$button_type = $button_item['button_type'];
-						}
-						echo '<button type="' . esc_attr($button_type) . '" name="action" value="' . esc_attr($button_item['action']) . '" class="' . esc_attr($classes) . '"' . $attributes . '>' . $content . '</button>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $attributes and $content are assembled above from esc_attr()/esc_html()-escaped parts only.
-					}
+				$this->print_button_item($button_item, isset($button_item['link']) ? 'g-tailwind-link-reset ' . $classes : $classes, $text, $icon_classes);
 			}
 			echo '</div>';
 		}

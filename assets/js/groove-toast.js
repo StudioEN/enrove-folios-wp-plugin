@@ -1,14 +1,20 @@
 /**
  * Groove toast notifications.
  *
- * A single pill at the bottom of the viewport reports the outcome of an action
+ * A single pill in the bottom-right corner reports the outcome of an action
  * and then leaves. Nothing in the page reflows around it, so the content the
- * operator was reading stays exactly where they left it.
+ * operator was reading stays exactly where they left it. Every Groove
+ * notification that is not pinned to a control lands in this one stack.
  *
  * window.grooveShowToast(message, type, duration)
  *   message  Plain text. Inserted as text, never parsed as HTML.
  *   type     'success' | 'error' | 'warning' | 'info'   (default 'success')
  *   duration Milliseconds before auto-dismiss. 0 keeps it up until dismissed.
+ *
+ * window.grooveStatusToast(key)
+ *   One toast for an operation that reports as it runs ("Saving…", then
+ *   "Saved"): each set(message, type, duration) rewrites the same pill in
+ *   place rather than stacking a new one. Returns { set, hide }.
  *
  * PHP queues toasts through \Groove\Toast, which pushes payloads onto
  * window.GROOVE_TOASTS and calls grooveDrainToasts(). The queue is an array so
@@ -41,29 +47,15 @@
 		return container
 	}
 
-	window.grooveShowToast = function (message, type, duration) {
-		if (!message) {
-			return null
-		}
-
-		if (!document.body) {
-			document.addEventListener('DOMContentLoaded', function () {
-				window.grooveShowToast(message, type, duration)
-			}, { once: true })
-			return null
-		}
-
-		type = type || 'success'
-		duration = typeof duration === 'number' ? duration : 4000
-
+	/**
+	 * Build one toast in the container and return its controller.
+	 */
+	function createToast(onGone) {
 		var container = getContainer()
 
 		var toast = document.createElement('div')
-		toast.className = 'g-toast g-toast--' + type
-
 		var content = document.createElement('div')
 		content.className = 'g-toast__content'
-		content.textContent = message
 
 		var close = document.createElement('button')
 		close.type = 'button'
@@ -75,13 +67,17 @@
 		toast.appendChild(close)
 		container.appendChild(toast)
 
+		var shown = false
+
 		// Paint the toast in its hidden state first so the entrance transition
 		// has something to move from.
 		requestAnimationFrame(function () {
+			shown = true
 			toast.classList.add('is-visible')
 		})
 
 		var timer = null
+		var duration = 0
 		var dismissed = false
 
 		function dismiss() {
@@ -98,6 +94,10 @@
 			toast.classList.remove('is-visible')
 			toast.classList.add('is-leaving')
 
+			if (onGone) {
+				onGone()
+			}
+
 			setTimeout(function () {
 				toast.remove()
 				if (!container.children.length) {
@@ -106,27 +106,82 @@
 			}, EXIT_MS)
 		}
 
-		close.addEventListener('click', dismiss)
-
-		if (duration > 0) {
-			timer = setTimeout(dismiss, duration)
-
-			// Hold the toast while it is being read or reached for.
-			toast.addEventListener('mouseenter', function () {
-				if (timer) {
-					clearTimeout(timer)
-					timer = null
-				}
-			})
-
-			toast.addEventListener('mouseleave', function () {
-				if (!dismissed && !timer) {
-					timer = setTimeout(dismiss, duration)
-				}
-			})
+		function schedule(ms) {
+			if (timer) {
+				clearTimeout(timer)
+				timer = null
+			}
+			duration = ms
+			if (duration > 0) {
+				timer = setTimeout(dismiss, duration)
+			}
 		}
 
-		return dismiss
+		close.addEventListener('click', dismiss)
+
+		// Hold the toast while it is being read or reached for.
+		toast.addEventListener('mouseenter', function () {
+			if (timer) {
+				clearTimeout(timer)
+				timer = null
+			}
+		})
+
+		toast.addEventListener('mouseleave', function () {
+			if (!dismissed && !timer && duration > 0) {
+				timer = setTimeout(dismiss, duration)
+			}
+		})
+
+		return {
+			update: function (message, type, ms) {
+				toast.className = 'g-toast g-toast--' + (type || 'success') + (shown ? ' is-visible' : '')
+				content.textContent = message
+				schedule(ms)
+			},
+			dismiss: dismiss
+		}
+	}
+
+	window.grooveShowToast = function (message, type, duration) {
+		if (!message) {
+			return null
+		}
+
+		if (!document.body) {
+			document.addEventListener('DOMContentLoaded', function () {
+				window.grooveShowToast(message, type, duration)
+			}, { once: true })
+			return null
+		}
+
+		var handle = createToast(null)
+		handle.update(message, type || 'success', typeof duration === 'number' ? duration : 4000)
+
+		return handle.dismiss
+	}
+
+	window.grooveStatusToast = function () {
+		var handle = null
+
+		return {
+			set: function (message, type, duration) {
+				if (!message || !document.body) {
+					return
+				}
+				if (!handle) {
+					handle = createToast(function () {
+						handle = null
+					})
+				}
+				handle.update(message, type || 'info', typeof duration === 'number' ? duration : 0)
+			},
+			hide: function () {
+				if (handle) {
+					handle.dismiss()
+				}
+			}
+		}
 	}
 
 	/**

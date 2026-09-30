@@ -65,6 +65,62 @@ class Markdown
 	}
 
 	/**
+	 * The closed tag vocabulary render() emits, for the wp_kses() its caller
+	 * echoes the result through. It lives beside the renderer so a new
+	 * construct and its tag are added together: a tag render() starts
+	 * emitting without being listed here is silently dropped on the page.
+	 *
+	 * wp_kses_post() is not a substitute: it drops the task-list checkboxes.
+	 *
+	 * @return array Allowed-HTML array for wp_kses().
+	 */
+	public static function allowed_html()
+	{
+		$class = array('class' => true);
+		$heading = array('id' => true, 'class' => true);
+
+		return array(
+			'h1'         => $heading,
+			'h2'         => $heading,
+			'h3'         => $heading,
+			'h4'         => $heading,
+			'h5'         => $heading,
+			'h6'         => $heading,
+			'p'          => $class,
+			'blockquote' => $class,
+			'pre'        => $class,
+			'code'       => $class,
+			'hr'         => $class,
+			'div'        => $class,
+			'span'       => $class,
+			'em'         => array(),
+			'strong'     => array(),
+			'ul'         => $class,
+			'ol'         => array('class' => true, 'start' => true),
+			'li'         => $class,
+			'input'      => array(
+				'type'     => array('values' => array('checkbox')),
+				'class'    => true,
+				'disabled' => true,
+				'checked'  => true,
+			),
+			'table'      => $class,
+			'thead'      => array(),
+			'tbody'      => array(),
+			'tr'         => array(),
+			'th'         => array('scope' => true, 'class' => true),
+			'td'         => $class,
+			'a'          => array(
+				'class'      => true,
+				'href'       => true,
+				'aria-label' => true,
+				'target'     => true,
+				'rel'        => true,
+			),
+		);
+	}
+
+	/**
 	 * The document's headings, in order, as `render()` will emit them.
 	 *
 	 * Feeds the contents rail on the Themes screen, and lets `bin/check-docs.php`

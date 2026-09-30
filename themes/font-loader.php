@@ -38,6 +38,9 @@ class Font_Loader
   /** Roots the CSS variables are injected on when a theme renders. */
   const FRONTEND_SELECTOR = '.g-folio__theme-cover, body.groove [class*="g-folio__theme-"][class$="-page"]';
 
+  /** The block editor canvas: the one other root the variables are set on. */
+  const EDITOR_SELECTOR = '.editor-styles-wrapper';
+
   /** The two typographic roles a folio can set. */
   const ROLES = ['header', 'body'];
 
@@ -108,18 +111,39 @@ class Font_Loader
   }
 
   /**
-   * A font stack is a CSS value we echo inline, so keep it to the characters
-   * a family list can legitimately contain — no braces, semicolons or parens.
+   * A font stack is a CSS value printed inside a <style> element, so it is
+   * rebuilt from its parts rather than filtered. Each comma-separated family
+   * must be a quoted name of letters, digits, spaces, dots, hyphens and
+   * underscores, or a bare CSS identifier (Georgia, -apple-system, serif).
+   * Anything else drops that family, not the whole stack, and a quoted name
+   * always comes back in single quotes, so no brace, semicolon, paren,
+   * backslash, angle bracket or unbalanced quote can reach the CSS.
+   *
+   * Public so the password gate, which interpolates the same stacks into
+   * CSS of its own, can re-validate them where it does.
+   *
+   * @param mixed $value e.g. "'Fraunces', Georgia, serif".
+   * @return string The rebuilt stack, or '' when no family was valid.
    */
-  protected static function sanitize_css_stack($value): string
+  public static function sanitize_css_stack($value): string
   {
-    if (!is_string($value)) {
+    if (!is_string($value) || $value === '') {
       return '';
     }
 
-    $value = preg_replace('/[^A-Za-z0-9 ,\'\-_.]/', '', $value);
+    $families = [];
 
-    return trim((string) $value);
+    foreach (explode(',', $value) as $part) {
+      $part = trim($part);
+
+      if (preg_match('/^([\'"])([A-Za-z0-9][A-Za-z0-9 ._-]{0,62})\1$/', $part, $matches)) {
+        $families[] = "'" . trim($matches[2]) . "'";
+      } elseif (strlen($part) <= 64 && preg_match('/^-?[A-Za-z][A-Za-z0-9_-]*(?: -?[A-Za-z][A-Za-z0-9_-]*)*$/', $part)) {
+        $families[] = $part;
+      }
+    }
+
+    return implode(', ', array_slice($families, 0, 12));
   }
 
   /**
@@ -266,20 +290,31 @@ class Font_Loader
    * `--g-folio-primary-font` is the pre-role-split name and stays aliased to
    * the body font for older theme CSS (groove-ebook still reads it).
    *
+   * Every value is validated again here, where it is interpolated, and not
+   * only when it was read: the selector must be one of the two this class
+   * declares, and each stack goes back through sanitize_css_stack().
+   *
    * @param array  $resolved Output of resolve().
-   * @param string $selector Root(s) the properties are set on.
-   * @return string Empty when nothing resolved.
+   * @param string $selector FRONTEND_SELECTOR or EDITOR_SELECTOR.
+   * @return string Empty when nothing resolved or the selector is not one of ours.
    */
   public static function build_inline_css(array $resolved, string $selector): string
   {
-    $declarations = [];
-
-    if (!empty($resolved['header']['css_stack'])) {
-      $declarations[] = '--g-folio-header-font: ' . $resolved['header']['css_stack'];
+    if (!in_array($selector, [self::FRONTEND_SELECTOR, self::EDITOR_SELECTOR], true)) {
+      return '';
     }
 
-    if (!empty($resolved['body']['css_stack'])) {
-      $declarations[] = '--g-folio-body-font: ' . $resolved['body']['css_stack'];
+    $header_stack = self::sanitize_css_stack($resolved['header']['css_stack'] ?? '');
+    $body_stack = self::sanitize_css_stack($resolved['body']['css_stack'] ?? '');
+
+    $declarations = [];
+
+    if ($header_stack !== '') {
+      $declarations[] = '--g-folio-header-font: ' . $header_stack;
+    }
+
+    if ($body_stack !== '') {
+      $declarations[] = '--g-folio-body-font: ' . $body_stack;
       $declarations[] = '--g-folio-primary-font: var(--g-folio-body-font)';
       $declarations[] = 'font-family: var(--g-folio-body-font)';
     }
@@ -299,7 +334,7 @@ class Font_Loader
    * @param array  $resolved       Output of resolve().
    * @param string $inline_handle  Style handle the variables ride on. Registered
    *                               as an empty handle when it does not exist yet.
-   * @param string $selector       Root(s) the variables are set on.
+   * @param string $selector       FRONTEND_SELECTOR or EDITOR_SELECTOR.
    */
   public static function enqueue(array $resolved, string $inline_handle, string $selector = self::FRONTEND_SELECTOR): void
   {
@@ -319,6 +354,8 @@ class Font_Loader
     }
 
     wp_enqueue_style($inline_handle);
-    wp_add_inline_style($inline_handle, $inline_css);
+    // Late escape for a <style> element: every value was validated where
+    // build_inline_css() interpolated it, and no tag can survive this.
+    wp_add_inline_style($inline_handle, wp_strip_all_tags($inline_css));
   }
 }

@@ -8,6 +8,8 @@ use Groove\Menu\Folio_Menu_Item;
 use Groove\List\Folio_Page_List_Table;
 use Groove\List\Folio_List_Table;
 use Groove\Themes\Default_Themes;
+use Groove\Contents\FolioPage\Content as Folio_Page_Content;
+use Groove\Utils\Request;
 use Groove\Utils\Utils;
 
 
@@ -20,6 +22,8 @@ class Folio extends Page
 {
   const PAGE_ID = 'groove-folio';
   const POST_TYPE = 'groove_folio_page';
+  /** save_folio() status for Save and autosave: whatever the folio has now. */
+  const KEEP_STATUS = '__keep__';
 
   private $folio;
   private $fields;
@@ -32,7 +36,61 @@ class Folio extends Page
     $this->add_post_action('save_groove_folio_unpublish', 'save_folio_unpublish');
     $this->add_post_action('auto_save_groove_folio', 'auto_save_folio');
 
-    $folio_id = (int) Utils::get_groove_post_id();
+    add_action('wp_ajax_groove_folio_inline_save', [$this, 'inline_save']);
+
+    add_action('groove/menu/register', function (Menu_Manager $menu) {
+      $menu->register(static::PAGE_ID, new Folio_Menu_Item($this));
+    }, Overview::MENU_PRIORITY + 20);
+
+    add_action('current_screen', function () {
+      global $plugin_page;
+      if ($plugin_page !== static::PAGE_ID) {
+        return;
+      }
+
+      // The folio is named only by a signed link (Utils\Request), and
+      // get_folio_fields() opens it only for a user who may edit it. Anything
+      // else (an old bookmark, an expired link) goes back to All Folios.
+      if (!$this->get_folio_fields()) {
+        $this->redirect_to_all_folios('folio_link');
+      }
+
+      $this->create_header_buttons((int) $this->folio->ID);
+
+      // A bulk action redirects, so it runs before the admin header prints.
+      if ($this->current_tab() === 'pages') {
+        $this->process_pages_tab_bulk_action(
+          (int) $this->folio->ID,
+          $this->get_pages_tab_current_status(),
+          $this->get_pages_tab_search_term(),
+          $this->get_pages_tab_current_orderby(),
+          $this->get_pages_tab_current_order(),
+          $this->get_pages_tab_current_paged()
+        );
+      }
+    });
+  }
+
+  /**
+   * The signed URL of the folio editor for one folio.
+   *
+   * @param int   $folio_id
+   * @param array $args     More query arguments (tab_key, list state).
+   * @return string Unescaped; escape it where it is printed.
+   */
+  public static function get_edit_url($folio_id, array $args = array())
+  {
+    return Request::admin_url(static::PAGE_ID, array_merge(array('folio_id' => (int) $folio_id), $args));
+  }
+
+  /**
+   * The header's buttons for the open folio. Built on this screen only, from
+   * the folio get_folio_fields() verified, not on every request.
+   *
+   * @param int $folio_id
+   */
+  private function create_header_buttons($folio_id)
+  {
     $folio_copy_link = '';
     $is_published = false;
     if ($folio_id > 0) {
@@ -61,7 +119,7 @@ class Folio extends Page
     $preview_tooltip_text = $is_published ? __('View Folio', 'groove-folios') : __('Preview Folio', 'groove-folios');
     $preview_link = $is_published
       ? $folio_copy_link
-      : Utils::get_folio_permalink_by_id(Utils::get_groove_post_id());
+      : Utils::get_folio_permalink_by_id($folio_id);
     $publish_button_type = $is_published ? 'secondary' : 'primary';
     $publish_button_action = $is_published ? 'save_groove_folio_unpublish' : 'save_groove_folio';
     if ($is_published) {
@@ -87,13 +145,9 @@ class Folio extends Page
       array(
         'text' => __('Add Page', 'groove-folios'),
         'type' => '',
-        'link' => add_query_arg(
-          array(
-            'post_type' => 'groove_folio_page',
-            'folio_id' => (int) Utils::get_groove_post_id(),
-          ),
-          admin_url('post-new.php')
-        )
+        // Carries the nonce that Folio_Page_Content::verify_add_page_link()
+        // checks before the new page is linked to this folio.
+        'link' => Folio_Page_Content::get_add_page_url($folio_id),
       )
     ];
 
@@ -148,32 +202,6 @@ class Folio extends Page
       )
     ];
 
-    add_action('save_post', [$this, 'save_post']);
-
-    add_action('wp_ajax_groove_folio_inline_save', [$this, 'inline_save']);
-
-    add_action('groove/menu/register', function (Menu_Manager $menu) {
-      $menu->register(static::PAGE_ID, new Folio_Menu_Item($this));
-    }, Overview::MENU_PRIORITY + 20);
-
-    add_action('current_screen', function () {
-      // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only view parameters: which admin screen and which folio to open; nothing is written.
-      $current_page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
-      if ($current_page !== static::PAGE_ID) {
-        return;
-      }
-
-      $folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0;
-
-      if (!isset($_GET['folio_id'])) {
-        $this->redirect_to_all_folios();
-      } else if (!$folio_id) {
-        $this->redirect_to_all_folios();
-      } else {
-        $this->get_folio_fields();
-      }
-      // phpcs:enable WordPress.Security.NonceVerification.Recommended
-    });
   }
 
   public function inline_save()
@@ -299,31 +327,6 @@ class Folio extends Page
     wp_die();
   }
 
-  public function save_post($post_id)
-  {
-    if ('groove_folio_page' === get_post_type($post_id)) {
-      if ((defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) || wp_is_post_revision($post_id)) {
-        return;
-      }
-      if (!current_user_can('edit_post', $post_id)) {
-        return;
-      }
-      $folio_id = get_post_meta($post_id, 'folio_id', true);
-      // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended -- save_post fires either inside a save whose request verified its own nonce (post.php's update-post_{ID}, Quick Edit's inlineeditnonce) or on core's auto-draft when post-new.php opens (a screen load core runs without a nonce); edit_post is checked above, and the int must name a groove_folio. It only links the page to that folio.
-      if (!$folio_id && isset($_POST['folio_id'])) {
-        $folio_id = intval(wp_unslash($_POST['folio_id']));
-      }
-      if (!$folio_id && isset($_GET['folio_id'])) {
-        $folio_id = intval(wp_unslash($_GET['folio_id']));
-      }
-      // phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.NonceVerification.Recommended
-      if ($folio_id && 'groove_folio' !== get_post_type($folio_id)) {
-        return;
-      }
-      update_post_meta($post_id, 'folio_id', $folio_id);
-    }
-  }
-
   public function get_fields()
   {
     return $this->get_folio_fields();
@@ -331,38 +334,42 @@ class Folio extends Page
 
   public function get_folio_fields()
   {
-    if ($this->folio == null) {
-      if (isset($_GET['folio_id'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the folio this screen edits.
-        $id = intval(wp_unslash($_GET['folio_id'])); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- As above.
-        if (!$id) {
-          $this->redirect_to_all_folios();
-        }
-        $args = array(
-          'posts_per_page' => 1, // 获取一条数据
-          'post__in' => array($id),
-          'post_type' => 'groove_folio',
-          'post_status' => array('draft', 'publish', 'pending', 'private')
-        );
-        $wp_query = new \WP_Query($args);
+    if ($this->folio === null) {
+      $id = Request::int('folio_id');
+      $post = $id > 0 ? get_post($id) : null;
 
-        // The screen needs only edit_posts, so a Contributor reaches it; as in
-        // core, they may open only folios they can edit, not others' drafts.
-        if (!$wp_query->have_posts() || !current_user_can('edit_post', $wp_query->post->ID)) {
-          $this->redirect_to_all_folios();
-        } else {
-          $this->folio = $wp_query->post;
-          $this->fields = new FolioFields($this->folio);
-        }
+      // The screen needs only edit_posts, so a Contributor reaches it; as in
+      // core, they may open only folios they can edit, not others' drafts.
+      if (
+        $post instanceof \WP_Post
+        && $post->post_type === 'groove_folio'
+        && in_array($post->post_status, array('draft', 'publish', 'pending', 'private'), true)
+        && current_user_can('edit_post', $post->ID)
+      ) {
+        $this->folio = $post;
+        $this->fields = new FolioFields($this->folio);
       }
     }
 
     return $this->fields;
   }
 
-  public function redirect_to_all_folios()
+  /**
+   * The open tab: one this folio has, or Setup.
+   *
+   * @return string
+   */
+  private function current_tab()
   {
-    $redirect_url = add_query_arg(array('page' => 'groove-all-folios'), admin_url('admin.php'));
-    wp_safe_redirect($redirect_url);
+    return Request::choice('tab_key', array_keys((array) $this->get_tabs()), 'setup');
+  }
+
+  /**
+   * @param string $notice All_Folios notice to show there, e.g. 'folio_link'.
+   */
+  public function redirect_to_all_folios($notice = '')
+  {
+    wp_safe_redirect(Request::admin_url(All_Folios::PAGE_ID, array('groove_notice' => $notice)));
     exit;
   }
 
@@ -383,16 +390,12 @@ class Folio extends Page
 
   public function save_folio_manual()
   {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only reads the folio's current status; save_folio() runs check_admin_referer('groove_save_folio', 'groove_nonce') before anything is written.
-    $id = isset($_POST['folio_id']) ? intval(wp_unslash($_POST['folio_id'])) : 0;
-    $this->save_folio($this->get_current_folio_status($id, 'draft'));
+    $this->save_folio(self::KEEP_STATUS);
   }
 
   public function auto_save_folio()
   {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only reads the folio's current status; save_folio() runs check_admin_referer('groove_save_folio', 'groove_nonce') before anything is written.
-    $id = isset($_POST['folio_id']) ? intval(wp_unslash($_POST['folio_id'])) : 0;
-    $this->save_folio($this->get_current_folio_status($id, 'draft'));
+    $this->save_folio(self::KEEP_STATUS);
   }
 
   private function get_current_folio_status($id, $fallback_status = 'draft')
@@ -441,6 +444,12 @@ class Folio extends Page
       return;
     }
 
+    // Save and autosave keep the status the folio has. It is looked up only
+    // now, once the nonce and the user's right to edit this folio are checked.
+    if ($post_status === self::KEEP_STATUS) {
+      $post_status = $this->get_current_folio_status($id, 'draft');
+    }
+
     // edit_post is not permission to publish. As in core, a Contributor's
     // Publish is a submission for review, and their pages stay as they are.
     if ($post_status === 'publish' && !self::can_publish_folios()) {
@@ -477,7 +486,7 @@ class Folio extends Page
     $proposal_version = isset($_POST['proposal_version']) ? sanitize_text_field(wp_unslash($_POST['proposal_version'])) : (string) ($fields->proposal_version ?? '');
 
     // Auto-increment version on explicit publish if the user didn't manually change it.
-    $is_explicit_publish = isset($_POST['action']) && $_POST['action'] === 'save_groove_folio';
+    $is_explicit_publish = isset($_POST['action']) && sanitize_key(wp_unslash($_POST['action'])) === 'save_groove_folio';
     $stored_version = (string) ($fields->proposal_version ?? '');
     if ($is_explicit_publish && $proposal_version === $stored_version && preg_match('/^(v?)(\d+)\.(\d+)$/', $proposal_version, $m)) {
       $proposal_version = $m[1] . $m[2] . '.' . ((int) $m[3] + 1);
@@ -690,7 +699,7 @@ class Folio extends Page
     }
 
     $can_manage = current_user_can('manage_options');
-    $fonts_url = add_query_arg(array('page' => 'groove-settings', 'tab_key' => 'fonts'), admin_url('admin.php'));
+    $fonts_url = Request::admin_url(Settings::PAGE_ID, array('tab_key' => 'fonts'));
     // The setup dialog is on this screen while fonts are unsettled; the link
     // opens it there and falls back to the Fonts tab without script.
     $opens_setup = $missing && \Groove\Setup\First_Run::should_offer();
@@ -760,7 +769,7 @@ class Folio extends Page
   public function display_content()
   {
     $tabs = $this->get_tabs();
-    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tab to show.
+    $tab_key = $this->current_tab();
     ?>
     <div class="g-top-bar-tabs-content">
       <?php
@@ -1279,13 +1288,7 @@ class Folio extends Page
     $all_collection_tag_names_list = is_wp_error($all_collection_tags_terms) ? [] : array_map(function ($t) {
       return $t->name;
     }, $all_collection_tags_terms);
-    $collection_tags_settings_url = add_query_arg(
-      array(
-        'page' => 'groove-settings',
-        'tab_key' => 'collections',
-      ),
-      admin_url('admin.php')
-    );
+    $collection_tags_settings_url = Request::admin_url(Settings::PAGE_ID, array('tab_key' => 'collections'));
 
     // Get current theme info for default image fallback
     $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
@@ -1651,23 +1654,16 @@ class Folio extends Page
   public function display_tabs()
   {
     $tabs = $this->get_tabs();
-    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tab to highlight.
-
-    $q = $this->parse_query();
+    $tab_key = $this->current_tab();
     ?>
     <nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Folio tabs', 'groove-folios'); ?>">
       <?php
       foreach ($tabs as $tab_id => $tab) {
         $active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
-        $q['tab_key'] = $tab_id;
-        $tab_url = add_query_arg($q, admin_url('admin.php'));
-        $extra_attrs = '';
-      if (!empty($tab['attrs']) && is_array($tab['attrs'])) {
-        foreach ($tab['attrs'] as $attr_name => $attr_val) {
-          $extra_attrs .= ' ' . esc_attr($attr_name) . '="' . esc_attr($attr_val) . '"';
-        }
-      }
-      echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . esc_attr($active_class) . '"' . $extra_attrs . '>' . esc_html($tab['label']) . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $extra_attrs is built just above from esc_attr()-escaped names and values.
+        $tab_url = self::get_edit_url((int) $this->folio->ID, array('tab_key' => $tab_id));
+        echo '<a href="' . esc_url($tab_url) . '" class="nav-tab' . esc_attr($active_class) . '"';
+        $this->print_attributes(isset($tab['attrs']) ? $tab['attrs'] : array());
+        echo '>' . esc_html($tab['label']) . '</a>';
       }
       ?>
     </nav>
@@ -1676,57 +1672,32 @@ class Folio extends Page
 
   private function get_pages_tab_current_status()
   {
-    $status = isset($_GET['post_status']) ? sanitize_key(wp_unslash($_GET['post_status'])) : 'all'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
-    $allowed_statuses = array('all', 'publish', 'draft', 'pending', 'private', 'trash');
-
-    if (!in_array($status, $allowed_statuses, true)) {
-      return 'all';
-    }
-
-    return $status;
+    return Request::choice('post_status', array('all', 'publish', 'draft', 'pending', 'private', 'trash'), 'all');
   }
 
   private function get_pages_tab_search_term()
   {
-    return isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
+    return Request::text('s');
   }
 
   private function get_pages_tab_current_paged()
   {
-    return max(1, isset($_GET['paged']) ? intval(wp_unslash($_GET['paged'])) : 1); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
+    return max(1, Request::int('paged', 1));
   }
 
   private function get_pages_tab_current_orderby()
   {
-    $orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash($_GET['orderby'])) : 'modified'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
-    $allowed_orderby = array('title', 'menu_order', 'modified');
-
-    if (!in_array($orderby, $allowed_orderby, true)) {
-      return 'modified';
-    }
-
-    return $orderby;
+    return Request::choice('orderby', array('title', 'menu_order', 'modified'), 'modified');
   }
 
   private function get_pages_tab_current_order()
   {
-    $order = isset($_GET['order']) ? strtoupper(sanitize_key(wp_unslash($_GET['order']))) : 'DESC'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only list-view parameter: filters, sorts or pages the Pages tab; nothing is written.
-    return $order === 'ASC' ? 'ASC' : 'DESC';
+    return strtoupper(Request::key('order')) === 'ASC' ? 'ASC' : 'DESC';
   }
 
   private function build_pages_tab_url($folio_id, $args = array())
   {
-    return add_query_arg(
-      array_merge(
-        array(
-          'page' => static::PAGE_ID,
-          'tab_key' => 'pages',
-          'folio_id' => (int) $folio_id,
-        ),
-        $args
-      ),
-      admin_url('admin.php')
-    );
+    return self::get_edit_url($folio_id, array_merge(array('tab_key' => 'pages'), $args));
   }
 
   private function get_pages_tab_status_label($status)
@@ -1940,36 +1911,23 @@ class Folio extends Page
     );
   }
 
-  private function get_pages_tab_current_bulk_action()
-  {
-    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Only reads which bulk action was chosen; process_pages_tab_bulk_action() runs check_admin_referer('groove_bulk_pages_action') before acting on it.
-    $action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '-1';
-    $action2 = isset($_REQUEST['action2']) ? sanitize_key(wp_unslash($_REQUEST['action2'])) : '-1';
-    // phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-    if ($action !== '-1') {
-      return $action;
-    }
-    if ($action2 !== '-1') {
-      return $action2;
-    }
-
-    return false;
-  }
-
   private function process_pages_tab_bulk_action($folio_id, $status, $search, $orderby, $order, $paged)
   {
-    $action = $this->get_pages_tab_current_bulk_action();
-    if (!$action) {
+    // Only the list form carries this nonce. It is verified before the chosen
+    // action or the selected pages are read.
+    if (!isset($_REQUEST['_groove_bulk_nonce'])) {
       return;
     }
+    check_admin_referer('groove_bulk_pages_action', '_groove_bulk_nonce');
 
+    $action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '-1';
+    if ($action === '-1') {
+      $action = isset($_REQUEST['action2']) ? sanitize_key(wp_unslash($_REQUEST['action2'])) : '-1';
+    }
     $available_actions = $this->get_pages_tab_available_bulk_actions($status);
     if (!isset($available_actions[$action])) {
       return;
     }
-
-    check_admin_referer('groove_bulk_pages_action', '_groove_bulk_nonce');
 
     $post_ids = isset($_REQUEST['post']) ? array_map('intval', (array) wp_unslash($_REQUEST['post'])) : array();
     $post_ids = array_values(array_filter($post_ids));
@@ -2035,15 +1993,9 @@ class Folio extends Page
    */
   private function queue_pages_tab_bulk_toast()
   {
-    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only outcome parameters set by this page's own redirect after a nonce-checked bulk action; they only choose the toast.
-    if (!isset($_GET['bulk_action']) || !isset($_GET['bulk_count'])) {
-      return;
-    }
-
-    $action = sanitize_key(wp_unslash($_GET['bulk_action']));
-    $count = intval(wp_unslash($_GET['bulk_count']));
-    // phpcs:enable WordPress.Security.NonceVerification.Recommended
-    if ($count < 1) {
+    $action = Request::key('bulk_action');
+    $count = Request::int('bulk_count');
+    if ($action === '' || $count < 1) {
       return;
     }
 
@@ -2099,13 +2051,12 @@ class Folio extends Page
 
   public function display_tab_pages()
   {
-    $folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the folio whose pages are listed.
+    $folio_id = (int) $this->folio->ID;
     $status = $this->get_pages_tab_current_status();
     $search = $this->get_pages_tab_search_term();
     $paged = $this->get_pages_tab_current_paged();
     $orderby = $this->get_pages_tab_current_orderby();
     $order = $this->get_pages_tab_current_order();
-    $this->process_pages_tab_bulk_action($folio_id, $status, $search, $orderby, $order, $paged);
 
     $status_counts = $this->get_pages_tab_status_counts($folio_id);
     $bulk_actions = $this->get_pages_tab_available_bulk_actions($status);
@@ -2124,6 +2075,7 @@ class Folio extends Page
       <input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>" />
       <input type="hidden" name="order" value="<?php echo esc_attr($order); ?>" />
       <?php wp_nonce_field('groove_bulk_pages_action', '_groove_bulk_nonce'); ?>
+      <?php Request::nonce_field(); ?>
 
       <ul class="subsubsub">
         <?php
@@ -2276,18 +2228,12 @@ class Folio extends Page
               $post_status = (string) get_post_status($post_id);
               $title = get_the_title($post_id);
               $post_title = $title !== '' ? $title : esc_html__('(no title)', 'groove-folios');
-              $base_edit_url = get_edit_post_link($post_id, '');
-              if ($base_edit_url) {
-                $edit_url = add_query_arg(
-                  array('folio_id' => (int) $folio_id),
-                  $base_edit_url
-                );
-              } else {
+              $edit_url = get_edit_post_link($post_id, '');
+              if (!$edit_url) {
                 $edit_url = add_query_arg(
                   array(
                     'post' => $post_id,
                     'action' => 'edit',
-                    'folio_id' => (int) $folio_id,
                   ),
                   admin_url('post.php')
                 );
@@ -2480,9 +2426,9 @@ class Folio extends Page
 
   public function display_page()
   {
-    $tab_key = isset($_GET['tab_key']) ? sanitize_key(wp_unslash($_GET['tab_key'])) : 'setup'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: which tab to show.
+    $tab_key = $this->current_tab();
 
-    $folio_id = isset($_GET['folio_id']) ? intval(wp_unslash($_GET['folio_id'])) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter: the folio this form edits; the save handler checks the groove_save_folio nonce.
+    $folio_id = (int) $this->folio->ID;
 
     if ($tab_key === 'pages') {
       // The Pages tab holds its own list form, and forms cannot nest, so the

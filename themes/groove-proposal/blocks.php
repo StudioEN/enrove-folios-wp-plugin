@@ -1271,7 +1271,7 @@ function groove_proposal_enqueue_editor_fonts(): void
 
     $resolved = Font_Loader::resolve($folio_id, Cover::get_default_fonts());
 
-    Font_Loader::enqueue($resolved, 'groove-proposal-editor-fonts', '.editor-styles-wrapper');
+    Font_Loader::enqueue($resolved, 'groove-proposal-editor-fonts', Font_Loader::EDITOR_SELECTOR);
 }
 
 /**

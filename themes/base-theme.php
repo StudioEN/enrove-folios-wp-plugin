@@ -114,10 +114,10 @@ abstract class Base_Theme extends Assets
    *   1. The folio slug in the URL path — always correct, even when the page's
    *      folio_id meta is stale (e.g. after duplication + deletion of the source folio).
    *   2. The folio_id meta stored on the page.
-   *   3. A folio_id request parameter (admin previews and query-param URLs).
+   *   3. The folio_id query var (previews and query-param URLs).
    *
-   * When meta is missing entirely, it is backfilled from the URL so admin screens
-   * (which have no folio path to read) resolve the folio too. Meta that merely
+   * Rendering never writes the link: a page joins its folio only through a
+   * nonce-checked Add Page link (Contents\FolioPage\Content). Meta that merely
    * disagrees with the URL is left alone: page lookup in
    * Utils::get_groove_post_by_post_type_and_post_name() is itself scoped by
    * folio_id, so a page that resolved from a folio path already matches it.
@@ -135,12 +135,6 @@ abstract class Base_Theme extends Assets
       $path_folio_id = (int) Utils::get_folio_id_from_current_path();
 
       if ($path_folio_id > 0) {
-        // Repairs a missing link, but only for someone who may edit the page:
-        // an anonymous reader's request must not write to the database.
-        if ($post_id > 0 && $meta_folio_id <= 0 && current_user_can('edit_post', $post_id)) {
-          update_post_meta($post_id, 'folio_id', $path_folio_id);
-        }
-
         return $path_folio_id;
       }
 
@@ -149,8 +143,8 @@ abstract class Base_Theme extends Assets
       }
     }
 
-    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter naming the folio to render; nothing is changed, and get_folio_data() only loads a folio this visitor may view.
-    return isset($_REQUEST['folio_id']) ? intval(wp_unslash($_REQUEST['folio_id'])) : 0;
+    // The folio_id query var (Utils::ROUTE_QUERY_VARS) of a preview URL.
+    return absint(get_query_var('folio_id'));
   }
 
   /**
@@ -642,7 +636,8 @@ abstract class Base_Theme extends Assets
    *
    * Folio page themes render blocks manually and bypass `the_content`,
    * so bare oEmbed URLs (for example Spotify links on their own line)
-   * need explicit processing here.
+   * need explicit processing here. Also removes script and style elements;
+   * the result is meant to be echoed through get_content_allowed_html().
    */
   protected function apply_embed_processing($content)
   {
@@ -657,7 +652,143 @@ abstract class Base_Theme extends Assets
       $content = $wp_embed->autoembed($content);
     }
 
-    return $content;
+    // Script and style elements go whole, contents and all. The wp_kses() the
+    // page template echoes this through removes their tags but would print
+    // what sat between them as text: a Custom HTML block's inline script
+    // would show on the page as code.
+    return (string) preg_replace('@<(script|style)[^>]*?>.*?</\\1>@si', '', $content);
+  }
+
+  /**
+   * The markup a folio page body may print, for the wp_kses() every page.php
+   * echoes get_content() through.
+   *
+   * The post allowlist, plus what rendering adds that core's save-time kses
+   * never sees: oEmbed and cover-background iframes, the SVG icons of social
+   * links and the image lightbox, the Search block's GET form, <source>, and
+   * the srcset/sizes/decoding/fetchpriority core puts on a featured image.
+   *
+   * Deliberately absent: <script>, <style>, iframe srcdoc and every on*
+   * handler. An embed that depends on its provider's script (X, Instagram,
+   * TikTok) prints the provider's own fallback instead: the quoted post and
+   * a link to it.
+   *
+   * @return array Allowed-HTML array for wp_kses().
+   */
+  public static function get_content_allowed_html(): array
+  {
+    static $allowed = null;
+
+    if ($allowed !== null) {
+      return $allowed;
+    }
+
+    $allowed = wp_kses_allowed_html('post');
+
+    // Attributes every added element takes, the way _wp_add_global_attributes()
+    // gives them to core's own post tags (that helper is private, so not called).
+    $common = array(
+      'class'       => true,
+      'id'          => true,
+      'style'       => true,
+      'title'       => true,
+      'role'        => true,
+      'aria-hidden' => true,
+      'aria-label'  => true,
+      'data-*'      => true,
+    );
+
+    // oEmbed players (YouTube, Vimeo, Spotify, SoundCloud, WordPress post
+    // embeds) and the cover block's embedded video background. No srcdoc and
+    // no event handlers; kses already refuses a javascript: or data: src.
+    $allowed['iframe'] = array_merge($common, array(
+      'src'             => true,
+      'name'            => true,
+      'width'           => true,
+      'height'          => true,
+      'allow'           => true,
+      'allowfullscreen' => true,
+      'loading'         => true,
+      'referrerpolicy'  => true,
+      'sandbox'         => true,
+      'security'        => true,
+      'frameborder'     => true,
+      'marginwidth'     => true,
+      'marginheight'    => true,
+      'scrolling'       => true,
+    ));
+
+    // get_the_post_thumbnail() and wp_filter_content_tags() markup.
+    $allowed['img'] = array_merge(isset($allowed['img']) ? $allowed['img'] : array(), array(
+      'srcset'        => true,
+      'sizes'         => true,
+      'decoding'      => true,
+      'fetchpriority' => true,
+    ));
+
+    $allowed['source'] = array(
+      'src'    => true,
+      'srcset' => true,
+      'sizes'  => true,
+      'type'   => true,
+      'media'  => true,
+    );
+
+    // Inline icons: social links, the image lightbox, navigation and search.
+    $svg_paint = array(
+      'fill'            => true,
+      'fill-rule'       => true,
+      'clip-rule'       => true,
+      'stroke'          => true,
+      'stroke-width'    => true,
+      'stroke-linecap'  => true,
+      'stroke-linejoin' => true,
+      'opacity'         => true,
+      'transform'       => true,
+    );
+    $allowed['svg'] = array_merge($common, $svg_paint, array(
+      'xmlns'               => true,
+      'version'             => true,
+      'width'               => true,
+      'height'              => true,
+      'viewbox'             => true,
+      'preserveaspectratio' => true,
+      'focusable'           => true,
+    ));
+    $allowed['g'] = array_merge($common, $svg_paint);
+    $allowed['path'] = array_merge($common, $svg_paint, array('d' => true));
+    $allowed['circle'] = array_merge($common, $svg_paint, array('cx' => true, 'cy' => true, 'r' => true));
+    $allowed['ellipse'] = array_merge($common, $svg_paint, array('cx' => true, 'cy' => true, 'rx' => true, 'ry' => true));
+    $allowed['rect'] = array_merge($common, $svg_paint, array('x' => true, 'y' => true, 'width' => true, 'height' => true, 'rx' => true, 'ry' => true));
+    $allowed['line'] = array_merge($common, $svg_paint, array('x1' => true, 'y1' => true, 'x2' => true, 'y2' => true));
+    $allowed['polygon'] = array_merge($common, $svg_paint, array('points' => true));
+    $allowed['polyline'] = array_merge($common, $svg_paint, array('points' => true));
+
+    // The Search block: a GET form back to this site.
+    $allowed['search'] = isset($allowed['search']) ? $allowed['search'] : $common;
+    $allowed['form'] = array_merge($common, array(
+      'action' => true,
+      'method' => array('values' => array('get')),
+    ));
+    $allowed['input'] = array_merge($common, array(
+      'type'        => array('values' => array('search', 'hidden', 'submit')),
+      'name'        => true,
+      'value'       => true,
+      'placeholder' => true,
+      'required'    => true,
+      'minlength'   => true,
+      'maxlength'   => true,
+      'size'        => true,
+    ));
+
+    /**
+     * Filters the markup a folio page body may print.
+     *
+     * @param array $allowed Allowed-HTML array for wp_kses().
+     */
+    $allowed = (array) apply_filters('groove_folios_content_allowed_html', $allowed);
+
+    return $allowed;
   }
 
   function get_pages_data($id)

@@ -5,6 +5,7 @@ use Groove\Pages\Page;
 use Groove\Pages\Overview;
 use Groove\Menu\Menu_Manager;
 use Groove\Menu\Add_New_Menu_Item;
+use Groove\Utils\Request;
 
 
 if (!defined('ABSPATH')) {
@@ -26,113 +27,122 @@ class Add_New extends Page
     }, Overview::MENU_PRIORITY + 20);
 
     add_action('admin_init', function () {
-      if (!isset($_GET['page']) || sanitize_key(wp_unslash($_GET['page'])) !== static::PAGE_ID) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only: only decides whether to redirect this retired screen to All Folios.
+      global $plugin_page;
+      if ($plugin_page !== static::PAGE_ID) {
         return;
       }
-      wp_safe_redirect(admin_url('admin.php?page=groove-all-folios&open_add_new=1'));
+      wp_safe_redirect(Request::admin_url(All_Folios::PAGE_ID, array('open_add_new' => 1)));
       exit;
     });
   }
 
   public function create_folio()
   {
-    $action = isset($_POST['action']) ? sanitize_key(wp_unslash($_POST['action'])) : '';
-    if ($action === 'groove_create_folio') {
-      check_admin_referer('groove_create_folio_action', 'groove_nonce');
+    // Hooked on admin_post_groove_create_folio, so the action is already
+    // known: the nonce is checked first, before any field is read.
+    check_admin_referer('groove_create_folio_action', 'groove_nonce');
 
-      if (!current_user_can('edit_posts')) {
-        wp_die(esc_html__('You do not have permission to create folios.', 'groove-folios'));
+    if (!current_user_can('edit_posts')) {
+      wp_die(esc_html__('You do not have permission to create folios.', 'groove-folios'));
+    }
+
+    $themes = \Groove\Themes\Themes_Manager::get_all_themes();
+    if (empty($themes)) {
+      wp_die(esc_html__('No themes are available.', 'groove-folios'));
+    }
+
+    $default_theme_id = (string) get_option('groove_default_theme_id', '');
+    if ($default_theme_id === '' || !isset($themes[$default_theme_id])) {
+      $default_theme_id = (string) array_key_first($themes);
+    }
+
+    $theme_id = isset($_POST['themeId']) ? sanitize_key(wp_unslash($_POST['themeId'])) : $default_theme_id;
+    if (empty($theme_id) || !isset($themes[$theme_id])) {
+      wp_die(esc_html__('Invalid theme selection.', 'groove-folios'));
+    }
+    // Any theme shipping a sample-content.php can be seeded. The definition
+    // is null for themes that ship none, which also disables the request.
+    $sample_content = \Groove\Themes\Themes_Manager::get_sample_content($theme_id);
+    // `seed_sample_content` is the current field; `seed_proposal_sample` is
+    // the one this flow used while only groove-proposal could be seeded, still
+    // accepted so a form submitted from a cached page keeps working. The
+    // paired hidden input means '0' arrives when the box is unticked.
+    $seed_requested = false;
+    foreach (array('seed_sample_content', 'seed_proposal_sample') as $field) {
+      if (isset($_POST[$field]) && '1' === sanitize_key(wp_unslash($_POST[$field]))) {
+        $seed_requested = true;
       }
+    }
+    $seed_sample_content = $sample_content !== null && $seed_requested;
 
-      $themes = \Groove\Themes\Themes_Manager::get_all_themes();
-      if (empty($themes)) {
-        wp_die(esc_html__('No themes are available.', 'groove-folios'));
+    $default_status = (string) get_option('groove_default_folio_status', 'draft');
+    if (!in_array($default_status, ['draft', 'publish'], true)) {
+      $default_status = 'draft';
+    }
+
+    // The default is a site setting, not permission to publish: a user who
+    // may only edit (a Contributor) starts a draft, as core would give them.
+    if ($default_status === 'publish' && !\Groove\Pages\Folio::can_publish_folios()) {
+      $default_status = 'draft';
+    }
+
+    // Seeded folios are scaffolding, not finished work. Even when the default
+    // folio status is `publish`, starting from sample content forces a draft
+    // so placeholder copy and stand-in imagery never go live by accident.
+    // Applies to the folio and, via create_sample_pages(), to its pages.
+    if ($seed_sample_content) {
+      $default_status = 'draft';
+    }
+
+    // An explicit default folio title always wins. Left blank, the title comes
+    // from the theme being created, so a magazine starts as "A New Issue" and
+    // a proposal as "A New Proposal" rather than everything sharing one name.
+    $title = trim((string) get_option('groove_default_folio_title', ''));
+    if ($title === '') {
+      $title = \Groove\Themes\Themes_Manager::get_default_folio_title($theme_id);
+    }
+
+    $fields = array(
+      'post_type' => 'groove_folio',
+      'post_status' => $default_status,
+      'post_title' => $title,
+      'post_name' => sanitize_title($title),
+      'post_content' => '',
+      'meta_input' => array(
+        'theme_id' => $theme_id,
+        'subtitle' => '',
+        'use_folio' => '1',
+        'show_logo' => '1',
+        'copyright' => '',
+      ),
+    );
+
+    if ($theme_id === 'groove-proposal') {
+      $fields['meta_input']['proposal_show_in_page_nav'] = '1';
+      $fields['meta_input']['proposal_color_scheme'] = 'default';
+    }
+
+    if ($seed_sample_content) {
+      if ($sample_content['subtitle'] !== '') {
+        $fields['meta_input']['subtitle'] = $sample_content['subtitle'];
       }
-
-      $default_theme_id = (string) get_option('groove_default_theme_id', '');
-      if ($default_theme_id === '' || !isset($themes[$default_theme_id])) {
-        $default_theme_id = (string) array_key_first($themes);
+      foreach ($sample_content['folio_meta'] as $meta_key => $meta_value) {
+        $fields['meta_input'][$meta_key] = $meta_value;
       }
+    }
 
-      $theme_id = isset($_POST['themeId']) ? sanitize_key(wp_unslash($_POST['themeId'])) : $default_theme_id;
-      if (empty($theme_id) || !isset($themes[$theme_id])) {
-        wp_die(esc_html__('Invalid theme selection.', 'groove-folios'));
-      }
-      // Any theme shipping a sample-content.php can be seeded. The definition
-      // is null for themes that ship none, which also disables the request.
-      $sample_content = \Groove\Themes\Themes_Manager::get_sample_content($theme_id);
-      $seed_sample_content = $sample_content !== null && $this->is_sample_seed_requested();
+    $folio_id = wp_insert_post($fields);
 
-      $default_status = (string) get_option('groove_default_folio_status', 'draft');
-      if (!in_array($default_status, ['draft', 'publish'], true)) {
-        $default_status = 'draft';
-      }
-
-      // The default is a site setting, not permission to publish: a user who
-      // may only edit (a Contributor) starts a draft, as core would give them.
-      if ($default_status === 'publish' && !\Groove\Pages\Folio::can_publish_folios()) {
-        $default_status = 'draft';
-      }
-
-      // Seeded folios are scaffolding, not finished work. Even when the default
-      // folio status is `publish`, starting from sample content forces a draft
-      // so placeholder copy and stand-in imagery never go live by accident.
-      // Applies to the folio and, via create_sample_pages(), to its pages.
+    if (!is_wp_error($folio_id)) {
       if ($seed_sample_content) {
-        $default_status = 'draft';
+        $this->create_sample_pages((int) $folio_id, $default_status, $sample_content['pages']);
       }
 
-      // An explicit default folio title always wins. Left blank, the title comes
-      // from the theme being created, so a magazine starts as "A New Issue" and
-      // a proposal as "A New Proposal" rather than everything sharing one name.
-      $title = trim((string) get_option('groove_default_folio_title', ''));
-      if ($title === '') {
-        $title = \Groove\Themes\Themes_Manager::get_default_folio_title($theme_id);
-      }
-
-      $fields = array(
-        'post_type' => 'groove_folio',
-        'post_status' => $default_status,
-        'post_title' => $title,
-        'post_name' => sanitize_title($title),
-        'post_content' => '',
-        'meta_input' => array(
-          'theme_id' => $theme_id,
-          'subtitle' => '',
-          'use_folio' => '1',
-          'show_logo' => '1',
-          'copyright' => '',
-        ),
-      );
-
-      if ($theme_id === 'groove-proposal') {
-        $fields['meta_input']['proposal_show_in_page_nav'] = '1';
-        $fields['meta_input']['proposal_color_scheme'] = 'default';
-      }
-
-      if ($seed_sample_content) {
-        if ($sample_content['subtitle'] !== '') {
-          $fields['meta_input']['subtitle'] = $sample_content['subtitle'];
-        }
-        foreach ($sample_content['folio_meta'] as $meta_key => $meta_value) {
-          $fields['meta_input'][$meta_key] = $meta_value;
-        }
-      }
-
-      $folio_id = wp_insert_post($fields);
-
-      if (!is_wp_error($folio_id)) {
-        if ($seed_sample_content) {
-          $this->create_sample_pages((int) $folio_id, $default_status, $sample_content['pages']);
-        }
-
-        $redirect_url = admin_url('admin.php?page=groove-folio&folio_id=' . $folio_id);
-        wp_safe_redirect($redirect_url);
-        exit;
-      }
-      else {
-        wp_die(esc_html($folio_id->get_error_message()));
-      }
+      wp_safe_redirect(Folio::get_edit_url((int) $folio_id));
+      exit;
+    }
+    else {
+      wp_die(esc_html($folio_id->get_error_message()));
     }
   }
 
@@ -296,32 +306,6 @@ class Add_New extends Page
   }
 
   /**
-   * Whether the submitted form asked for sample content.
-   *
-   * `seed_sample_content` is the current field; `seed_proposal_sample` is the
-   * field this flow used while only groove-proposal could be seeded, and is
-   * still accepted so a form submitted from a cached page keeps working.
-   *
-   * @return bool
-   */
-  private function is_sample_seed_requested(): bool
-  {
-    // phpcs:disable WordPress.Security.NonceVerification.Missing -- Only called from create_folio(), after check_admin_referer('groove_create_folio_action', 'groove_nonce') and the edit_posts check.
-    foreach (array('seed_sample_content', 'seed_proposal_sample') as $field) {
-      if (!isset($_POST[$field])) {
-        continue;
-      }
-      // The paired hidden input means '0' arrives when the box is unticked.
-      if ('1' === $_POST[$field]) {
-        return true;
-      }
-    }
-    // phpcs:enable WordPress.Security.NonceVerification.Missing
-
-    return false;
-  }
-
-  /**
    * Create the folio pages defined by a theme's sample-content.php.
    *
    * @param string $status  Post status inherited from the new folio.
@@ -444,38 +428,11 @@ class Add_New extends Page
     return $resolved[$slug];
   }
 
+  /**
+   * Never reached: admin_init sends this retired screen to All Folios, whose
+   * Add New dialog renders display__themes().
+   */
   public function display_content()
   {
-?>
-<div class="g-folio__content g-folio__postbox-themes">
-  <div class="g-folio__postbox postbox-container" style="width: 656px">
-    <div class="postbox">
-      <div class="g-folio__postbox-header">
-        <div class="g-folio__postbox-header-left">
-          <h2 class="g-folio__postbox-title">
-            <?php echo esc_html__('Themes', 'groove-folios'); ?>
-          </h2>
-        </div>
-        <div class="g-folio__postbox-header-right">
-          <div class="g-folio__postbox-close">
-            <?php
-            $from = isset($_GET['from']) ? sanitize_key(wp_unslash($_GET['from'])) : 'groove-overview'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only view parameter, checked against an allow-list below; picks the close link's target.
-            $allowed_from = array('groove-overview', 'groove-all-folios');
-            if (!in_array($from, $allowed_from, true)) {
-              $from = 'groove-overview';
-            }
-            ?>
-            <a type="submit" class="g-folio__postbox-icon gicon-close"
-              href="<?php echo esc_url(add_query_arg(array('page' => $from), admin_url('admin.php'))); ?>"></a>
-          </div>
-        </div>
-      </div>
-      <div class="g-folio__postbox-body">
-        <?php $this->display__themes()?>
-      </div>
-    </div>
-  </div>
-</div>
-<?php
   }
 }
