@@ -1689,6 +1689,11 @@ body.groove .g-setup-panel__desc {
   flex: 0 0 auto;
 }
 
+/* Once setup is decided with a "no": the way back, without the accent wash. */
+.g-setup-panel--quiet {
+  background: var(--g-surface);
+}
+
 /* Every other screen: a quiet button in the header. */
 body.groove .g-setup-entry {
   display: inline-flex;

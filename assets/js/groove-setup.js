@@ -6,7 +6,9 @@
 //
 // Closing the dialog never cancels anything. A download already running keeps
 // going on this page, and the "Finish setup" entries ([data-groove-setup-open])
-// bring the dialog back until every item is settled.
+// bring the dialog back until every item is settled. A declined item shows its
+// choice again, "no" selected, so the dialog is also the way to download after
+// all; left as it is, it needs nothing doing.
 (function () {
   var cfg = window.GROOVE_SETUP;
   var modal = document.getElementById('g-setup-modal');
@@ -18,7 +20,6 @@
   var dismissBtn = modal.querySelector('[data-groove-setup-dismiss]');
   var live = modal.querySelector('[data-groove-setup-live]');
   var running = false;
-  var finished = false;
 
   var dialog = window.grooveDialog(modal);
 
@@ -39,14 +40,38 @@
     }, 50);
   }
 
-  function isSettled(item) {
-    var state = item.getAttribute('data-state');
-    return state === 'ready' || state === 'declined';
+  // On this site: there is nothing left to choose.
+  function isReady(item) {
+    return item.getAttribute('data-state') === 'ready';
   }
 
   function choiceOf(item) {
     var checked = item.querySelector('input[type="radio"]:checked');
     return checked ? checked.value : 'download';
+  }
+
+  // Needs nothing doing: on this site, or declined and still left at "no".
+  function isSettled(item) {
+    return isReady(item) || (item.getAttribute('data-state') === 'declined' && choiceOf(item) === 'decline');
+  }
+
+  // Declined before this page asked anything: a download that fails puts the
+  // "no" back rather than leaving the site half-way and asking again.
+  function wasDeclined(item) {
+    return item.getAttribute('data-was-declined') === '1';
+  }
+
+  // Already on this site, so "download" only switches back to them.
+  function isOnSite(item) {
+    var total = parseInt(item.getAttribute('data-total'), 10) || 0;
+    var present = parseInt(item.getAttribute('data-present'), 10) || 0;
+    return total > 0 && present >= total;
+  }
+
+  function openItems() {
+    return items.filter(function (item) {
+      return !isSettled(item);
+    });
   }
 
   function itemName(item) {
@@ -79,7 +104,7 @@
   function setChoicesDisabled(disabled) {
     items.forEach(function (item) {
       Array.prototype.forEach.call(item.querySelectorAll('input'), function (input) {
-        input.disabled = disabled || isSettled(item);
+        input.disabled = disabled || isReady(item);
       });
     });
   }
@@ -116,13 +141,6 @@
 
   // The primary button always says what pressing it will do.
   function refreshActions() {
-    if (finished) {
-      runBtn.textContent = t.done;
-      runBtn.disabled = false;
-      dismissBtn.hidden = true;
-      return;
-    }
-
     dismissBtn.hidden = false;
 
     if (running) {
@@ -135,9 +153,15 @@
     runBtn.disabled = false;
     dismissBtn.textContent = t.notNow;
 
-    var open = items.filter(function (item) {
-      return !isSettled(item);
-    });
+    var open = openItems();
+
+    // Nothing to run: every item is on this site or left at "no" — after a
+    // run, or opened to revisit a "no" and left as it was.
+    if (!open.length) {
+      runBtn.textContent = t.done;
+      dismissBtn.hidden = true;
+      return;
+    }
 
     // "Try again" only while it is still a download that failed; a failed
     // item switched to its "no" choice is just a choice to save.
@@ -146,8 +170,10 @@
       return;
     }
 
+    // Only what will really be fetched; switching back to files already on
+    // this site is just a choice to save.
     var wanted = open.filter(function (item) {
-      return choiceOf(item) === 'download';
+      return choiceOf(item) === 'download' && !isOnSite(item);
     }).map(itemName);
 
     if (wanted.length === 2) {
@@ -198,6 +224,10 @@
     var status = item.querySelector('[data-groove-setup-status]');
     var total = parseInt(item.getAttribute('data-total'), 10) || 0;
     var present = parseInt(item.getAttribute('data-present'), 10) || 0;
+    // Set only when the server says the download failed, not when a request
+    // is cut off: leaving the page mid-download aborts one, and the server
+    // may well finish that step.
+    var serverFailed = false;
     setProgress(item, present, total);
     if (present === 0 && status) status.textContent = t.preparing;
 
@@ -210,6 +240,7 @@
           return;
         }
         if (data.failed > 0) {
+          serverFailed = true;
           fail(item, data.error);
           return;
         }
@@ -218,12 +249,23 @@
         if (data.remaining > 0 && data.present > before) {
           return step(data.present);
         }
+        serverFailed = true;
         fail(item, t.stalled);
       });
     }
 
     return step(present).catch(function (error) {
       fail(item, error.message);
+    }).then(function () {
+      // The first step recorded "download" as the choice. If the server could
+      // not finish it, a site that had said no goes back to no, with the
+      // reason still shown and Try again still offered.
+      if (!serverFailed || !wasDeclined(item)) return;
+      return post('groove_first_run_decline', item).then(function () {
+        item.setAttribute('data-state', 'declined');
+        var status = item.querySelector('[data-groove-setup-status]');
+        if (status && t.keptChoice) status.textContent += ' ' + t.keptChoice;
+      }, function () {});
     });
   }
 
@@ -241,9 +283,7 @@
     setChoicesDisabled(true);
     refreshActions();
 
-    var queue = items.filter(function (item) {
-      return !isSettled(item);
-    });
+    var queue = openItems();
 
     // In order, not at once: two long downloads side by side would each be
     // half as likely to finish inside the server's time limit.
@@ -256,7 +296,7 @@
 
     chain.then(function () {
       running = false;
-      finished = items.every(isSettled);
+      var finished = !openItems().length;
       setChoicesDisabled(false);
       refreshActions();
 
@@ -272,13 +312,13 @@
         return;
       }
 
-      var downloaded = items.some(function (item) {
-        return item.getAttribute('data-state') === 'ready';
-      });
-      var message = downloaded ? t.finished : t.finishedDeclined;
+      // "Full fonts and photos" only when nothing was left at "no".
+      var message = items.every(isReady) ? t.finished : t.finishedDeclined;
 
-      // Nothing is left to finish, so nothing should offer to.
-      Array.prototype.forEach.call(document.querySelectorAll('[data-groove-setup-entry]'), function (entry) {
+      // Nothing is left to finish, so the header buttons go. With an item
+      // still at "no", the panel stays: it is the way back to this dialog.
+      var gone = items.every(isReady) ? '[data-groove-setup-entry]' : '.g-setup-entry[data-groove-setup-entry]';
+      Array.prototype.forEach.call(document.querySelectorAll(gone), function (entry) {
         entry.remove();
       });
 
@@ -308,7 +348,7 @@
   });
 
   runBtn.addEventListener('click', function () {
-    if (finished) {
+    if (!openItems().length) {
       dialog.close();
       return;
     }

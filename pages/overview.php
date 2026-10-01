@@ -226,6 +226,8 @@ class Overview extends Page
 <div class="space-y-6">
   <?php if (First_Run::should_offer()): ?>
   <?php First_Run::display_overview_panel(); ?>
+  <?php elseif (First_Run::should_offer_return()): ?>
+  <?php First_Run::display_return_panel(); ?>
   <?php else: ?>
   <div class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3">
     <p class="m-0 text-sm text-indigo-900">

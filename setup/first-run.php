@@ -20,10 +20,13 @@ if (!defined('ABSPATH')) {
  * So the first Groove screen an administrator opens asks, once, in a dialog
  * that also runs the downloads and shows their progress. Each item is a choice
  * with a real "no" — system fonts instead of Google's, gradients instead of
- * photos — and an answer either way settles that item for good. Closing the
- * dialog settles nothing: it does not open by itself again, but a panel on
- * Overview and a "Finish setup" button in the other screens' headers bring it
- * back until both items are settled.
+ * photos — and an answer either way settles that item. Closing the dialog
+ * settles nothing: it does not open by itself again, but a panel on Overview
+ * and a "Finish setup" button in the other screens' headers bring it back
+ * until both items are settled. A "no" is not final either: while an item is
+ * declined, a quieter panel on Overview (no header button, so a choice made
+ * on purpose is not nagged about) opens the same dialog with that choice
+ * selected, to download after all.
  *
  * The downloads run as a series of short requests from the dialog rather than
  * one long one, so a slow host shows progress instead of timing out, and a
@@ -191,6 +194,30 @@ class First_Run
     return current_user_can('manage_options') && static::needs_attention();
   }
 
+  /**
+   * The items the administrator turned down.
+   *
+   * @return string[] 'fonts', 'photos', or both.
+   */
+  public static function declined_items(): array
+  {
+    return array_keys(array_filter(static::status(), static function ($item) {
+      return $item['state'] === 'declined';
+    }));
+  }
+
+  /**
+   * Whether the way back to the dialog is offered: nothing is left undecided,
+   * but something was declined, and can still be downloaded or switched back
+   * to.
+   *
+   * @return bool
+   */
+  public static function should_offer_return(): bool
+  {
+    return current_user_can('manage_options') && !static::needs_attention() && static::declined_items() !== array();
+  }
+
   // ── Requests ───────────────────────────────────────────────────────────
 
   /**
@@ -329,6 +356,7 @@ class First_Run
         'finished' => __('Setup finished. Folios now use their full fonts and photos.', 'groove-folios'),
         'finishedDeclined' => __('Setup finished.', 'groove-folios'),
         'leaveWarning' => __('Downloads are still running. Leave anyway?', 'groove-folios'),
+        'keptChoice' => __('Your earlier choice is kept.', 'groove-folios'),
       ),
     );
   }
@@ -377,6 +405,64 @@ class First_Run
   }
 
   /**
+   * The Overview panel once everything is decided but something was declined:
+   * says what folios use instead, and opens the dialog to download after all.
+   * Quieter than the setup panel, and only here, since the choice was made.
+   */
+  public static function display_return_panel(): void
+  {
+    $status = static::status();
+    $declined = static::declined_items();
+    $fonts_here = static::is_on_site($status['fonts']);
+    $photos_here = static::is_on_site($status['photos']);
+
+    if (count($declined) === 2) {
+      if ($fonts_here && $photos_here) {
+        $desc = __('Folios use system fonts and gradient covers. The theme fonts and photos are on this site, so you can switch back to them at any time.', 'groove-folios');
+      } elseif ($fonts_here) {
+        $desc = __('Folios use system fonts and gradient covers. You can switch back to the theme fonts, which are on this site, or download the photos at any time.', 'groove-folios');
+      } elseif ($photos_here) {
+        $desc = __('Folios use system fonts and gradient covers. You can download the theme fonts, or switch back to the photos, which are on this site, at any time.', 'groove-folios');
+      } else {
+        $desc = __('Folios use system fonts and gradient covers. You can download the theme fonts and photos at any time.', 'groove-folios');
+      }
+      $button = __('Set up fonts and photos', 'groove-folios');
+    } elseif ($declined === array('fonts')) {
+      $desc = $fonts_here
+        ? __('Folios use system fonts. The theme fonts are on this site, so you can switch back to them at any time.', 'groove-folios')
+        : __('Folios use system fonts. You can download the theme fonts at any time.', 'groove-folios');
+      $button = __('Set up fonts', 'groove-folios');
+    } else {
+      $desc = $photos_here
+        ? __('Folio covers use gradients. The photos are on this site, so you can switch back to them at any time.', 'groove-folios')
+        : __('Folio covers use gradients. You can download the sample photos at any time.', 'groove-folios');
+      $button = __('Set up photos', 'groove-folios');
+    }
+    ?>
+<section class="g-setup-panel g-setup-panel--quiet" data-groove-setup-entry aria-labelledby="g-setup-panel-title">
+  <div class="g-setup-panel__text">
+    <h2 id="g-setup-panel-title" class="g-setup-panel__title"><?php esc_html_e('Fonts and photos', 'groove-folios'); ?></h2>
+    <p class="g-setup-panel__desc"><?php echo esc_html($desc); ?></p>
+  </div>
+  <button type="button" class="button button-secondary" data-groove-setup-open aria-haspopup="dialog">
+    <?php echo esc_html($button); ?>
+  </button>
+</section>
+<?php
+  }
+
+  /**
+   * Whether every file of an item is on this site, whatever was chosen.
+   *
+   * @param array $item An entry from status().
+   * @return bool
+   */
+  private static function is_on_site(array $item): bool
+  {
+    return $item['total'] > 0 && $item['present'] >= $item['total'];
+  }
+
+  /**
    * The header button that brings the dialog back on screens with no panel.
    */
   public static function display_header_entry(): void
@@ -391,12 +477,14 @@ class First_Run
 
   /**
    * The dialog. Printed in the admin footer of every Groove screen while
-   * something is unsettled, so every entry point opens the same one.
+   * something is undecided, and of Overview while something is declined, so
+   * every entry point opens the same one.
    *
-   * Both items are always shown. One that is already settled — downloaded,
-   * declined, or carried in this copy of the plugin — says so in place of its
+   * Both items are always shown. One that is already on this site —
+   * downloaded, or carried in this copy of the plugin — says so in place of its
    * choice, so the dialog describes the whole setup rather than looking as if
-   * part of it went missing.
+   * part of it went missing. A declined one shows its choice again, with "no"
+   * selected, so it can be changed.
    */
   public static function render_dialog(): void
   {
@@ -412,7 +500,7 @@ class First_Run
   <div class="g-theme-details__backdrop" data-groove-setup-close></div>
   <div class="g-theme-details__dialog g-setup__dialog" tabindex="-1">
     <div class="g-theme-details__header">
-      <h2 id="g-setup-title" class="g-theme-details__title"><?php esc_html_e('Finish setting up Groove Folios', 'groove-folios'); ?></h2>
+      <h2 id="g-setup-title" class="g-theme-details__title"><?php echo static::needs_attention() ? esc_html__('Finish setting up Groove Folios', 'groove-folios') : esc_html__('Fonts and photos', 'groove-folios'); ?></h2>
       <button type="button" class="g-theme-details__close" data-groove-setup-close
         aria-label="<?php esc_attr_e('Close', 'groove-folios'); ?>">
         <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
@@ -436,12 +524,16 @@ class First_Run
           ),
           number_format_i18n($fonts['total'])
         ),
-        'download' => __('Download from Google Fonts', 'groove-folios'),
-        'download_hint' => __('How the themes are designed to look.', 'groove-folios'),
+        'download' => static::is_on_site($fonts) ? __('Use the theme fonts', 'groove-folios') : __('Download from Google Fonts', 'groove-folios'),
+        'download_hint' => static::is_on_site($fonts) ? __('Already on this site. Nothing is downloaded.', 'groove-folios') : __('How the themes are designed to look.', 'groove-folios'),
         'decline' => __('Use system fonts', 'groove-folios'),
         'decline_hint' => __('The fonts the WordPress dashboard uses. Nothing is downloaded.', 'groove-folios'),
         'bar_label' => __('Fonts downloaded', 'groove-folios'),
-        'ready' => __('Downloaded. Folios use the theme fonts.', 'groove-folios'),
+        // Switching back to fonts already here downloads nothing, so it is not
+        // reported as a download.
+        'ready' => $fonts['state'] === 'declined' && static::is_on_site($fonts)
+          ? __('Folios use the theme fonts.', 'groove-folios')
+          : __('Downloaded. Folios use the theme fonts.', 'groove-folios'),
         'declined' => __('Using system fonts. You can download the theme fonts later in Settings → Fonts.', 'groove-folios'),
       ));
 
@@ -457,14 +549,16 @@ class First_Run
           ),
           number_format_i18n($photos['total'])
         ),
-        'download' => __('Download from Pexels', 'groove-folios'),
-        'download_hint' => __('Photo covers, and sample folios with their pictures.', 'groove-folios'),
+        'download' => static::is_on_site($photos) ? __('Use the photos', 'groove-folios') : __('Download from Pexels', 'groove-folios'),
+        'download_hint' => static::is_on_site($photos) ? __('Already on this site. Nothing is downloaded.', 'groove-folios') : __('Photo covers, and sample folios with their pictures.', 'groove-folios'),
         'decline' => __('Use gradient covers', 'groove-folios'),
         'decline_hint' => __('A soft gradient in the theme’s colours until you add your own image.', 'groove-folios'),
         'bar_label' => __('Photos downloaded', 'groove-folios'),
         'ready' => $photos_bundled
           ? __('Included with this copy of the plugin. Nothing to download.', 'groove-folios')
-          : __('Downloaded. Covers and sample folios use the photos.', 'groove-folios'),
+          : ($photos['state'] === 'declined' && static::is_on_site($photos)
+            ? __('Covers and sample folios use the photos.', 'groove-folios')
+            : __('Downloaded. Covers and sample folios use the photos.', 'groove-folios')),
         'declined' => __('Using gradient covers. You can download the photos later in Settings → Imagery.', 'groove-folios'),
       ));
       ?>
@@ -484,7 +578,8 @@ class First_Run
   }
 
   /**
-   * One item of the dialog: its choice while unsettled, or how it was settled.
+   * One item of the dialog: its choice while undecided or declined, or that it
+   * is on this site.
    *
    * @param string $key    'fonts' or 'photos'.
    * @param array  $item   Its entry from status().
@@ -492,7 +587,8 @@ class First_Run
    */
   private static function render_item(string $key, array $item, array $copy): void
   {
-    $settled = in_array($item['state'], array('ready', 'declined'), true);
+    $settled = $item['state'] === 'ready';
+    $declined = $item['state'] === 'declined';
     $show_progress = $settled || $item['state'] === 'partial';
     $total = (int) $item['total'];
     $present = $item['state'] === 'ready' ? $total : (int) $item['present'];
@@ -509,19 +605,20 @@ class First_Run
     ?>
       <fieldset class="g-setup__item" data-groove-setup-item="<?php echo esc_attr($key); ?>" data-state="<?php echo esc_attr($item['state']); ?>"
         data-total="<?php echo esc_attr((string) $total); ?>" data-present="<?php echo esc_attr((string) $present); ?>"
-        data-ready-text="<?php echo esc_attr($copy['ready']); ?>" data-declined-text="<?php echo esc_attr($copy['declined']); ?>">
+        data-ready-text="<?php echo esc_attr($copy['ready']); ?>" data-declined-text="<?php echo esc_attr($copy['declined']); ?>"
+        data-was-declined="<?php echo $declined ? '1' : '0'; ?>">
         <legend class="g-setup__item-title"><?php echo esc_html($copy['title']); ?></legend>
         <p class="g-setup__item-desc"><?php echo esc_html($copy['desc']); ?></p>
         <div class="g-choices"<?php echo $settled ? ' hidden' : ''; ?>>
           <label class="g-choice">
-            <input type="radio" name="g-setup-<?php echo esc_attr($key); ?>" value="download" checked<?php disabled($settled, true); ?> />
+            <input type="radio" name="g-setup-<?php echo esc_attr($key); ?>" value="download"<?php checked(!$declined); ?><?php disabled($settled, true); ?> />
             <span class="g-choice__text">
               <span class="g-choice__label"><?php echo esc_html($copy['download']); ?></span>
               <span class="g-choice__hint"><?php echo esc_html($copy['download_hint']); ?></span>
             </span>
           </label>
           <label class="g-choice">
-            <input type="radio" name="g-setup-<?php echo esc_attr($key); ?>" value="decline"<?php disabled($settled, true); ?> />
+            <input type="radio" name="g-setup-<?php echo esc_attr($key); ?>" value="decline"<?php checked($declined); ?><?php disabled($settled, true); ?> />
             <span class="g-choice__text">
               <span class="g-choice__label"><?php echo esc_html($copy['decline']); ?></span>
               <span class="g-choice__hint"><?php echo esc_html($copy['decline_hint']); ?></span>
@@ -530,7 +627,7 @@ class First_Run
         </div>
         <div class="g-setup__progress"<?php echo $show_progress ? '' : ' hidden'; ?>>
           <div class="g-setup__bar" role="progressbar" aria-label="<?php echo esc_attr($copy['bar_label']); ?>"
-            aria-valuemin="0" aria-valuemax="<?php echo esc_attr((string) $total); ?>" aria-valuenow="<?php echo esc_attr((string) $present); ?>"<?php echo $item['state'] === 'declined' ? ' hidden' : ''; ?>>
+            aria-valuemin="0" aria-valuemax="<?php echo esc_attr((string) $total); ?>" aria-valuenow="<?php echo esc_attr((string) $present); ?>">
             <span class="g-setup__bar-fill" style="width: <?php echo esc_attr((string) $pct); ?>%"></span>
           </div>
           <p class="g-setup__status" data-groove-setup-status><?php echo esc_html($status_text); ?></p>

@@ -98,14 +98,19 @@ class Module extends BaseModule
 		}
 
 		// First-run setup, on Groove's own admin pages (not the list tables or
-		// the block editor) while fonts or photos are still unsettled.
-		if ($current_page !== '' && \Groove\Setup\First_Run::should_offer()) {
+		// the block editor) while fonts or photos are undecided; and on
+		// Overview, whose panel is the way back, while one is declined.
+		$offers_setup = \Groove\Setup\First_Run::should_offer()
+			|| ($current_page === \Groove\Pages\Overview::PAGE_ID && \Groove\Setup\First_Run::should_offer_return());
+		if ($current_page !== '' && $offers_setup) {
 			$groove_setup_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-setup.js';
 			$groove_setup_js_version = file_exists($groove_setup_js_path) ? (string) filemtime($groove_setup_js_path) : GROOVE_VERSION;
 			wp_enqueue_script('groove-setup', $this->get_js_assets_url('groove-setup'), ['groove-dialog', 'groove-toast'], $groove_setup_js_version, true);
 
 			// Not over the Add New dialog that All Folios opens from a link.
-			$auto_open = !Request::has('open_add_new') && \Groove\Setup\First_Run::take_auto_open();
+			// Opens by itself only while something is undecided, never to revisit
+			// a "no".
+			$auto_open = \Groove\Setup\First_Run::should_offer() && !Request::has('open_add_new') && \Groove\Setup\First_Run::take_auto_open();
 			wp_add_inline_script(
 				'groove-setup',
 				'window.GROOVE_SETUP = ' . wp_json_encode(\Groove\Setup\First_Run::script_settings($auto_open), JSON_HEX_TAG | JSON_HEX_AMP) . ';',
