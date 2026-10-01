@@ -92,6 +92,17 @@ class Utils
       return true;
     }
 
+    // A folio page is no more visible than its folio: a published page of a
+    // private, password-locked or unpublished folio is not, by its own
+    // address. Theme resolution refuses those folios too, but then the
+    // visitor was told the theme was missing.
+    if ($post->post_type === 'groove_folio_page') {
+      $folio = get_post((int) get_post_meta($post->ID, 'folio_id', true));
+      if ($folio instanceof \WP_Post && $folio->post_type === 'groove_folio' && !static::can_current_request_view_post($folio)) {
+        return false;
+      }
+    }
+
     // Password-protected posts require the visitor to enter the password first.
     if (post_password_required($post)) {
       return false;
