@@ -87,7 +87,7 @@ WordPress.org review asks for a nonce check before any `$_GET`/`$_POST`/`$_REQUE
 
 ### Admin assets
 
-[modules/groove-main/module.php](modules/groove-main/module.php) (`is_active()` → `is_admin()`) is the single enqueue point. Tailwind 4 comes from the Vite dev server when a GET on `/@vite/client` returns 200 from localhost:5173 (probed only on a `local`/`development` site, for a request from localhost; Vite answers HEAD there with a 404), otherwise from `assets/build/.vite/manifest.json`. Hand-authored CSS/JS under `assets/css` and `assets/js` is enqueued directly and versioned by `filemtime()`. Load order matters: `groove-toggletip` → `groove-toast` → `groove-main`. PHP config reaches JS through `window.GROOVE_SETTINGS`.
+[modules/groove-main/module.php](modules/groove-main/module.php) (`is_active()` → `is_admin()`) is the single enqueue point. Tailwind 4 comes from the Vite dev server when a GET on `/@vite/client` returns 200 from localhost:5173 (probed only on a `local`/`development` site, for a request from localhost; Vite answers HEAD there with a 404), otherwise from `assets/build/.vite/manifest.json`. The dev-server code lives in [modules/groove-main/vite-dev.php](modules/groove-main/vite-dev.php) (`Vite_Dev`), which the package script leaves out of the zip, so a released plugin has no localhost code; `module.php` uses it only if the class loads. Keep anything that talks to localhost in that file. Hand-authored CSS/JS under `assets/css` and `assets/js` is enqueued directly and versioned by `filemtime()`. Load order matters: `groove-toggletip` → `groove-toast` → `groove-main`. PHP config reaches JS through `window.GROOVE_SETTINGS`.
 
 All admin pages get `body.groove` via an `admin_body_class` filter — the CSS scope for the whole plugin.
 

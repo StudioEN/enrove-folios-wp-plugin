@@ -44,43 +44,10 @@ class Module extends BaseModule
 
 	private function enqueue_scripts()
 	{
-		// Vite integration
-		$is_vite_dev = false;
-		$vite_port = 5173;
-
-		// Probe for the Vite dev server only on a local or development site
-		// (WP_ENVIRONMENT_TYPE; Studio sets 'local'). A production install never
-		// makes a request or enqueues anything from localhost — it reads the
-		// committed manifest below. The probe fails gracefully when Vite is down.
-		$remote_addr = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
-		if (in_array(wp_get_environment_type(), ['local', 'development'], true) && in_array($remote_addr, ['127.0.0.1', '::1'], true)) {
-			// A 200 from /@vite/client means it is Vite on the port, not another local
-			// app holding it; a refused connection fails fast, well inside the timeout.
-			// GET, not HEAD: Vite answers HEAD on /@vite/client with a 404.
-			$response = wp_remote_get('http://localhost:' . $vite_port . '/@vite/client', ['timeout' => 0.5, 'limit_response_size' => 1024]);
-			if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
-				$is_vite_dev = true;
-			}
-		}
-
-		if ($is_vite_dev) {
-			// Enqueue Vite client for HMR. No version on either dev-server script: Vite
-			// serves them uncached, and a ?ver= query would change the module URL HMR tracks.
-			wp_enqueue_script('vite-client', 'http://localhost:' . $vite_port . '/@vite/client', [], null, true); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Local Vite dev server (development environments only); see comment above.
-
-			// Add type="module" to the tags WordPress printed for the two dev-server scripts
-			add_filter('script_loader_tag', function ($tag, $handle, $src) {
-				if ($handle === 'vite-client' || $handle === 'groove-tailwind-vite') {
-					$tag = preg_replace('/ type=([\'"])text\/javascript\1/', '', $tag);
-					return preg_replace('/ src=/', ' type="module" src=', $tag, 1);
-				}
-				return $tag;
-			}, 10, 3);
-
-			// Enqueue our tailwind entry directly from the Vite dev server
-			wp_enqueue_script('groove-tailwind-vite', 'http://localhost:' . $vite_port . '/assets/css/tailwind.css', [], null, true); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- Local Vite dev server (development environments only); see comment above.
-		} else {
-			// Production mode: try to read the manifest.json
+		// The Vite dev server (npm run dev) when it is running, in a checkout:
+		// vite-dev.php is left out of the WordPress.org package, so a released
+		// plugin always reads the compiled build from the committed manifest.
+		if (!class_exists(Vite_Dev::class) || !Vite_Dev::enqueue()) {
 			$manifest_path = plugin_dir_path(dirname(__DIR__)) . 'assets/build/.vite/manifest.json';
 			if (file_exists($manifest_path)) {
 				$manifest = json_decode(file_get_contents($manifest_path), true);
