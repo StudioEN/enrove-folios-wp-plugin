@@ -45,7 +45,7 @@ Folio themes set their type in open-licence fonts from Google Fonts. Folios neve
 
 Theme covers and the photos in sample content come from Pexels. Their licence does not allow them to be packaged with the plugin, so the plugin does not include them. An administrator can fetch them by pressing **Download Photos** on Groove → Settings → Imagery, or in the same setup dialog. That sends one request per photo (46 in total, about 4 MB) from **your server** to `images.pexels.com`. Pexels receives your server's IP address and the addresses of the photos requested. Nothing else is sent, no account or API key is involved, and nothing is fetched until one of those buttons is pressed. The photos are then served from your own uploads folder.
 
-The plugin also contains a client for the Pexels API (`api.pexels.com`), which the developers use with their own API key and a curation script to choose these photos. The script is not part of the released plugin and its settings are not shown without it, so the released plugin never contacts the Pexels API.
+The developers choose these photos with the Pexels API (`api.pexels.com`), their own API key and a curation script. None of these is part of the released plugin, so the released plugin never contacts the Pexels API.
 
 * Pexels licence: https://www.pexels.com/license/
 * Terms of service: https://www.pexels.com/terms-of-service/
