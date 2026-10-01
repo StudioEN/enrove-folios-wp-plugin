@@ -469,20 +469,20 @@ class Folio extends Page
     check_admin_referer('groove_save_folio', 'groove_nonce');
 
     if (empty($_POST['folio_id'])) {
-      wp_send_json(array('code' => 400, 'message' => 'Missing folio ID.'));
+      wp_send_json(array('code' => 400, 'message' => __('Missing folio ID.', 'groove-folios')));
       return;
     }
 
     $id = intval(wp_unslash($_POST['folio_id']));
 
     if (!current_user_can('edit_post', $id)) {
-      wp_send_json(array('code' => 403, 'message' => 'Forbidden'));
+      wp_send_json(array('code' => 403, 'message' => __('Sorry, you are not allowed to edit this folio.', 'groove-folios')));
       return;
     }
 
     $folio_post = get_post($id);
     if (!$folio_post || $folio_post->post_type !== 'groove_folio') {
-      wp_send_json(array('code' => 404, 'message' => 'Folio not found.'));
+      wp_send_json(array('code' => 404, 'message' => __('Folio not found.', 'groove-folios')));
       return;
     }
 

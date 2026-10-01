@@ -198,10 +198,10 @@ window.wp = window.wp || {};
 			if ( $(this).prop('checked') ) {
 				c = false;
 				var id = $( this ).val(),
-					theTitle = $( '#inline_' + id + ' .post_title' ).html() || wp.i18n.__( '(no title)' ),
+					theTitle = $( '#inline_' + id + ' .post_title' ).html() || wp.i18n.__( '(no title)', 'groove-folios' ),
 					buttonVisuallyHiddenText = wp.i18n.sprintf(
 						/* translators: %s: Post title. */
-						wp.i18n.__( 'Remove &#8220;%s&#8221; from Bulk Edit' ),
+						wp.i18n.__( 'Remove &#8220;%s&#8221; from Bulk Edit', 'groove-folios' ),
 						theTitle
 					);
 
@@ -230,7 +230,7 @@ window.wp = window.wp || {};
 
 			$( 'table.widefat input[value="' + id + '"]' ).prop( 'checked', false );
 			$( '#_' + id ).parent().remove();
-			wp.a11y.speak( wp.i18n.__( 'Item removed.' ), 'assertive' );
+			wp.a11y.speak( wp.i18n.__( 'Item removed.', 'groove-folios' ), 'assertive' );
 
 			// Move focus to a proper place when items are removed.
 			if ( $next.length ) {
@@ -240,7 +240,7 @@ window.wp = window.wp || {};
 			} else {
 				$( '#bulk-titles-list' ).remove();
 				inlineEditPost.revert();
-				wp.a11y.speak( wp.i18n.__( 'All selected items have been removed. Select new items to use Bulk Actions.' ) );
+				wp.a11y.speak( wp.i18n.__( 'All selected items have been removed. Select new items to use Bulk Actions.', 'groove-folios' ) );
 			}
 		});
 
@@ -357,7 +357,7 @@ window.wp = window.wp || {};
 			var terms = $(this),
 				taxname = $(this).attr('id').replace('_' + id, ''),
 				textarea = $('textarea.tax_input_' + taxname, editRow),
-				comma = wp.i18n._x( ',', 'tag delimiter' ).trim();
+				comma = wp.i18n._x( ',', 'tag delimiter', 'groove-folios' ).trim();
 
 			// Ensure the textarea exists.
 			if ( ! textarea.length ) {
@@ -483,7 +483,7 @@ window.wp = window.wp || {};
 							$( this ).find( '.editinline' )
 								.attr( 'aria-expanded', 'false' )
 								.trigger( 'focus' );
-							wp.a11y.speak( wp.i18n.__( 'Changes saved.' ) );
+							wp.a11y.speak( wp.i18n.__( 'Changes saved.', 'groove-folios' ) );
 						});
 					} else {
 						r = r.replace( /<.[^<>]*?>/g, '' );
@@ -493,8 +493,8 @@ window.wp = window.wp || {};
 					}
 				} else {
 					$errorNotice.removeClass( 'hidden' );
-					$error.text( wp.i18n.__( 'Error while saving the changes.' ) );
-					wp.a11y.speak( wp.i18n.__( 'Error while saving the changes.' ) );
+					$error.text( wp.i18n.__( 'Error while saving the changes.', 'groove-folios' ) );
+					wp.a11y.speak( wp.i18n.__( 'Error while saving the changes.', 'groove-folios' ) );
 				}
 			},
 		'html');

@@ -73,13 +73,15 @@ class Module extends BaseModule
 		wp_enqueue_script('groove-form-state', $this->get_js_assets_url('groove-form-state'), ['groove-toggletip'], GROOVE_VERSION, true);
 		$groove_main_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-main.js';
 		$groove_main_js_version = file_exists($groove_main_js_path) ? (string) filemtime($groove_main_js_path) : GROOVE_VERSION;
-		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery', 'groove-toast'], $groove_main_js_version, true);
+		wp_enqueue_script('groove-main', $this->get_js_assets_url('groove-main'), ['jquery', 'wp-i18n', 'groove-toast'], $groove_main_js_version, true);
+		wp_set_script_translations('groove-main', 'groove-folios');
 		// The one dialog behaviour every Groove dialog shares: open, close,
 		// Escape, focus trap and the counted scroll lock.
 		$groove_dialog_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/groove-dialog.js';
 		$groove_dialog_js_version = file_exists($groove_dialog_js_path) ? (string) filemtime($groove_dialog_js_path) : GROOVE_VERSION;
 		wp_enqueue_script('groove-dialog', $this->get_js_assets_url('groove-dialog'), [], $groove_dialog_js_version, true);
-		wp_enqueue_script('groove-inline-edit', $this->get_js_assets_url('groove-inline-edit'), ['jquery'], GROOVE_VERSION, true);
+		wp_enqueue_script('groove-inline-edit', $this->get_js_assets_url('groove-inline-edit'), ['jquery', 'wp-i18n', 'wp-a11y'], GROOVE_VERSION, true);
+		wp_set_script_translations('groove-inline-edit', 'groove-folios');
 
 		$current_page = $this->current_page();
 		if ($current_page === \Groove\Pages\Themes::PAGE_ID) {
@@ -278,7 +280,12 @@ class Module extends BaseModule
 		if (!$this->is_top_bar_active()) {
 			return $default;
 		}
-		return '<span class="g-folio__footer-version">Groove Folios v' . esc_html(GROOVE_VERSION) . ' by StudioEN</span>';
+		return '<span class="g-folio__footer-version">' . esc_html(sprintf(
+			/* translators: 1: plugin version number, 2: the plugin author's name. */
+			__('Groove Folios v%1$s by %2$s', 'groove-folios'),
+			GROOVE_VERSION,
+			'StudioEN'
+		)) . '</span>';
 	}
 
 	public function __construct()

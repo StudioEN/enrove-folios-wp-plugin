@@ -539,9 +539,9 @@ jQuery(function () {
       const reloadDelayMs = Number(options.reloadDelayMs || 0)
       const shouldUpdatePermalink = !!options.updatePermalink
       const silent = !!options.silent
-      const savingText = options.savingText || 'Saving...'
-      const savedText = options.savedText || 'Saved'
-      const errorText = options.errorText || 'Save failed'
+      const savingText = options.savingText || wp.i18n.__('Saving...', 'groove-folios')
+      const savedText = options.savedText || wp.i18n.__('Saved', 'groove-folios')
+      const errorText = options.errorText || wp.i18n.__('Save failed', 'groove-folios')
       const fields = getFields()
       const sentState = savedStateOf(fields)
       const nonce = fields.groove_nonce || folioForm.find('input[name="groove_nonce"]').first().val()
@@ -719,9 +719,9 @@ jQuery(function () {
       const isUnpublish = action === 'save_groove_folio_unpublish'
       const originalLabel = publishBtn.text()
       // A user who cannot publish gets Submit for Review, with its own labels.
-      const savingLabel = publishBtn.data('saving-text') || (isUnpublish ? 'Unpublishing...' : 'Publishing...')
-      const savedLabel = publishBtn.data('saved-text') || (isUnpublish ? 'Unpublished' : 'Published')
-      const errorLabel = publishBtn.data('error-text') || (isUnpublish ? 'Unpublish failed' : 'Publish failed')
+      const savingLabel = publishBtn.data('saving-text') || (isUnpublish ? wp.i18n.__('Unpublishing...', 'groove-folios') : wp.i18n.__('Publishing...', 'groove-folios'))
+      const savedLabel = publishBtn.data('saved-text') || (isUnpublish ? wp.i18n.__('Unpublished', 'groove-folios') : wp.i18n.__('Published', 'groove-folios'))
+      const errorLabel = publishBtn.data('error-text') || (isUnpublish ? wp.i18n.__('Unpublish failed', 'groove-folios') : wp.i18n.__('Publish failed', 'groove-folios'))
 
       isManualSave = true
       clearTimeout(autosaveTimer)
@@ -759,7 +759,7 @@ jQuery(function () {
 
       isManualSave = true
       clearTimeout(autosaveTimer)
-      saveBtn.text('Saving...')
+      saveBtn.text(wp.i18n.__('Saving...', 'groove-folios'))
       // Switched off while in flight, so a double press cannot save twice.
       isSaveBusy = true
       refreshSaveButton()
@@ -798,8 +798,8 @@ jQuery(function () {
 
     const copyLinkBtn = jQuery('#g-copy-folio-link')
     if (copyLinkBtn.length) {
-      const copyTooltipText = String(copyLinkBtn.data('copy-text') || 'Copy link')
-      const copiedTooltipText = String(copyLinkBtn.data('copied-text') || 'Copied')
+      const copyTooltipText = String(copyLinkBtn.data('copy-text') || wp.i18n.__('Copy link', 'groove-folios'))
+      const copiedTooltipText = String(copyLinkBtn.data('copied-text') || wp.i18n.__('Copied', 'groove-folios'))
       const copyTooltip = createAdaptiveTooltip(copyLinkBtn, copyTooltipText)
 
       function fallbackCopy(text) {
@@ -922,7 +922,7 @@ jQuery(function () {
         previewFrame.removeClass('hidden')
         defaultBtn.removeClass('hidden')
         removeBtn.removeClass('hidden')
-        selectBtn.text('Replace logo')
+        selectBtn.text(wp.i18n.__('Replace logo', 'groove-folios'))
       }
 
       function clearPreview() {
@@ -930,7 +930,7 @@ jQuery(function () {
         previewFrame.addClass('hidden')
         defaultBtn.addClass('hidden')
         removeBtn.addClass('hidden')
-        selectBtn.text('Select logo')
+        selectBtn.text(wp.i18n.__('Select logo', 'groove-folios'))
       }
 
       selectBtn.on('click', function (e) {
@@ -1011,13 +1011,13 @@ jQuery(function () {
           let value = ''
 
           if (summaryType === 'boolean') {
-            const trueLabel = String(summaryItem.data('true-label') || 'Yes')
-            const falseLabel = String(summaryItem.data('false-label') || 'No')
+            const trueLabel = String(summaryItem.data('true-label') || wp.i18n.__('Yes', 'groove-folios'))
+            const falseLabel = String(summaryItem.data('false-label') || wp.i18n.__('No', 'groove-folios'))
             value = sourceField.is(':checked') ? trueLabel : falseLabel
           } else {
             value = String(sourceField.val() || '').trim()
             if (!value) {
-              value = String(summaryItem.data('empty-label') || 'Not set')
+              value = String(summaryItem.data('empty-label') || wp.i18n.__('Not set', 'groove-folios'))
             }
           }
 
