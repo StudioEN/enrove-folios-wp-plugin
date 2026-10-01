@@ -540,12 +540,6 @@ abstract class Base_Theme extends Assets
   }
 
   /**
-   * Resolve the public URL for this theme directory from the class file path.
-   * Supports both plugin-bundled themes and installed themes in wp-content.
-   *
-   * @return string
-   */
-  /**
    * URL of the theme's cover, or '' when there is no cover to show.
    *
    * A theme package carries its own cover. The built-in themes' covers are
@@ -575,23 +569,20 @@ abstract class Base_Theme extends Assets
     return '';
   }
 
+  /**
+   * The public URL of this theme's folder, trailing slash. Themes are bundled
+   * with the plugin, so plugin_dir_url() resolves it, whatever the plugins
+   * folder is called or wherever it is symlinked from.
+   *
+   * @return string
+   */
   protected static function resolve_theme_folder_url(): string
   {
     $class = static::class;
-    if (isset(self::$theme_folder_urls[$class])) {
-      return self::$theme_folder_urls[$class];
+    if (!isset(self::$theme_folder_urls[$class])) {
+      self::$theme_folder_urls[$class] = plugin_dir_url(trailingslashit(static::get_theme_folder_path()) . 'setup.php');
     }
 
-    $theme_folder_path = wp_normalize_path(static::get_theme_folder_path());
-    $content_dir = wp_normalize_path(trailingslashit(WP_CONTENT_DIR));
-
-    if (strpos($theme_folder_path, $content_dir) === 0) {
-      $relative_path = ltrim(substr($theme_folder_path, strlen($content_dir)), '/');
-      self::$theme_folder_urls[$class] = trailingslashit(WP_CONTENT_URL) . $relative_path;
-      return self::$theme_folder_urls[$class];
-    }
-
-    self::$theme_folder_urls[$class] = trailingslashit(GROOVE_URL) . 'themes/' . static::get_id() . '/';
     return self::$theme_folder_urls[$class];
   }
 
@@ -656,7 +647,11 @@ abstract class Base_Theme extends Assets
     // page template echoes this through removes their tags but would print
     // what sat between them as text: a Custom HTML block's inline script
     // would show on the page as code.
-    return (string) preg_replace('@<(script|style)[^>]*?>.*?</\\1>@si', '', $content);
+    $stripped = preg_replace('@<(script|style)[^>]*?>.*?</\\1>@si', '', $content);
+
+    // null when PCRE gives up (its backtrack limit, on very large content).
+    // The page is shown rather than lost; wp_kses() still removes the tags.
+    return $stripped === null ? $content : $stripped;
   }
 
   /**
@@ -1029,7 +1024,10 @@ abstract class Base_Theme extends Assets
       $this->theme_id = $resolved_id;
       $this->theme_name = $theme['name'] ?? '';
       $this->theme_cover_url = $theme['cover_url'] ?? '';
-      $this->theme_logo_url = $theme['logo_url'] ?? '';
+      // A folio shows a logo only when its owner chose one. The theme's own
+      // logo is the plugin's wordmark: it is for the theme picker's preview
+      // (theme-picker-preview-template.php sets it there), never a cover.
+      $this->theme_logo_url = '';
       $this->show_logo = true;
 
       $folio_id = $this->get_folio_id_for_customization();

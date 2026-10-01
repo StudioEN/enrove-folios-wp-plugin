@@ -131,7 +131,8 @@ class Add_New extends Page
       }
     }
 
-    $folio_id = wp_insert_post($fields);
+    // Slashed, as wp_insert_post() unslashes what it is given.
+    $folio_id = wp_insert_post(wp_slash($fields));
 
     if (!is_wp_error($folio_id)) {
       if ($seed_sample_content) {
@@ -316,7 +317,9 @@ class Add_New extends Page
     $status = in_array($status, array('draft', 'publish', 'private', 'pending'), true) ? $status : 'draft';
 
     foreach ($pages as $index => $page) {
-      $page_id = wp_insert_post(array(
+      // wp_insert_post() unslashes what it is given; the sample content is
+      // not slashed, so a backslash in a block's attributes would be lost.
+      $page_id = wp_insert_post(wp_slash(array(
         'post_type' => 'groove_folio_page',
         'post_status' => $status,
         'post_title' => $page['title'],
@@ -325,7 +328,7 @@ class Add_New extends Page
         'meta_input' => array(
           'folio_id' => $folio_id,
         ),
-      ));
+      )));
 
       if (is_wp_error($page_id) || !$page_id || empty($page['feature_image'])) {
         continue;

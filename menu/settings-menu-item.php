@@ -26,7 +26,7 @@ class Settings_Menu_Item extends Menu_Item_Page {
 	}
 
 	public function get_page_title() {
-		return '';
+		return esc_html__( 'Groove Folios Settings', 'groove-folios' );
 	}
 
 	public function get_capability() {

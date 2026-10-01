@@ -30,7 +30,7 @@ class Folio_Menu_Item extends Menu_Item_Page
 
 	public function get_page_title()
 	{
-		return '';
+		return esc_html__('Edit Folio', 'groove-folios');
 	}
 
 	public function get_capability()

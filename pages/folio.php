@@ -269,17 +269,58 @@ class Folio extends Page
       wp_die();
     }
 
-    $data = &$_POST;
     $post = get_post($post_id, ARRAY_A);
 
-    // Since it's coming from the database.
-    $post = wp_slash($post);
-
-    $data['content'] = $post['post_content'];
-    $data['excerpt'] = $post['post_excerpt'];
-
-    // Rename.
-    $data['user_ID'] = get_current_user_id();
+    // The fields Quick Edit sends, each read as what it is, never the whole
+    // request. Content and excerpt come from the database: Quick Edit does not
+    // change them.
+    $data = array(
+      'post_ID' => $post_id,
+      'content' => $post['post_content'],
+      'excerpt' => $post['post_excerpt'],
+      'user_ID' => get_current_user_id(),
+    );
+    foreach (array('post_title', 'post_password', 'page_template') as $key) {
+      if (isset($_POST[$key])) {
+        $data[$key] = sanitize_text_field(wp_unslash($_POST[$key]));
+      }
+    }
+    if (isset($_POST['post_name'])) {
+      $data['post_name'] = sanitize_title(wp_unslash($_POST['post_name']));
+    }
+    foreach (array('_status', 'keep_private', 'comment_status', 'ping_status', 'post_format', 'sticky', 'edit_date') as $key) {
+      if (isset($_POST[$key])) {
+        $data[$key] = sanitize_key(wp_unslash($_POST[$key]));
+      }
+    }
+    foreach (array('post_author', 'post_parent') as $key) {
+      if (isset($_POST[$key])) {
+        $data[$key] = absint(wp_unslash($_POST[$key]));
+      }
+    }
+    if (isset($_POST['menu_order'])) {
+      $data['menu_order'] = intval(wp_unslash($_POST['menu_order']));
+    }
+    // touch_time()'s fields, and the hidden copies core compares them with to
+    // see whether the date was changed.
+    foreach (array('aa', 'mm', 'jj', 'hh', 'mn', 'ss') as $unit) {
+      foreach (array($unit, 'hidden_' . $unit) as $key) {
+        if (isset($_POST[$key])) {
+          $data[$key] = (string) absint(wp_unslash($_POST[$key]));
+        }
+      }
+    }
+    if (isset($_POST['post_category']) && is_array($_POST['post_category'])) {
+      $data['post_category'] = array_map('absint', wp_unslash($_POST['post_category']));
+    }
+    // A hierarchical taxonomy sends term IDs, a flat one a comma-separated
+    // list of names.
+    if (isset($_POST['tax_input']) && is_array($_POST['tax_input'])) {
+      $data['tax_input'] = array();
+      foreach (map_deep(wp_unslash($_POST['tax_input']), 'sanitize_text_field') as $taxonomy => $terms) {
+        $data['tax_input'][sanitize_key($taxonomy)] = is_array($terms) ? array_map('absint', $terms) : $terms;
+      }
+    }
 
     if (isset($data['post_parent'])) {
       $data['parent_id'] = $data['post_parent'];
@@ -289,13 +330,13 @@ class Folio extends Page
     if (isset($data['keep_private']) && 'private' === $data['keep_private']) {
       $data['visibility'] = 'private';
       $data['post_status'] = 'private';
-    } else {
+    } elseif (isset($data['_status'])) {
       $data['post_status'] = $data['_status'];
     }
 
     // A page goes live with its folio (Contents\FolioPage\Publishing), which
     // would save this as a draft; the row says why instead.
-    $requested_status = isset($data['post_status']) && is_string($data['post_status']) ? sanitize_key($data['post_status']) : '';
+    $requested_status = isset($data['post_status']) ? $data['post_status'] : '';
     if (
       $post['post_type'] === 'groove_folio_page'
       && in_array($requested_status, Folio_Page_Publishing::LIVE_PAGE_STATUSES, true)
@@ -331,8 +372,8 @@ class Folio extends Page
       $data['post_name'] = wp_unique_post_slug($data['post_name'], $post['ID'], $post['post_status'], $post['post_type'], $post['post_parent']);
     }
 
-    // Update the post.
-    edit_post();
+    // Update the post. edit_post() expects slashed data, as $_POST is.
+    edit_post(wp_slash($data));
 
     $saved_post = get_post($post_id);
     $saved_post_type = $saved_post ? $saved_post->post_type : static::POST_TYPE;
@@ -921,7 +962,6 @@ class Folio extends Page
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Logo', 'groove-folios'); ?></label>
               <?php
-                $default_client_logo_url = GROOVE_URL . 'themes/groove-proposal/assets/images/theme-g-logo.png';
                 $client_logo_preview = $proposal_client_logo_url !== '' ? esc_url_raw($proposal_client_logo_url) : '';
               ?>
               <input type="hidden" id="proposal_client_logo_url" name="proposal_client_logo_url"
@@ -930,12 +970,10 @@ class Folio extends Page
                 <div class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"
                   id="g-client-logo-preview-frame">
                   <img id="g-client-logo-preview" class="g-folio__media-preview-image"
-                    src="<?php echo esc_url($client_logo_preview !== '' ? $client_logo_preview : $default_client_logo_url); ?>" />
+                    src="<?php echo esc_url($client_logo_preview); ?>" />
                 </div>
                 <div class="g-folio__media-actions">
                   <button type="button" id="g-client-logo-select" class="button button-secondary"><?php echo $client_logo_preview !== '' ? esc_html__('Replace logo', 'groove-folios') : esc_html__('Select logo', 'groove-folios'); ?></button>
-                  <button type="button" id="g-client-logo-default" data-default-url="<?php echo esc_url($default_client_logo_url); ?>"
-                    class="button-link <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Use default', 'groove-folios'); ?></button>
                   <button type="button" id="g-client-logo-remove"
                     class="button-link text-red-600 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Remove', 'groove-folios'); ?></button>
                 </div>
@@ -1314,9 +1352,10 @@ class Folio extends Page
     $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
     $current_theme = $all_themes[$fields->theme_id] ?? reset($all_themes);
     $theme_cover_url = $current_theme["cover_url"] ?? '';
-    $theme_logo_url = $current_theme["logo_url"] ?? '';
     $feature_image_src = ($feature_image instanceof \WP_Post && !empty($feature_image->guid)) ? $feature_image->guid : $theme_cover_url;
-    $logo_image_src = ($logo instanceof \WP_Post && !empty($logo->guid)) ? $logo->guid : $theme_logo_url;
+    // No logo unless one is chosen: the theme's own is the plugin's wordmark,
+    // which never appears on a folio.
+    $logo_image_src = ($logo instanceof \WP_Post && !empty($logo->guid)) ? $logo->guid : '';
     $show_logo = (string) ($fields->show_logo ?? '1') !== '0';
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
@@ -1379,8 +1418,8 @@ class Folio extends Page
               </div>
               <div class="g-folio__media-actions">
                 <button type="button" id="logo-image" class="button button-secondary"><?php esc_html_e('Replace image', 'groove-folios'); ?></button>
-                <button type="button" data-default-url="<?php echo esc_url($theme_logo_url); ?>" id="use-default-logo"
-                  class="button-link"><?php esc_html_e('Use default', 'groove-folios'); ?></button>
+                <button type="button" data-default-url="" id="use-default-logo"
+                  class="button-link"><?php esc_html_e('Remove', 'groove-folios'); ?></button>
               </div>
             </div>
             <div class="mt-3 flex items-center">

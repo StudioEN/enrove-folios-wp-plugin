@@ -35,8 +35,9 @@
 
 
 // Two ways in, and only two: `php bin/check-theme-contract.php` from a shell, or
-// Themes_Manager including it on a WordPress request. A browser asking for the
-// file directly gets nothing. The shell defines ABSPATH for itself (as
+// code including it as a library on a WordPress request (the theme installer
+// did, until 0.5.1). A browser asking for the file directly gets nothing. The
+// file is a development tool and is left out of the release zip. The shell defines ABSPATH for itself (as
 // bin/check-docs.php does) so the guard can be the plain form Plugin Check reads.
 if (PHP_SAPI === 'cli' && !defined('ABSPATH')) {
     define('ABSPATH', dirname(__DIR__) . '/'); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress's own constant, defined only in a shell where WordPress is not loaded.
@@ -46,7 +47,8 @@ if (!defined('ABSPATH')) {
 }
 
 // This file stopped being CLI-only when Themes_Manager began including it to
-// check a package at install time, which puts it on a WordPress request. The
+// check a package at install time (until 0.5.1), which put it on a WordPress
+// request, and whatever brings third-party themes back may do so again. The
 // rest of the plugin's runtime code uses no PHP 8 function anywhere — it is
 // written to the 7.x floor — and three of them are used below, so on a 7.x host
 // the include would fatal and take the upload with it. Defining them is a
@@ -783,9 +785,10 @@ function groove_contract_core_slots(array $slots): array
 
 // ── CLI entry point ──────────────────────────────────────────────────────────
 //
-// Everything above is callable as a library. Themes_Manager includes this file
-// to check a package it has just unpacked, and must not inherit getopt(), the
-// help text, or any of the exits below — so it defines this constant first.
+// Everything above is callable as a library. Code that includes this file to
+// check a theme it has just unpacked (the installer did, until 0.5.1) must not
+// inherit getopt(), the help text, or any of the exits below — so it defines
+// this constant first.
 if (defined('GROOVE_THEME_CONTRACT_LIB')) {
     return;
 }

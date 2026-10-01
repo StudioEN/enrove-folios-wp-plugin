@@ -994,7 +994,10 @@ executable code outside its own folder, so the installer, the replace and remove
 `load_installed_themes()` were removed. Support for third-party themes is coming; it will not work by
 writing PHP files, and a theme written to this spec today is what it will load.
 
-The contract checker already runs on a theme folder anywhere, so a theme can be checked while it waits:
+The contract checker already runs on a theme folder anywhere, so a theme can be checked while it waits.
+It is a development tool, so it is not in the installed plugin: run it from a checkout of
+[the plugin's repository](https://github.com/StudioEN/groove-folios-wp-plugin).
+
 
 ```bash
 php bin/check-theme-contract.php --dir=/path/to/your-theme

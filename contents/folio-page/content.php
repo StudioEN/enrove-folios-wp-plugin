@@ -279,6 +279,7 @@ class Content extends BaseContent
     add_filter('rest_pre_insert_groove_folio_page', [$this, 'guard_rest_folio_link'], 10, 2);
     add_filter('is_protected_meta', [$this, 'protect_folio_link'], 10, 3);
     Publishing::register();
+    Visibility::register();
   }
 }
 ?>

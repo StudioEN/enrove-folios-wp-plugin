@@ -93,6 +93,11 @@ Under a base path, `/folio/` by default. You can change it on Groove → Setting
 * Publish and Unpublish in the folio editor ask first, and say how many pages change with the folio.
 * A page unpublished in a published folio leaves the folio's navigation for everyone, its editors included.
 * Security: Contributors submit folios for review instead of publishing them, can open only folios they may edit, and can no longer add pages to other people's folios.
+* Security: a published page of a private, password-protected or unpublished folio is no longer readable through the REST API, feeds, searches or the sitemap.
+* Folio covers show a logo only when you choose one; the Groove wordmark is no longer added by default.
+* Folios have a page title, and Contributors no longer see other people's private folios in All Folios.
+* Fixed: duplicating a folio or starting one from sample content no longer drops backslashes from block settings.
+* Fixed: the folio editor fits a phone, and its remaining messages can be translated.
 * Fixed: Groove Magazine now honours a folio's font choices.
 * Fixed: the folio page editor's content ran edge to edge on sites with a block theme.
 
@@ -116,7 +121,7 @@ Under a base path, `/folio/` by default. You can change it on Groove → Setting
 == Upgrade Notice ==
 
 = 0.5.1 =
-Security fix: Contributors could publish folios. Fonts are now served from your own site; press Download Fonts once on Groove → Settings → Fonts. Published pages of unpublished folios go back to draft until their folio is published.
+Security fixes: Contributors could publish folios, and pages of private folios were readable through the REST API. Fonts are now served from your site; press Download Fonts on Groove → Settings → Fonts. Covers show a logo only if you choose one.
 
 = 0.5.0 =
 Theme switches and theme removal now ask before hiding content, and publishing a folio no longer clears its collection tags.

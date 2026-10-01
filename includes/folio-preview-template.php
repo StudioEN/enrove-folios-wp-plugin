@@ -189,8 +189,28 @@ endif;
 // A folio this request may see. WordPress's own main query found nothing at this
 // path (there are no rewrite rules, by design) and has already set a 404, which
 // every published folio was served with until this line: search engines drop a
-// 404 and link previews refuse it. The page is real, so say so.
+// 404 and link previews refuse it. The page is real, so say so, to wp_head()
+// and body_class() as well, which otherwise print a 404's robots tag and
+// error404 class.
 status_header(200);
+$GLOBALS['wp_query']->is_404 = false;
+
+// The document is titled after the folio, and a page after itself and its
+// folio. Core's title tag would title it after the main query, which found
+// nothing here, so it is left out.
+$_gv_doc_post = get_post((int) \Groove\Utils\Utils::get_groove_post_id());
+$_gv_doc_title = array();
+if ($_gv_doc_post instanceof \WP_Post) {
+  $_gv_doc_title[] = $_gv_doc_post->post_title;
+  if ($_gv_doc_post->post_type === 'groove_folio_page') {
+    $_gv_doc_folio = get_post((int) get_post_meta($_gv_doc_post->ID, 'folio_id', true));
+    if ($_gv_doc_folio instanceof \WP_Post && $_gv_doc_folio->post_title !== '') {
+      $_gv_doc_title[] = $_gv_doc_folio->post_title;
+    }
+  }
+}
+$_gv_doc_title = array_filter($_gv_doc_title, 'strlen');
+remove_action('wp_head', '_wp_render_title_tag', 1);
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -198,6 +218,7 @@ status_header(200);
 <head>
   <meta charset="<?php bloginfo('charset'); ?>" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><?php echo esc_html($_gv_doc_title ? implode(' – ', $_gv_doc_title) : get_bloginfo('name')); ?></title>
   <?php wp_head(); ?>
 </head>
 

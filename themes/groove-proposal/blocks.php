@@ -1282,24 +1282,10 @@ function groove_proposal_enqueue_editor_fonts(): void
 }
 
 /**
- * Resolve the URL to this theme's folder.
+ * The URL of this theme's folder, trailing slash. Themes are bundled with the
+ * plugin, so plugin_dir_url() resolves it.
  */
 function groove_proposal_blocks_url(): string
 {
-    static $url;
-    if ($url !== null) {
-        return $url;
-    }
-
-    $theme_path = wp_normalize_path(trailingslashit(__DIR__));
-    $content_dir = wp_normalize_path(trailingslashit(WP_CONTENT_DIR));
-
-    if (strpos($theme_path, $content_dir) === 0) {
-        $relative = ltrim(substr($theme_path, strlen($content_dir)), '/');
-        $url = trailingslashit(WP_CONTENT_URL) . $relative;
-    } else {
-        $url = trailingslashit(plugin_dir_url(__FILE__));
-    }
-
-    return $url;
+    return plugin_dir_url(__FILE__);
 }

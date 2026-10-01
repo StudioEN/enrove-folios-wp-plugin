@@ -55,9 +55,10 @@ class Settings extends Page
     $this->add_post_action('save_groove_collection_tag', 'handle_collection_tag_save');
     $this->add_post_action('delete_groove_collection_tag', 'handle_collection_tag_delete');
     // The API key only serves the curation script, which the WordPress.org
-    // package leaves out; without it these handlers are not registered, so
-    // the released plugin has no way to reach api.pexels.com.
-    if (is_readable(GROOVE_PATH . 'bin/curate-pexels.php')) {
+    // package leaves out with the key and API client classes; without them
+    // these handlers are not registered, so the released plugin has no way
+    // to reach api.pexels.com.
+    if ($this->pexels_curation_available()) {
       $this->add_post_action('save_groove_pexels_key', 'handle_pexels_key_save');
       $this->add_post_action('delete_groove_pexels_key', 'handle_pexels_key_delete');
       $this->add_post_action('test_groove_pexels_connection', 'handle_pexels_connection_test');
@@ -186,10 +187,23 @@ class Settings extends Page
   /**
    * The Pexels helpers live in pexels/ and are autoloaded on demand.
    * Guard on them so the settings screen still renders if they are absent.
+   * These two download the sample photos, and ship.
    */
   private function pexels_is_available()
   {
-    return class_exists('\\Groove\\Pexels\\Key') && class_exists('\\Groove\\Pexels\\Client');
+    return class_exists('\\Groove\\Pexels\\Library') && class_exists('\\Groove\\Pexels\\Credits');
+  }
+
+  /**
+   * The API key, the API client and the curation script that uses them exist
+   * only in a development checkout: the WordPress.org package leaves all
+   * three out.
+   */
+  private function pexels_curation_available()
+  {
+    return is_readable(GROOVE_PATH . 'bin/curate-pexels.php')
+      && class_exists('\\Groove\\Pexels\\Key')
+      && class_exists('\\Groove\\Pexels\\Client');
   }
 
   private function get_pexels_key_source_label($source)
@@ -659,7 +673,7 @@ class Settings extends Page
       wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
     }
 
-    if ($this->pexels_is_available() && \Groove\Pexels\Key::is_locked_by_constant()) {
+    if ($this->pexels_curation_available() && \Groove\Pexels\Key::is_locked_by_constant()) {
       $this->set_tab_notice(
         'warning',
         __('GROOVE_PEXELS_API_KEY is defined in wp-config.php, so the stored key was not changed.', 'groove-folios'),
@@ -714,7 +728,7 @@ class Settings extends Page
       wp_die(esc_html__('You do not have permission to modify settings.', 'groove-folios'));
     }
 
-    if (!$this->pexels_is_available()) {
+    if (!$this->pexels_curation_available()) {
       $this->set_tab_notice(
         'error',
         __('The Pexels client is unavailable.', 'groove-folios'),
@@ -1084,17 +1098,16 @@ class Settings extends Page
   public function display_imagery_fields()
   {
     $available = $this->pexels_is_available();
-    $locked = $available ? \Groove\Pexels\Key::is_locked_by_constant() : false;
-    $source = $available ? \Groove\Pexels\Key::source() : '';
-    $masked = $available ? \Groove\Pexels\Key::masked() : '';
+    // The API key and the curation script only matter in a development checkout.
+    // The WordPress.org package leaves them out, so neither section is shown.
+    $can_curate = $this->pexels_curation_available();
+    $locked = $can_curate ? \Groove\Pexels\Key::is_locked_by_constant() : false;
+    $source = $can_curate ? \Groove\Pexels\Key::source() : '';
+    $masked = $can_curate ? \Groove\Pexels\Key::masked() : '';
     $has_key = $source !== '';
     $has_option_key = get_option('groove_pexels_api_key', '') !== '';
     $notice = $this->take_tab_notice();
 
-    // The API key and the curation script only matter in a development checkout.
-    // The WordPress.org package leaves bin/curate-pexels.php out, and without it
-    // the key has nothing to do, so neither section is shown.
-    $can_curate = is_readable(GROOVE_PATH . 'bin/curate-pexels.php');
     $photos = $available ? \Groove\Pexels\Library::status() : array('total' => 0, 'present' => 0, 'missing' => array());
     $photos_downloaded = $available ? \Groove\Pexels\Library::downloaded_count() : 0;
 
@@ -1260,7 +1273,7 @@ class Settings extends Page
       <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
         <?php wp_nonce_field('groove_test_pexels_connection', 'groove_nonce'); ?>
         <input type="hidden" name="action" value="test_groove_pexels_connection" />
-        <button type="submit" id="groove-test-pexels-connection" class="button button-secondary" <?php disabled(!$available || !$has_key, true); ?>>
+        <button type="submit" id="groove-test-pexels-connection" class="button button-secondary" <?php disabled(!$has_key, true); ?>>
           <?php esc_html_e('Test Connection', 'groove-folios'); ?>
         </button>
       </form>
@@ -1408,7 +1421,7 @@ class Settings extends Page
         <li>
           <?php esc_html_e('Pexels images — only when an administrator chooses to download them, in the setup dialog or on the Imagery tab. The photos are fetched once from images.pexels.com into your uploads folder, and Pexels sees your server’s IP address. After that they are served from your own site.', 'groove-folios'); ?>
         </li>
-        <?php if (is_readable(GROOVE_PATH . 'bin/curate-pexels.php')): ?>
+        <?php if ($this->pexels_curation_available()): ?>
         <li>
           <?php esc_html_e('Pexels API — only if you add your own API key on the Imagery tab, and only when you run the image curation script or press the connection test yourself.', 'groove-folios'); ?>
         </li>

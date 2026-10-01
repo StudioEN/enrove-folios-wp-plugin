@@ -314,7 +314,9 @@ class All_Folios extends Page
 
 	private function get_status_counts()
 	{
-		$counts = wp_count_posts(static::POST_TYPE);
+		// 'readable', as on core's lists: someone else's private folios count
+		// only for a user who may read them.
+		$counts = wp_count_posts(static::POST_TYPE, 'readable');
 
 		$publish = (int) ($counts->publish ?? 0);
 		$draft = (int) ($counts->draft ?? 0);
@@ -361,6 +363,9 @@ class All_Folios extends Page
 		$query_args = array(
 			'post_type' => static::POST_TYPE,
 			'post_status' => $status === 'all' ? array('publish', 'draft', 'pending', 'private', 'future') : $status,
+			// As core's lists do: someone else's private folios only for a user
+			// who may read them.
+			'perm' => 'readable',
 			'posts_per_page' => $per_page,
 			'paged' => $paged,
 			'orderby' => $orderby,
@@ -457,6 +462,7 @@ class All_Folios extends Page
 		$ids_query_args = array(
 			'post_type' => static::POST_TYPE,
 			'post_status' => $status === 'all' ? array('publish', 'draft', 'pending', 'private', 'future') : $status,
+			'perm' => 'readable',
 			'posts_per_page' => -1,
 			'fields' => 'ids',
 			'orderby' => 'modified',
@@ -712,7 +718,9 @@ class All_Folios extends Page
 			$source->post_title
 		);
 
-		$new_folio_id = wp_insert_post(array(
+		// wp_insert_post() unslashes what it is given, so stored text is
+		// slashed first, or a backslash in block attributes would be lost.
+		$new_folio_id = wp_insert_post(wp_slash(array(
 			'post_type'    => static::POST_TYPE,
 			'post_title'   => $new_title,
 			'post_name'    => sanitize_title($new_title),
@@ -720,7 +728,7 @@ class All_Folios extends Page
 			'post_author'  => get_current_user_id(),
 			'post_content' => $source->post_content,
 			'post_excerpt' => $source->post_excerpt,
-		));
+		)));
 
 		if (is_wp_error($new_folio_id) || !$new_folio_id) {
 			return false;
@@ -750,7 +758,7 @@ class All_Folios extends Page
 
 		$page_id_map = array();
 		foreach ($pages as $page) {
-			$new_page_id = wp_insert_post(array(
+			$new_page_id = wp_insert_post(wp_slash(array(
 				'post_type'    => 'groove_folio_page',
 				'post_title'   => $page->post_title,
 				'post_status'  => 'draft',
@@ -758,7 +766,7 @@ class All_Folios extends Page
 				'post_content' => $page->post_content,
 				'post_excerpt' => $page->post_excerpt,
 				'menu_order'   => $page->menu_order,
-			));
+			)));
 
 			if (is_wp_error($new_page_id) || !$new_page_id) {
 				continue;
@@ -803,7 +811,8 @@ class All_Folios extends Page
 				continue;
 			}
 			foreach ((array) $meta_values as $meta_value) {
-				add_post_meta((int) $target_post_id, $meta_key, maybe_unserialize($meta_value));
+				// add_post_meta() unslashes, as wp_insert_post() does.
+				add_post_meta((int) $target_post_id, $meta_key, wp_slash(maybe_unserialize($meta_value)));
 			}
 		}
 	}
@@ -828,7 +837,7 @@ class All_Folios extends Page
 		}
 
 		if (count($post_update) > 1) {
-			wp_update_post($post_update);
+			wp_update_post(wp_slash($post_update));
 		}
 
 		$this->rewrite_post_meta_values((int) $post_id, $replacement_map, $skip_meta_keys);
@@ -860,7 +869,7 @@ class All_Folios extends Page
 
 			delete_post_meta((int) $post_id, $meta_key);
 			foreach ($rewritten_values as $rewritten_value) {
-				add_post_meta((int) $post_id, $meta_key, $rewritten_value);
+				add_post_meta((int) $post_id, $meta_key, wp_slash($rewritten_value));
 			}
 		}
 	}
@@ -1294,6 +1303,10 @@ class All_Folios extends Page
 								get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post_id),
 								$this->get_last_modified_by($post_id)
 							);
+							// As on core's lists: a folio the user may not edit is listed
+							// without the actions they could not take.
+							$can_edit = current_user_can('edit_post', $post_id);
+							$can_delete = current_user_can('delete_post', $post_id);
 							$quick_edit_title = $title !== '' ? $title : esc_html__('(no title)', 'groove-folios');
 							$quick_edit_aria_label = sprintf(
 								/* translators: %s: Folio title. */
@@ -1306,28 +1319,36 @@ class All_Folios extends Page
 									class="<?php echo esc_attr($this->column_classes('cb', $hidden_columns, 'check-column')); ?>">
 									<label class="screen-reader-text"
 										for="cb-select-<?php echo esc_attr((string) $post_id); ?>"><?php esc_html_e('Select folio', 'groove-folios'); ?></label>
+									<?php if ($can_edit): ?>
 									<input id="cb-select-<?php echo esc_attr((string) $post_id); ?>" type="checkbox" name="post[]"
 										value="<?php echo esc_attr((string) $post_id); ?>" />
+									<?php endif; ?>
 								</th>
 								<td class="<?php echo esc_attr($this->column_classes('title', $hidden_columns, 'title has-row-actions column-primary page-title')); ?>"
 									data-colname="<?php esc_attr_e('Folio Name', 'groove-folios'); ?>">
 									<strong>
+										<?php if ($can_edit): ?>
 										<a class="row-title" href="<?php echo esc_url($edit_url); ?>">
 											<?php echo esc_html($title !== '' ? $title : esc_html__('(no title)', 'groove-folios')); ?>
 										</a>
+										<?php else: ?>
+											<?php echo esc_html($title !== '' ? $title : esc_html__('(no title)', 'groove-folios')); ?>
+										<?php endif; ?>
 									</strong>
 									<div class="row-actions">
+										<?php if ($can_edit): ?>
 										<span class="edit">
 											<a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove-folios'); ?></a> |
 										</span>
-										<?php if ($post_status !== 'trash'): ?>
+										<?php endif; ?>
+										<?php if ($can_edit && $post_status !== 'trash'): ?>
 											<span class="inline hide-if-no-js">
 												<button type="button" class="button-link editinline"
 													aria-label="<?php echo esc_attr($quick_edit_aria_label); ?>"
 													aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove-folios'); ?></button> |
 											</span>
 										<?php endif; ?>
-										<?php if ($post_status !== 'trash'): ?>
+										<?php if ($can_edit && $post_status !== 'trash'): ?>
 											<span class="duplicate">
 												<a href="<?php echo esc_url(self::get_duplicate_url($post_id, array_filter(array(
 													'post_status' => $status !== 'all' ? $status : null,
@@ -1342,9 +1363,9 @@ class All_Folios extends Page
 										<?php endif; ?>
 										<span class="view">
 											<a href="<?php echo esc_url($row_view_url); ?>" target="_blank"
-												rel="noopener noreferrer"><?php echo esc_html($row_view_label); ?></a> |
+												rel="noopener noreferrer"><?php echo esc_html($row_view_label); ?></a><?php if ($can_delete): ?> |<?php endif; ?>
 										</span>
-										<?php if ($post_status === 'trash'): ?>
+										<?php if ($can_delete && $post_status === 'trash'): ?>
 											<span class="untrash">
 												<a
 													href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove-folios'); ?></a>
@@ -1354,7 +1375,7 @@ class All_Folios extends Page
 												<a class="submitdelete"
 													href="<?php echo esc_url(get_delete_post_link($post_id, '', true)); ?>"><?php esc_html_e('Delete Permanently', 'groove-folios'); ?></a>
 											</span>
-										<?php else: ?>
+										<?php elseif ($can_delete): ?>
 											<span class="trash">
 												<a class="submitdelete"
 													href="<?php echo esc_url(get_delete_post_link($post_id)); ?>"><?php esc_html_e('Trash', 'groove-folios'); ?></a>

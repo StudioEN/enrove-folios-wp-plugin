@@ -355,8 +355,15 @@ class Library
       return __('The download was not a JPEG image.', 'groove-folios');
     }
 
+    // WordPress's direct filesystem, as for the fonts: the destination is
+    // under uploads, which WordPress itself writes to directly.
+    require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+    require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
+    // FS_CHMOD_FILE, which core defines only once WP_Filesystem() connects.
+    $mode = defined('FS_CHMOD_FILE') ? FS_CHMOD_FILE : (fileperms(ABSPATH . 'index.php') & 0777 | 0644);
+
     $destination = static::downloaded_path($slug);
-    $moved = copy($temp, $destination);
+    $moved = (new \WP_Filesystem_Direct(null))->copy($temp, $destination, true, $mode);
     wp_delete_file($temp);
 
     if (!$moved) {

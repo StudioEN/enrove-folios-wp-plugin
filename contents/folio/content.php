@@ -84,10 +84,13 @@ class Content extends BaseContent
       'show_tagcloud' => false,
       'show_in_rest' => true,
       'hierarchical' => false,
+      // As core's post tags: anyone who writes may tag a folio, which
+      // creates a new tag as it goes, but renaming and deleting tags (the
+      // REST API's term routes) is for editors.
       'capabilities' => array(
-        'manage_terms' => 'edit_posts',
-        'edit_terms' => 'edit_posts',
-        'delete_terms' => 'edit_posts',
+        'manage_terms' => 'manage_categories',
+        'edit_terms' => 'manage_categories',
+        'delete_terms' => 'manage_categories',
         'assign_terms' => 'edit_posts',
       ),
       'query_var' => true,
@@ -105,33 +108,44 @@ class Content extends BaseContent
       },
     );
 
+    // Each value is sanitised as the folio editor sanitises it (Folio::save),
+    // so a write through the REST API stores what the editor would, and the
+    // editor's own writes, which pass through here too, are unchanged.
+    // proposal_revision_log has none: it is JSON the plugin builds itself,
+    // and a text sanitiser would break it.
     foreach (array(
-      'theme_id',
-      'subtitle',
-      'copyright',
-      'permission',
-      'fonts',
-      'header_font',
-      'body_font',
-      'show_byline',
-      'proposal_version',
-      'proposal_status',
-      'proposal_prepared_for',
-      'proposal_prepared_by',
-      'proposal_contact_email',
-      'proposal_contact_name',
-      'proposal_contact_role',
-      'proposal_contact_phone',
-      'proposal_contact_linkedin',
-      'proposal_contacts',
-      'proposal_client_name',
-      'proposal_client_logo_url',
-      'proposal_date',
-      'proposal_show_in_page_nav',
-      'proposal_color_scheme',
-      'proposal_revision_log',
-    ) as $meta_key) {
-      register_post_meta('groove_folio', $meta_key, $meta_args);
+      'theme_id' => 'sanitize_key',
+      'subtitle' => 'sanitize_text_field',
+      'copyright' => 'sanitize_text_field',
+      'permission' => 'sanitize_text_field',
+      'fonts' => 'sanitize_key',
+      'header_font' => 'sanitize_key',
+      'body_font' => 'sanitize_key',
+      'show_byline' => 'sanitize_key',
+      'proposal_version' => 'sanitize_text_field',
+      'proposal_status' => 'sanitize_text_field',
+      'proposal_prepared_for' => 'sanitize_text_field',
+      'proposal_prepared_by' => 'sanitize_text_field',
+      'proposal_contact_email' => 'sanitize_email',
+      'proposal_contact_name' => 'sanitize_text_field',
+      'proposal_contact_role' => 'sanitize_text_field',
+      'proposal_contact_phone' => 'sanitize_text_field',
+      'proposal_contact_linkedin' => 'esc_url_raw',
+      'proposal_contacts' => 'sanitize_textarea_field',
+      'proposal_client_name' => 'sanitize_text_field',
+      'proposal_client_logo_url' => 'esc_url_raw',
+      'proposal_date' => 'sanitize_text_field',
+      'proposal_show_in_page_nav' => 'sanitize_key',
+      'proposal_color_scheme' => 'sanitize_key',
+      'proposal_revision_log' => null,
+    ) as $meta_key => $sanitize) {
+      $args = $meta_args;
+      if ($sanitize !== null) {
+        $args['sanitize_callback'] = static function ($value) use ($sanitize) {
+          return call_user_func($sanitize, is_scalar($value) ? (string) $value : '');
+        };
+      }
+      register_post_meta('groove_folio', $meta_key, $args);
     }
   }
 

@@ -832,9 +832,9 @@ jQuery(function () {
           reload: false,
           updatePermalink: reason === 'title-blur',
           silent: true,
-          savingText: 'Saving draft...',
-          savedText: 'Draft saved',
-          errorText: 'Autosave failed'
+          savingText: wp.i18n.__('Saving draft...', 'groove-folios'),
+          savedText: wp.i18n.__('Draft saved', 'groove-folios'),
+          errorText: wp.i18n.__('Autosave failed', 'groove-folios')
         }).done(function (result) {
           if (result && result.code === 0) {
             lastAutosaveHash = payloadHash
@@ -974,9 +974,9 @@ jQuery(function () {
       ajax(action, {
         reload: false,
         updatePermalink: true,
-        savingText: 'Saving...',
-        savedText: 'Saved',
-        errorText: 'Save failed'
+        savingText: wp.i18n.__('Saving...', 'groove-folios'),
+        savedText: wp.i18n.__('Saved', 'groove-folios'),
+        errorText: wp.i18n.__('Save failed', 'groove-folios')
       }).always(function () {
         isManualSave = false
         isSaveBusy = false
@@ -1001,8 +1001,8 @@ jQuery(function () {
       }
     })
 
-    createAdaptiveTooltip('#g-reset-header-font', 'Reset font')
-    createAdaptiveTooltip('#g-reset-body-font', 'Reset font')
+    createAdaptiveTooltip('#g-reset-header-font', wp.i18n.__('Reset font', 'groove-folios'))
+    createAdaptiveTooltip('#g-reset-body-font', wp.i18n.__('Reset font', 'groove-folios'))
 
     const copyLinkBtn = jQuery('#g-copy-folio-link')
     if (copyLinkBtn.length) {
@@ -1078,9 +1078,9 @@ jQuery(function () {
       openButton.click(function (event) {
         event.preventDefault()
         const customUploader = wp.media({
-          title: 'Select',
+          title: wp.i18n.__('Select image', 'groove-folios'),
           button: {
-            text: 'Select'
+            text: wp.i18n.__('Select', 'groove-folios')
           },
           multiple: false
         })
@@ -1130,13 +1130,11 @@ jQuery(function () {
       const hiddenInput = jQuery('#proposal_client_logo_url')
       const previewImg = jQuery('#g-client-logo-preview')
       const previewFrame = jQuery('#g-client-logo-preview-frame')
-      const defaultBtn = jQuery('#g-client-logo-default')
       const removeBtn = jQuery('#g-client-logo-remove')
 
       function showPreview(url) {
         previewImg.attr('src', url)
         previewFrame.removeClass('hidden')
-        defaultBtn.removeClass('hidden')
         removeBtn.removeClass('hidden')
         selectBtn.text(wp.i18n.__('Replace logo', 'groove-folios'))
       }
@@ -1144,7 +1142,6 @@ jQuery(function () {
       function clearPreview() {
         hiddenInput.val('').trigger('change')
         previewFrame.addClass('hidden')
-        defaultBtn.addClass('hidden')
         removeBtn.addClass('hidden')
         selectBtn.text(wp.i18n.__('Select logo', 'groove-folios'))
       }
@@ -1152,8 +1149,8 @@ jQuery(function () {
       selectBtn.on('click', function (e) {
         e.preventDefault()
         var uploader = wp.media({
-          title: 'Select Client Logo',
-          button: { text: 'Use this logo' },
+          title: wp.i18n.__('Select client logo', 'groove-folios'),
+          button: { text: wp.i18n.__('Use this logo', 'groove-folios') },
           multiple: false,
           library: { type: 'image' }
         })
@@ -1165,12 +1162,6 @@ jQuery(function () {
         })
 
         uploader.open()
-      })
-
-      defaultBtn.on('click', function () {
-        var defaultUrl = jQuery(this).data('default-url')
-        hiddenInput.val(defaultUrl).trigger('change')
-        showPreview(defaultUrl)
       })
 
       removeBtn.on('click', function () {

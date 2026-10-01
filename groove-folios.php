@@ -19,9 +19,6 @@
 if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
 }
-if (!function_exists('get_file_data')) {
-	require_once ABSPATH . 'wp-includes/functions.php';
-}
 $groove_plugin_data = get_file_data(__FILE__, ['Version' => 'Version'], 'plugin');
 define('GROOVE_VERSION', $groove_plugin_data['Version']);
 define('GROOVE__FILE__', __FILE__);

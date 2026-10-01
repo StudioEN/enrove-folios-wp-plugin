@@ -80,7 +80,10 @@ class Publishing
    * would have been with the rules in place, and come back when their folio
    * is published. Run on admin_init (wp-admin, admin-ajax, admin-post), not
    * on every front-end request; it only ever takes down pages that break
-   * the rule, so a run cut short is simply finished by the next one.
+   * the rule, so a run cut short is simply finished by the next one. The
+   * pages are read by ID, a batch at a time, and each batch is let go of
+   * before the next, so a site with thousands of pages does not run out of
+   * memory here, on every wp-admin request, plugins.php included.
    */
   public static function migrate_existing_pages()
   {
@@ -88,16 +91,23 @@ class Publishing
       return;
     }
 
-    $pages = get_posts(array(
+    $page_ids = get_posts(array(
       'post_type' => 'groove_folio_page',
       'post_status' => self::LIVE_PAGE_STATUSES,
       'posts_per_page' => -1,
+      'fields' => 'ids',
       'no_found_rows' => true,
     ));
 
-    foreach ($pages as $page) {
-      if (!static::is_folio_live((int) get_post_meta($page->ID, 'folio_id', true))) {
-        static::take_down_page($page);
+    foreach (array_chunk(array_map('intval', $page_ids), 100) as $batch) {
+      _prime_post_caches($batch, false, true);
+      foreach ($batch as $page_id) {
+        $page = get_post($page_id);
+        if ($page instanceof \WP_Post && !static::is_folio_live((int) get_post_meta($page_id, 'folio_id', true))) {
+          static::take_down_page($page);
+        }
+        wp_cache_delete($page_id, 'posts');
+        wp_cache_delete($page_id, 'post_meta');
       }
     }
 

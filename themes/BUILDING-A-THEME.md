@@ -221,6 +221,9 @@ Escape, click outside, Tab into it while closed.
 
 ## 5. The contract checker
 
+The checker and its self-test are development tools, not part of the installed plugin. Run them from a
+checkout of [the plugin's repository](https://github.com/StudioEN/groove-folios-wp-plugin).
+
 ```bash
 php bin/check-theme-contract.php --theme=<id>            # a bundled theme
 php bin/check-theme-contract.php --dir=/path/to/theme    # a theme folder outside themes/
