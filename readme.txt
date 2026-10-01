@@ -89,8 +89,12 @@ Under a base path, `/folio/` by default. You can change it on Groove → Setting
 * No "Powered by" credit appears on folios.
 * Installing themes from a .zip is removed; support for third-party themes is coming soon.
 * A folio page's block inserter offers only the blocks its theme styles, and the site's WordPress theme no longer leaks into folios or the folio page editor.
+* A folio's pages go live with it. While a folio is unpublished, its pages can't be published; unpublishing a folio returns its live pages to draft, and publishing it again brings them back as they were.
+* Publish and Unpublish in the folio editor ask first, and say how many pages change with the folio.
+* A page unpublished in a published folio leaves the folio's navigation for everyone, its editors included.
 * Security: Contributors submit folios for review instead of publishing them, can open only folios they may edit, and can no longer add pages to other people's folios.
 * Fixed: Groove Magazine now honours a folio's font choices.
+* Fixed: the folio page editor's content ran edge to edge on sites with a block theme.
 
 = 0.5.0 =
 * Change theme in the folio editor uses the same dialog as choosing a theme for a new folio.
@@ -112,7 +116,7 @@ Under a base path, `/folio/` by default. You can change it on Groove → Setting
 == Upgrade Notice ==
 
 = 0.5.1 =
-Security fix: Contributors could publish folios. Fonts are now served from your own site; press Download Fonts once on Groove → Settings → Fonts to get the theme fonts back.
+Security fix: Contributors could publish folios. Fonts are now served from your own site; press Download Fonts once on Groove → Settings → Fonts. Published pages of unpublished folios go back to draft until their folio is published.
 
 = 0.5.0 =
 Theme switches and theme removal now ask before hiding content, and publishing a folio no longer clears its collection tags.
