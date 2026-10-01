@@ -367,7 +367,8 @@ jQuery(function () {
       if (showCreate) {
         const li = document.createElement('li')
         li.className = 'g-tag-dropdown__create'
-        li.textContent = 'Create "' + token + '"'
+        /* translators: %s: the collection tag the user typed. */
+        li.textContent = wp.i18n.sprintf(wp.i18n.__('Create “%s”', 'groove-folios'), token)
         li.addEventListener('mousedown', e => { e.preventDefault(); selectTag(token) })
         dropdown.appendChild(li)
       }

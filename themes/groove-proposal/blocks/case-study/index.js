@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var Fragment = wp.element.Fragment;
   var useState = wp.element.useState;
   var registerBlockType = wp.blocks.registerBlockType;
@@ -26,11 +27,11 @@
 
   var TEMPLATE = [
     ['core/heading', { level: 3, content: 'The Challenge' }],
-    ['core/paragraph', { placeholder: 'Describe the challenge the client faced…' }],
+    ['core/paragraph', { placeholder: __('Describe the challenge the client faced…', 'groove-folios') }],
     ['core/heading', { level: 3, content: 'Our Approach' }],
-    ['core/paragraph', { placeholder: 'Describe the approach you took…' }],
+    ['core/paragraph', { placeholder: __('Describe the approach you took…', 'groove-folios') }],
     ['core/heading', { level: 3, content: 'The Results' }],
-    ['core/paragraph', { placeholder: 'Describe the results achieved…' }],
+    ['core/paragraph', { placeholder: __('Describe the results achieved…', 'groove-folios') }],
   ];
 
   var ALLOWED_BLOCKS = [
@@ -281,7 +282,7 @@
             image
               ? el('img', { src: image, alt: '', style: rectImgStyle })
               : el('div', { style: rectPlaceholderStyle }, placeholder),
-            el('div', { style: hovering ? rectOverlayVisibleStyle : rectOverlayStyle }, image ? 'Change' : 'Upload')
+            el('div', { style: hovering ? rectOverlayVisibleStyle : rectOverlayStyle }, image ? __('Change', 'groove-folios') : __('Upload', 'groove-folios'))
           );
         },
       }),
@@ -289,7 +290,7 @@
         type: 'button',
         style: rectRemoveButtonStyle,
         onClick: function (e) { e.stopPropagation(); onRemove(); },
-        'aria-label': 'Remove image',
+        'aria-label': __('Remove image', 'groove-folios'),
       }, '×') : null
     );
   }
@@ -324,7 +325,7 @@
           updated[index] = Object.assign({}, item, { label: v });
           onChange(updated);
         },
-        placeholder: 'Label',
+        placeholder: __('Label', 'groove-folios'),
         allowedFormats: [],
       })
     );
@@ -333,11 +334,11 @@
   // ── Block registration ────────────────────────────────────────────────
 
   registerBlockType('groove-proposal/case-study', {
-    title: 'Case Study',
-    description: 'An elaborate client story with challenge, approach, and results sections, plus flexible rich content.',
+    title: __('Case Study', 'groove-folios'),
+    description: __('An elaborate client story with challenge, approach, and results sections, plus flexible rich content.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['case study', 'portfolio', 'proof', 'client story'],
+    keywords: [__('case study', 'groove-folios'), __('portfolio', 'groove-folios'), __('proof', 'groove-folios'), __('client story', 'groove-folios')],
     attributes: {
       clientName: { type: 'string', default: '' },
       clientLogo: { type: 'string', default: '' },
@@ -366,7 +367,7 @@
 
       function addStat() {
         if (stats.length >= MAX_STATS) return;
-        setStats(stats.concat([{ value: '0', label: 'Label' }]));
+        setStats(stats.concat([{ value: '0', label: __('Label', 'groove-folios') }]));
       }
 
       function removeStat() {
@@ -380,18 +381,18 @@
 
       return el(Fragment, null,
         el(InspectorControls, null,
-          el(PanelBody, { title: 'Case study settings', initialOpen: true },
+          el(PanelBody, { title: __('Case study settings', 'groove-folios'), initialOpen: true },
             el(SelectControl, {
-              label: 'Layout',
+              label: __('Layout', 'groove-folios'),
               value: attrs.layout,
               options: [
-                { label: 'Spotlight', value: 'spotlight' },
-                { label: 'Compact', value: 'compact' },
+                { label: __('Spotlight', 'groove-folios'), value: 'spotlight' },
+                { label: __('Compact', 'groove-folios'), value: 'compact' },
               ],
               onChange: function (val) { setAttributes({ layout: val }); },
             }),
             el(TextControl, {
-              label: 'View live project URL',
+              label: __('View live project URL', 'groove-folios'),
               type: 'url',
               value: attrs.link,
               placeholder: 'https://…',
@@ -403,13 +404,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: 'Add stat',
+              label: __('Add stat', 'groove-folios'),
               onClick: addStat,
               disabled: stats.length >= MAX_STATS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: 'Remove stat',
+              label: __('Remove stat', 'groove-folios'),
               onClick: removeStat,
               disabled: stats.length <= MIN_STATS,
             })
@@ -424,14 +425,14 @@
                 onRemove: function () { setAttributes({ clientLogo: '' }); },
                 width: '64px',
                 height: '40px',
-                placeholder: 'Logo',
+                placeholder: __('Logo', 'groove-folios'),
               }),
               el(RichText, {
                 tagName: 'div',
                 style: clientNameStyle,
                 value: attrs.clientName,
                 onChange: function (v) { setAttributes({ clientName: v }); },
-                placeholder: 'Client name',
+                placeholder: __('Client name', 'groove-folios'),
                 allowedFormats: [],
               })
             ),
@@ -439,7 +440,7 @@
               type: 'text',
               style: tagsInputStyle,
               value: attrs.tagsText,
-              placeholder: 'Tags, comma separated (e.g. Brand, Web, B2B)',
+              placeholder: __('Tags, comma separated (e.g. Brand, Web, B2B)', 'groove-folios'),
               onChange: function (e) { setAttributes({ tagsText: e.target.value }); },
             }),
             tags.length > 0 ? el('div', { style: tagsRowStyle }, tags.map(function (tag, i) {
@@ -450,7 +451,7 @@
               style: titleStyle,
               value: attrs.projectTitle,
               onChange: function (v) { setAttributes({ projectTitle: v }); },
-              placeholder: 'Project title',
+              placeholder: __('Project title', 'groove-folios'),
               allowedFormats: [],
             }),
             el(RectImageEditor, {
@@ -459,7 +460,7 @@
               onRemove: function () { setAttributes({ heroImage: '' }); },
               width: '100%',
               height: '220px',
-              placeholder: 'Hero image',
+              placeholder: __('Hero image', 'groove-folios'),
               borderRadius: '0.375rem',
             }),
             stats.length > 0 ? el('div', { style: statsGridStyle }, stats.map(function (stat, i) {

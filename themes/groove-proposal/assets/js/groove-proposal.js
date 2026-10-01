@@ -483,8 +483,12 @@
   function syncThemeToggleButtons(mode) {
     var isDark = mode === 'dark';
     document.querySelectorAll('[data-gp-theme-toggle]').forEach(function (button) {
-      button.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-      button.setAttribute('title', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+      // The labels come translated from the markup (data-label-light/-dark).
+      var label = isDark
+        ? (button.getAttribute('data-label-light') || 'Switch to light mode')
+        : (button.getAttribute('data-label-dark') || 'Switch to dark mode');
+      button.setAttribute('aria-label', label);
+      button.setAttribute('title', label);
     });
   }
 

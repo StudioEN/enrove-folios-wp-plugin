@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -94,18 +95,18 @@
           updated[index] = v;
           onChange(updated);
         },
-        placeholder: 'What the reader should leave with…',
+        placeholder: __('What the reader should leave with…', 'groove-folios'),
         allowedFormats: ['core/bold', 'core/italic'],
       })
     );
   }
 
   registerBlockType('groove-ebook/summary', {
-    title: 'Chapter Summary',
-    description: 'The handful of things a chapter leaves the reader with.',
+    title: __('Chapter Summary', 'groove-folios'),
+    description: __('The handful of things a chapter leaves the reader with.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-ebook',
-    keywords: ['summary', 'takeaway', 'recap', 'chapter', 'key points'],
+    keywords: [__('summary', 'groove-folios'), __('takeaway', 'groove-folios'), __('recap', 'groove-folios'), __('chapter', 'groove-folios'), __('key points', 'groove-folios')],
     attributes: {
       title: {
         type: 'string',
@@ -135,7 +136,7 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: 'Add a point',
+              label: __('Add a point', 'groove-folios'),
               onClick: function () {
                 if (points.length >= MAX_POINTS) return;
                 setPoints(points.concat(['']));
@@ -144,7 +145,7 @@
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: 'Remove the last point',
+              label: __('Remove the last point', 'groove-folios'),
               onClick: function () {
                 if (points.length <= MIN_POINTS) return;
                 setPoints(points.slice(0, -1));
@@ -160,7 +161,7 @@
               style: titleStyle,
               value: attrs.title,
               onChange: function (v) { props.setAttributes({ title: v }); },
-              placeholder: 'Heading (optional)',
+              placeholder: __('Heading (optional)', 'groove-folios'),
               allowedFormats: [],
             }),
             el('div', { style: listStyle },

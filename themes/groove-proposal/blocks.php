@@ -260,7 +260,7 @@ function groove_proposal_render_pricing_table(array $attributes): string
 
         $out .= '<div class="' . esc_attr($row_class) . '">'
             . '<div class="gp-pricing__item">'
-            . '<span class="gp-pricing__name">' . $name . ($optional ? ' <em>(optional)</em>' : '') . '</span>'
+            . '<span class="gp-pricing__name">' . $name . ($optional ? ' <em>' . esc_html__('(optional)', 'groove-folios') . '</em>' : '') . '</span>'
             . '<span class="gp-pricing__desc">' . $desc . '</span>'
             . '</div>'
             . '<span class="gp-pricing__price">' . esc_html($format_price($price)) . '</span>'
@@ -507,10 +507,10 @@ function groove_proposal_render_callout_box(array $attributes): string
     }
 
     $labels = [
-        'note'      => 'Note',
-        'tip'       => 'Tip',
-        'important' => 'Important',
-        'warning'   => 'Warning',
+        'note'      => __('Note', 'groove-folios'),
+        'tip'       => __('Tip', 'groove-folios'),
+        'important' => __('Important', 'groove-folios'),
+        'warning'   => __('Warning', 'groove-folios'),
     ];
 
     $class = 'gp-callout-box gp-callout-box--' . esc_attr($style);
@@ -1096,7 +1096,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-key-metrics',
         $theme_url . 'blocks/key-metrics/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($js_path) ? (string) filemtime($js_path) : GROOVE_VERSION,
         true
     );
@@ -1115,7 +1115,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-timeline',
         $theme_url . 'blocks/timeline/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($timeline_js) ? (string) filemtime($timeline_js) : GROOVE_VERSION,
         true
     );
@@ -1125,7 +1125,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-pull-quote',
         $theme_url . 'blocks/pull-quote/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($quote_js) ? (string) filemtime($quote_js) : GROOVE_VERSION,
         true
     );
@@ -1135,7 +1135,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-pricing-table',
         $theme_url . 'blocks/pricing-table/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($pricing_js) ? (string) filemtime($pricing_js) : GROOVE_VERSION,
         true
     );
@@ -1145,7 +1145,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-team-grid',
         $theme_url . 'blocks/team-grid/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($team_js) ? (string) filemtime($team_js) : GROOVE_VERSION,
         true
     );
@@ -1155,7 +1155,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-process-steps',
         $theme_url . 'blocks/process-steps/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($steps_js) ? (string) filemtime($steps_js) : GROOVE_VERSION,
         true
     );
@@ -1165,7 +1165,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-callout-box',
         $theme_url . 'blocks/callout-box/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($callout_js) ? (string) filemtime($callout_js) : GROOVE_VERSION,
         true
     );
@@ -1175,7 +1175,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-comparison-columns',
         $theme_url . 'blocks/comparison-columns/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($compare_js) ? (string) filemtime($compare_js) : GROOVE_VERSION,
         true
     );
@@ -1185,7 +1185,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-case-study',
         $theme_url . 'blocks/case-study/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($case_study_js) ? (string) filemtime($case_study_js) : GROOVE_VERSION,
         true
     );
@@ -1195,7 +1195,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-faq',
         $theme_url . 'blocks/faq/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($faq_js) ? (string) filemtime($faq_js) : GROOVE_VERSION,
         true
     );
@@ -1205,7 +1205,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-cta',
         $theme_url . 'blocks/cta/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($cta_js) ? (string) filemtime($cta_js) : GROOVE_VERSION,
         true
     );
@@ -1215,7 +1215,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-testimonial-grid',
         $theme_url . 'blocks/testimonial-grid/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($testimonials_js) ? (string) filemtime($testimonials_js) : GROOVE_VERSION,
         true
     );
@@ -1225,7 +1225,7 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-logo-strip',
         $theme_url . 'blocks/logo-strip/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($logo_strip_js) ? (string) filemtime($logo_strip_js) : GROOVE_VERSION,
         true
     );
@@ -1235,11 +1235,18 @@ add_action('enqueue_block_editor_assets', function () {
     wp_enqueue_script(
         'groove-proposal-block-deliverables',
         $theme_url . 'blocks/deliverables/index.js',
-        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+        ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
         file_exists($deliverables_js) ? (string) filemtime($deliverables_js) : GROOVE_VERSION,
         true
     );
 
+
+    // Every block script above labels its editor UI with wp.i18n.
+    foreach (wp_scripts()->queue as $handle) {
+        if (strpos($handle, 'groove-proposal-block-') === 0) {
+            wp_set_script_translations($handle, 'groove-folios');
+        }
+    }
 
     // Editor typography. Loaded through the same resolver the front end uses,
     // so the canvas previews whatever this folio will actually render with —

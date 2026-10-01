@@ -1,11 +1,13 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
+  var sprintf = wp.i18n.sprintf;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -120,7 +122,7 @@
           style: authorStyle,
           value: entry.author || '',
           onChange: function (v) { update('author', v); },
-          placeholder: 'Author',
+          placeholder: __('Author', 'groove-folios'),
           allowedFormats: [],
         }),
         el(RichText, {
@@ -128,7 +130,7 @@
           style: workStyle,
           value: entry.work || '',
           onChange: function (v) { update('work', v); },
-          placeholder: 'Title of the work',
+          placeholder: __('Title of the work', 'groove-folios'),
           allowedFormats: [],
         }),
         el(RichText, {
@@ -136,7 +138,7 @@
           style: noteStyle,
           value: entry.note || '',
           onChange: function (v) { update('note', v); },
-          placeholder: 'Publisher, year, page…',
+          placeholder: __('Publisher, year, page…', 'groove-folios'),
           allowedFormats: [],
         })
       )
@@ -144,11 +146,11 @@
   }
 
   registerBlockType('groove-ebook/references', {
-    title: 'References',
-    description: 'Works cited or further reading, numbered — back matter for a chapter or a colophon.',
+    title: __('References', 'groove-folios'),
+    description: __('Works cited or further reading, numbered — back matter for a chapter or a colophon.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-ebook',
-    keywords: ['references', 'bibliography', 'sources', 'further reading', 'citations'],
+    keywords: [__('references', 'groove-folios'), __('bibliography', 'groove-folios'), __('sources', 'groove-folios'), __('further reading', 'groove-folios'), __('citations', 'groove-folios')],
     attributes: {
       title: {
         type: 'string',
@@ -178,7 +180,7 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: 'Add an entry',
+              label: __('Add an entry', 'groove-folios'),
               onClick: function () {
                 if (entries.length >= MAX_ENTRIES) return;
                 setEntries(entries.concat([{ author: '', work: '', note: '', url: '' }]));
@@ -187,7 +189,7 @@
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: 'Remove the last entry',
+              label: __('Remove the last entry', 'groove-folios'),
               onClick: function () {
                 if (entries.length <= MIN_ENTRIES) return;
                 setEntries(entries.slice(0, -1));
@@ -200,11 +202,15 @@
         // that would wreck the canvas preview of a list meant to read as a
         // bibliography.
         el(InspectorControls, null,
-          el(PanelBody, { title: 'Links', initialOpen: false },
+          el(PanelBody, { title: __('Links', 'groove-folios'), initialOpen: false },
             entries.map(function (entry, i) {
               return el(TextControl, {
                 key: i,
-                label: (entry.work || entry.author || 'Entry ' + (i + 1)),
+                label: (entry.work || entry.author || sprintf(
+                  /* translators: %d: the entry's position in the list. */
+                  __('Entry %d', 'groove-folios'),
+                  i + 1
+                )),
                 value: entry.url || '',
                 type: 'url',
                 placeholder: 'https://',
@@ -224,7 +230,7 @@
               style: titleStyle,
               value: attrs.title,
               onChange: function (v) { props.setAttributes({ title: v }); },
-              placeholder: 'Heading (optional)',
+              placeholder: __('Heading (optional)', 'groove-folios'),
               allowedFormats: [],
             }),
             el('div', { style: listStyle },

@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var useState = wp.element.useState;
   var useRef = wp.element.useRef;
   var useEffect = wp.element.useEffect;
@@ -19,10 +20,10 @@
   var STYLES = ['note', 'tip', 'important', 'warning'];
 
   var STYLE_META = {
-    note:      { label: 'Note',      color: '#27498c', icon: 'info-outline' },
-    tip:       { label: 'Tip',       color: '#3a7d44', icon: 'lightbulb' },
-    important: { label: 'Important', color: '#855c22', icon: 'star-filled' },
-    warning:   { label: 'Warning',   color: '#c0392b', icon: 'warning' },
+    note:      { label: __('Note', 'groove-folios'),      color: '#27498c', icon: 'info-outline' },
+    tip:       { label: __('Tip', 'groove-folios'),       color: '#3a7d44', icon: 'lightbulb' },
+    important: { label: __('Important', 'groove-folios'), color: '#855c22', icon: 'star-filled' },
+    warning:   { label: __('Warning', 'groove-folios'),   color: '#c0392b', icon: 'warning' },
   };
 
   // ── Inline styles ──────────────────────────────────────────────────────────
@@ -192,11 +193,11 @@
   // ── Block registration ──────────────────────────────────────────────────────
 
   registerBlockType('groove-proposal/callout-box', {
-    title: 'Callout Box',
-    description: 'Bordered highlight for assumptions, key takeaways, or important notes.',
+    title: __('Callout Box', 'groove-folios'),
+    description: __('Bordered highlight for assumptions, key takeaways, or important notes.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['callout', 'note', 'tip', 'important', 'warning', 'highlight', 'assumption'],
+    keywords: [__('callout', 'groove-folios'), __('note', 'groove-folios'), __('tip', 'groove-folios'), __('important', 'groove-folios'), __('warning', 'groove-folios'), __('highlight', 'groove-folios'), __('assumption', 'groove-folios')],
     attributes: {
       title: {
         type: 'string',
@@ -256,7 +257,7 @@
               style: titleStyle,
               value: attrs.title,
               onChange: function (v) { props.setAttributes({ title: v }); },
-              placeholder: 'Callout title (optional)',
+              placeholder: __('Callout title (optional)', 'groove-folios'),
               allowedFormats: [],
             }),
             el(RichText, {
@@ -264,7 +265,7 @@
               style: bodyStyle,
               value: attrs.body,
               onChange: function (v) { props.setAttributes({ body: v }); },
-              placeholder: 'Callout content\u2026',
+              placeholder: __('Callout content\u2026', 'groove-folios'),
               allowedFormats: ['core/bold', 'core/italic'],
             })
           )

@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var useState = wp.element.useState;
   var useCallback = wp.element.useCallback;
   var registerBlockType = wp.blocks.registerBlockType;
@@ -212,7 +213,7 @@
         style: titleStyle,
         value: step.title,
         onChange: function (v) { update('title', v); },
-        placeholder: 'Step title',
+        placeholder: __('Step title', 'groove-folios'),
         allowedFormats: [],
       }),
       el(RichText, {
@@ -220,7 +221,7 @@
         style: descStyle,
         value: step.desc,
         onChange: function (v) { update('desc', v); },
-        placeholder: 'Step description…',
+        placeholder: __('Step description…', 'groove-folios'),
         allowedFormats: [],
       })
     );
@@ -267,7 +268,7 @@
           style: titleStyle,
           value: step.title,
           onChange: function (v) { update('title', v); },
-          placeholder: 'Step title',
+          placeholder: __('Step title', 'groove-folios'),
           allowedFormats: [],
         }),
         el(RichText, {
@@ -275,7 +276,7 @@
           style: descStyle,
           value: step.desc,
           onChange: function (v) { update('desc', v); },
-          placeholder: 'Step description…',
+          placeholder: __('Step description…', 'groove-folios'),
           allowedFormats: [],
         })
       )
@@ -285,11 +286,11 @@
   // ── Block registration ────────────────────────────────────────────────
 
   registerBlockType('groove-proposal/process-steps', {
-    title: 'Process Steps',
-    description: 'Numbered process steps with prominent badges. Horizontal or vertical layout.',
+    title: __('Process Steps', 'groove-folios'),
+    description: __('Numbered process steps with prominent badges. Horizontal or vertical layout.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['process', 'steps', 'workflow', 'method', 'approach', 'how'],
+    keywords: [__('process', 'groove-folios'), __('steps', 'groove-folios'), __('workflow', 'groove-folios'), __('method', 'groove-folios'), __('approach', 'groove-folios'), __('how', 'groove-folios')],
     attributes: {
       steps: {
         type: 'array',
@@ -363,13 +364,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: activeIndex >= 0 ? 'Insert step before selected' : 'Add step',
+              label: activeIndex >= 0 ? __('Insert step before selected', 'groove-folios') : __('Add step', 'groove-folios'),
               onClick: addStep,
               disabled: steps.length >= MAX_STEPS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: activeIndex >= 0 ? 'Remove selected step' : 'Remove last step',
+              label: activeIndex >= 0 ? __('Remove selected step', 'groove-folios') : __('Remove last step', 'groove-folios'),
               onClick: removeStep,
               disabled: steps.length <= MIN_STEPS,
             })
@@ -377,7 +378,7 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: isVertical ? 'columns' : 'list-view',
-              label: isVertical ? 'Switch to horizontal' : 'Switch to vertical',
+              label: isVertical ? __('Switch to horizontal', 'groove-folios') : __('Switch to vertical', 'groove-folios'),
               onClick: toggleLayout,
             })
           )

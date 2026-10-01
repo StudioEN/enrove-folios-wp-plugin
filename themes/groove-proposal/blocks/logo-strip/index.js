@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var useState = wp.element.useState;
   var useCallback = wp.element.useCallback;
   var registerBlockType = wp.blocks.registerBlockType;
@@ -150,7 +151,7 @@
     if (url) {
       content = el('img', { src: url, alt: '', style: logoImgStyle });
     } else {
-      content = el('span', { style: placeholderTextStyle }, 'Add logo');
+      content = el('span', { style: placeholderTextStyle }, __('Add logo', 'groove-folios'));
     }
 
     return el(MediaUpload, {
@@ -168,7 +169,7 @@
           content,
           url ? el('span', {
             style: hovering ? overlayVisibleStyle : overlayStyle,
-          }, 'Change') : null
+          }, __('Change', 'groove-folios')) : null
         );
       },
     });
@@ -210,14 +211,14 @@
         type: 'text',
         style: fieldInputStyle,
         value: logo.name,
-        placeholder: 'Name (alt text)',
+        placeholder: __('Name (alt text)', 'groove-folios'),
         onChange: function (e) { update('name', e.target.value); },
       }),
       el('input', {
         type: 'text',
         style: fieldInputStyle,
         value: logo.link,
-        placeholder: 'Link URL (optional)',
+        placeholder: __('Link URL (optional)', 'groove-folios'),
         onChange: function (e) { update('link', e.target.value); },
       })
     );
@@ -226,11 +227,11 @@
   // ── Block registration ────────────────────────────────────────────────
 
   registerBlockType('groove-proposal/logo-strip', {
-    title: 'Trusted-by Logo Strip',
-    description: 'A row of client or partner logos for social proof.',
+    title: __('Trusted-by Logo Strip', 'groove-folios'),
+    description: __('A row of client or partner logos for social proof.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['logos', 'clients', 'partners', 'trusted by', 'social proof'],
+    keywords: [__('logos', 'groove-folios'), __('clients', 'groove-folios'), __('partners', 'groove-folios'), __('trusted by', 'groove-folios'), __('social proof', 'groove-folios')],
     attributes: {
       heading: {
         type: 'string',
@@ -296,13 +297,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: activeIndex >= 0 ? 'Insert logo before selected' : 'Add logo',
+              label: activeIndex >= 0 ? __('Insert logo before selected', 'groove-folios') : __('Add logo', 'groove-folios'),
               onClick: addLogo,
               disabled: logos.length >= MAX_LOGOS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: activeIndex >= 0 ? 'Remove selected logo' : 'Remove last logo',
+              label: activeIndex >= 0 ? __('Remove selected logo', 'groove-folios') : __('Remove last logo', 'groove-folios'),
               onClick: removeLogo,
               disabled: logos.length <= MIN_LOGOS,
             })
@@ -314,7 +315,7 @@
             style: headingStyle,
             value: heading,
             onChange: function (v) { props.setAttributes({ heading: v }); },
-            placeholder: 'Trusted by teams like yours',
+            placeholder: __('Trusted by teams like yours', 'groove-folios'),
             allowedFormats: [],
           }),
           el('div', { style: rowStyle },

@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -54,11 +55,11 @@
   );
 
   registerBlockType('groove-ebook/epigraph', {
-    title: 'Epigraph',
-    description: 'A borrowed line set under a chapter title, with its attribution.',
+    title: __('Epigraph', 'groove-folios'),
+    description: __('A borrowed line set under a chapter title, with its attribution.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-ebook',
-    keywords: ['epigraph', 'quote', 'chapter', 'opening', 'motto'],
+    keywords: [__('epigraph', 'groove-folios'), __('quote', 'groove-folios'), __('chapter', 'groove-folios'), __('opening', 'groove-folios'), __('motto', 'groove-folios')],
     attributes: {
       text: {
         type: 'string',
@@ -85,7 +86,7 @@
             style: textStyle,
             value: attrs.text,
             onChange: function (v) { props.setAttributes({ text: v }); },
-            placeholder: 'The quoted line…',
+            placeholder: __('The quoted line…', 'groove-folios'),
             allowedFormats: ['core/italic', 'core/bold'],
           }),
           el(RichText, {
@@ -95,7 +96,7 @@
             style: attributionStyle,
             value: attrs.attribution,
             onChange: function (v) { props.setAttributes({ attribution: v }); },
-            placeholder: 'Attribution',
+            placeholder: __('Attribution', 'groove-folios'),
             allowedFormats: [],
           })
         )

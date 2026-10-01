@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -104,7 +105,7 @@
             updated[index] = Object.assign({}, item, { question: newValue });
             onChange(updated);
           },
-          placeholder: 'Question',
+          placeholder: __('Question', 'groove-folios'),
           allowedFormats: [],
         }),
         el('span', { style: markerStyle }, '+')
@@ -118,17 +119,17 @@
           updated[index] = Object.assign({}, item, { answer: newValue });
           onChange(updated);
         },
-        placeholder: 'Answer…',
+        placeholder: __('Answer…', 'groove-folios'),
       })
     );
   }
 
   registerBlockType('groove-proposal/faq', {
-    title: 'FAQ Accordion',
-    description: 'Expandable question-and-answer list for handling objections around pricing, timeline, or scope.',
+    title: __('FAQ Accordion', 'groove-folios'),
+    description: __('Expandable question-and-answer list for handling objections around pricing, timeline, or scope.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['faq', 'questions', 'accordion', 'objections'],
+    keywords: [__('faq', 'groove-folios'), __('questions', 'groove-folios'), __('accordion', 'groove-folios'), __('objections', 'groove-folios')],
     attributes: {
       items: {
         type: 'array',
@@ -163,13 +164,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: 'Add question',
+              label: __('Add question', 'groove-folios'),
               onClick: addItem,
               disabled: items.length >= MAX_ITEMS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: 'Remove question',
+              label: __('Remove question', 'groove-folios'),
               onClick: removeItem,
               disabled: items.length <= MIN_ITEMS,
             })

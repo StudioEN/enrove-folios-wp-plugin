@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -97,18 +98,18 @@
           updated[index] = Object.assign({}, item, { label: newLabel });
           onChange(updated);
         },
-        placeholder: 'Label',
+        placeholder: __('Label', 'groove-folios'),
         allowedFormats: [],
       })
     );
   }
 
   registerBlockType('groove-proposal/key-metrics', {
-    title: 'Key Metrics',
-    description: 'Large stat values with labels. Supports 2 to 4 items.',
+    title: __('Key Metrics', 'groove-folios'),
+    description: __('Large stat values with labels. Supports 2 to 4 items.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['metrics', 'stats', 'numbers', 'kpi'],
+    keywords: [__('metrics', 'groove-folios'), __('stats', 'groove-folios'), __('numbers', 'groove-folios'), __('kpi', 'groove-folios')],
     attributes: {
       items: {
         type: 'array',
@@ -130,7 +131,7 @@
 
       function addItem() {
         if (items.length >= MAX_ITEMS) return;
-        setItems(items.concat([{ value: '0', label: 'Label' }]));
+        setItems(items.concat([{ value: '0', label: __('Label', 'groove-folios') }]));
       }
 
       function removeItem() {
@@ -148,13 +149,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: 'Add metric',
+              label: __('Add metric', 'groove-folios'),
               onClick: addItem,
               disabled: items.length >= MAX_ITEMS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: 'Remove metric',
+              label: __('Remove metric', 'groove-folios'),
               onClick: removeItem,
               disabled: items.length <= MIN_ITEMS,
             })

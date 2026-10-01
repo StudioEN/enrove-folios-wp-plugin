@@ -32,7 +32,7 @@ class Cover extends Base_Theme
         <h3 class="g-folio__theme-nav-name">
           <?php echo esc_html($this->theme_name); ?>
         </h3>
-        <label class="g-folio__theme-nav-label">CONTENTS</label>
+        <label class="g-folio__theme-nav-label"><?php esc_html_e('Contents', 'groove-folios'); ?></label>
         <div class="g-folio__theme-navs">
           <?php
           $index = 1;
@@ -81,7 +81,7 @@ class Cover extends Base_Theme
       <div class="g-folio__theme-fields g-folio__theme-password-form">
         <?php if (!empty($this->pages) && $page): ?>
           <a class="g-folio__theme-fields-submit" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page->ID)); ?>">
-            Open folio
+            <?php esc_html_e('Open folio', 'groove-folios'); ?>
           </a>
         <?php endif; ?>
       </div>

@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -139,7 +140,7 @@
           style: dateStyle,
           value: phase.date,
           onChange: function (v) { update('date', v); },
-          placeholder: 'Timeframe',
+          placeholder: __('Timeframe', 'groove-folios'),
           allowedFormats: [],
         }),
         el(RichText, {
@@ -147,7 +148,7 @@
           style: titleStyle,
           value: phase.title,
           onChange: function (v) { update('title', v); },
-          placeholder: 'Phase title',
+          placeholder: __('Phase title', 'groove-folios'),
           allowedFormats: [],
         }),
         el(RichText, {
@@ -155,7 +156,7 @@
           style: descStyle,
           value: phase.desc,
           onChange: function (v) { update('desc', v); },
-          placeholder: 'Phase description\u2026',
+          placeholder: __('Phase description\u2026', 'groove-folios'),
           allowedFormats: [],
         })
       )
@@ -163,11 +164,11 @@
   }
 
   registerBlockType('groove-proposal/timeline', {
-    title: 'Timeline / Phases',
-    description: 'Vertical phase timeline with ordinals, dates, and descriptions.',
+    title: __('Timeline / Phases', 'groove-folios'),
+    description: __('Vertical phase timeline with ordinals, dates, and descriptions.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['timeline', 'phases', 'schedule', 'milestones', 'roadmap'],
+    keywords: [__('timeline', 'groove-folios'), __('phases', 'groove-folios'), __('schedule', 'groove-folios'), __('milestones', 'groove-folios'), __('roadmap', 'groove-folios')],
     attributes: {
       phases: {
         type: 'array',
@@ -202,13 +203,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: 'Add phase',
+              label: __('Add phase', 'groove-folios'),
               onClick: addPhase,
               disabled: phases.length >= MAX_PHASES,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: 'Remove phase',
+              label: __('Remove phase', 'groove-folios'),
               onClick: removePhase,
               disabled: phases.length <= MIN_PHASES,
             })

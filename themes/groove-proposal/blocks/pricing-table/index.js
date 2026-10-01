@@ -1,11 +1,13 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
+  var _x = wp.i18n._x;
   var useState = wp.element.useState;
   var useCallback = wp.element.useCallback;
   var registerBlockType = wp.blocks.registerBlockType;
@@ -29,23 +31,23 @@
   var MAX_ROWS = 12;
 
   var CURRENCY_OPTIONS = [
-    { value: 'USD', label: 'USD — US Dollar ($)', locale: 'en-US' },
-    { value: 'AUD', label: 'AUD — Australian Dollar (A$)', locale: 'en-AU' },
-    { value: 'BRL', label: 'BRL — Brazilian Real (R$)', locale: 'pt-BR' },
-    { value: 'CAD', label: 'CAD — Canadian Dollar (CA$)', locale: 'en-CA' },
-    { value: 'CHF', label: 'CHF — Swiss Franc (CHF)', locale: 'de-CH' },
-    { value: 'CNY', label: 'CNY — Chinese Yuan (¥)', locale: 'zh-CN' },
-    { value: 'DKK', label: 'DKK — Danish Krone (kr)', locale: 'da-DK' },
-    { value: 'EUR', label: 'EUR — Euro (€)', locale: 'de-DE' },
-    { value: 'GBP', label: 'GBP — British Pound (£)', locale: 'en-GB' },
-    { value: 'HKD', label: 'HKD — Hong Kong Dollar (HK$)', locale: 'en-HK' },
-    { value: 'INR', label: 'INR — Indian Rupee (₹)', locale: 'en-IN' },
-    { value: 'JPY', label: 'JPY — Japanese Yen (¥)', locale: 'ja-JP' },
-    { value: 'MXN', label: 'MXN — Mexican Peso (MX$)', locale: 'es-MX' },
-    { value: 'NOK', label: 'NOK — Norwegian Krone (kr)', locale: 'nb-NO' },
-    { value: 'NZD', label: 'NZD — New Zealand Dollar (NZ$)', locale: 'en-NZ' },
-    { value: 'SEK', label: 'SEK — Swedish Krona (kr)', locale: 'sv-SE' },
-    { value: 'SGD', label: 'SGD — Singapore Dollar (S$)', locale: 'en-SG' },
+    { value: 'USD', label: __('USD — US Dollar ($)', 'groove-folios'), locale: 'en-US' },
+    { value: 'AUD', label: __('AUD — Australian Dollar (A$)', 'groove-folios'), locale: 'en-AU' },
+    { value: 'BRL', label: __('BRL — Brazilian Real (R$)', 'groove-folios'), locale: 'pt-BR' },
+    { value: 'CAD', label: __('CAD — Canadian Dollar (CA$)', 'groove-folios'), locale: 'en-CA' },
+    { value: 'CHF', label: __('CHF — Swiss Franc (CHF)', 'groove-folios'), locale: 'de-CH' },
+    { value: 'CNY', label: __('CNY — Chinese Yuan (¥)', 'groove-folios'), locale: 'zh-CN' },
+    { value: 'DKK', label: __('DKK — Danish Krone (kr)', 'groove-folios'), locale: 'da-DK' },
+    { value: 'EUR', label: __('EUR — Euro (€)', 'groove-folios'), locale: 'de-DE' },
+    { value: 'GBP', label: __('GBP — British Pound (£)', 'groove-folios'), locale: 'en-GB' },
+    { value: 'HKD', label: __('HKD — Hong Kong Dollar (HK$)', 'groove-folios'), locale: 'en-HK' },
+    { value: 'INR', label: __('INR — Indian Rupee (₹)', 'groove-folios'), locale: 'en-IN' },
+    { value: 'JPY', label: __('JPY — Japanese Yen (¥)', 'groove-folios'), locale: 'ja-JP' },
+    { value: 'MXN', label: __('MXN — Mexican Peso (MX$)', 'groove-folios'), locale: 'es-MX' },
+    { value: 'NOK', label: __('NOK — Norwegian Krone (kr)', 'groove-folios'), locale: 'nb-NO' },
+    { value: 'NZD', label: __('NZD — New Zealand Dollar (NZ$)', 'groove-folios'), locale: 'en-NZ' },
+    { value: 'SEK', label: __('SEK — Swedish Krona (kr)', 'groove-folios'), locale: 'sv-SE' },
+    { value: 'SGD', label: __('SGD — Singapore Dollar (S$)', 'groove-folios'), locale: 'en-SG' },
   ];
 
   function localeForCurrency(code) {
@@ -306,7 +308,7 @@
           style: nameStyle,
           value: row.name,
           onChange: function (v) { update('name', v); },
-          placeholder: 'Line item',
+          placeholder: __('Line item', 'groove-folios'),
           allowedFormats: [],
         }),
         el(RichText, {
@@ -314,7 +316,7 @@
           style: descStyle,
           value: row.desc,
           onChange: function (v) { update('desc', v); },
-          placeholder: 'Description',
+          placeholder: __('Description', 'groove-folios'),
           allowedFormats: [],
         })
       ),
@@ -332,8 +334,8 @@
             e.stopPropagation();
             update('optional', !row.optional);
           },
-          title: row.optional ? 'Mark as required' : 'Mark as optional',
-        }, row.optional ? 'OPT' : 'REQ')
+          title: row.optional ? __('Mark as required', 'groove-folios') : __('Mark as optional', 'groove-folios'),
+        }, row.optional ? _x('OPT', 'pricing row badge: optional', 'groove-folios') : _x('REQ', 'pricing row badge: required', 'groove-folios'))
       )
     );
   }
@@ -341,11 +343,11 @@
   // ── Block registration ────────────────────────────────────────────────
 
   registerBlockType('groove-proposal/pricing-table', {
-    title: 'Pricing / Investment Table',
-    description: 'Scope and investment breakdown with auto-calculated total.',
+    title: __('Pricing / Investment Table', 'groove-folios'),
+    description: __('Scope and investment breakdown with auto-calculated total.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['pricing', 'investment', 'table', 'cost', 'budget', 'proposal'],
+    keywords: [__('pricing', 'groove-folios'), __('investment', 'groove-folios'), __('table', 'groove-folios'), __('cost', 'groove-folios'), __('budget', 'groove-folios'), __('proposal', 'groove-folios')],
     attributes: {
       rows: {
         type: 'array',
@@ -424,9 +426,9 @@
 
       return el(wp.element.Fragment, null,
         el(InspectorControls, null,
-          el(PanelBody, { title: 'Currency', initialOpen: true },
+          el(PanelBody, { title: __('Currency', 'groove-folios'), initialOpen: true },
             el(SelectControl, {
-              label: 'Currency',
+              label: __('Currency', 'groove-folios'),
               value: currency,
               options: CURRENCY_OPTIONS,
               onChange: function (val) {
@@ -442,13 +444,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: activeIndex >= 0 ? 'Insert row before selected' : 'Add row',
+              label: activeIndex >= 0 ? __('Insert row before selected', 'groove-folios') : __('Add row', 'groove-folios'),
               onClick: addRow,
               disabled: rows.length >= MAX_ROWS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: activeIndex >= 0 ? 'Remove selected row' : 'Remove last row',
+              label: activeIndex >= 0 ? __('Remove selected row', 'groove-folios') : __('Remove last row', 'groove-folios'),
               onClick: removeRow,
               disabled: rows.length <= MIN_ROWS,
             })
@@ -458,8 +460,8 @@
           el('div', { style: wrapStyle },
             // Header
             el('div', { style: headerStyle },
-              el('span', { style: colLabelStyle }, 'Scope'),
-              el('span', { style: Object.assign({}, colLabelStyle, { textAlign: 'right' }) }, 'Investment')
+              el('span', { style: colLabelStyle }, __('Scope', 'groove-folios')),
+              el('span', { style: Object.assign({}, colLabelStyle, { textAlign: 'right' }) }, __('Investment', 'groove-folios'))
             ),
             // Rows
             rows.map(function (row, i) {
@@ -476,7 +478,7 @@
             }),
             // Total
             el('div', { style: totalRowStyle },
-              el('span', { style: totalLabelStyle }, 'Total'),
+              el('span', { style: totalLabelStyle }, __('Total', 'groove-folios')),
               el('span', { style: totalValueStyle }, formatCurrency(total, currency, locale))
             )
           )

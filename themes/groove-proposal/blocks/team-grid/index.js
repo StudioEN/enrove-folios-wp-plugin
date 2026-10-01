@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var useState = wp.element.useState;
   var useCallback = wp.element.useCallback;
   var registerBlockType = wp.blocks.registerBlockType;
@@ -229,7 +230,7 @@
           avatarContent,
           el('span', {
             style: hovering ? avatarOverlayVisibleStyle : avatarOverlayStyle,
-          }, photo ? 'Change' : 'Photo')
+          }, photo ? __('Change', 'groove-folios') : __('Photo', 'groove-folios'))
         );
       },
     });
@@ -287,7 +288,7 @@
         style: nameStyle,
         value: member.name,
         onChange: function (v) { update('name', v); },
-        placeholder: 'Name',
+        placeholder: __('Name', 'groove-folios'),
         allowedFormats: [],
       }),
       el(RichText, {
@@ -296,7 +297,7 @@
         style: roleStyle,
         value: member.role,
         onChange: function (v) { update('role', v); },
-        placeholder: 'Role',
+        placeholder: __('Role', 'groove-folios'),
         allowedFormats: [],
       }),
       el(RichText, {
@@ -305,7 +306,7 @@
         style: bioStyle,
         value: member.bio,
         onChange: function (v) { update('bio', v); },
-        placeholder: 'Short bio…',
+        placeholder: __('Short bio…', 'groove-folios'),
         allowedFormats: [],
       }),
     ];
@@ -334,11 +335,11 @@
   // ── Block registration ────────────────────────────────────────────────
 
   registerBlockType('groove-proposal/team-grid', {
-    title: 'Team Grid',
-    description: 'Team member cards with photo or initials, name, role, and bio. Grid or list layout.',
+    title: __('Team Grid', 'groove-folios'),
+    description: __('Team member cards with photo or initials, name, role, and bio. Grid or list layout.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['team', 'people', 'grid', 'members', 'staff', 'about'],
+    keywords: [__('team', 'groove-folios'), __('people', 'groove-folios'), __('grid', 'groove-folios'), __('members', 'groove-folios'), __('staff', 'groove-folios'), __('about', 'groove-folios')],
     attributes: {
       members: {
         type: 'array',
@@ -428,13 +429,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: activeIndex >= 0 ? 'Insert member before selected' : 'Add member',
+              label: activeIndex >= 0 ? __('Insert member before selected', 'groove-folios') : __('Add member', 'groove-folios'),
               onClick: addMember,
               disabled: members.length >= MAX_MEMBERS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: activeIndex >= 0 ? 'Remove selected member' : 'Remove last member',
+              label: activeIndex >= 0 ? __('Remove selected member', 'groove-folios') : __('Remove last member', 'groove-folios'),
               onClick: removeMember,
               disabled: members.length <= MIN_MEMBERS,
             })
@@ -442,12 +443,12 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: isList ? 'grid-view' : 'list-view',
-              label: isList ? 'Switch to grid' : 'Switch to list',
+              label: isList ? __('Switch to grid', 'groove-folios') : __('Switch to list', 'groove-folios'),
               onClick: toggleLayout,
             }),
             !isList ? el(ToolbarButton, {
               icon: 'columns',
-              label: columns === 3 ? 'Switch to 2 columns' : 'Switch to 3 columns',
+              label: columns === 3 ? __('Switch to 2 columns', 'groove-folios') : __('Switch to 3 columns', 'groove-folios'),
               onClick: toggleColumns,
             }) : null
           )

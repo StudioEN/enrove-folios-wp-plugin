@@ -138,7 +138,7 @@ function display_magazine_navigation_pane(array $args = [])
     ?>
     <nav class="gm-nav" aria-label="<?php echo esc_attr($aria_label); ?>">
         <div class="gm-nav__content">
-            <button class="gm-nav__close" aria-label="Close navigation" data-tooltip="Close"></button>
+            <button class="gm-nav__close" aria-label="<?php esc_attr_e('Close navigation', 'groove-folios'); ?>" data-tooltip="<?php esc_attr_e('Close', 'groove-folios'); ?>"></button>
             <h3 class="gm-nav__title">
                 <?php if (!empty($title_url)): ?>
                     <a href="<?php echo esc_url($title_url); ?>">
@@ -170,7 +170,7 @@ function display_magazine_navigation_pane(array $args = [])
 
             <?php if (!empty($recent_pages)): ?>
                 <hr class="gm-nav__divider" />
-                <span class="gm-nav__section-title">RECENT</span>
+                <span class="gm-nav__section-title"><?php esc_html_e('Recent', 'groove-folios'); ?></span>
                 <div class="gm-nav__items gm-nav__items--recent">
                     <?php
                     foreach ($recent_pages as $offset => $page) {
@@ -186,8 +186,8 @@ function display_magazine_navigation_pane(array $args = [])
             <?php endif; ?>
         </div>
         <?php if ($show_theme_toggle): ?>
-            <button class="gm-theme-toggle gm-theme-toggle--nav" aria-label="Switch to dark mode"
-                data-tooltip="Switch to dark mode"></button>
+            <button class="gm-theme-toggle gm-theme-toggle--nav" aria-label="<?php esc_attr_e('Switch to dark mode', 'groove-folios'); ?>"
+                data-tooltip="<?php esc_attr_e('Switch to dark mode', 'groove-folios'); ?>" data-label-light="<?php esc_attr_e('Switch to light mode', 'groove-folios'); ?>" data-label-dark="<?php esc_attr_e('Switch to dark mode', 'groove-folios'); ?>"></button>
         <?php endif; ?>
     </nav>
     <?php

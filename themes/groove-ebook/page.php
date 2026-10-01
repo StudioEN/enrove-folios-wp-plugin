@@ -154,7 +154,7 @@ class Page extends Base_Theme
           }
           ?>
         </div>
-        <button type="button" class="g-folio__theme-page-mobile-nav-back">↑ Back to top</button>
+        <button type="button" class="g-folio__theme-page-mobile-nav-back"><?php esc_html_e('↑ Back to top', 'groove-folios'); ?></button>
       </div>
     </nav>
     <?php
@@ -193,7 +193,7 @@ class Page extends Base_Theme
             <?php echo esc_html($folio_title); ?>
           <?php endif; ?>
         </h3>
-        <label class="g-folio__theme-page-nav-label">CONTENTS</label>
+        <label class="g-folio__theme-page-nav-label"><?php esc_html_e('Contents', 'groove-folios'); ?></label>
         <div class="g-folio__theme-page-navs">
           <?php
           $index = 1;

@@ -120,7 +120,7 @@ class Cover extends Base_Theme
             'title' => $nav['title'],
             'title_url' => $nav['title_url'],
             'label' => 'LATEST',
-            'aria_label' => 'Issue contents',
+            'aria_label' => __('Issue contents', 'groove-folios'),
             'pages' => $nav['pages'],
             'show_theme_toggle' => true,
         ]);
@@ -167,7 +167,7 @@ class Cover extends Base_Theme
 
             <div class="gm-cover__hero-content">
                 <div class="gm-cover__hero-top">
-                    <button class="gm-cover__nav-toggle" aria-label="Open navigation" data-tooltip="Contents">
+                    <button class="gm-cover__nav-toggle" aria-label="<?php esc_attr_e('Open navigation', 'groove-folios'); ?>" data-tooltip="<?php esc_attr_e('Contents', 'groove-folios'); ?>">
                         <svg class="gm-icon gm-icon--menu" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <line x1="3" y1="6" x2="21" y2="6"></line>
                             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -196,7 +196,7 @@ class Cover extends Base_Theme
                 <div class="gm-cover__stories">
                     <?php if ($featured): ?>
                         <div class="gm-cover__featured">
-                            <span class="gm-cover__stories-label">LATEST</span>
+                            <span class="gm-cover__stories-label"><?php esc_html_e('Latest', 'groove-folios'); ?></span>
                             <a class="gm-cover__featured-link" href="<?php echo esc_url($featured['url']); ?>"
                                 data-gm-story-image="<?php echo esc_url($featured['feature_url']); ?>">
                                 <span class="gm-cover__featured-title"><?php echo esc_html($featured['title']); ?></span>
@@ -207,7 +207,7 @@ class Cover extends Base_Theme
 
                     <?php if (!empty($more_stories)): ?>
                         <div class="gm-cover__more">
-                            <span class="gm-cover__stories-label">RECENT</span>
+                            <span class="gm-cover__stories-label"><?php esc_html_e('Recent', 'groove-folios'); ?></span>
                             <?php foreach ($more_stories as $story): ?>
                                 <a class="gm-cover__more-link" href="<?php echo esc_url($story['url']); ?>"
                                     data-gm-story-image="<?php echo esc_url($story['feature_url']); ?>">

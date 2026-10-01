@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var useState = wp.element.useState;
   var useCallback = wp.element.useCallback;
   var registerBlockType = wp.blocks.registerBlockType;
@@ -123,7 +124,7 @@
         style: textStyle,
         value: item.text,
         onChange: function (v) { update('text', v); },
-        placeholder: 'Enter testimonial…',
+        placeholder: __('Enter testimonial…', 'groove-folios'),
       }),
       el('figcaption', { style: citeStyle },
         el(RichText, {
@@ -131,7 +132,7 @@
           style: authorStyle,
           value: item.author,
           onChange: function (v) { update('author', v); },
-          placeholder: 'Author name',
+          placeholder: __('Author name', 'groove-folios'),
           allowedFormats: [],
         }),
         el(RichText, {
@@ -139,7 +140,7 @@
           style: roleStyle,
           value: item.role,
           onChange: function (v) { update('role', v); },
-          placeholder: 'Role, Company',
+          placeholder: __('Role, Company', 'groove-folios'),
           allowedFormats: [],
         })
       )
@@ -149,11 +150,11 @@
   // ── Block registration ────────────────────────────────────────────────
 
   registerBlockType('groove-proposal/testimonial-grid', {
-    title: 'Testimonial Grid',
-    description: 'A compact grid of short client quotes for social proof.',
+    title: __('Testimonial Grid', 'groove-folios'),
+    description: __('A compact grid of short client quotes for social proof.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['testimonials', 'quotes', 'reviews', 'social proof', 'clients'],
+    keywords: [__('testimonials', 'groove-folios'), __('quotes', 'groove-folios'), __('reviews', 'groove-folios'), __('social proof', 'groove-folios'), __('clients', 'groove-folios')],
     attributes: {
       items: {
         type: 'array',
@@ -220,13 +221,13 @@
 
       return el(wp.element.Fragment, null,
         el(InspectorControls, null,
-          el(PanelBody, { title: 'Layout', initialOpen: true },
+          el(PanelBody, { title: __('Layout', 'groove-folios'), initialOpen: true },
             el(SelectControl, {
-              label: 'Columns',
+              label: __('Columns', 'groove-folios'),
               value: String(columns),
               options: [
-                { value: '2', label: '2 columns' },
-                { value: '3', label: '3 columns' },
+                { value: '2', label: __('2 columns', 'groove-folios') },
+                { value: '3', label: __('3 columns', 'groove-folios') },
               ],
               onChange: function (val) {
                 props.setAttributes({ columns: parseInt(val, 10) });
@@ -238,13 +239,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: activeIndex >= 0 ? 'Insert testimonial before selected' : 'Add testimonial',
+              label: activeIndex >= 0 ? __('Insert testimonial before selected', 'groove-folios') : __('Add testimonial', 'groove-folios'),
               onClick: addItem,
               disabled: items.length >= MAX_ITEMS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: activeIndex >= 0 ? 'Remove selected testimonial' : 'Remove last testimonial',
+              label: activeIndex >= 0 ? __('Remove selected testimonial', 'groove-folios') : __('Remove last testimonial', 'groove-folios'),
               onClick: removeItem,
               disabled: items.length <= MIN_ITEMS,
             })

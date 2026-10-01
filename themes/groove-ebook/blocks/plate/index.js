@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -83,11 +84,11 @@
   );
 
   registerBlockType('groove-ebook/plate', {
-    title: 'Plate',
-    description: 'A numbered figure with a caption and a credit line.',
+    title: __('Plate', 'groove-folios'),
+    description: __('A numbered figure with a caption and a credit line.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-ebook',
-    keywords: ['plate', 'figure', 'image', 'illustration', 'caption', 'credit'],
+    keywords: [__('plate', 'groove-folios'), __('figure', 'groove-folios'), __('image', 'groove-folios'), __('illustration', 'groove-folios'), __('caption', 'groove-folios'), __('credit', 'groove-folios')],
     attributes: {
       url: { type: 'string', default: '' },
       id: { type: 'number' },
@@ -134,7 +135,7 @@
               });
             }
             return el('div', { style: placeholderStyle },
-              el(Button, { variant: 'secondary', onClick: renderProps.open }, 'Choose a picture')
+              el(Button, { variant: 'secondary', onClick: renderProps.open }, __('Choose a picture', 'groove-folios'))
             );
           },
         })
@@ -145,7 +146,7 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'align-full-width',
-              label: 'Bleed to the edge of the page',
+              label: __('Bleed to the edge of the page', 'groove-folios'),
               isPressed: !!attrs.bleed,
               onClick: function () { props.setAttributes({ bleed: !attrs.bleed }); },
             })
@@ -160,7 +161,7 @@
                 style: labelStyle,
                 value: attrs.label,
                 onChange: function (v) { props.setAttributes({ label: v }); },
-                placeholder: 'Fig. 1',
+                placeholder: __('Fig. 1', 'groove-folios'),
                 allowedFormats: [],
               }),
               el(RichText, {
@@ -168,7 +169,7 @@
                 style: captionStyle,
                 value: attrs.caption,
                 onChange: function (v) { props.setAttributes({ caption: v }); },
-                placeholder: 'What the picture shows…',
+                placeholder: __('What the picture shows…', 'groove-folios'),
                 allowedFormats: ['core/italic', 'core/link'],
               }),
               el(RichText, {
@@ -176,7 +177,7 @@
                 style: creditStyle,
                 value: attrs.credit,
                 onChange: function (v) { props.setAttributes({ credit: v }); },
-                placeholder: 'Credit (optional)',
+                placeholder: __('Credit (optional)', 'groove-folios'),
                 allowedFormats: ['core/link'],
               })
             )

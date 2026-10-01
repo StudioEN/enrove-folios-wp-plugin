@@ -203,7 +203,7 @@ function display_proposal_navigation_pane(array $args = []): void
             <?php endif; ?>
 
             <div class="gp-nav__info-group gp-nav__info-group--mode">
-              <button type="button" class="gp-theme-toggle gp-theme-toggle--nav" data-gp-theme-toggle
+              <button type="button" class="gp-theme-toggle gp-theme-toggle--nav" data-gp-theme-toggle data-label-light="<?php esc_attr_e('Switch to light mode', 'groove-folios'); ?>" data-label-dark="<?php esc_attr_e('Switch to dark mode', 'groove-folios'); ?>"
                 aria-label="<?php echo esc_attr__('Switch colour mode', 'groove-folios'); ?>"></button>
             </div>
           </div>

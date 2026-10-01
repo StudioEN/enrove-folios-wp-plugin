@@ -419,10 +419,11 @@ add_action('enqueue_block_editor_assets', function () {
         wp_enqueue_script(
             'groove-ebook-block-' . $slug,
             $base_url . $slug . '/index.js',
-            ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+            ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-i18n'],
             file_exists($path) ? (string) filemtime($path) : GROOVE_VERSION,
             true
         );
+        wp_set_script_translations('groove-ebook-block-' . $slug, 'groove-folios');
     }
 
     // Editor typography, through the same resolver the front end uses, so the

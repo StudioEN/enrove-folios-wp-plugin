@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -44,11 +45,11 @@
   );
 
   registerBlockType('groove-ebook/pull-quote', {
-    title: 'Pull Quote',
-    description: 'A line lifted out of your own prose to break a long column.',
+    title: __('Pull Quote', 'groove-folios'),
+    description: __('A line lifted out of your own prose to break a long column.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-ebook',
-    keywords: ['pull', 'quote', 'lift', 'display', 'break'],
+    keywords: [__('pull', 'groove-folios'), __('quote', 'groove-folios'), __('lift', 'groove-folios'), __('display', 'groove-folios'), __('break', 'groove-folios')],
     attributes: {
       text: {
         type: 'string',
@@ -74,13 +75,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'editor-justify',
-              label: 'Full column width',
+              label: __('Full column width', 'groove-folios'),
               isPressed: align === 'full',
               onClick: function () { props.setAttributes({ align: 'full' }); },
             }),
             el(ToolbarButton, {
               icon: 'align-pull-right',
-              label: 'Inset, beside the text',
+              label: __('Inset, beside the text', 'groove-folios'),
               isPressed: align === 'inset',
               onClick: function () { props.setAttributes({ align: 'inset' }); },
             })
@@ -93,7 +94,7 @@
               style: textStyle,
               value: attrs.text,
               onChange: function (v) { props.setAttributes({ text: v }); },
-              placeholder: 'The line worth repeating…',
+              placeholder: __('The line worth repeating…', 'groove-folios'),
               allowedFormats: ['core/italic'],
             })
           )

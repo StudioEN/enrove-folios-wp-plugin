@@ -151,7 +151,7 @@ class Page extends Base_Theme
                 <div class="gm-page__navbar-progress-bar" style="width: 0%"></div>
             </div>
             <div class="gm-page__navbar-inner">
-                <button class="gm-page__nav-toggle" aria-label="Open navigation" data-tooltip="Contents">
+                <button class="gm-page__nav-toggle" aria-label="<?php esc_attr_e('Open navigation', 'groove-folios'); ?>" data-tooltip="<?php esc_attr_e('Contents', 'groove-folios'); ?>">
                     <svg class="gm-icon gm-icon--menu" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -177,7 +177,7 @@ class Page extends Base_Theme
         $on_this_page_label = Utils::get_folio_on_this_page_label((int) $this->folio_id);
         $blocks = parse_blocks($this->content);
         ?>
-        <nav class="gm-page__mobile-nav" aria-label="On this page">
+        <nav class="gm-page__mobile-nav" aria-label="<?php esc_attr_e('On this page', 'groove-folios'); ?>">
             <div class="gm-page__mobile-nav-content">
                 <div class="gm-page__mobile-nav-label">
                     <?php echo esc_html($on_this_page_label); ?>
@@ -203,7 +203,7 @@ class Page extends Base_Theme
                     }
                     ?>
                 </div>
-                <div class="gm-page__mobile-nav-top">↑ Back to top</div>
+                <div class="gm-page__mobile-nav-top"><?php esc_html_e('↑ Back to top', 'groove-folios'); ?></div>
             </div>
         </nav>
         <?php
@@ -217,7 +217,7 @@ class Page extends Base_Theme
             'title' => $nav['title'],
             'title_url' => $nav['title_url'],
             'label' => 'LATEST',
-            'aria_label' => 'Issue contents',
+            'aria_label' => __('Issue contents', 'groove-folios'),
             'pages' => $nav['pages'],
             'current_page_id' => $nav['current_page_id'],
             'show_theme_toggle' => true,
@@ -229,11 +229,11 @@ class Page extends Base_Theme
         $prev_page = $this->get_prev_page();
         $next_page = $this->get_next_page();
         ?>
-        <nav class="gm-page__footer" aria-label="Story navigation">
+        <nav class="gm-page__footer" aria-label="<?php esc_attr_e('Story navigation', 'groove-folios'); ?>">
             <div class="gm-page__footer-prev">
                 <?php if ($prev_page): ?>
                     <a class="gm-page__footer-link" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($prev_page->ID)); ?>">
-                        <span class="gm-page__footer-direction">← Previous</span>
+                        <span class="gm-page__footer-direction"><?php esc_html_e('← Previous', 'groove-folios'); ?></span>
                         <span class="gm-page__footer-title" title="<?php echo esc_attr($prev_page->post_title); ?>">
                             <?php echo esc_html($prev_page->post_title); ?>
                         </span>
@@ -244,7 +244,7 @@ class Page extends Base_Theme
             <div class="gm-page__footer-next">
                 <?php if ($next_page): ?>
                     <a class="gm-page__footer-link" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($next_page->ID)); ?>">
-                        <span class="gm-page__footer-direction">Next →</span>
+                        <span class="gm-page__footer-direction"><?php esc_html_e('Next →', 'groove-folios'); ?></span>
                         <span class="gm-page__footer-title" title="<?php echo esc_attr($next_page->post_title); ?>">
                             <?php echo esc_html($next_page->post_title); ?>
                         </span>

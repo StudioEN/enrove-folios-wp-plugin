@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var useState = wp.element.useState;
   var useCallback = wp.element.useCallback;
   var registerBlockType = wp.blocks.registerBlockType;
@@ -174,11 +175,11 @@
   // ── Block registration ──────────────────────────────────────────────────────
 
   registerBlockType('groove-proposal/comparison-columns', {
-    title: 'Comparison Columns',
-    description: 'Side-by-side columns comparing options or packages with feature rows.',
+    title: __('Comparison Columns', 'groove-folios'),
+    description: __('Side-by-side columns comparing options or packages with feature rows.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['comparison', 'columns', 'packages', 'options', 'plans', 'features', 'versus'],
+    keywords: [__('comparison', 'groove-folios'), __('columns', 'groove-folios'), __('packages', 'groove-folios'), __('options', 'groove-folios'), __('plans', 'groove-folios'), __('features', 'groove-folios'), __('versus', 'groove-folios')],
     attributes: {
       columns: {
         type: 'array',
@@ -313,13 +314,13 @@
           onMouseDownCapture: function () { onFocus('header', ci); },
           onFocusCapture: function () { onFocus('header', ci); },
         },
-          isRec ? el('span', { style: recommendedBadgeStyle }, 'Recommended') : null,
+          isRec ? el('span', { style: recommendedBadgeStyle }, __('Recommended', 'groove-folios')) : null,
           el(RichText, {
             tagName: 'div',
             style: nameStyle,
             value: col.name,
             onChange: function (v) { updateColumn(ci, 'name', v); },
-            placeholder: 'Package name',
+            placeholder: __('Package name', 'groove-folios'),
             allowedFormats: [],
           }),
           el(RichText, {
@@ -327,7 +328,7 @@
             style: subtitleStyle,
             value: col.subtitle,
             onChange: function (v) { updateColumn(ci, 'subtitle', v); },
-            placeholder: 'Short description',
+            placeholder: __('Short description', 'groove-folios'),
             allowedFormats: [],
           })
         );
@@ -362,7 +363,7 @@
                 style: featureTextStyle,
                 value: featureVal,
                 onChange: function (v) { updateFeature(ci, rowIdx, v); },
-                placeholder: 'Feature\u2026',
+                placeholder: __('Feature\u2026', 'groove-folios'),
                 allowedFormats: [],
               })
             );
@@ -387,13 +388,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: 'Add column',
+              label: __('Add column', 'groove-folios'),
               onClick: addColumn,
               disabled: colCount >= MAX_COLS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: isActiveColValid ? 'Remove selected column' : 'Remove last column',
+              label: isActiveColValid ? __('Remove selected column', 'groove-folios') : __('Remove last column', 'groove-folios'),
               onClick: removeColumn,
               disabled: colCount <= MIN_COLS,
             })
@@ -402,13 +403,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'table-row-after',
-              label: 'Add feature row',
+              label: __('Add feature row', 'groove-folios'),
               onClick: addFeatureRow,
               disabled: maxFeatures >= MAX_FEATURES,
             }),
             el(ToolbarButton, {
               icon: 'table-row-delete',
-              label: 'Remove feature row',
+              label: __('Remove feature row', 'groove-folios'),
               onClick: removeFeatureRow,
               disabled: maxFeatures <= MIN_FEATURES,
             })
@@ -418,8 +419,8 @@
             el(ToolbarButton, {
               icon: 'star-filled',
               label: isActiveColValid
-                ? (isActiveRec ? 'Remove recommended badge' : 'Mark as recommended')
-                : 'Select a column first',
+                ? (isActiveRec ? __('Remove recommended badge', 'groove-folios') : __('Mark as recommended', 'groove-folios'))
+                : __('Select a column first', 'groove-folios'),
               onClick: toggleRecommended,
               isPressed: isActiveRec,
               disabled: !isActiveColValid,

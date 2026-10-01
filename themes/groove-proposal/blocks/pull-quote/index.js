@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -65,11 +66,11 @@
   );
 
   registerBlockType('groove-proposal/pull-quote', {
-    title: 'Pull Quote / Testimonial',
-    description: 'Large italic quote with author attribution.',
+    title: __('Pull Quote / Testimonial', 'groove-folios'),
+    description: __('Large italic quote with author attribution.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['quote', 'testimonial', 'blockquote', 'review'],
+    keywords: [__('quote', 'groove-folios'), __('testimonial', 'groove-folios'), __('blockquote', 'groove-folios'), __('review', 'groove-folios')],
     attributes: {
       text: {
         type: 'string',
@@ -100,7 +101,7 @@
             style: quoteStyle,
             value: attrs.text,
             onChange: function (v) { props.setAttributes({ text: v }); },
-            placeholder: 'Enter quote\u2026',
+            placeholder: __('Enter quote\u2026', 'groove-folios'),
             allowedFormats: [],
           }),
           el('figcaption', { style: citeStyle },
@@ -109,7 +110,7 @@
               style: authorStyle,
               value: attrs.author,
               onChange: function (v) { props.setAttributes({ author: v }); },
-              placeholder: 'Author name',
+              placeholder: __('Author name', 'groove-folios'),
               allowedFormats: [],
             }),
             el(RichText, {
@@ -117,7 +118,7 @@
               style: roleStyle,
               value: attrs.role,
               onChange: function (v) { props.setAttributes({ role: v }); },
-              placeholder: 'Role, Company',
+              placeholder: __('Role, Company', 'groove-folios'),
               allowedFormats: [],
             })
           )

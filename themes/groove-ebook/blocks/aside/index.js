@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -47,11 +48,11 @@
   );
 
   registerBlockType('groove-ebook/aside', {
-    title: 'Aside',
-    description: 'A short note set apart from the argument — a caveat, a digression, a definition.',
+    title: __('Aside', 'groove-folios'),
+    description: __('A short note set apart from the argument — a caveat, a digression, a definition.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-ebook',
-    keywords: ['aside', 'note', 'sidenote', 'digression', 'caveat'],
+    keywords: [__('aside', 'groove-folios'), __('note', 'groove-folios'), __('sidenote', 'groove-folios'), __('digression', 'groove-folios'), __('caveat', 'groove-folios')],
     attributes: {
       label: {
         type: 'string',
@@ -78,7 +79,7 @@
             style: labelStyle,
             value: attrs.label,
             onChange: function (v) { props.setAttributes({ label: v }); },
-            placeholder: 'Label (optional)',
+            placeholder: __('Label (optional)', 'groove-folios'),
             allowedFormats: [],
           }),
           el(RichText, {
@@ -86,7 +87,7 @@
             style: bodyStyle,
             value: attrs.body,
             onChange: function (v) { props.setAttributes({ body: v }); },
-            placeholder: 'The note…',
+            placeholder: __('The note…', 'groove-folios'),
             allowedFormats: ['core/bold', 'core/italic', 'core/link'],
           })
         )

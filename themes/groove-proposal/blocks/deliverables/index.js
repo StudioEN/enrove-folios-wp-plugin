@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -94,7 +95,7 @@
           updated[index] = v;
           onChange(updated);
         },
-        placeholder: 'Deliverable…',
+        placeholder: __('Deliverable…', 'groove-folios'),
       })
     );
   }
@@ -102,11 +103,11 @@
   // ── Block registration ────────────────────────────────────────────────
 
   registerBlockType('groove-proposal/deliverables', {
-    title: 'Deliverables Checklist',
-    description: 'A checklist of what’s included in this engagement.',
+    title: __('Deliverables Checklist', 'groove-folios'),
+    description: __('A checklist of what’s included in this engagement.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['deliverables', 'checklist', 'scope', 'included', 'list'],
+    keywords: [__('deliverables', 'groove-folios'), __('checklist', 'groove-folios'), __('scope', 'groove-folios'), __('included', 'groove-folios'), __('list', 'groove-folios')],
     attributes: {
       heading: {
         type: 'string',
@@ -147,13 +148,13 @@
           el(ToolbarGroup, null,
             el(ToolbarButton, {
               icon: 'plus-alt2',
-              label: 'Add item',
+              label: __('Add item', 'groove-folios'),
               onClick: addItem,
               disabled: items.length >= MAX_ITEMS,
             }),
             el(ToolbarButton, {
               icon: 'minus',
-              label: 'Remove item',
+              label: __('Remove item', 'groove-folios'),
               onClick: removeItem,
               disabled: items.length <= MIN_ITEMS,
             })
@@ -166,7 +167,7 @@
               style: headingStyle,
               value: heading,
               onChange: function (v) { props.setAttributes({ heading: v }); },
-              placeholder: 'Heading (optional)',
+              placeholder: __('Heading (optional)', 'groove-folios'),
               allowedFormats: [],
             }),
             el('div', { style: listStyle },

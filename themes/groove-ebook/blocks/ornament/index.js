@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var useBlockProps = wp.blockEditor.useBlockProps;
   var BlockControls = wp.blockEditor.BlockControls;
@@ -14,11 +15,11 @@
 
   // Must stay in step with GROOVE_EBOOK_ORNAMENTS in blocks.php.
   var MARKS = [
-    { key: 'asterism', label: 'Asterism', glyph: '⁂', icon: 'star-filled' },
-    { key: 'stars', label: 'Three stars', glyph: '* * *', icon: 'star-empty' },
-    { key: 'dots', label: 'Three dots', glyph: '· · ·', icon: 'ellipsis' },
-    { key: 'rule', label: 'Short rule', glyph: '', icon: 'minus' },
-    { key: 'blank', label: 'Blank line', glyph: '', icon: 'editor-paragraph' },
+    { key: 'asterism', label: __('Asterism', 'groove-folios'), glyph: '⁂', icon: 'star-filled' },
+    { key: 'stars', label: __('Three stars', 'groove-folios'), glyph: '* * *', icon: 'star-empty' },
+    { key: 'dots', label: __('Three dots', 'groove-folios'), glyph: '· · ·', icon: 'ellipsis' },
+    { key: 'rule', label: __('Short rule', 'groove-folios'), glyph: '', icon: 'minus' },
+    { key: 'blank', label: __('Blank line', 'groove-folios'), glyph: '', icon: 'editor-paragraph' },
   ];
 
   function markFor(key) {
@@ -67,11 +68,11 @@
   );
 
   registerBlockType('groove-ebook/ornament', {
-    title: 'Section Break',
-    description: 'The space between two scenes — an ornament, a short rule, or nothing at all.',
+    title: __('Section Break', 'groove-folios'),
+    description: __('The space between two scenes — an ornament, a short rule, or nothing at all.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-ebook',
-    keywords: ['break', 'ornament', 'asterism', 'divider', 'scene', 'separator'],
+    keywords: [__('break', 'groove-folios'), __('ornament', 'groove-folios'), __('asterism', 'groove-folios'), __('divider', 'groove-folios'), __('scene', 'groove-folios'), __('separator', 'groove-folios')],
     attributes: {
       mark: {
         type: 'string',

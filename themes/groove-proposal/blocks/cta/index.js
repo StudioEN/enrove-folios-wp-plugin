@@ -1,11 +1,12 @@
 (function (wp) {
   'use strict';
 
-  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor) {
+  if (!wp || !wp.blocks || !wp.element || !wp.blockEditor || !wp.i18n) {
     return;
   }
 
   var el = wp.element.createElement;
+  var __ = wp.i18n.__;
   var registerBlockType = wp.blocks.registerBlockType;
   var RichText = wp.blockEditor.RichText;
   var useBlockProps = wp.blockEditor.useBlockProps;
@@ -17,8 +18,8 @@
   var STYLES = ['primary', 'subtle'];
 
   var STYLE_OPTIONS = [
-    { value: 'primary', label: 'Primary (solid)' },
-    { value: 'subtle', label: 'Subtle (bordered)' },
+    { value: 'primary', label: __('Primary (solid)', 'groove-folios') },
+    { value: 'subtle', label: __('Subtle (bordered)', 'groove-folios') },
   ];
 
   // ── Inline styles (reliable in the editor) ─────────────────────────────
@@ -95,11 +96,11 @@
   );
 
   registerBlockType('groove-proposal/cta', {
-    title: 'Closing CTA',
-    description: 'A "ready to move forward" call-to-action for the end of a proposal.',
+    title: __('Closing CTA', 'groove-folios'),
+    description: __('A "ready to move forward" call-to-action for the end of a proposal.', 'groove-folios'),
     icon: BLOCK_ICON,
     category: 'groove-proposal',
-    keywords: ['cta', 'call to action', 'closing', 'next steps', 'button'],
+    keywords: [__('cta', 'groove-folios'), __('call to action', 'groove-folios'), __('closing', 'groove-folios'), __('next steps', 'groove-folios'), __('button', 'groove-folios')],
     attributes: {
       heading: {
         type: 'string',
@@ -134,9 +135,9 @@
 
       return el(wp.element.Fragment, null,
         el(InspectorControls, null,
-          el(PanelBody, { title: 'Settings', initialOpen: true },
+          el(PanelBody, { title: __('Settings', 'groove-folios'), initialOpen: true },
             el(SelectControl, {
-              label: 'Style',
+              label: __('Style', 'groove-folios'),
               value: currentStyle,
               options: STYLE_OPTIONS,
               onChange: function (val) {
@@ -144,7 +145,7 @@
               },
             }),
             el(TextControl, {
-              label: 'Button link',
+              label: __('Button link', 'groove-folios'),
               type: 'url',
               value: attrs.buttonUrl,
               placeholder: 'https://…',
@@ -161,7 +162,7 @@
               style: headingStyle,
               value: attrs.heading,
               onChange: function (v) { props.setAttributes({ heading: v }); },
-              placeholder: 'Ready to get started?',
+              placeholder: __('Ready to get started?', 'groove-folios'),
               allowedFormats: [],
             }),
             el(RichText, {
@@ -169,14 +170,14 @@
               style: bodyStyle,
               value: attrs.body,
               onChange: function (v) { props.setAttributes({ body: v }); },
-              placeholder: 'Add a short closing message…',
+              placeholder: __('Add a short closing message…', 'groove-folios'),
             }),
             el(RichText, {
               tagName: 'span',
               style: buttonStyle(currentStyle),
               value: attrs.buttonText,
               onChange: function (v) { props.setAttributes({ buttonText: v }); },
-              placeholder: 'Schedule a call',
+              placeholder: __('Schedule a call', 'groove-folios'),
               allowedFormats: [],
             })
           )

@@ -909,7 +909,7 @@ class Folio extends Page
               <label for="proposal_client_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Name', 'groove-folios'); ?></label>
               <input type="text" id="proposal_client_name" name="proposal_client_name"
                 value="<?php echo esc_attr($proposal_client_name); ?>"
-                placeholder="Client Name"
+                placeholder="<?php esc_attr_e('Client Name', 'groove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
@@ -942,7 +942,7 @@ class Folio extends Page
               </label>
               <input type="text" id="proposal_prepared_for" name="proposal_prepared_for"
                 value="<?php echo esc_attr($proposal_prepared_for); ?>"
-                placeholder="Client Name"
+                placeholder="<?php esc_attr_e('Client Name', 'groove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
               <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Superseded by Client Name above when set.', 'groove-folios'); ?></p>
             </div>
@@ -963,14 +963,14 @@ class Folio extends Page
               <label for="proposal_contact_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Name', 'groove-folios'); ?></label>
               <input type="text" id="proposal_contact_name" name="proposal_contact_name"
                 value="<?php echo esc_attr($proposal_contact_name); ?>"
-                placeholder="Alex Morgan"
+                placeholder="<?php echo esc_attr_x('Alex Morgan', 'example contact name', 'groove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
               <label for="proposal_contact_role" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Role', 'groove-folios'); ?></label>
               <input type="text" id="proposal_contact_role" name="proposal_contact_role"
                 value="<?php echo esc_attr($proposal_contact_role); ?>"
-                placeholder="Engagement Lead"
+                placeholder="<?php echo esc_attr_x('Engagement Lead', 'example contact role', 'groove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
@@ -997,7 +997,7 @@ class Folio extends Page
           <div class="p-4">
             <textarea id="proposal_contacts" name="proposal_contacts" rows="5"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="Name | Role | email@example.com | +1 555-555-5555 | https://linkedin.com/in/username&#10;Name | Role | email@example.com"><?php echo esc_textarea($proposal_contacts); ?></textarea>
+              placeholder="<?php echo esc_attr__('Name | Role | email@example.com | +1 555-555-5555 | https://linkedin.com/in/username', 'groove-folios') . '&#10;' . esc_attr__('Name | Role | email@example.com', 'groove-folios'); ?>"><?php echo esc_textarea($proposal_contacts); ?></textarea>
             <p class="mt-2 mb-0 text-xs text-gray-500">
               <?php esc_html_e('Optional. One contact per line using pipes: Name | Role | Email | Phone | LinkedIn URL. When set, replaces the primary contact above.', 'groove-folios'); ?>
             </p>
@@ -1166,7 +1166,7 @@ class Folio extends Page
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-        <h3 class="text-sm font-semibold text-gray-800 m-0">Customization</h3>
+        <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Customization', 'groove-folios'); ?></h3>
       </div>
       <div class="p-4 space-y-4">
         <div>
@@ -1196,12 +1196,11 @@ class Folio extends Page
         </div>
         <div class="space-y-4">
           <div>
-            <label for="g-header-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Primary
-              FONT</label>
+            <label for="g-header-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Primary font', 'groove-folios'); ?></label>
             <div class="flex items-center gap-2">
               <select id="g-header-font" name="header_font"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                <option value="">Theme Default</option>
+                <option value=""><?php esc_html_e('Theme default', 'groove-folios'); ?></option>
                 <?php foreach ($available_fonts as $font_key => $font): ?>
                   <option value="<?php echo esc_attr($font_key); ?>" <?php selected($header_font, $font_key); ?>>
                     <?php echo esc_html($font['label']); ?>
@@ -1217,12 +1216,11 @@ class Folio extends Page
             </div>
           </div>
           <div>
-            <label for="g-body-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Secondary
-              FONT</label>
+            <label for="g-body-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Secondary font', 'groove-folios'); ?></label>
             <div class="flex items-center gap-2">
               <select id="g-body-font" name="body_font"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                <option value="">Theme Default</option>
+                <option value=""><?php esc_html_e('Theme default', 'groove-folios'); ?></option>
                 <?php foreach ($available_fonts as $font_key => $font): ?>
                   <option value="<?php echo esc_attr($font_key); ?>" <?php selected($body_font, $font_key); ?>>
                     <?php echo esc_html($font['label']); ?>
@@ -1237,14 +1235,12 @@ class Folio extends Page
               </button>
             </div>
           </div>
-          <p class="m-0 text-xs text-gray-500">Primary font styles titles and headings. Secondary font styles the body text.
-          </p>
+          <p class="m-0 text-xs text-gray-500"><?php esc_html_e('Primary font styles titles and headings. Secondary font styles the body text.', 'groove-folios'); ?></p>
           <?php $this->display_font_availability_hint(); ?>
         </div>
         <div>
           <label for="g-on-this-page-label"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">ON
-            THIS PAGE LABEL</label>
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('“On this page” label', 'groove-folios'); ?></label>
           <input type="text" id="g-on-this-page-label" name="on_this_page_label"
             value="<?php echo esc_attr($on_this_page_label); ?>"
             placeholder="<?php echo esc_attr($on_this_page_placeholder); ?>"
@@ -1268,18 +1264,17 @@ class Folio extends Page
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-        <h3 class="text-sm font-semibold text-gray-800 m-0">Publishing</h3>
+        <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Publishing', 'groove-folios'); ?></h3>
       </div>
       <div class="p-4 space-y-4">
         <div class="flex items-center">
           <input type="hidden" name="use_folio" value="0" />
           <input type="checkbox" id="use_folio" name="use_folio" value="1"
             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($is_using_folio, true, false) ?> />
-          <label for="use_folio" class="ml-2 block text-sm text-gray-900">Use Folio Cover</label>
+          <label for="use_folio" class="ml-2 block text-sm text-gray-900"><?php esc_html_e('Use folio cover', 'groove-folios'); ?></label>
         </div>
         <div>
-          <label for="permalink" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">PERMALINK
-            (Read-only)</label>
+          <label for="permalink" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Permalink (read-only)', 'groove-folios'); ?></label>
           <div class="mt-1 flex rounded-md shadow-sm">
             <span
               class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">/<?php echo esc_html($base_slug); ?>/</span>
@@ -1320,19 +1315,19 @@ class Folio extends Page
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-        <h3 class="text-sm font-semibold text-gray-800 m-0">Essentials</h3>
+        <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Essentials', 'groove-folios'); ?></h3>
       </div>
       <div class="p-4 space-y-4">
         <?php wp_nonce_field('groove_save_folio', 'groove_nonce'); ?>
         <div>
-          <label for="title" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">TITLE</label>
+          <label for="title" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Title', 'groove-folios'); ?></label>
           <input type="text" id="title" name="title" value="<?php echo esc_attr($fields->title) ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
         <div>
           <label for="subtitle"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">SUBTITLE</label>
-          <input placeholder="Option" type="text" id="subtitle" name="subtitle" value="<?php echo esc_attr($subtitle) ?>"
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Subtitle', 'groove-folios'); ?></label>
+          <input placeholder="<?php esc_attr_e('Optional', 'groove-folios'); ?>" type="text" id="subtitle" name="subtitle" value="<?php echo esc_attr($subtitle) ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
         <div>
@@ -1352,7 +1347,7 @@ class Folio extends Page
         </div>
         <div class="g-folio__media-row">
           <div class="g-folio__media-col">
-            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">FEATURE IMAGE</label>
+            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Feature image', 'groove-folios'); ?></label>
             <input value="<?php echo $feature_image instanceof \WP_Post ? (int) $feature_image->ID : ''; ?>" type="hidden"
               name="feature_image_id" id="feature-media-id">
             <div class="flex items-start space-x-4">
@@ -1361,14 +1356,14 @@ class Folio extends Page
                 <img id="feature-preview" class="g-folio__media-preview-image" src="<?php echo esc_url($feature_image_src); ?>" />
               </div>
               <div class="flex flex-col space-y-2">
-                <button type="button" id="feature-image" class="button button-secondary">Replace image</button>
+                <button type="button" id="feature-image" class="button button-secondary"><?php esc_html_e('Replace image', 'groove-folios'); ?></button>
                 <button type="button" data-default-url="<?php echo esc_url($theme_cover_url); ?>" id="use-default-image"
-                  class="button-link">Use default</button>
+                  class="button-link"><?php esc_html_e('Use default', 'groove-folios'); ?></button>
               </div>
             </div>
           </div>
           <div class="g-folio__media-col">
-            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">LOGO</label>
+            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Logo', 'groove-folios'); ?></label>
             <input value="<?php echo $logo instanceof \WP_Post ? (int) $logo->ID : ''; ?>" type="hidden" name="logo_id"
               id="logo-media-id">
             <div class="flex items-start space-x-4">
@@ -1377,16 +1372,16 @@ class Folio extends Page
                 <img id="logo-preview" class="g-folio__media-preview-image" src="<?php echo esc_url($logo_image_src); ?>" />
               </div>
               <div class="flex flex-col space-y-2">
-                <button type="button" id="logo-image" class="button button-secondary">Replace image</button>
+                <button type="button" id="logo-image" class="button button-secondary"><?php esc_html_e('Replace image', 'groove-folios'); ?></button>
                 <button type="button" data-default-url="<?php echo esc_url($theme_logo_url); ?>" id="use-default-logo"
-                  class="button-link">Use default</button>
+                  class="button-link"><?php esc_html_e('Use default', 'groove-folios'); ?></button>
               </div>
             </div>
             <div class="mt-3 flex items-center">
               <input type="hidden" name="show_logo" value="0" />
               <input type="checkbox" id="show_logo" name="show_logo" value="1"
                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($show_logo, true, false); ?> />
-              <label for="show_logo" class="ml-2 block text-sm text-gray-900">Include logo</label>
+              <label for="show_logo" class="ml-2 block text-sm text-gray-900"><?php esc_html_e('Include logo', 'groove-folios'); ?></label>
             </div>
           </div>
         </div>
@@ -1399,7 +1394,7 @@ class Folio extends Page
         }
         ?>
         <div>
-          <label for="byline" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">BYLINE</label>
+          <label for="byline" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Byline', 'groove-folios'); ?></label>
           <?php
           wp_dropdown_users(array(
             'name' => 'byline',
@@ -1413,8 +1408,8 @@ class Folio extends Page
         </div>
         <div>
           <label for="copyright"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">COPYRIGHT</label>
-          <input placeholder="Option" type="text" id="copyright" name="copyright" value="<?php echo esc_attr($copyright) ?>"
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Copyright', 'groove-folios'); ?></label>
+          <input placeholder="<?php esc_attr_e('Optional', 'groove-folios'); ?>" type="text" id="copyright" name="copyright" value="<?php echo esc_attr($copyright) ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
       </div>
