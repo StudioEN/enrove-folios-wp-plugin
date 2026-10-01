@@ -244,8 +244,10 @@ jQuery(function () {
       if (typeof text !== 'undefined') {
         setTooltipText(text)
       }
-      updateTooltipPlacement()
+      // Shown first, then placed: a hidden bubble is display: none and has no
+      // size to measure. Both happen before the next paint.
       tooltipBtn.addClass('is-tooltip-visible')
+      updateTooltipPlacement()
       clearTimeout(tooltipResetTimer)
       if (autoHideMs > 0) {
         tooltipResetTimer = setTimeout(function () {

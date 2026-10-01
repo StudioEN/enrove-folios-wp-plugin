@@ -492,11 +492,11 @@ body.groove .g-tooltip-button .g-tooltip-bubble {
   white-space: nowrap;
   padding: 6px 8px;
   max-width: min(240px, calc(100vw - 16px));
+  display: none;
   opacity: 0;
-  visibility: hidden;
   pointer-events: none;
   z-index: 100000;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease, display 0.15s allow-discrete;
 }
 
 /* Labels are short enough to stay on one line; a sentence of explanation is
@@ -515,11 +515,11 @@ body.groove .g-tooltip-button .g-tooltip-arrow {
   content: "";
   position: absolute;
   border: var(--g-tooltip-arrow-size) solid transparent;
+  display: none;
   opacity: 0;
-  visibility: hidden;
   pointer-events: none;
   z-index: 100000;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease, display 0.15s allow-discrete;
 }
 
 body.groove .g-tooltip-button[data-tooltip-placement="top"] .g-tooltip-bubble {
@@ -574,18 +574,30 @@ body.groove .g-tooltip-button[data-tooltip-placement="right"] .g-tooltip-arrow {
   transform: translate(-2px, calc(-50% + var(--g-tooltip-shift-y)));
 }
 
+/* A hidden bubble is display: none, not just invisible. An absolutely
+   positioned box still counts towards the page's scrollable area while it is
+   transparent or visibility: hidden, so a bubble on a button near the edge
+   widened the page until its first showing worked out where it fits. The fade
+   in comes from @starting-style, the fade out from allow-discrete. */
 body.groove .g-tooltip-button:hover .g-tooltip-bubble,
 body.groove .g-tooltip-button:focus .g-tooltip-bubble,
-body.groove .g-tooltip-button.is-tooltip-visible .g-tooltip-bubble {
-  opacity: 1;
-  visibility: visible;
-}
-
+body.groove .g-tooltip-button.is-tooltip-visible .g-tooltip-bubble,
 body.groove .g-tooltip-button:hover .g-tooltip-arrow,
 body.groove .g-tooltip-button:focus .g-tooltip-arrow,
 body.groove .g-tooltip-button.is-tooltip-visible .g-tooltip-arrow {
+  display: block;
   opacity: 1;
-  visibility: visible;
+}
+
+@starting-style {
+  body.groove .g-tooltip-button:hover .g-tooltip-bubble,
+  body.groove .g-tooltip-button:focus .g-tooltip-bubble,
+  body.groove .g-tooltip-button.is-tooltip-visible .g-tooltip-bubble,
+  body.groove .g-tooltip-button:hover .g-tooltip-arrow,
+  body.groove .g-tooltip-button:focus .g-tooltip-arrow,
+  body.groove .g-tooltip-button.is-tooltip-visible .g-tooltip-arrow {
+    opacity: 0;
+  }
 }
 
 body.groove .g-tooltip-button[data-tooltip-placement="top"]:hover .g-tooltip-bubble,
