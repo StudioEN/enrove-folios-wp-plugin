@@ -25,13 +25,6 @@ class Folio extends Page
   const POST_TYPE = 'groove_folio_page';
   /** save_folio() status for Save and autosave: whatever the folio has now. */
   const KEEP_STATUS = '__keep__';
-  /**
-   * The pages that publishing a folio publishes. Not private or scheduled
-   * ones: a page someone made private stays private, and a scheduled one
-   * keeps its date (neither can exist before the folio is live, but either
-   * may once it has been).
-   */
-  const PAGE_STATUSES_TO_PUBLISH = array('draft', 'pending');
 
   private $folio;
   private $fields;
@@ -155,17 +148,9 @@ class Folio extends Page
     // (Contents\FolioPage\Publishing), so both ask first and say how many.
     // A Contributor's Submit for Review changes no page, and does not.
     if ($folio_id > 0 && ($is_published || self::can_publish_folios())) {
-      if ($is_published) {
-        $page_count = count(Folio_Page_Publishing::get_page_ids($folio_id, Folio_Page_Publishing::LIVE_PAGE_STATUSES));
-      } else {
-        $page_count = 0;
-        foreach (Folio_Page_Publishing::get_page_ids($folio_id, self::PAGE_STATUSES_TO_PUBLISH) as $page_id) {
-          $page = get_post($page_id);
-          if ($page && self::can_publish_page($page)) {
-            $page_count++;
-          }
-        }
-      }
+      $page_count = $is_published
+        ? count(Folio_Page_Publishing::get_pages($folio_id, Folio_Page_Publishing::LIVE_PAGE_STATUSES))
+        : count(Folio_Page_Publishing::get_pages_to_publish($folio_id));
       $this->publish_confirm = array(
         'kind' => $is_published ? 'unpublish' : 'publish',
         'count' => $page_count,
@@ -304,7 +289,7 @@ class Folio extends Page
 
     // A page goes live with its folio (Contents\FolioPage\Publishing), which
     // would save this as a draft; the row says why instead.
-    $requested_status = sanitize_key((string) $data['post_status']);
+    $requested_status = isset($data['post_status']) && is_string($data['post_status']) ? sanitize_key($data['post_status']) : '';
     if (
       $post['post_type'] === 'groove_folio_page'
       && in_array($requested_status, Folio_Page_Publishing::LIVE_PAGE_STATUSES, true)
@@ -513,11 +498,6 @@ class Folio extends Page
       $post_status = 'pending';
     }
 
-    // Publishing it publishes its pages; saving a folio that is already
-    // published leaves each page as it is, since each can be taken down on
-    // its own once the folio is live.
-    $was_published = $folio_post->post_status === 'publish';
-
     $fields = new FolioFields($folio_post);
 
     $post_title = isset($_POST['title']) ? sanitize_text_field(wp_unslash($_POST['title'])) : $fields->title;
@@ -689,17 +669,8 @@ class Folio extends Page
     // Newsletter colors are now generated per-visitor from local time.
     delete_post_meta($id, 'newsletter_theme_preset');
 
-    if ($post_status === 'publish' && !$was_published && !is_wp_error($folio_result)) {
-      foreach (Folio_Page_Publishing::get_page_ids($id, self::PAGE_STATUSES_TO_PUBLISH) as $page_id) {
-        $child_page = get_post($page_id);
-        if ($child_page && self::can_publish_page($child_page)) {
-          wp_update_post(array(
-            'ID' => $child_page->ID,
-            'post_status' => 'publish'
-          ));
-        }
-      }
-    }
+    // Its pages follow the folio's status change, from whatever made it
+    // (Contents\FolioPage\Publishing::follow_folio_status()).
 
     if (!is_wp_error($folio_result)) {
       // The JS button handler uses AJAX and expects JSON {code:0} to trigger location.reload().
@@ -1783,24 +1754,6 @@ class Folio extends Page
     return current_user_can($post_type ? $post_type->cap->publish_posts : 'publish_posts');
   }
 
-  /**
-   * Whether the current user may publish this folio page along with its
-   * folio: they must be able to edit it and to publish pages. A page someone
-   * else linked to this folio stays as it is unless the publisher could have
-   * published it themselves.
-   *
-   * @param \WP_Post $page
-   * @return bool
-   */
-  private static function can_publish_page($page)
-  {
-    $post_type = get_post_type_object($page->post_type);
-
-    return $post_type
-      && current_user_can('edit_post', $page->ID)
-      && current_user_can($post_type->cap->publish_posts);
-  }
-
   private function get_folio_status_label($status)
   {
     switch ($status) {
@@ -2532,14 +2485,14 @@ class Folio extends Page
       $title = __('Unpublish this folio?', 'groove-folios');
       $lead = $count > 0
         ? sprintf(
-          /* translators: %s: number of published pages. */
-          _n('The folio goes offline, and its %s published page goes back to draft.', 'The folio goes offline, and its %s published pages go back to draft.', $count, 'groove-folios'),
+          /* translators: %s: number of published, private or scheduled pages. */
+          _n('The folio goes offline, and its %s live page goes back to draft.', 'The folio goes offline, and its %s live pages go back to draft.', $count, 'groove-folios'),
           number_format_i18n($count)
         )
         : __('The folio goes offline.', 'groove-folios');
       $notes = array(
         __('While the folio is unpublished, its pages can’t be published on their own.', 'groove-folios'),
-        __('Publishing the folio again publishes all its pages.', 'groove-folios'),
+        __('Publishing the folio again puts them back as they were, and publishes its other draft and pending pages.', 'groove-folios'),
       );
       $confirm = __('Unpublish folio', 'groove-folios');
     } else {
@@ -2553,7 +2506,7 @@ class Folio extends Page
         : __('The folio goes live.', 'groove-folios');
       $notes = array(
         __('Once it’s live, each page can be unpublished or published on its own.', 'groove-folios'),
-        __('Unpublishing the folio later returns all its pages to draft.', 'groove-folios'),
+        __('Unpublishing the folio later returns its live pages to draft until it’s published again.', 'groove-folios'),
       );
       $confirm = __('Publish folio', 'groove-folios');
     }

@@ -307,18 +307,17 @@ class Settings extends Page
 
       delete_option('groove_default_allow_pdf_download');
     } elseif ('routing' === $tab) {
-      $raw_slug = isset($_POST['folio_base_slug']) ? trim((string) wp_unslash($_POST['folio_base_slug'])) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only tested for emptiness here; sanitize_title() below sanitizes it before anything is stored, and the two checks give different messages.
+      // sanitize_title() keeps the %-encoded octets of a non-ASCII slug, which
+      // is how the field shows one; sanitize_text_field() would strip them.
+      $base_slug = isset($_POST['folio_base_slug']) ? sanitize_title(wp_unslash($_POST['folio_base_slug'])) : '';
 
       // Reported rather than corrected. Silently substituting "folio" would
       // send every published folio to a different URL than the operator asked
       // for, and the screen would show the substitution as if it were theirs.
-      if ($raw_slug === '') {
-        $this->redirect_to_settings_tab('routing', array('message' => 'base_slug_empty'));
-      }
-
-      $base_slug = sanitize_title($raw_slug);
+      // Blank and unusable get different messages.
       if ($base_slug === '') {
-        $this->redirect_to_settings_tab('routing', array('message' => 'base_slug_invalid'));
+        $typed = isset($_POST['folio_base_slug']) ? trim(sanitize_text_field(wp_unslash($_POST['folio_base_slug']))) : '';
+        $this->redirect_to_settings_tab('routing', array('message' => $typed === '' ? 'base_slug_empty' : 'base_slug_invalid'));
       }
 
       update_option('groove_folio_base_slug', $base_slug);

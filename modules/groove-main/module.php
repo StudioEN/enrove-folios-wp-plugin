@@ -139,7 +139,7 @@ class Module extends BaseModule
 			$auto_open = !Request::has('open_add_new') && \Groove\Setup\First_Run::take_auto_open();
 			wp_add_inline_script(
 				'groove-setup',
-				'window.GROOVE_SETUP = ' . wp_json_encode(\Groove\Setup\First_Run::script_settings($auto_open)) . ';',
+				'window.GROOVE_SETUP = ' . wp_json_encode(\Groove\Setup\First_Run::script_settings($auto_open), JSON_HEX_TAG | JSON_HEX_AMP) . ';',
 				'before'
 			);
 			add_action('admin_footer', ['\Groove\Setup\First_Run', 'render_dialog']);
@@ -213,7 +213,7 @@ class Module extends BaseModule
 
 		wp_add_inline_script(
 			'groove-main',
-			'window.GROOVE_SETTINGS = ' . wp_json_encode($settings) . ';' .
+			'window.GROOVE_SETTINGS = ' . wp_json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP) . ';' .
 			'window.GROOVE_SCREEN_ID = window.GROOVE_SETTINGS.screenId;' .
 			'window.GROOVE_POST = !!window.GROOVE_SETTINGS.isPost;' .
 			'window.GROOVE_POST_TYPE = window.GROOVE_SETTINGS.postType;' .

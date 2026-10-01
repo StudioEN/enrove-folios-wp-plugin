@@ -523,7 +523,9 @@ class Utils
     $home_path = wp_parse_url(home_url(), PHP_URL_PATH) ?? '/';
     $home_path = rtrim($home_path, '/');
 
-    $request_uri = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only the path is taken from it, and only to regex-match against the folio base slug; it is never output or stored, and sanitize_text_field() would strip %-encoded octets from the path.
+    // esc_url_raw(), not sanitize_text_field(): the latter strips the
+    // %-encoded octets of a non-ASCII slug from the path.
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash($_SERVER['REQUEST_URI'])) : '/';
     $url_parts = wp_parse_url($request_uri);
     $current_path = isset($url_parts['path']) ? $url_parts['path'] : '/';
 

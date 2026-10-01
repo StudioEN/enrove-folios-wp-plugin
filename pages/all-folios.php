@@ -1,6 +1,7 @@
 <?php
 namespace Groove\Pages;
 
+use Groove\Contents\FolioPage\Publishing;
 use Groove\List\Folio_List_Table;
 use Groove\Menu\All_Folios_Menu_Item;
 use Groove\Menu\Menu_Manager;
@@ -725,7 +726,10 @@ class All_Folios extends Page
 			return false;
 		}
 
-		$skip_keys = array('_edit_lock', '_edit_last', '_wp_old_slug');
+		// A copy starts unpublished and owes nothing to the original's
+		// history: a page's note of how it was before its folio took it down
+		// would bring it back private or published when the copy goes live.
+		$skip_keys = array('_edit_lock', '_edit_last', '_wp_old_slug', Publishing::HELD_STATUS_META);
 		$this->copy_post_meta_values($post_id, $new_folio_id, $skip_keys);
 
 		$term_ids = wp_get_object_terms($post_id, 'groove_collection_tag', array('fields' => 'ids'));
