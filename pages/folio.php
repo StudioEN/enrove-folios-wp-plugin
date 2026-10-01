@@ -166,6 +166,9 @@ class Folio extends Page
         // Carries the nonce that Folio_Page_Content::verify_add_page_link()
         // checks before the new page is linked to this folio.
         'link' => Folio_Page_Content::get_add_page_url($folio_id),
+        // At phone width Add Page, Preview and Copy link go into the More
+        // actions menu (Page::display_overflow_menu()); Save and Publish stay.
+        'overflow' => true,
       )
     ];
 
@@ -175,6 +178,7 @@ class Folio extends Page
         'type' => 'secondary',
         'ui' => 'wp',
         'link' => $preview_link,
+        'overflow' => true,
         'class' => 'g-tooltip-button',
         'attrs' => array(
           'id' => 'g-folio-preview-link',
@@ -208,6 +212,8 @@ class Folio extends Page
         'action' => 'copy_groove_folio_link',
         'button_type' => 'button',
         'icon' => 'dashicons-admin-links',
+        'overflow' => true,
+        'menu_text' => $copy_link_label,
         'class' => 'g-tooltip-button',
         'attrs' => array(
           'id' => 'g-copy-folio-link',
@@ -920,13 +926,13 @@ class Folio extends Page
               ?>
               <input type="hidden" id="proposal_client_logo_url" name="proposal_client_logo_url"
                 value="<?php echo esc_attr($proposal_client_logo_url); ?>" />
-              <div class="flex items-start space-x-4">
+              <div class="g-folio__media-field">
                 <div class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"
                   id="g-client-logo-preview-frame">
                   <img id="g-client-logo-preview" class="g-folio__media-preview-image"
                     src="<?php echo esc_url($client_logo_preview !== '' ? $client_logo_preview : $default_client_logo_url); ?>" />
                 </div>
-                <div class="flex flex-col space-y-2">
+                <div class="g-folio__media-actions">
                   <button type="button" id="g-client-logo-select" class="button button-secondary"><?php echo $client_logo_preview !== '' ? esc_html__('Replace logo', 'groove-folios') : esc_html__('Select logo', 'groove-folios'); ?></button>
                   <button type="button" id="g-client-logo-default" data-default-url="<?php echo esc_url($default_client_logo_url); ?>"
                     class="button-link <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Use default', 'groove-folios'); ?></button>
@@ -1350,12 +1356,12 @@ class Folio extends Page
             <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Feature image', 'groove-folios'); ?></label>
             <input value="<?php echo $feature_image instanceof \WP_Post ? (int) $feature_image->ID : ''; ?>" type="hidden"
               name="feature_image_id" id="feature-media-id">
-            <div class="flex items-start space-x-4">
+            <div class="g-folio__media-field">
               <div
                 class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2">
                 <img id="feature-preview" class="g-folio__media-preview-image" src="<?php echo esc_url($feature_image_src); ?>" />
               </div>
-              <div class="flex flex-col space-y-2">
+              <div class="g-folio__media-actions">
                 <button type="button" id="feature-image" class="button button-secondary"><?php esc_html_e('Replace image', 'groove-folios'); ?></button>
                 <button type="button" data-default-url="<?php echo esc_url($theme_cover_url); ?>" id="use-default-image"
                   class="button-link"><?php esc_html_e('Use default', 'groove-folios'); ?></button>
@@ -1366,12 +1372,12 @@ class Folio extends Page
             <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Logo', 'groove-folios'); ?></label>
             <input value="<?php echo $logo instanceof \WP_Post ? (int) $logo->ID : ''; ?>" type="hidden" name="logo_id"
               id="logo-media-id">
-            <div class="flex items-start space-x-4">
+            <div class="g-folio__media-field">
               <div
                 class="g-folio__media-preview-frame flex items-center justify-center rounded border border-gray-200 bg-gray-50 p-2">
                 <img id="logo-preview" class="g-folio__media-preview-image" src="<?php echo esc_url($logo_image_src); ?>" />
               </div>
-              <div class="flex flex-col space-y-2">
+              <div class="g-folio__media-actions">
                 <button type="button" id="logo-image" class="button button-secondary"><?php esc_html_e('Replace image', 'groove-folios'); ?></button>
                 <button type="button" data-default-url="<?php echo esc_url($theme_logo_url); ?>" id="use-default-logo"
                   class="button-link"><?php esc_html_e('Use default', 'groove-folios'); ?></button>

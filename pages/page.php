@@ -176,8 +176,10 @@ abstract class Page extends Assets
 					}
 				}
 
+				$overflow_class = static::is_overflow_item($button_item) ? ' g-page-header__overflow-item' : '';
+
 				if ($ui === 'wp') {
-					$wp_classes = 'button';
+					$wp_classes = 'button' . $overflow_class;
 					if ($type === 'primary') {
 						$wp_classes .= ' button-primary';
 					} else if ($type === 'secondary') {
@@ -211,11 +213,82 @@ abstract class Page extends Assets
 				} else {
 					$classes = $base_classes . ' border border-gray-300 bg-white text-gray-700 hover:bg-gray-50';
 				}
+				$classes .= $overflow_class;
 
 				$this->print_button_item($button_item, isset($button_item['link']) ? 'g-tailwind-link-reset ' . $classes : $classes, $text, $icon_classes);
 			}
 			echo '</div>';
 		}
+	}
+
+	/**
+	 * Whether a header item moves into the More actions menu at phone width
+	 * ('overflow' => true). Only a link, or an action with an id for the menu
+	 * item to press, can: anything else stays in the bar.
+	 *
+	 * @param array $button_item
+	 * @return bool
+	 */
+	protected static function is_overflow_item($button_item)
+	{
+		if (empty($button_item['overflow'])) {
+			return false;
+		}
+
+		return isset($button_item['link'])
+			|| (isset($button_item['action']) && !empty($button_item['attrs']['id']));
+	}
+
+	/**
+	 * The header items, left then right, that go into the More actions menu.
+	 *
+	 * @return array[]
+	 */
+	protected function get_overflow_items()
+	{
+		$items = array_merge((array) $this->left_button_items, (array) $this->right_button_items);
+
+		return array_values(array_filter($items, function ($item) {
+			return static::is_overflow_item($item);
+		}));
+	}
+
+	/**
+	 * The More actions menu: at phone width (groove-main.css) it stands in for
+	 * the header items that carry 'overflow', which are hidden there. A link
+	 * is repeated as a link (re-read from the bar's copy when it has an id,
+	 * data-groove-menu-mirror); an action item's menu entry presses the real
+	 * control (data-groove-menu-proxy), so whatever script drives that control
+	 * still does. groove-main.js runs the menu.
+	 *
+	 * @param array[] $items From get_overflow_items().
+	 */
+	protected function display_overflow_menu(array $items)
+	{
+		if (empty($items)) {
+			return;
+		}
+
+		$menu_id = 'g-page-header-menu';
+		?>
+		<div class="g-page-header__more" data-groove-menu>
+			<button type="button" class="button button-secondary g-page-header__icon-button" data-groove-menu-toggle
+				aria-haspopup="menu" aria-expanded="false" aria-controls="<?php echo esc_attr($menu_id); ?>"
+				aria-label="<?php esc_attr_e('More actions', 'groove-folios'); ?>">
+				<span class="dashicons dashicons-ellipsis" aria-hidden="true"></span>
+			</button>
+			<div class="g-menu" id="<?php echo esc_attr($menu_id); ?>" role="menu" aria-label="<?php esc_attr_e('More actions', 'groove-folios'); ?>" hidden>
+				<?php foreach ($items as $item):
+					$label = isset($item['menu_text']) ? (string) $item['menu_text'] : (isset($item['text']) ? (string) $item['text'] : '');
+					if (isset($item['link'])): ?>
+						<a class="g-menu__item" role="menuitem" tabindex="-1" href="<?php echo esc_url($item['link']); ?>"<?php echo !empty($item['attrs']['id']) ? ' data-groove-menu-mirror="' . esc_attr($item['attrs']['id']) . '"' : ''; ?>><?php echo esc_html($label); ?></a>
+					<?php else: ?>
+						<button type="button" class="g-menu__item" role="menuitem" tabindex="-1" data-groove-menu-proxy="<?php echo esc_attr($item['attrs']['id']); ?>"><?php echo esc_html($label); ?></button>
+					<?php endif;
+				endforeach; ?>
+			</div>
+		</div>
+		<?php
 	}
 
 	public function display_tabs()
@@ -238,16 +311,18 @@ abstract class Page extends Assets
 	{
 		$tabs = $this->get_tabs();
 		$setup_entry = $this->shows_setup_entry() && \Groove\Setup\First_Run::should_offer();
+		$overflow_items = $this->get_overflow_items();
 		?>
 		<div class="g-page-header">
 			<div class="g-page-header__left">
 				<h1 class="wp-heading-inline g-page-header__title"><?php echo esc_html($this->get_title()); ?></h1>
 				<?php $this->display_left_button_items(); ?>
 			</div>
-			<?php if (!empty($this->right_button_items) || $setup_entry): ?>
+			<?php if (!empty($this->right_button_items) || $setup_entry || !empty($overflow_items)): ?>
 			<div class="g-page-header__right">
 				<?php if ($setup_entry) { \Groove\Setup\First_Run::display_header_entry(); } ?>
 				<?php $this->display_right_button_items(); ?>
+				<?php $this->display_overflow_menu($overflow_items); ?>
 			</div>
 			<?php endif; ?>
 		</div>

@@ -423,17 +423,31 @@ body.groove.groove-folios_page_groove-folio #pages-filter .wp-list-table.widefat
   background: var(--g-accent);
 }
 
+/* The header holds a 56px row while its title and actions fit side by side;
+   when they do not (a long title, a phone), the actions wrap under the title
+   instead of running over it. */
 body.groove .g-page-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
+  gap: 8px 12px;
+  min-height: 56px;
+  padding: 8px 0;
+  box-sizing: border-box;
 }
 
 body.groove .g-page-header__left,
 body.groove .g-page-header__right {
   display: flex;
   align-items: center;
+}
+
+body.groove .g-page-header__right {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 8px;
+  margin-inline-start: auto;
 }
 
 body.groove .g-page-header__left {
@@ -445,11 +459,14 @@ body.groove .g-page-header__title {
   margin: 0;
   padding: 0;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 body.groove .g-page-header__buttons {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  row-gap: 8px;
 }
 
 body.groove .g-page-header__buttons-group {
@@ -470,6 +487,95 @@ body.groove .g-page-header__icon-button .dashicons {
   height: 16px;
   font-size: 16px;
   line-height: 16px;
+}
+
+/* The More actions menu button: only at phone width, see below. */
+body.groove .g-page-header__more {
+  display: none;
+  position: relative;
+  margin-inline-start: 8px;
+}
+
+/* Where wp-admin goes mobile, the icon buttons match core's 40px touch-size
+   buttons. */
+@media screen and (max-width: 782px) {
+  body.groove .g-page-header__icon-button {
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+/* At phone width the items a page marks 'overflow' leave the bar for the
+   More actions menu, so the bar keeps only the actions that commit work. */
+@media screen and (max-width: 600px) {
+  body.groove .g-page-header .g-page-header__overflow-item,
+  body.groove .g-page-header__buttons:not(:has(> :not(.g-page-header__overflow-item))) {
+    display: none;
+  }
+
+  body.groove .g-page-header__more {
+    display: block;
+  }
+}
+
+/* A menu of actions, anchored under its button's right edge. */
+body.groove .g-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 180px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 4px;
+  border: 1px solid var(--g-border-strong);
+  border-radius: 8px;
+  background: var(--g-surface);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+}
+
+body.groove .g-menu[hidden] {
+  display: none;
+}
+
+body.groove .g-menu__item {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  box-shadow: none;
+  color: var(--g-text);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+body.groove .g-menu__item:hover,
+body.groove .g-menu__item:focus {
+  background: var(--g-surface-alt);
+  color: var(--g-text);
+  box-shadow: none;
+}
+
+body.groove .g-menu__item:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: -2px;
+}
+
+body.groove .g-menu__item[aria-disabled="true"] {
+  color: var(--g-text-muted);
+  background: none;
+  cursor: default;
 }
 
 body.groove .g-tooltip-button {
@@ -685,10 +791,28 @@ body.groove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible
   object-fit: contain;
 }
 
+/* Feature image and logo side by side while each column has room for its
+   frame and buttons, stacked when not (a phone, or the two-card layout
+   squeezing the Essentials card). Inside a column the buttons drop below
+   the frame rather than running past the card. */
 .g-folio__media-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 16px;
+}
+
+.g-folio__media-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 16px;
+}
+
+.g-folio__media-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .g-folio__media-col {
@@ -1960,6 +2084,7 @@ body.groove .g-theme-picker-summary {
 
 body.groove .g-theme-picker-summary__layout {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 14px;
 }
@@ -1981,9 +2106,11 @@ body.groove .g-theme-picker-summary__thumb-image {
   object-fit: cover;
 }
 
+/* Under the thumbnail when the card is too narrow for the text and the
+   Change theme button beside it. */
 body.groove .g-theme-picker-summary__content {
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 1 1 160px;
 }
 
 body.groove .g-theme-picker-summary__name {

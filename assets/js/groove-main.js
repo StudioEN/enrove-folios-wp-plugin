@@ -278,6 +278,208 @@ jQuery(function () {
     }
   }
 
+  // The header's More actions menu (Page::display_overflow_menu()), shown at
+  // phone width in place of the items that carry 'overflow'. A menu button
+  // as the ARIA pattern has it: arrow keys, Home and End move between items,
+  // Escape closes and returns to the button, Tab or a click elsewhere closes.
+  // An item with data-groove-menu-proxy presses the real control, which keeps
+  // its own state and script; a link item is an ordinary link, re-read from
+  // its bar copy (data-groove-menu-mirror) each time the menu opens.
+  function initMenu(root) {
+    const toggle = root.querySelector('[data-groove-menu-toggle]')
+    const menu = root.querySelector('[role="menu"]')
+    if (!toggle || !menu) {
+      return
+    }
+
+    function items() {
+      return Array.prototype.slice.call(menu.querySelectorAll('[role="menuitem"]'))
+    }
+
+    function isOpen() {
+      return !menu.hidden
+    }
+
+    function syncProxies() {
+      items().forEach(function (item) {
+        const id = item.getAttribute('data-groove-menu-proxy')
+        const target = id ? document.getElementById(id) : null
+        if (id) {
+          const off = !target || target.disabled || target.getAttribute('aria-disabled') === 'true'
+          item.setAttribute('aria-disabled', off ? 'true' : 'false')
+        }
+
+        const mirror = item.getAttribute('data-groove-menu-mirror')
+        const source = mirror ? document.getElementById(mirror) : null
+        if (source && source.getAttribute('href')) {
+          item.setAttribute('href', source.getAttribute('href'))
+        }
+      })
+    }
+
+    // The bar control an item stands in for, to take focus when the menu
+    // goes away under it at a wider width.
+    function barControlFor(item) {
+      const id = item && (item.getAttribute('data-groove-menu-proxy') || item.getAttribute('data-groove-menu-mirror'))
+      const control = id ? document.getElementById(id) : null
+      if (control && control.offsetParent) {
+        return control
+      }
+      const header = root.closest('.g-page-header')
+      const first = header ? Array.prototype.find.call(header.querySelectorAll('a[href], button:not([disabled])'), function (el) {
+        return el.offsetParent && !root.contains(el)
+      }) : null
+      return first || null
+    }
+
+    function open(focusLast) {
+      syncProxies()
+      menu.hidden = false
+      toggle.setAttribute('aria-expanded', 'true')
+      const list = items()
+      const target = focusLast ? list[list.length - 1] : list[0]
+      if (target) {
+        target.focus()
+      }
+    }
+
+    function close(returnFocus) {
+      if (!isOpen()) {
+        return
+      }
+      menu.hidden = true
+      toggle.setAttribute('aria-expanded', 'false')
+      if (returnFocus) {
+        toggle.focus()
+      }
+    }
+
+    toggle.addEventListener('click', function () {
+      if (isOpen()) {
+        close(false)
+      } else {
+        open(false)
+      }
+    })
+
+    toggle.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault()
+        open(event.key === 'ArrowUp')
+      }
+    })
+
+    // Escape closes from anywhere in the widget, the button included (a
+    // screen reader's cursor can rest there while the menu is open).
+    root.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && isOpen()) {
+        event.preventDefault()
+        event.stopPropagation()
+        close(true)
+      }
+    })
+
+    // A press on the menu's padding or edge keeps focus on the item it was on,
+    // so the keys go on working.
+    menu.addEventListener('mousedown', function (event) {
+      if (!event.target.closest('[role="menuitem"]')) {
+        event.preventDefault()
+      }
+    })
+
+    menu.addEventListener('keydown', function (event) {
+      const list = items()
+      const index = list.indexOf(document.activeElement)
+      let next = null
+
+      // Space activates a link item as it does a button item.
+      if (event.key === ' ' && document.activeElement && document.activeElement.tagName === 'A') {
+        event.preventDefault()
+        document.activeElement.click()
+        return
+      }
+
+      if (event.key === 'ArrowDown') {
+        next = list[(index + 1) % list.length]
+      } else if (event.key === 'ArrowUp') {
+        next = list[(index - 1 + list.length) % list.length]
+      } else if (event.key === 'Home') {
+        next = list[0]
+      } else if (event.key === 'End') {
+        next = list[list.length - 1]
+      } else if (event.key === 'Tab') {
+        close(false)
+        return
+      }
+
+      if (next) {
+        event.preventDefault()
+        next.focus()
+      }
+    })
+
+    menu.addEventListener('click', function (event) {
+      const item = event.target.closest('[role="menuitem"]')
+      if (!item) {
+        return
+      }
+      if (item.getAttribute('aria-disabled') === 'true') {
+        event.preventDefault()
+        return
+      }
+
+      const id = item.getAttribute('data-groove-menu-proxy')
+      if (!id) {
+        close(false)
+        return
+      }
+
+      close(true)
+      const target = document.getElementById(id)
+      if (target) {
+        target.click()
+      }
+    })
+
+    document.addEventListener('pointerdown', function (event) {
+      if (isOpen() && !root.contains(event.target)) {
+        close(false)
+      }
+    })
+
+    root.addEventListener('focusout', function (event) {
+      if (isOpen() && event.relatedTarget && !root.contains(event.relatedTarget)) {
+        close(false)
+      }
+    })
+
+    // Widening past phone width hides the menu button; don't leave the menu
+    // open behind it.
+    if (window.matchMedia) {
+      const phone = window.matchMedia('(max-width: 600px)')
+      const onChange = function () {
+        if (phone.matches || !isOpen()) {
+          return
+        }
+        const focused = root.contains(document.activeElement) ? document.activeElement : null
+        close(false)
+        if (focused) {
+          const control = barControlFor(focused)
+          if (control) {
+            control.focus()
+          }
+        }
+      }
+      if (phone.addEventListener) {
+        phone.addEventListener('change', onChange)
+      } else if (phone.addListener) {
+        phone.addListener(onChange)
+      }
+    }
+  }
+
+  document.querySelectorAll('[data-groove-menu]').forEach(initMenu)
+
   const Groove = Object.create({
     screenId: settings.screenId || window.GROOVE_SCREEN_ID || '',
     themeId: settings.themeId || window.GROOVE_THEME_ID || null,
@@ -580,6 +782,9 @@ jQuery(function () {
 
           if (result.copy_link) {
             jQuery('#g-copy-folio-link').data('copy-link', result.copy_link)
+            // copy_link is the public URL, sent only for a published folio,
+            // whose View link opens the same address: a renamed slug moves it.
+            jQuery('#g-folio-preview-link').attr('href', result.copy_link)
           }
 
           if (shouldReload) {
@@ -844,12 +1049,20 @@ jQuery(function () {
           return
         }
 
+        // Pressed from the More actions menu at phone width, the button itself
+        // is hidden, so its tooltip would be too: say it in a toast instead.
+        const inMenu = !copyLinkBtn.is(':visible')
+
         copyText(linkToCopy).then(function () {
-          if (copyTooltip) {
+          if (inMenu && typeof window.grooveShowToast === 'function') {
+            window.grooveShowToast(copiedTooltipText, 'success', 2400)
+          } else if (copyTooltip) {
             copyTooltip.show(copiedTooltipText, 1800, copyTooltipText)
           }
         }).catch(function () {
-          if (copyTooltip) {
+          if (inMenu && typeof window.grooveShowToast === 'function') {
+            window.grooveShowToast(wp.i18n.__('The link could not be copied.', 'groove-folios'), 'error')
+          } else if (copyTooltip) {
             copyTooltip.show(copyTooltipText, 1200, copyTooltipText)
           }
         })
