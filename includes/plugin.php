@@ -187,6 +187,39 @@ class Plugin
 		// folio-preview-template.php which does its own draft-safe WP_Query.
 	}
 
+	/**
+	 * The theme picker preview's request (groove-main.js builds it), checked
+	 * before any of it is used: the user may edit posts, the nonce is the
+	 * picker's, and the theme exists.
+	 *
+	 * @return array|int The theme ID, view ('cover' or 'page') and page index
+	 *                   (0 or 1); or the HTTP status to refuse it with.
+	 */
+	private function read_theme_preview_request()
+	{
+		if (!current_user_can('edit_posts')) {
+			return 403;
+		}
+
+		$nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
+		if (!wp_verify_nonce($nonce, 'groove_theme_preview')) {
+			return 403;
+		}
+
+		$theme_id = sanitize_key((string) get_query_var('groove_theme_preview'));
+		if ($theme_id === '' || !Themes_Manager::has($theme_id)) {
+			return 404;
+		}
+
+		$view = sanitize_key((string) get_query_var('groove_preview_view'));
+
+		return array(
+			'theme_id' => $theme_id,
+			'view' => $view === 'page' ? 'page' : 'cover',
+			'page_index' => max(0, min(1, absint(get_query_var('groove_preview_page')))),
+		);
+	}
+
 	private function register_autoloader()
 	{
 		require_once GROOVE_PATH . '/includes/autoloader.php';
@@ -254,8 +287,17 @@ class Plugin
 		// Run before redirect_canonical (priority 10) to prevent WP from
 		// "helpfully" redirecting 404s (drafts) to the homepage.
 		add_action('template_redirect', function () {
-			// Theme picker preview — admin-only, nonce verified inside the template.
+			// Theme picker preview: editors only, with the picker's nonce. The
+			// template reads no request data; it is handed what this checked.
 			if ((string) get_query_var('groove_theme_preview') !== '') {
+				$preview = $this->read_theme_preview_request();
+				if (is_int($preview)) {
+					status_header($preview);
+					exit;
+				}
+				$theme_id = $preview['theme_id'];
+				$view = $preview['view'];
+				$page_index = $preview['page_index'];
 				Site_Theme_Isolation::isolate_front_end();
 				require_once plugin_dir_path(__FILE__) . 'theme-picker-preview-template.php';
 				exit;

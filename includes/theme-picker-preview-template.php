@@ -3,8 +3,8 @@
  * Theme Picker Preview Template
  *
  * Renders a live theme preview with dummy content, no real folio post required.
- * Triggered by ?groove_theme_preview=<theme-id> in plugin.php's template_redirect hook.
- * Requires: admin capability + valid nonce.
+ * Triggered by ?groove_theme_preview=<theme-id> in plugin.php's template_redirect hook,
+ * which checks the request (edit_posts + the picker's nonce) and sets the variables below.
  */
 
 use Groove\Themes\Themes_Manager;
@@ -15,30 +15,9 @@ if (!defined('ABSPATH')) {
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Required from inside a closure (Plugin's template_redirect handler), so these variables are local to it, not globals.
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
-
-if (!current_user_can('edit_posts')) {
-  status_header(403);
-  exit;
-}
-
-$nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
-if (!wp_verify_nonce($nonce, 'groove_theme_preview')) {
-  status_header(403);
-  exit;
-}
-
-// ── Params ────────────────────────────────────────────────────────────────────
-
-$theme_id = isset($_GET['groove_theme_preview']) ? sanitize_key(wp_unslash($_GET['groove_theme_preview'])) : '';
-if (empty($theme_id) || !Themes_Manager::has($theme_id)) {
-  status_header(404);
-  exit;
-}
-
-$view       = isset($_GET['groove_preview_view']) ? sanitize_key(wp_unslash($_GET['groove_preview_view'])) : 'cover';
-$page_index = isset($_GET['groove_preview_page']) ? intval(wp_unslash($_GET['groove_preview_page'])) : 0;
-$page_index = max(0, min(1, $page_index));
+// $theme_id, $view ('cover' or 'page') and $page_index (0 or 1) come from
+// Plugin::read_theme_preview_request(), which has checked the user, the nonce
+// and the theme before this file is loaded.
 
 // ── Dummy data ────────────────────────────────────────────────────────────────
 

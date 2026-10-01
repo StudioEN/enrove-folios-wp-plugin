@@ -49,7 +49,7 @@ Admin screens are `Groove\Pages\*` classes extending [pages/page.php](pages/page
 
 `Plugin::add_rewrite()` is deliberately empty. Adding rewrite rules makes WP see a CPT archive query, and since `has_archive => false`, `redirect_canonical` bounces the visitor home before templates run. Instead a `template_redirect` hook at **priority 5** (ahead of `redirect_canonical`) intercepts and `exit`s:
 
-- `?groove_theme_preview=` → [includes/theme-picker-preview-template.php](includes/theme-picker-preview-template.php)
+- `?groove_theme_preview=` → [includes/theme-picker-preview-template.php](includes/theme-picker-preview-template.php), after `Plugin::read_theme_preview_request()` has checked `edit_posts`, the picker's nonce and the theme. The template reads no request data itself; it is handed `$theme_id`, `$view` and `$page_index`
 - a path under `/{base_slug}/`, or `?groove_preview=1`, or `?folio_id=` / `?p=` naming a groove post → [includes/folio-preview-template.php](includes/folio-preview-template.php)
 
 That template resolves the theme, renders the password gate or a 404, and otherwise emits a bare document around `$theme->display_theme()`. Don't hardcode `/folio/` — the base slug is the `groove_folio_base_slug` option; call `Utils::get_folio_base_slug()`, and build every folio URL with `Utils::get_folio_permalink_by_id()`.
@@ -81,7 +81,7 @@ WordPress.org review asks for a nonce check before any `$_GET`/`$_POST`/`$_REQUE
 - **View parameters** (which folio, tab, list filter/search/sort/page, and action outcomes such as `bulk_action`) are read only through `Groove\Utils\Request` ([utils/request.php](utils/request.php)), which verifies a `_groove_view` nonce before reading. Build every admin link that carries one with `Request::admin_url()` (or `Folio::get_edit_url()`), add `Request::nonce_field()` to a GET form, and sign redirects the same way. An unsigned link reads as the default view.
 - **Which screen this is**: core's `global $plugin_page` / `$pagenow`, not `$_GET['page']`.
 - **Handlers** verify their nonce first, before reading any field (bulk forms: check `isset()` of the nonce field, `check_admin_referer()`, then read `action`), then check a capability on the object the input names.
-- **Front-end routing** (`folio_id`, `p`, `groove_preview`, `groove_theme_preview`) uses registered query vars and `get_query_var()` (`Utils::ROUTE_QUERY_VARS`); public URLs cannot carry nonces.
+- **Front-end routing** (`folio_id`, `p`, `groove_preview`, and the theme picker preview's `groove_theme_preview`, `groove_preview_view`, `groove_preview_page`) uses registered query vars and `get_query_var()` (`Utils::ROUTE_QUERY_VARS`); public URLs cannot carry nonces. The picker preview's own nonce (`_wpnonce`) is the one superglobal read on that path, inside a method, before anything else. **No request data is read at a file's top level**: a template included from a handler is handed checked values.
 
 `php <plugin-check>/vendor/bin/phpcs --standard=WordPress --sniffs=WordPress.Security.NonceVerification --ignore-annotations` over the shipped files should report nothing.
 
