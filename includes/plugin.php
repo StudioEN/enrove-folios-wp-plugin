@@ -1,36 +1,36 @@
 <?php
-namespace Groove;
+namespace Enrove;
 
-use Groove\Autoloader;
-use Groove\Modules\Modules_Manager;
-use Groove\Contents\Contents_Manager;
-use Groove\Pages\Overview;
-use Groove\Pages\All_Folios;
-use Groove\Pages\Folio;
-use Groove\Pages\Add_New;
-use Groove\Pages\Settings;
-use Groove\Pages\Themes;
-use Groove\Menu\Menu_Manager;
-use Groove\Themes\Themes_Manager;
-use Groove\Themes\Theme_Blocks;
-use Groove\Themes\Site_Theme_Isolation;
-use Groove\Utils\Utils;
+use Enrove\Autoloader;
+use Enrove\Modules\Modules_Manager;
+use Enrove\Contents\Contents_Manager;
+use Enrove\Pages\Overview;
+use Enrove\Pages\All_Folios;
+use Enrove\Pages\Folio;
+use Enrove\Pages\Add_New;
+use Enrove\Pages\Settings;
+use Enrove\Pages\Themes;
+use Enrove\Menu\Menu_Manager;
+use Enrove\Themes\Themes_Manager;
+use Enrove\Themes\Theme_Blocks;
+use Enrove\Themes\Site_Theme_Isolation;
+use Enrove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
 	exit;
 }
 
 /**
- * Groove plugin.
+ * Enrove plugin.
  *
- * The main plugin handler class is responsible for initializing Groove. The
+ * The main plugin handler class is responsible for initializing Enrove. The
  * class registers and all the components required to run the plugin.
  *
  * @since 1.0.0
  */
 class Plugin
 {
-	const GROOVE_DEFAULT_POST_TYPES = ['folio', 'folio-page'];
+	const ENROVE_DEFAULT_POST_TYPES = ['folio', 'folio-page'];
 
 	public static $instance = null;
 
@@ -49,7 +49,7 @@ class Plugin
 		_doing_it_wrong(
 			__FUNCTION__,
 			sprintf('Cloning instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
-			esc_html(GROOVE_VERSION)
+			esc_html(ENROVE_VERSION)
 		);
 	}
 
@@ -58,7 +58,7 @@ class Plugin
 		_doing_it_wrong(
 			__FUNCTION__,
 			sprintf('Unserializing instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
-			esc_html(GROOVE_VERSION)
+			esc_html(ENROVE_VERSION)
 		);
 	}
 
@@ -66,7 +66,7 @@ class Plugin
 	{
 		if (is_null(self::$instance)) {
 			self::$instance = new self();
-			do_action('groove/loaded');
+			do_action('enrove/loaded');
 		}
 
 		return self::$instance;
@@ -80,7 +80,7 @@ class Plugin
 		$this->init_components();
 		$this->clean_up_removed_features();
 
-		do_action('groove/init');
+		do_action('enrove/init');
 	}
 
 	/**
@@ -91,21 +91,21 @@ class Plugin
 	 * to answer it, and the analytics opt-in would sit in the options table
 	 * recording a consent to something the plugin no longer does.
 	 *
-	 * Submissions already stored in the `groove_feedback` post type are left
+	 * Submissions already stored in the `enrove_feedback` post type are left
 	 * alone. They are the site owner's data; the post type is just no longer
 	 * registered, so they are invisible rather than gone. Drop this method once
 	 * no install can still be upgrading from a build that had either feature.
 	 */
 	private function clean_up_removed_features()
 	{
-		if (get_option('_groove_removed_features_cleaned')) {
+		if (get_option('_enrove_removed_features_cleaned')) {
 			return;
 		}
 
-		wp_clear_scheduled_hook('groove/feedback/retry');
-		delete_option('groove_usage_analytics');
+		wp_clear_scheduled_hook('enrove/feedback/retry');
+		delete_option('enrove_usage_analytics');
 
-		update_option('_groove_removed_features_cleaned', 1);
+		update_option('_enrove_removed_features_cleaned', 1);
 	}
 
 	/**
@@ -121,12 +121,12 @@ class Plugin
 
 	public function get_install_time()
 	{
-		$installed_time = get_option('_groove_installed_time');
+		$installed_time = get_option('_enrove_installed_time');
 
 		if (!$installed_time) {
 			$installed_time = time();
 
-			update_option('_groove_installed_time', $installed_time);
+			update_option('_enrove_installed_time', $installed_time);
 		}
 
 		return $installed_time;
@@ -146,9 +146,9 @@ class Plugin
 		$this->contents_manager = new Contents_Manager();
 
 		// Registers the setup dialog's AJAX handlers; the dialog itself is
-		// printed by the groove-main module on Groove's own screens.
+		// printed by the enrove-main module on Enrove's own screens.
 		if (is_admin()) {
-			\Groove\Setup\First_Run::instance();
+			\Enrove\Setup\First_Run::instance();
 		}
 
 		$this->menu_manager->register_actions();
@@ -165,10 +165,10 @@ class Plugin
 
 	private function add_cpt_support()
 	{
-		$cpt_support = get_option('groove_cpt_support', self::GROOVE_DEFAULT_POST_TYPES);
+		$cpt_support = get_option('enrove_cpt_support', self::ENROVE_DEFAULT_POST_TYPES);
 
 		foreach ($cpt_support as $cpt_slug) {
-			add_post_type_support($cpt_slug, 'groove');
+			add_post_type_support($cpt_slug, 'enrove');
 		}
 	}
 
@@ -177,8 +177,8 @@ class Plugin
 		// NOTE: No custom rewrite rules here by design.
 		//
 		// All /folio/ routing is handled by the template_include filter in __construct().
-		// Adding rewrite rules for groove_folio/groove_folio_page causes WordPress to see
-		// a CPT archive query (post_type=groove_folio, no 'name'). Since has_archive=false,
+		// Adding rewrite rules for enrove_folio/enrove_folio_page causes WordPress to see
+		// a CPT archive query (post_type=enrove_folio, no 'name'). Since has_archive=false,
 		// WordPress's redirect_canonical fires and bounces the visitor to the home page —
 		// before template_include ever gets a chance to intercept.
 		//
@@ -188,7 +188,7 @@ class Plugin
 	}
 
 	/**
-	 * The theme picker preview's request (groove-main.js builds it), checked
+	 * The theme picker preview's request (enrove-main.js builds it), checked
 	 * before any of it is used: the user may edit posts, the nonce is the
 	 * picker's, and the theme exists.
 	 *
@@ -202,27 +202,27 @@ class Plugin
 		}
 
 		$nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
-		if (!wp_verify_nonce($nonce, 'groove_theme_preview')) {
+		if (!wp_verify_nonce($nonce, 'enrove_theme_preview')) {
 			return 403;
 		}
 
-		$theme_id = sanitize_key((string) get_query_var('groove_theme_preview'));
+		$theme_id = sanitize_key((string) get_query_var('enrove_theme_preview'));
 		if ($theme_id === '' || !Themes_Manager::has($theme_id)) {
 			return 404;
 		}
 
-		$view = sanitize_key((string) get_query_var('groove_preview_view'));
+		$view = sanitize_key((string) get_query_var('enrove_preview_view'));
 
 		return array(
 			'theme_id' => $theme_id,
 			'view' => $view === 'page' ? 'page' : 'cover',
-			'page_index' => max(0, min(1, absint(get_query_var('groove_preview_page')))),
+			'page_index' => max(0, min(1, absint(get_query_var('enrove_preview_page')))),
 		);
 	}
 
 	private function register_autoloader()
 	{
-		require_once GROOVE_PATH . '/includes/autoloader.php';
+		require_once ENROVE_PATH . '/includes/autoloader.php';
 
 		Autoloader::run();
 	}
@@ -239,7 +239,7 @@ class Plugin
 	/**
 	 * Plugin constructor.
 	 *
-	 * Initializing Groove plugin.
+	 * Initializing Enrove plugin.
 	 *
 	 * @since 1.0.0
 	 * @access private
@@ -248,30 +248,34 @@ class Plugin
 	{
 		$this->register_autoloader();
 
+		// Before anything reads a stored name: move data kept under the
+		// plugin's old names to the ones the code now uses.
+		\Enrove\Setup\Legacy_Names::migrate();
+
 		// Boot the theme registry immediately so it is available everywhere.
 		Themes_Manager::register_defaults();
 		Theme_Blocks::register();
 		Site_Theme_Isolation::register();
 
 		add_filter('admin_body_class', function ($classes) {
-			$classes .= ' groove';
+			$classes .= ' enrove';
 			return $classes;
 		});
 
 
 		add_filter('rewrite_rules_array', function ($rules) {
 			$new_rules = array(
-				'groove-preview/?$' => 'index.php?preview=true',
+				'enrove-preview/?$' => 'index.php?preview=true',
 			);
 
 			return $new_rules + $rules;
 		});
 
 		add_filter('post_type_link', function ($post_link, $post, $leavename) {
-			$groove_post_link = Utils::get_folio_permalink_by_id($post->ID);
+			$enrove_post_link = Utils::get_folio_permalink_by_id($post->ID);
 
-			if ($groove_post_link) {
-				return $groove_post_link;
+			if ($enrove_post_link) {
+				return $enrove_post_link;
 			}
 
 			return $post_link;
@@ -289,7 +293,7 @@ class Plugin
 		add_action('template_redirect', function () {
 			// Theme picker preview: editors only, with the picker's nonce. The
 			// template reads no request data; it is handed what this checked.
-			if ((string) get_query_var('groove_theme_preview') !== '') {
+			if ((string) get_query_var('enrove_theme_preview') !== '') {
 				$preview = $this->read_theme_preview_request();
 				if (is_int($preview)) {
 					status_header($preview);
@@ -306,22 +310,22 @@ class Plugin
 			$current_path = Utils::get_current_path();
 			$base_slug = Utils::get_folio_base_slug();
 			$pattern = '#^/' . preg_quote($base_slug, '#') . '/#';
-			$is_query_preview = '1' === (string) get_query_var('groove_preview');
+			$is_query_preview = '1' === (string) get_query_var('enrove_preview');
 			$query_folio_id = absint(get_query_var('folio_id'));
 			$query_post_id = absint(get_query_var('p'));
 
-			$is_query_groove_context = false;
-			if ($query_folio_id && get_post_type($query_folio_id) === 'groove_folio') {
-				$is_query_groove_context = true;
+			$is_query_enrove_context = false;
+			if ($query_folio_id && get_post_type($query_folio_id) === 'enrove_folio') {
+				$is_query_enrove_context = true;
 			}
 			if ($query_post_id) {
 				$query_post_type = get_post_type($query_post_id);
-				if (in_array($query_post_type, array('groove_folio', 'groove_folio_page'), true)) {
-					$is_query_groove_context = true;
+				if (in_array($query_post_type, array('enrove_folio', 'enrove_folio_page'), true)) {
+					$is_query_enrove_context = true;
 				}
 			}
 
-			if ($is_query_preview || $is_query_groove_context || preg_match($pattern, $current_path)) {
+			if ($is_query_preview || $is_query_enrove_context || preg_match($pattern, $current_path)) {
 				// A folio is its own document: nothing of the site's theme.
 				Site_Theme_Isolation::isolate_front_end();
 				$plugin_dir = plugin_dir_path(__FILE__);
@@ -358,21 +362,21 @@ class Plugin
 				sanitize_title($title),
 				$post_id,
 				$post->post_status,
-				'groove_folio_page',
+				'enrove_folio_page',
 				$post->post_parent
 			);
 			// Only update if the slug has actually changed, and unhooked while
 			// updating, so the save this triggers does not come back here.
 			if ($new_slug !== $post->post_name) {
-				remove_action('save_post_groove_folio_page', $sync_page_slug, 10);
+				remove_action('save_post_enrove_folio_page', $sync_page_slug, 10);
 				wp_update_post(array('ID' => $post_id, 'post_name' => $new_slug));
-				add_action('save_post_groove_folio_page', $sync_page_slug, 10, 3);
+				add_action('save_post_enrove_folio_page', $sync_page_slug, 10, 3);
 			}
 		};
-		add_action('save_post_groove_folio_page', $sync_page_slug, 10, 3);
+		add_action('save_post_enrove_folio_page', $sync_page_slug, 10, 3);
 
 		// Block editor saves via REST API — fires after the post is fully written.
-		add_action('rest_after_insert_groove_folio_page', function ($post) {
+		add_action('rest_after_insert_enrove_folio_page', function ($post) {
 			if (empty($post->post_title)) {
 				return;
 			}
@@ -380,7 +384,7 @@ class Plugin
 				sanitize_title($post->post_title),
 				$post->ID,
 				$post->post_status,
-				'groove_folio_page',
+				'enrove_folio_page',
 				$post->post_parent
 			);
 			if ($new_slug !== $post->post_name) {
@@ -397,10 +401,10 @@ class Plugin
 
 	final public static function get_title()
 	{
-		return esc_html__('Groove', 'groove-folios');
+		return esc_html__('Enrove', 'enrove-folios');
 	}
 }
 
-if (!defined('GROOVE_TESTS')) {
+if (!defined('ENROVE_TESTS')) {
 	Plugin::instance();
 }

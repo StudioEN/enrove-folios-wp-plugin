@@ -1,6 +1,6 @@
 <?php
-namespace Groove\Contents\FolioPage;
-use Groove\Contents\BaseContent;
+namespace Enrove\Contents\FolioPage;
+use Enrove\Contents\BaseContent;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
 class Content extends BaseContent
 {
   /** Nonce action on every Add Page link (get_add_page_url()). */
-  const ADD_PAGE_NONCE = 'groove_add_folio_page';
+  const ADD_PAGE_NONCE = 'enrove_add_folio_page';
 
   /** The folio a verified Add Page link names, until its page is created. */
   private $add_page_folio_id = 0;
@@ -27,18 +27,18 @@ class Content extends BaseContent
   public function create_posttype()
   {
     $labels = array(
-      'name' => _x('Folio Pages', 'post type general name', 'groove-folios'),
-      'singular_name' => _x('Folio Page', 'post type singular name', 'groove-folios'),
-      'menu_name' => _x('Folio Pages', 'admin menu', 'groove-folios'),
-      'all_items' => __('All Folio Pages', 'groove-folios'),
-      'add_new' => __('Add New', 'groove-folios'),
-      'add_new_item' => __('Add New Folio Page', 'groove-folios'),
-      'edit_item' => __('Edit Folio Page', 'groove-folios'),
-      'new_item' => __('New Folio Page', 'groove-folios'),
-      'view_item' => __('View Folio Page', 'groove-folios'),
-      'search_items' => __('Search Folio Pages', 'groove-folios'),
-      'not_found' => __('No folio pages found', 'groove-folios'),
-      'not_found_in_trash' => __('No folio pages found in trash', 'groove-folios'),
+      'name' => _x('Folio Pages', 'post type general name', 'enrove-folios'),
+      'singular_name' => _x('Folio Page', 'post type singular name', 'enrove-folios'),
+      'menu_name' => _x('Folio Pages', 'admin menu', 'enrove-folios'),
+      'all_items' => __('All Folio Pages', 'enrove-folios'),
+      'add_new' => __('Add New', 'enrove-folios'),
+      'add_new_item' => __('Add New Folio Page', 'enrove-folios'),
+      'edit_item' => __('Edit Folio Page', 'enrove-folios'),
+      'new_item' => __('New Folio Page', 'enrove-folios'),
+      'view_item' => __('View Folio Page', 'enrove-folios'),
+      'search_items' => __('Search Folio Pages', 'enrove-folios'),
+      'not_found' => __('No folio pages found', 'enrove-folios'),
+      'not_found_in_trash' => __('No folio pages found in trash', 'enrove-folios'),
     );
 
     $args = array(
@@ -60,9 +60,9 @@ class Content extends BaseContent
       'menu_position' => 1,
     );
 
-    register_post_type('groove_' . $this->get_key(), $args);
+    register_post_type('enrove_' . $this->get_key(), $args);
 
-    register_post_meta('groove_folio_page', 'folio_id', array(
+    register_post_meta('enrove_folio_page', 'folio_id', array(
       'show_in_rest' => true,
       'single' => true,
       'type' => 'integer',
@@ -84,7 +84,7 @@ class Content extends BaseContent
   {
     return add_query_arg(
       array(
-        'post_type' => 'groove_folio_page',
+        'post_type' => 'enrove_folio_page',
         'folio_id' => (int) $folio_id,
         '_wpnonce' => wp_create_nonce(self::ADD_PAGE_NONCE),
       ),
@@ -107,22 +107,22 @@ class Content extends BaseContent
 
     // Presence only: a folio_id marks an Add Page link. Its value is read
     // after check_admin_referer() below.
-    if ($typenow !== 'groove_folio_page' || !isset($_GET['folio_id'])) {
+    if ($typenow !== 'enrove_folio_page' || !isset($_GET['folio_id'])) {
       return;
     }
     check_admin_referer(self::ADD_PAGE_NONCE);
 
     $folio_id = absint(wp_unslash($_GET['folio_id']));
-    if (!$folio_id || get_post_type($folio_id) !== 'groove_folio' || !current_user_can('edit_post', $folio_id)) {
+    if (!$folio_id || get_post_type($folio_id) !== 'enrove_folio' || !current_user_can('edit_post', $folio_id)) {
       wp_die(
-        esc_html__('Sorry, you are not allowed to add a page to that folio.', 'groove-folios'),
+        esc_html__('Sorry, you are not allowed to add a page to that folio.', 'enrove-folios'),
         '',
         array('response' => 403, 'back_link' => true)
       );
     }
 
     $this->add_page_folio_id = $folio_id;
-    add_action('save_post_groove_folio_page', array($this, 'link_new_page'), 10, 3);
+    add_action('save_post_enrove_folio_page', array($this, 'link_new_page'), 10, 3);
   }
 
   /**
@@ -140,7 +140,7 @@ class Content extends BaseContent
     if ($update || $post->post_status !== 'auto-draft' || !current_user_can('edit_post', $post_id)) {
       return;
     }
-    remove_action('save_post_groove_folio_page', array($this, 'link_new_page'), 10);
+    remove_action('save_post_enrove_folio_page', array($this, 'link_new_page'), 10);
 
     $folio_id = $this->add_page_folio_id;
     $this->add_page_folio_id = 0;
@@ -169,7 +169,7 @@ class Content extends BaseContent
     if ($check !== null || $meta_key !== 'folio_id' || !is_user_logged_in()) {
       return $check;
     }
-    if (get_post_type($object_id) !== 'groove_folio_page') {
+    if (get_post_type($object_id) !== 'enrove_folio_page') {
       return $check;
     }
 
@@ -200,7 +200,7 @@ class Content extends BaseContent
     if ($meta_key === false || $meta_key === null || $meta_key === '') {
       $meta_key = $meta->meta_key;
     }
-    if ($meta_key !== 'folio_id' || get_post_type((int) $meta->post_id) !== 'groove_folio_page') {
+    if ($meta_key !== 'folio_id' || get_post_type((int) $meta->post_id) !== 'enrove_folio_page') {
       return $check;
     }
 
@@ -232,7 +232,7 @@ class Content extends BaseContent
     if (!$this->may_link_to_folio($meta['folio_id'])) {
       return new \WP_Error(
         'rest_cannot_edit',
-        __('Sorry, you are not allowed to add a page to that folio.', 'groove-folios'),
+        __('Sorry, you are not allowed to add a page to that folio.', 'enrove-folios'),
         array('status' => rest_authorization_required_code())
       );
     }
@@ -276,7 +276,7 @@ class Content extends BaseContent
     add_filter('add_post_metadata', [$this, 'guard_folio_link'], 10, 4);
     add_filter('update_post_metadata', [$this, 'guard_folio_link'], 10, 4);
     add_filter('update_post_metadata_by_mid', [$this, 'guard_folio_link_by_mid'], 10, 4);
-    add_filter('rest_pre_insert_groove_folio_page', [$this, 'guard_rest_folio_link'], 10, 2);
+    add_filter('rest_pre_insert_enrove_folio_page', [$this, 'guard_rest_folio_link'], 10, 2);
     add_filter('is_protected_meta', [$this, 'protect_folio_link'], 10, 3);
     Publishing::register();
     Visibility::register();

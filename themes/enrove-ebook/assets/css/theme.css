@@ -1,0 +1,1653 @@
+/* ── Design tokens ──────────────────────────────────────────────────────────
+   The --folio-* names are the shared folio theme contract
+   (assets/css/folio-contract.css); --ge-* is this theme's private namespace
+   for the colours the contract has no slot for.
+
+   Declared on the theme's two roots, not on :root. The rendered document
+   carries body.enrove, and so does wp-admin (admin_body_class), so a :root
+   block would leak into admin screens — see themes/README.md "CSS scoping".
+   Every selector in this file is a descendant of one of these two roots, and
+   so reaches every element the theme styles. The one exception is the
+   view-transition section below: those pseudos hang off the document root and
+   cannot be scoped at all, which is why the section argues for itself.
+   ─────────────────────────────────────────────────────────────────────────── */
+body.enrove .g-folio__theme-2,
+body.enrove .g-folio__theme-2-page {
+  /* Surfaces. The blue is this theme's field, not an emphasis colour: it is
+     the entire interior-page background and the cover's brief pane. White is
+     the plane content actually sits on — the nav panes and the page body. */
+  --folio-ground: #1D35B4;
+  --folio-surface: #fff;
+  --folio-surface-alt: #F6F7F7;
+
+  /* Text — the three tiers that run on the white chrome (nav panes, top bar). */
+  --folio-text: #101517;
+  --folio-text-muted: #3C434A;
+  --folio-text-subtle: #8C8F94;
+
+  /* Both are white here: white reads on the accent, and it is what all thirteen
+     white-on-blue sites use. They stay two slots because they answer two
+     questions — this theme is the reason --folio-on-ground exists in the
+     contract at all. --ge-on-ground below aliases the ground one. */
+  --folio-on-accent: #fff;
+  --folio-on-ground: #fff;
+
+  /* Lines. --folio-rule is the near-white hairline the chrome already used;
+     --folio-rule-strong is filled because the book blocks below consume it —
+     an epigraph's left rule and a section break's short rule both disappear at
+     #F0F0F1. Its value is the contract's own fallback, stated here rather than
+     inherited so the slot is filled on purpose. */
+  --folio-rule: #F0F0F1;
+  --folio-rule-strong: #DCDCDE;
+
+  /* Accent — links and nav items. */
+  --folio-accent: #3858E9;
+  /* Both were inherited from the contract, whose accent happens to be this
+     same blue. Stated here because the hover and focus states below read them
+     and a slot a theme depends on should not be a coincidence. */
+  --folio-accent-hover: #2145E6;
+  --folio-accent-soft: #F0F6FC;
+
+  /* Focus. The ring defaults to the accent because most of what takes focus in
+     this theme sits on a white plane: the nav pane, the top bar and the page
+     body are all --folio-surface. The blue field is the exception, and it gets
+     --ge-focus-inverse below — an accent-blue ring on the accent-blue ground
+     would be the one place the ring disappears. */
+  --folio-focus: var(--folio-accent);
+
+  /* Secondary accent — the green. Not interactive: it numbers the nav and
+     labels the catalog. This theme is one of the two reasons the slot exists. */
+  --folio-accent-2: #52B107;
+  --folio-accent-2-soft: #9DD373;
+
+  /* Type. Display, meta and label come straight from the contract ramp — its
+     maxima are already this theme's desktop sizes, so nothing moves at width.
+     The three sizes in between get private clamps whose MAXIMUM is the current
+     fixed size, for the same reason: desktop is unchanged and only narrower
+     viewports move. --ge-text-ui stays fixed at 1rem because it sits on
+     controls, where 16px is also what stops iOS zooming a focused input. */
+  --ge-text-page-title: clamp(1.5rem, 1.25rem + 1.1vw, 2rem);
+  --ge-text-ordinal: clamp(1.5rem, 1.35rem + 0.7vw, 2rem);
+  --ge-text-subtitle: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --ge-text-ui: 1rem;
+
+  /* Type — --g-folio-primary-font is the plugin's pre-role-split font name
+     (themes/font-loader.php aliases it to --g-folio-body-font). */
+  --folio-font-body: var(--g-folio-primary-font, 'DM Sans', sans-serif);
+
+  /* Depth and motion */
+  --folio-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.10);
+  --folio-overlay: rgba(255, 255, 255, 0.90);
+  --folio-dur: .3s;
+
+  /* Frosted chrome, for the fixed top bar. Past the first screenful the bar
+     had to go fully opaque, because at any lower opacity the running type
+     passing under it read straight through. A blurred backdrop is the other
+     answer, and it lets the bar stay a translucent plane instead: what passes
+     beneath dissolves rather than showing through.
+
+     Only the rules inside the @supports guard read these, so an engine without
+     backdrop-filter keeps the opaque bar it has today.
+
+     The bar's UNSCROLLED colour is deliberately not here — it keeps
+     --folio-overlay. The blur is on the bar in that state too, and does real
+     work there: is-scrolled does not flip until scrollY > 96 (enrove-main.js),
+     and the bar is 48px with the page title starting at 80px, so there is a
+     band where the title and the top of the reading card travel under a bar
+     that is still at its unscrolled colour. What the state does NOT need is a
+     lower opacity: that would be a glass affordance rather than an answer to
+     anything.
+
+     The mobile contents dropdown that hangs off the bar is NOT frosted, and
+     the reason is contrast, not taste. The bar carries --folio-text and
+     --folio-text-muted, which sit at 14.4:1 and 7.8:1 on this surface over the
+     blue ground — margin to spare. The dropdown carries --folio-accent links,
+     which are far lighter: the same surface puts them at 4.39:1, under the
+     4.5:1 floor for body text and below the 5.6:1 they have on the opaque
+     panel today. Matching the two materials is not worth spending that. */
+  --ge-navbar-blur: blur(16px);
+  --ge-navbar-glass: rgba(255, 255, 255, 0.86);
+  /* The frosted bar over the white reading card is white on white, so the one
+     thing that still separates them is an edge. --folio-rule is near-white and
+     would not carry it. */
+  --ge-navbar-edge: color-mix(in srgb, var(--folio-text) 8%, transparent);
+
+  /* ── Theme-private ──────────────────────────────────────────────────────
+     Aliases point at slots; the rest are colours with no slot to point at. */
+  --ge-on-ground: var(--folio-on-ground);
+
+  /* The focus ring for the handful of controls that sit ON the blue ground
+     rather than on the white chrome. Same white this theme already reads with. */
+  --ge-focus-inverse: var(--folio-on-ground);
+
+  /* The fixed top bar's height. Four things are measured off it — the bar
+     itself, the mobile nav that hangs below it, the page title that clears it,
+     and the scroll-margin that keeps an anchored heading from landing under
+     it — so it is one number, not four. */
+  --ge-navbar-h: 48px;
+
+  /* The reading card's padding. A number rather than a literal for the same
+     reason as the bar's height: a plate that bleeds to the edge of the card
+     cancels this padding with a negative margin, and the two have to be the
+     same value at every width or the picture lands short of the edge. */
+  --ge-card-pad: var(--folio-space-5);
+
+  --ge-brief-author: #F0F6FC;
+  --ge-brief-copyright: #9EC2E6;
+  --ge-brief-field-bg: rgba(197, 217, 237, 1);
+  --ge-nav-button-icon: #E2E8F0;
+  --ge-nav-order: var(--folio-accent-2);
+  --ge-catalog: var(--folio-accent-2-soft);
+  --ge-shadow-dropdown: 0px 5px 10px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* ── View transitions ────────────────────────────────────────────────
+   Every page of a folio is its own document, so what smooths the move between
+   them is the cross-document view transition, not a router. It arms only when
+   BOTH documents opt in, and only a folio render loads this file: a link out
+   to the rest of the site finds no @view-transition on the far side and
+   navigates hard, which is right — that is somewhere else, not the next page.
+
+   The whole of it is a slower, eased version of the browser's own cross-fade.
+   There is no slide and nothing is given a view-transition-name, and both of
+   those are decisions rather than omissions:
+
+     · A translate on the root pseudos moves the two snapshots off each other,
+       and the strip where only one of them is painted goes half-transparent
+       for a frame — the document's background reads through between the two
+       pages, and this theme's ground is a saturated blue sitting on whatever
+       colour the site's body happens to be. A cross-fade alone has no strip.
+
+     · The fixed top bar is in the same place on both pages, so it cross-fades
+       to itself and already appears to hold still while the reading column
+       turns over. Naming it would buy the same stillness and cost the frost:
+       a named element is captured into its own isolated group, where a
+       backdrop-filter has no backdrop left to sample.
+
+   These are literals rather than tokens. ::view-transition-* pseudos are
+   attached to the DOCUMENT root, outside .g-folio__theme-2-page, so a custom
+   property declared on this theme's roots cannot reach them.
+
+   Engines without the feature ignore the whole section and navigate exactly as
+   they do today. Nothing here is load-bearing.
+   ──────────────────────────────────────────────────────────────────── */
+
+@view-transition {
+  navigation: auto;
+}
+
+/* The group is in the list for the one case where it animates at all: the two
+   documents' viewports differ in height, as they do when a mobile URL bar
+   collapses across the navigation. Left out it would resize on the UA's 0.25s
+   while its contents cross-faded on 340ms. */
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 340ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The reduced-motion block at the foot of this file cannot reach these: it
+     selects descendants of the theme's roots, and these pseudos hang off the
+     document root. Same treatment, stated where it applies. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/* ── Interaction states ─────────────────────────────────────────────────────
+   This theme shipped with none: no :hover, no :focus-visible, and no link
+   decoration of its own. That is where the disappearing underline came from —
+   not a rule in this file, but the absence of one. A folio renders through the
+   site's own WordPress front end (includes/folio-preview-template.php calls
+   wp_head()), so the active site theme's stylesheet loads alongside this one,
+   and a great many of them ship `a:hover { text-decoration: none }`. Anything
+   this file leaves unsaid, some other stylesheet says instead.
+
+   The principle, and it is the WCAG 1.4.1 one: hover and focus ADD affordance,
+   never subtract it. Nothing here removes an underline, a colour or a ring
+   that was present at rest.
+
+   Three kinds of link, three treatments:
+     · prose links carry an underline at every state and thicken on hover —
+       colour alone is not a sufficient cue inside running text;
+     · drawer rows are list items, not running text, so they take a row tint
+       and a colour shift, which is affordance added, not decoration removed;
+     · standalone chrome links (the pager, the catalog, the byline) are bare at
+       rest and gain an underline on hover and focus.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* The ring. Replaces the four bare `outline: none` declarations that used to
+   sit on this theme's buttons and left keyboard users with nothing at all. */
+.g-folio__theme-2 :focus-visible,
+.g-folio__theme-2-page :focus-visible {
+  outline: 2px solid var(--folio-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* The exceptions: controls that sit on the blue ground rather than the white
+   chrome, where an accent-blue ring would be a blue ring on a blue field. */
+.g-folio__theme-2 .g-folio__theme-fields-submit:focus-visible,
+.g-folio__theme-2 .g-folio__theme-nav-button:focus-visible,
+.g-folio__theme-2 .g-folio__theme-site:focus-visible,
+.g-folio__theme-2-page .g-folio__theme-page-catalog a:focus-visible,
+.g-folio__theme-2-page .g-folio__theme-page-prev a:focus-visible,
+.g-folio__theme-2-page .g-folio__theme-page-next a:focus-visible,
+.g-folio__theme-2-page .g-folio__theme-site:focus-visible {
+  outline-color: var(--ge-focus-inverse);
+}
+
+/* ── Prose links ──────────────────────────────────────────────────────────── */
+.g-folio__theme-2-page .g-folio__theme-page-content a {
+  color: var(--folio-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  /* Lighter than the text at rest so the underline reads as a texture rather
+     than a strikethrough of the descenders; full strength on hover. */
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+  transition: color var(--folio-dur) var(--folio-ease),
+    text-decoration-color var(--folio-dur) var(--folio-ease);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-content a:hover,
+.g-folio__theme-2-page .g-folio__theme-page-content a:focus-visible {
+  color: var(--folio-accent-hover);
+  text-decoration-thickness: 2px;
+  text-decoration-color: currentColor;
+}
+
+/* ── Drawer rows ──────────────────────────────────────────────────────────── */
+.g-folio__theme-2 .g-folio__theme-nav-item,
+.g-folio__theme-2-page .g-folio__theme-page-nav-item,
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-item {
+  transition: background-color var(--folio-dur) var(--folio-ease),
+    color var(--folio-dur) var(--folio-ease);
+}
+
+.g-folio__theme-2 .g-folio__theme-nav-item-link:hover .g-folio__theme-nav-item,
+.g-folio__theme-2 .g-folio__theme-nav-item-link:focus-visible .g-folio__theme-nav-item,
+.g-folio__theme-2-page .g-folio__theme-page-nav-item-link:hover .g-folio__theme-page-nav-item,
+.g-folio__theme-2-page .g-folio__theme-page-nav-item-link:focus-visible .g-folio__theme-page-nav-item,
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-item-link:hover .g-folio__theme-page-mobile-nav-item,
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-item-link:focus-visible .g-folio__theme-page-mobile-nav-item {
+  background-color: var(--folio-accent-soft);
+  color: var(--folio-accent-hover);
+}
+
+/* ── Standalone chrome links ──────────────────────────────────────────────── */
+.g-folio__theme-2 .g-folio__theme-site,
+.g-folio__theme-2-page .g-folio__theme-site,
+.g-folio__theme-2-page .g-folio__theme-page-nav-name a,
+.g-folio__theme-2-page .g-folio__theme-page-catalog a,
+.g-folio__theme-2-page .g-folio__theme-page-prev a,
+.g-folio__theme-2-page .g-folio__theme-page-next a {
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+  transition: color var(--folio-dur) var(--folio-ease);
+}
+
+.g-folio__theme-2 .g-folio__theme-site:hover,
+.g-folio__theme-2 .g-folio__theme-site:focus-visible,
+.g-folio__theme-2-page .g-folio__theme-site:hover,
+.g-folio__theme-2-page .g-folio__theme-site:focus-visible,
+.g-folio__theme-2-page .g-folio__theme-page-nav-name a:hover,
+.g-folio__theme-2-page .g-folio__theme-page-nav-name a:focus-visible,
+.g-folio__theme-2-page .g-folio__theme-page-catalog a:hover,
+.g-folio__theme-2-page .g-folio__theme-page-catalog a:focus-visible,
+.g-folio__theme-2-page .g-folio__theme-page-prev a:hover,
+.g-folio__theme-2-page .g-folio__theme-page-prev a:focus-visible,
+.g-folio__theme-2-page .g-folio__theme-page-next a:hover,
+.g-folio__theme-2-page .g-folio__theme-page-next a:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+
+/* The folio title in the nav pane is the one link of the group on the white
+   plane, so it can also take the accent. The catalog, the pager and the byline
+   are all white on the blue ground and keep their colour — there the added
+   underline is the whole of the change. */
+.g-folio__theme-2-page .g-folio__theme-page-nav-name a:hover,
+.g-folio__theme-2-page .g-folio__theme-page-nav-name a:focus-visible {
+  color: var(--folio-accent-hover);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.g-folio__theme-2 .g-folio__theme-nav-button,
+.g-folio__theme-2 .g-folio__theme-nav-close,
+.g-folio__theme-2-page .g-folio__theme-page-nav-button,
+.g-folio__theme-2-page .g-folio__theme-page-nav-close,
+.g-folio__theme-2-page .g-folio__theme-page-nav-bar-toggle,
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-back {
+  transition: opacity var(--folio-dur) var(--folio-ease),
+    background-color var(--folio-dur) var(--folio-ease),
+    color var(--folio-dur) var(--folio-ease);
+}
+
+.g-folio__theme-2 .g-folio__theme-nav-close:hover,
+.g-folio__theme-2-page .g-folio__theme-page-nav-close:hover,
+.g-folio__theme-2-page .g-folio__theme-page-nav-bar-toggle:hover {
+  opacity: 0.7;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-button:hover {
+  background-color: var(--folio-accent-soft);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-back:hover,
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-back:focus-visible {
+  color: var(--folio-accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.g-folio__theme-2 .g-folio__theme-fields-submit:hover {
+  background-color: color-mix(in srgb, var(--ge-on-ground) 14%, transparent);
+}
+
+.g-folio__theme-2 {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /* The cover shell is fixed to the viewport, which is exactly where a mobile
+     browser's collapsing address bar makes vh lie. dvh with a vh fallback. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  /* The shell is fixed and centred, so a card taller than the viewport had
+     nowhere to go. Padding keeps the card off the edges on a short screen and
+     overflow gives it somewhere to scroll; neither moves anything at desktop,
+     where the card is well inside the viewport. */
+  box-sizing: border-box;
+  padding: var(--folio-space-5);
+  overflow-y: auto;
+}
+
+.g-folio__theme-2 .g-folio__theme-brief {
+  /* 660 = the 596px content box plus its 2x32px side padding; 545 = 497 plus
+     2x24px. Restating the card as its OUTER box means border-box renders it
+     pixel-identical at desktop, while letting it shrink with a gutter instead
+     of overflowing once the viewport drops below ~700px. The gutter comes from
+     the shell's padding, so the card does not subtract one of its own. Height
+     becomes a minimum so long titles grow the card rather than spilling out. */
+  box-sizing: border-box;
+  width: min(660px, 100%);
+  min-height: min(545px, calc(100vh - var(--folio-space-7)));
+  min-height: min(545px, calc(100dvh - var(--folio-space-7)));
+  height: auto;
+}
+
+.g-folio__theme-2 .g-folio__theme-brief {
+  display: flex;
+  border-radius: 2px;
+  background: var(--folio-ground);
+  box-shadow: var(--folio-shadow);
+  flex-direction: column;
+  padding: 24px 32px;
+}
+
+.g-folio__theme-2 .g-folio__theme-title {
+  color: var(--ge-on-ground);
+  font-size: var(--folio-text-display);
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.25;
+  margin-top: 37.88px;
+}
+
+.g-folio__theme-2 .g-folio__theme-subtitle {
+  color: var(--ge-on-ground);
+  font-size: var(--ge-text-subtitle);
+  font-weight: 500;
+  margin: 0;
+  margin-top: 24px;
+}
+
+.g-folio__theme-2 .g-folio__theme-author {
+  font-size: var(--folio-text-meta);
+  color: var(--ge-brief-author);
+  font-weight: 400;
+  line-height: 1.25;
+  margin-top: 32px;
+}
+
+.g-folio__theme-2 .g-folio__theme-logo {
+  height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.g-folio__theme-2 .g-folio__theme-logo img {
+  width: 105.898px;
+  height: 20.119px;
+  flex-shrink: 0;
+}
+
+.g-folio__theme-2 .g-folio__theme-fields {
+  flex: 1;
+}
+
+.g-folio__theme-2 .g-folio__theme-password-form {}
+
+.g-folio__theme-2 .g-folio__theme-fields-submit-input {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  background: var(--ge-brief-field-bg);
+  padding: 8px 12px 8px 12px;
+  border-radius: 2px;
+  border: none;
+  margin-bottom: 8px;
+  font-size: var(--ge-text-ui);
+}
+
+.g-folio__theme-2 .g-folio__theme-fields-submit {
+  display: flex;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 2px;
+  border: 1px solid var(--ge-on-ground);
+  color: var(--ge-on-ground);
+  font-size: var(--folio-text-meta);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 20px;
+  /* 142.857% */
+  width: 80px;
+  cursor: pointer;
+  background-color: transparent;
+}
+
+.g-folio__theme-2 .g-folio__theme-copyright {
+  justify-self: flex-end;
+  font-size: var(--folio-text-label);
+  color: var(--ge-brief-copyright);
+  line-height: 1.25;
+  font-weight: 400;
+}
+
+.g-folio__theme-2 .g-folio__theme-powerby {
+  justify-self: flex-end;
+  font-size: var(--folio-text-label);
+  line-height: 1.25;
+  font-weight: 400;
+  margin-bottom: 24px;
+  color: var(--ge-on-ground);
+}
+
+.g-folio__theme-2 .g-folio__theme-site {
+  color: var(--ge-on-ground);
+}
+
+.g-folio__theme-2 .g-folio__theme-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.g-folio__theme-2 .g-folio__theme-nav-button {
+  position: fixed;
+  left: 24px;
+  top: 12px;
+  height: 32px;
+  width: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--folio-ground);
+  color: var(--ge-nav-button-icon);
+  border: none;
+  cursor: pointer;
+}
+
+.g-folio__theme-2 .g-folio__theme-menu-icon,
+.g-folio__theme-2-page .g-folio__theme-menu-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.g-folio__theme-2 .g-folio__theme-nav-close {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  z-index: 1;
+  height: 32px;
+  width: 32px;
+  /* The icon is a transparent PNG and the list now scrolls underneath it, so
+     the button carries the pane's own ground rather than letting type show
+     through the glyph. On a white pane this changes nothing at rest. */
+  background: url('../images/theme-close.png') no-repeat center center var(--folio-surface);
+  background-size: cover;
+  border: none;
+  cursor: pointer;
+}
+
+.g-folio__theme-2 .g-folio__theme-nav {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  /* The pane frames; .g-folio__theme-nav-content inside it scrolls. The
+     close button is a sibling of that box rather than a child, so it stays in
+     the corner while a long contents list moves under it. */
+  overflow: hidden;
+  /* Off-screen is not out of the tab order — a translated pane still takes
+     focus, so tabbing walked into an invisible drawer. visibility does remove
+     it, delayed by the slide so the animation still plays on the way out. */
+  visibility: hidden;
+  /* 360px is the design width. Below that the drawer becomes the viewport —
+     which is what the page variant already did at the phone breakpoint and the
+     cover never did: on a 360px phone this pane sat edge to edge with no
+     gutter, and on anything narrower it overflowed off-screen. */
+  width: min(360px, 100%);
+  padding: 24px;
+  background: var(--folio-surface);
+  box-sizing: border-box;
+  transform: translateX(-100%);
+  /* Was `all`, which also animated the width change at the breakpoint and
+     anything else that moves with it. Only the slide is meant to animate. */
+  transition: transform var(--folio-dur) var(--folio-ease),
+    visibility 0s linear var(--folio-dur);
+}
+
+.g-folio__theme-2 .g-folio__theme-nav.visible {
+  transform: translateX(0);
+  visibility: visible;
+  /* No `visibility` in this list: it must flip the instant the pane opens, or
+     focus cannot move into it. The base rule keeps the delayed hide, which is
+     what lets the pane slide out on close. */
+  transition: transform var(--folio-dur) var(--folio-ease);
+}
+
+/* A long table of contents scrolls here, inside the pane's frame, rather than
+   running off the bottom of it — and does not drag the page behind it when it
+   reaches the end. */
+.g-folio__theme-2 .g-folio__theme-nav-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.g-folio__theme-2 .g-folio__theme-nav-name {
+  color: var(--folio-text);
+  font-size: var(--ge-text-subtitle);
+  font-weight: 700;
+  margin-top: 80px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-name {
+  margin-left: 16px;
+  font-size: var(--folio-text-meta);
+  /* Named, not inherited. Its own sibling below states --folio-text-muted, so
+     the intent was always the pair; this half was left to inherit from the
+     site's body, which put the one line of type on the bar at whatever colour
+     the active WordPress theme happened to set. That matters more now the bar
+     is translucent: the contrast behind it is this theme's to know. */
+  color: var(--folio-text);
+}
+
+.g-folio__theme-2-page .g-folio__theme-folio-name {
+  color: var(--folio-text-muted);
+  font-size: var(--folio-text-meta);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.g-folio__theme-2 .g-folio__theme-nav-item {
+  height: 64px;
+  color: var(--folio-accent);
+  font-size: var(--ge-text-ui);
+  font-weight: 700;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  cursor: pointer;
+}
+
+.g-folio__theme-2 .g-folio__theme-nav-item-link {
+  text-decoration: none;
+}
+
+.g-folio__theme-2 .g-folio__theme-nav-item::after {
+  content: "";
+  background-color: var(--folio-rule);
+  height: 1px;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+
+.g-folio__theme-2 .g-folio__theme-nav-item-order {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--ge-text-ordinal);
+  color: var(--ge-nav-order);
+  font-weight: 700;
+  font-style: normal;
+}
+
+.g-folio__theme-2 .g-folio__theme-nav-label {
+  font-size: var(--folio-text-label);
+  color: var(--folio-text-subtle);
+  margin-top: 32px;
+}
+
+/* ── Scrolling ──────────────────────────────────────────────────────────────
+   The document scrolls. It did not before: this element was `overflow: scroll`
+   AND .g-folio__theme-page-center was `height: 100vh; overflow: scroll`, so
+   above the phone breakpoint the reading column scrolled INSIDE a page that
+   never moved, with a second, permanently-visible scrollbar track outside it.
+
+   Two features are wired to the window and so did nothing above 600px:
+   "↑ Back to top" (window.scrollTo) and the top bar's scrolled state
+   (window.scrollY > 96) — both in assets/js/enrove-main.js. Below 600px the
+   old CSS released the inner scroller and both worked, which is why the bug
+   only ever showed on a desktop. The sticky sidebar was measured against the
+   inner scroller too.
+
+   One scroller, owned by the document, fixes all of it.
+   ─────────────────────────────────────────────────────────────────────────── */
+.g-folio__theme-2-page {
+  background-color: var(--folio-ground);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* dvh tracks the mobile browser's collapsing address bar; vh does not, and
+     is left first as the fallback for engines without dvh. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--folio-font-body);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-main {
+  width: 100%;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-center {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  /* The gutter, at every width below the sidebar's. It used to exist only under
+     600px, so the whole tablet range put the white card hard against both edges
+     of the screen — and it was written as `width: 100%` plus `margin: 0 16px`,
+     which resolves to 100% + 32px and pushed the page wider than the viewport.
+     Padding inside a border-box cannot do that. */
+  padding: 0 clamp(var(--folio-space-4), 3vw, var(--folio-space-6));
+}
+
+/* ── Contents sidebar ───────────────────────────────────────────────────────
+   A supplement to the reading column, not part of it, so it is declared the
+   other way round from everything else in this file: absent by default, and
+   added back only where the column can keep its measure beside it. That
+   replaces two max-width steps (shrink at 1280, hide at 1024) whose only job
+   was to undo a desktop-only decision, and it flexes between 1024 and 1440
+   instead of stepping. At 1440 the clamps resolve to exactly the 265px and
+   64px the theme was drawn with.
+
+   Below the threshold nothing is lost: the same table of contents is one tap
+   away in the nav pane.
+   ─────────────────────────────────────────────────────────────────────────── */
+.g-folio__theme-2-page .g-folio__theme-page-sidebar {
+  display: none;
+}
+
+@media screen and (min-width: 1024px) {
+  .g-folio__theme-2-page .g-folio__theme-page-sidebar {
+    display: block;
+    flex: 0 0 clamp(200px, 18.4vw, 265px);
+    margin-left: clamp(var(--folio-space-5), 4.45vw, var(--folio-space-8));
+    /* The full-height column the list sticks WITHIN. `position: sticky` used
+       to sit here, on the flex item itself — which stretches to the row's
+       height, so it had nothing left to travel and never stuck at all. The
+       -100px offset it carried was inert for the same reason. The list below
+       is the part that moves. */
+    align-self: stretch;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-catalogs {
+    position: sticky;
+    top: calc(var(--ge-navbar-h) + var(--folio-space-5));
+    /* A table of contents longer than the viewport scrolls inside itself
+       rather than being clipped by the pin. */
+    max-height: calc(100dvh - var(--ge-navbar-h) - var(--folio-space-7));
+    overflow-y: auto;
+  }
+
+  /* The sidebar layout centres itself and carries its own air, so the gutter
+     below is the narrower widths' concern only. This keeps every width from
+     1024 up rendering exactly as the theme was drawn. */
+  .g-folio__theme-2-page .g-folio__theme-page-center {
+    padding: 0;
+  }
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav {
+  position: fixed;
+  top: var(--ge-navbar-h);
+  z-index: 15;
+  left: 0;
+  right: 0;
+  background: var(--folio-surface);
+  box-sizing: border-box;
+  transition: all var(--folio-dur);
+  box-shadow: var(--ge-shadow-dropdown);
+  height: 0;
+  padding: 0 16px;
+  overflow: hidden;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav.visible {
+  height: auto;
+  padding: 24px 16px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-label {
+  color: var(--folio-text-muted);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-label);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 125%;
+  /* 15px */
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-item {
+  height: 38px;
+  color: var(--folio-accent);
+  font-size: var(--folio-text-meta);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-back {
+  /* Also a <button> now, and for the same reason. */
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  color: var(--folio-accent);
+  font-size: var(--folio-text-meta);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-top: 32px;
+  cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-mobile-nav-item-link {
+  text-decoration: none;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  height: var(--ge-navbar-h);
+  width: 100%;
+  background-color: var(--folio-overlay);
+  transition: background-color var(--folio-dur);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+/* Past the first screenful the bar firms up so type does not read through it.
+   enrove-main.js used to write both colours inline as literal rgba(), so the
+   slot above was decorative and a theme could not change either one. It now
+   toggles this class and the colours live here.
+
+   Only the solid half is a fallback. The unscrolled 0.90 above applies in
+   both branches — the @supports block below sets no colour for that state,
+   only the filter — and it is this rule that the blur replaces, so the bar
+   never has to go fully opaque where backdrop-filter exists. */
+.g-folio__theme-2-page .g-folio__theme-page-nav-bar.is-scrolled {
+  background-color: var(--folio-surface);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* The filter goes on the bar in both states, not just the scrolled one.
+     Partly because backdrop-filter does not interpolate, so adding it at the
+     class toggle would pop — and partly because the unscrolled state is not
+     idle: is-scrolled waits for scrollY > 96 while the bar is 48px and the
+     title starts at 80px, so the type crossing that band is blurred by this
+     rule and nothing else. Only the COLOUR is left to the state below. */
+  .g-folio__theme-2-page .g-folio__theme-page-nav-bar {
+    -webkit-backdrop-filter: var(--ge-navbar-blur);
+    backdrop-filter: var(--ge-navbar-blur);
+    /* The colour is no longer the only thing that changes on scroll. */
+    transition: background-color var(--folio-dur) var(--folio-ease),
+      box-shadow var(--folio-dur) var(--folio-ease);
+  }
+
+  /* This is the state the blur was added for. Scrolled, the bar sits over the
+     white reading card, and the fallback answer to that is to go solid; here
+     it can stay translucent and let the type passing under it dissolve. Which
+     leaves white frost on white paper with nothing to tell them apart, so the
+     hairline is the edge. Both belong to this state only — over the blue
+     ground a hairline reads as a seam rather than a border. */
+  .g-folio__theme-2-page .g-folio__theme-page-nav-bar.is-scrolled {
+    background-color: var(--ge-navbar-glass);
+    box-shadow: 0 1px 0 0 var(--ge-navbar-edge);
+  }
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-bar-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-bar-toggle {
+  display: none;
+  background: url('../images/more-toggle-icon.png') no-repeat center center var(--folio-surface-alt);
+  background-size: 24px 24px;
+  height: 32px;
+  width: 32px;
+  /* A <button> in the markup now, so the UA chrome comes off; it was a bare
+     <div> with a click handler, which no keyboard could reach. */
+  padding: 0;
+  border: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-button {
+  height: 32px;
+  width: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--folio-surface-alt);
+  color: var(--folio-accent);
+  border: none;
+  cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-close {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  z-index: 1;
+  height: 32px;
+  width: 32px;
+  /* The icon is a transparent PNG and the list now scrolls underneath it, so
+     the button carries the pane's own ground rather than letting type show
+     through the glyph. On a white pane this changes nothing at rest. */
+  background: url('../images/theme-close.png') no-repeat center center var(--folio-surface);
+  background-size: cover;
+  border: none;
+  cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  /* The pane frames; .g-folio__theme-page-nav-content inside it scrolls. The
+     close button is a sibling of that box rather than a child, so it stays in
+     the corner while a long contents list moves under it. */
+  overflow: hidden;
+  /* Off-screen is not out of the tab order — a translated pane still takes
+     focus, so tabbing walked into an invisible drawer. visibility does remove
+     it, delayed by the slide so the animation still plays on the way out. */
+  visibility: hidden;
+  width: min(360px, 100%);
+  padding: 24px;
+  background: var(--folio-surface);
+  box-sizing: border-box;
+  transform: translateX(-100%);
+  transition: transform var(--folio-dur) var(--folio-ease),
+    visibility 0s linear var(--folio-dur);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The open state changes one thing. It used to restate the width, padding,
+   background and box-sizing identically, which meant every future edit to the
+   pane had to be made in two places or silently only applied when closed. */
+.g-folio__theme-2-page .g-folio__theme-page-nav.visible {
+  transform: translateX(0);
+  visibility: visible;
+  /* No `visibility` in this list: it must flip the instant the pane opens, or
+     focus cannot move into it. The base rule keeps the delayed hide, which is
+     what lets the pane slide out on close. */
+  transition: transform var(--folio-dur) var(--folio-ease);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-name {
+  color: var(--folio-text);
+  font-size: var(--ge-text-subtitle);
+  font-weight: 700;
+  margin-top: 80px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-item {
+  height: 64px;
+  color: var(--folio-accent);
+  font-size: var(--ge-text-ui);
+  font-weight: 700;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  cursor: pointer;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-item-link {
+  text-decoration: none;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-item::after {
+  content: "";
+  background-color: var(--folio-rule);
+  height: 1px;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-item-order {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--ge-text-ordinal);
+  color: var(--ge-nav-order);
+  font-weight: 700;
+  font-style: normal;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-nav-label {
+  font-size: var(--folio-text-label);
+  color: var(--folio-text-subtle);
+  margin-top: 32px;
+}
+
+
+.g-folio__theme-2-page .g-folio__theme-page-content {
+  background-color: var(--folio-surface);
+  width: min(954px, 100%);
+  padding: var(--ge-card-pad);
+  box-sizing: border-box;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-body {
+  display: flex;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-title {
+  font-size: var(--ge-text-page-title);
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--ge-on-ground);
+  /* Clears the fixed top bar. Was a flat 80px, which is what this resolves to
+     — but it now moves with the bar instead of being re-derived by hand. */
+  margin-top: calc(var(--ge-navbar-h) + var(--folio-space-6));
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-content {
+  margin-top: 56px;
+}
+
+/* Both tables of contents link to in-page anchors. Without this the fixed top
+   bar covers whichever heading you jump to. */
+.g-folio__theme-2-page .g-folio__theme-page-content :is(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: calc(var(--ge-navbar-h) + var(--folio-space-4));
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-footer {
+  display: flex;
+  width: 100%;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-prev,
+.g-folio__theme-2-page .g-folio__theme-page-next,
+.g-folio__theme-2-page .g-folio__theme-page-powerby {
+  flex: 1;
+  min-width: 0;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-powerby {
+  text-align: center;
+  font-size: var(--folio-text-meta);
+  line-height: 1.25;
+  font-weight: 400;
+  padding: 24px 0;
+  color: var(--ge-on-ground);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-container {
+  width: min(954px, 100%);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-catalogs-label {
+  color: var(--ge-catalog);
+  font-size: var(--folio-text-label);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.12px;
+  text-transform: uppercase;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-catalogs {
+  flex: 1;
+  box-sizing: border-box;
+  padding-left: 16px;
+  border-left: 1px solid var(--ge-catalog);
+  margin-top: 200px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-catalog a {
+  color: var(--ge-on-ground);
+  font-size: var(--folio-text-meta);
+  word-wrap: break-word;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-catalog h1,
+.g-folio__theme-2-page .g-folio__theme-page-catalog h2 {
+  color: var(--ge-on-ground);
+  font-size: var(--folio-text-meta);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-prev .g-folio__theme-page-arrow {
+  transform: rotate(-180deg);
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-next,
+.g-folio__theme-2-page .g-folio__theme-page-prev {
+  display: flex;
+  font-size: var(--folio-text-meta);
+  color: var(--ge-on-ground);
+  padding: 24px 0;
+  line-height: 1.25;
+  font-weight: 400;
+  align-items: center;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-arrow {
+  display: inline-block;
+  background: url('../images/theme-arrow.png') center center no-repeat;
+  background-size: 24px 24px;
+  height: 24px;
+  width: 24px;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-next a,
+.g-folio__theme-2-page .g-folio__theme-page-prev a {
+  color: var(--ge-on-ground);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: calc(100% - 24px);
+  /* Make room for arrow */
+  vertical-align: middle;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-next {
+  justify-content: flex-end;
+}
+
+.g-folio__theme-2-page .g-folio__theme-site {
+  color: var(--ge-on-ground);
+  margin-left: 2px;
+}
+
+
+/* ── Book furniture ─────────────────────────────────────────────────────────
+   The seven blocks registered in blocks.php. Core Gutenberg already sets a
+   book's running text — paragraphs with drop caps, headings, images, lists,
+   footnotes — and none of that is restyled here. These are the things a book
+   puts AROUND its prose; the argument for the set is in blocks.php.
+
+   Two constraints shape every rule below.
+
+   The first is that this file has to say everything. A folio renders through
+   the site's own WordPress front end, so the active site theme's stylesheet
+   loads beside this one and has opinions about figure, blockquote, cite, ul,
+   ol, li and h3 — every one of which appears in this kit. So each block states
+   its family, size, colour and margins outright rather than inheriting and
+   hoping. It is the same reason the interaction states further up had to be
+   written at all: anything this file leaves unsaid, some other stylesheet says
+   instead.
+
+   The second is that the kit is monochrome, and that is a decision with a
+   number behind it. --folio-accent-2, this theme's green, measures 2.8:1 on
+   the white card — under the 4.5:1 floor for body text and under the 3:1 one
+   for large text as well. It appears exactly once below, as the pull quote's
+   rule, which carries no type. Every label here is --folio-text-muted at
+   10:1 instead, and --folio-text-subtle (3.25:1) is spent on three marks and
+   nothing else: the dash before an epigraph's attribution, the dash before a
+   summary point, and the section break's glyph. All three are decoration, and
+   two of them are generated content, which is why they are dashes and not
+   words — a screen reader that reads CSS content aloud has nothing to say.
+
+   That restraint suits the material anyway. The blue field and the green
+   numerals are where this theme spends its colour; the reading card is where
+   the reader should stop noticing the design and start reading the book.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* The card contains its floats. Only the inset pull quote below floats, and
+   without a formatting context here it would hang out of the bottom of the
+   white card whenever it was the last thing on the page. flow-root rather than
+   overflow: hidden, which would also clip the bleeding plate. */
+.g-folio__theme-2-page .g-folio__theme-page-content {
+  display: flow-root;
+}
+
+/* And each block that has an edge of its own establishes one too. A float
+   shortens the LINE boxes beside it, not the block boxes: without this a
+   summary's rule or an aside's panel would slide underneath a floated quote
+   instead of sitting beside it. The section break is already a flex container,
+   which is a formatting context by definition. */
+.g-folio__theme-2-page .ge-epigraph,
+.g-folio__theme-2-page .ge-aside,
+.g-folio__theme-2-page .ge-plate,
+.g-folio__theme-2-page .ge-summary,
+.g-folio__theme-2-page .ge-references {
+  display: flow-root;
+}
+
+/* Every block below carries its own vertical rhythm, which would otherwise
+   double up against the card's padding at the two ends of the page. */
+.g-folio__theme-2-page .g-folio__theme-page-content > *:first-child {
+  margin-top: 0;
+}
+
+.g-folio__theme-2-page .g-folio__theme-page-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ─── Epigraph ─── */
+
+.g-folio__theme-2-page .ge-epigraph {
+  margin: var(--folio-space-6) 0 var(--folio-space-7);
+  padding-left: var(--folio-space-5);
+  border-left: 1px solid var(--folio-rule-strong);
+  max-width: 34rem;
+}
+
+.g-folio__theme-2-page .ge-epigraph__text {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  quotes: none;
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-body);
+  font-style: italic;
+  font-weight: 400;
+  line-height: var(--folio-leading-body);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-epigraph__attribution {
+  margin-top: var(--folio-space-3);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-meta);
+  font-weight: 500;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text);
+}
+
+/* The dash is drawn, not stored: an author who types their own into the field
+   would otherwise end up with two. */
+.g-folio__theme-2-page .ge-epigraph__attribution::before {
+  content: "\2014\00a0";
+  color: var(--folio-text-subtle);
+}
+
+/* ─── Pull quote ─── */
+
+.g-folio__theme-2-page .ge-pullquote {
+  margin: var(--folio-space-7) 0;
+  padding-top: var(--folio-space-4);
+  /* The one place the green lands on the white card. It carries no type, so
+     its 2.8:1 is a question of texture rather than legibility. */
+  border-top: 2px solid var(--folio-accent-2);
+}
+
+.g-folio__theme-2-page .ge-pullquote__text {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  quotes: none;
+  font-family: var(--folio-font-body);
+  font-size: var(--ge-text-subtitle);
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--folio-text);
+}
+
+/* Inset floats the quote beside the prose, which is what a printed page does
+   with a lifted line. It needs a column wide enough to still read as one, so
+   below that width the block quietly stays full-width — declared here rather
+   than in the responsive section for the same reason the sidebar's query is:
+   this governs one component and nothing else. */
+@media screen and (min-width: 700px) {
+  .g-folio__theme-2-page .ge-pullquote--inset {
+    float: right;
+    clear: right;
+    width: min(22rem, 42%);
+    margin: var(--folio-space-2) 0 var(--folio-space-5) var(--folio-space-6);
+  }
+}
+
+/* ─── Aside ─── */
+
+.g-folio__theme-2-page .ge-aside {
+  margin: var(--folio-space-6) 0;
+  padding: var(--folio-space-4) var(--folio-space-5);
+  background-color: var(--folio-surface-alt);
+  border-radius: 2px;
+}
+
+.g-folio__theme-2-page .ge-aside__label {
+  display: block;
+  margin-bottom: var(--folio-space-2);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-aside__body {
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-meta);
+  line-height: var(--folio-leading-body);
+  color: var(--folio-text-muted);
+}
+
+/* ─── Plate ─── */
+
+.g-folio__theme-2-page .ge-plate {
+  margin: var(--folio-space-7) 0;
+}
+
+.g-folio__theme-2-page .ge-plate__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* A plate that runs to the edge of the reading card. The negative margin has
+   to cancel the card's padding exactly, which is what --ge-card-pad is for. */
+.g-folio__theme-2-page .ge-plate--bleed {
+  margin-inline: calc(var(--ge-card-pad) * -1);
+}
+
+/* The caption is type, so it comes back inside the measure the picture left. */
+.g-folio__theme-2-page .ge-plate--bleed .ge-plate__caption {
+  padding-inline: var(--ge-card-pad);
+}
+
+.g-folio__theme-2-page .ge-plate__caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--folio-space-2);
+  margin-top: var(--folio-space-3);
+  font-family: var(--folio-font-body);
+}
+
+.g-folio__theme-2-page .ge-plate__label {
+  flex: 0 0 auto;
+  font-size: var(--folio-text-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-plate__text {
+  flex: 1 1 12rem;
+  font-size: var(--folio-text-meta);
+  line-height: 1.55;
+  color: var(--folio-text-muted);
+}
+
+/* The credit takes its own line under the caption. Italic and one step down
+   rather than a lighter grey — --folio-text-subtle is 3.25:1 and this is
+   still type someone has to be able to read. */
+.g-folio__theme-2-page .ge-plate__credit {
+  flex: 1 1 100%;
+  font-size: var(--folio-text-label);
+  font-style: italic;
+  line-height: 1.55;
+  color: var(--folio-text-muted);
+}
+
+/* ─── Section break ─── */
+
+.g-folio__theme-2-page .ge-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--folio-space-7) 0;
+  min-height: var(--folio-space-5);
+}
+
+/* Both marks are decoration — the glyph carries aria-hidden and the rule is
+   drawn — so --folio-text-subtle here is a texture choice with no contrast
+   floor to meet. The separator role on the wrapper is what announces the
+   break to a screen reader. */
+.g-folio__theme-2-page .ge-ornament__mark {
+  font-family: var(--folio-font-body);
+  font-size: 1.125rem;
+  line-height: 1;
+  letter-spacing: 0.15em;
+  color: var(--folio-text-subtle);
+}
+
+.g-folio__theme-2-page .ge-ornament--rule::after {
+  content: "";
+  width: var(--folio-space-7);
+  height: 1px;
+  background-color: var(--folio-rule-strong);
+}
+
+/* Nothing drawn at all: the break is the white space, which is what most
+   novels use and what a reader stops seeing fastest. */
+.g-folio__theme-2-page .ge-ornament--blank {
+  margin: var(--folio-space-8) 0;
+  min-height: 0;
+}
+
+/* ─── Chapter summary ─── */
+
+.g-folio__theme-2-page .ge-summary {
+  margin: var(--folio-space-7) 0;
+  padding: var(--folio-space-5) 0;
+  /* Heavier above than below, so the box reads as closing the section it sits
+     under rather than opening the next one. */
+  border-top: 1px solid var(--folio-text);
+  border-bottom: 1px solid var(--folio-rule-strong);
+}
+
+.g-folio__theme-2-page .ge-summary__title {
+  margin: 0 0 var(--folio-space-4);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-summary__points {
+  margin: 0;
+  padding: 0;
+  /* The markup carries role="list": Safari drops list semantics when the
+     marker is removed, and these are a list whether or not they show bullets. */
+  list-style: none;
+}
+
+.g-folio__theme-2-page .ge-summary__point {
+  position: relative;
+  margin: 0 0 var(--folio-space-3);
+  padding-left: var(--folio-space-5);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-body);
+  line-height: var(--folio-leading-body);
+  color: var(--folio-text);
+}
+
+.g-folio__theme-2-page .ge-summary__point:last-child {
+  margin-bottom: 0;
+}
+
+/* A dash rather than a number: numbering these would claim an order the
+   points do not have. */
+.g-folio__theme-2-page .ge-summary__point::before {
+  content: "\2014";
+  position: absolute;
+  left: 0;
+  color: var(--folio-text-subtle);
+}
+
+/* ─── References ─── */
+
+.g-folio__theme-2-page .ge-references {
+  margin: var(--folio-space-7) 0;
+}
+
+.g-folio__theme-2-page .ge-references__title {
+  margin: 0 0 var(--folio-space-4);
+  padding-bottom: var(--folio-space-2);
+  border-bottom: 1px solid var(--folio-rule-strong);
+  font-family: var(--folio-font-body);
+  font-size: var(--folio-text-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: var(--folio-leading-ui);
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-references__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ge-reference;
+}
+
+.g-folio__theme-2-page .ge-references__entry {
+  position: relative;
+  margin: 0 0 var(--folio-space-4);
+  padding-left: var(--folio-space-6);
+  counter-increment: ge-reference;
+  font-family: var(--folio-font-body);
+  line-height: 1.5;
+}
+
+.g-folio__theme-2-page .ge-references__entry:last-child {
+  margin-bottom: 0;
+}
+
+/* Numbered from a counter rather than the list's own marker, so the number can
+   be set in the muted tier while the entry stays at full strength. It is the
+   citation's handle, not decoration, so it does not go to --folio-text-subtle. */
+.g-folio__theme-2-page .ge-references__entry::before {
+  content: counter(ge-reference) ".";
+  position: absolute;
+  left: 0;
+  font-size: var(--folio-text-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--folio-text-muted);
+}
+
+.g-folio__theme-2-page .ge-references__author,
+.g-folio__theme-2-page .ge-references__work,
+.g-folio__theme-2-page .ge-references__note,
+.g-folio__theme-2-page .ge-references__link {
+  display: block;
+}
+
+.g-folio__theme-2-page .ge-references__author {
+  font-size: var(--folio-text-meta);
+  font-weight: 500;
+  color: var(--folio-text);
+}
+
+.g-folio__theme-2-page .ge-references__work {
+  font-size: var(--folio-text-meta);
+  font-style: italic;
+  color: var(--folio-text);
+}
+
+/* A linked title takes the link colour and underline from the prose-link rule
+   above. Without this the cite's own colour would win over what it inherits
+   from the anchor, and the link would look exactly like the entries that are
+   not links. */
+.g-folio__theme-2-page .ge-references__link .ge-references__work {
+  color: inherit;
+}
+
+.g-folio__theme-2-page .ge-references__note {
+  font-size: var(--folio-text-label);
+  color: var(--folio-text-muted);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────
+   Three widths and one input type, each with a single job:
+
+     >=1024   the contents sidebar appears beside the reading column. Declared
+              with the sidebar itself, further up, because that is the only
+              thing it governs and mobile-first is the honest idiom for a
+              component that exists only on a desktop.
+     <=600    the reading column becomes the viewport: chrome that duplicates
+              the nav pane steps aside, and both drawers go full width.
+     <=480    the last of the padding gives way.
+     coarse   every target reaches 44px.
+
+   The steps that used to sit at 1280 and 1024 are gone. Both existed only to
+   walk the sidebar back down a step at a time; it now flexes between 1024 and
+   1440 and appears on its own terms, and nothing else in the layout changed at
+   either width. Several rules here were no-ops too — `width: 100%` on boxes
+   already sized `min(954px, 100%)`, a second `display: none` on a sidebar
+   hidden one query earlier, and two rules undoing a `height: 100vh` that the
+   layout no longer sets.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 600px) {
+  /* The folio name is the first thing in the nav pane anyway, and the bar has
+     room for one title, not two. */
+  .g-folio__theme-2-page .g-folio__theme-folio-name {
+    display: none;
+  }
+
+  .g-folio__theme-2 .g-folio__theme-content {
+    width: 100%;
+  }
+
+  .g-folio__theme-2 .g-folio__theme-brief {
+    width: 100%;
+    padding: 32px 24px;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-powerby {
+    display: none;
+  }
+
+  /* Both drawers. Only the page's was widened here before; the cover's stayed
+     at its design width and ran off the edge of a small phone. */
+  .g-folio__theme-2 .g-folio__theme-nav,
+  .g-folio__theme-2-page .g-folio__theme-page-nav {
+    width: 100%;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-nav-bar-toggle {
+    display: flex;
+  }
+}
+
+/* Below the phone breakpoint the card's own padding is the last thing with
+   room to give. */
+@media screen and (max-width: 480px) {
+  .g-folio__theme-2 .g-folio__theme-brief {
+    padding: var(--folio-space-5) var(--folio-space-4);
+  }
+
+  /* Written at the same specificity as the token block above — a media query
+     adds none of its own, and `.g-folio__theme-2-page` alone would lose. */
+  body.enrove .g-folio__theme-2-page {
+    --ge-card-pad: var(--folio-space-4);
+  }
+}
+
+/* Touch targets. The nav controls are 32px and the mobile nav rows 38px, both
+   fine for a cursor and both under the 44px minimum for a finger. */
+@media (pointer: coarse) {
+  .g-folio__theme-2 .g-folio__theme-nav-button,
+  .g-folio__theme-2 .g-folio__theme-nav-close,
+  .g-folio__theme-2-page .g-folio__theme-page-nav-button,
+  .g-folio__theme-2-page .g-folio__theme-page-nav-close,
+  .g-folio__theme-2-page .g-folio__theme-page-nav-bar-toggle {
+    height: 44px;
+    width: 44px;
+  }
+
+  .g-folio__theme-2-page .g-folio__theme-page-mobile-nav-item {
+    height: 44px;
+  }
+}
+
+/* The contract cannot do this for a theme — its fallbacks sit on :root and this
+   theme declares its own tokens nearer. See themes/README.md. */
+@media (prefers-reduced-motion: reduce) {
+  .g-folio__theme-2 *,
+  .g-folio__theme-2-page * {
+    transition-duration: 1ms !important;
+    transition-delay: 0s !important;
+    animation-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Themes;
+namespace Enrove\Themes;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
  *
  * All four are cut off for the length of one request: a folio front-end
  * render (isolate_front_end(), called by Plugin's template_redirect handler
- * before either folio template is required) or a groove_folio_page edit
+ * before either folio template is required) or an enrove_folio_page edit
  * screen (isolate_editor(), on current_screen). What is left is core's own
  * defaults, so a folio page looks, and offers the same colours and sizes,
  * whichever theme the site runs. Nothing is changed outside those requests,
@@ -82,7 +82,7 @@ class Site_Theme_Isolation
 
     public static function maybe_isolate_editor($screen): void
     {
-        if (!$screen instanceof \WP_Screen || $screen->base !== 'post' || $screen->post_type !== 'groove_folio_page') {
+        if (!$screen instanceof \WP_Screen || $screen->base !== 'post' || $screen->post_type !== 'enrove_folio_page') {
             return;
         }
 
@@ -90,7 +90,7 @@ class Site_Theme_Isolation
     }
 
     /**
-     * For a groove_folio_page edit screen. Runs on current_screen, ahead of
+     * For an enrove_folio_page edit screen. Runs on current_screen, ahead of
      * the editor settings and of the REST responses the editor preloads.
      */
     public static function isolate_editor(): void
@@ -124,12 +124,12 @@ class Site_Theme_Isolation
      */
     public static function enqueue_canvas_base(): void
     {
-        $path = GROOVE_PATH . 'assets/css/folio-editor-canvas.css';
+        $path = ENROVE_PATH . 'assets/css/folio-editor-canvas.css';
         wp_enqueue_style(
-            'groove-folio-editor-canvas',
-            GROOVE_URL . 'assets/css/folio-editor-canvas.css',
+            'enrove-folio-editor-canvas',
+            ENROVE_URL . 'assets/css/folio-editor-canvas.css',
             [],
-            file_exists($path) ? (string) filemtime($path) : GROOVE_VERSION
+            file_exists($path) ? (string) filemtime($path) : ENROVE_VERSION
         );
     }
 

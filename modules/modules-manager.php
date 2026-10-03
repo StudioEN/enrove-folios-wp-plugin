@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Modules;
+namespace Enrove\Modules;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -25,7 +25,7 @@ class Modules_Manager {
 
 	public function get_modules_names() {
 		return [
-			'groove-main',
+			'enrove-main',
 		];
 	}
 
@@ -42,6 +42,6 @@ class Modules_Manager {
 	}
 
 	protected function get_modules_namespace_prefix() {
-		return 'Groove';
+		return 'Enrove';
 	}
 }

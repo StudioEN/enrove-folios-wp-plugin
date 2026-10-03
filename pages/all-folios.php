@@ -1,14 +1,14 @@
 <?php
-namespace Groove\Pages;
+namespace Enrove\Pages;
 
-use Groove\Contents\FolioPage\Publishing;
-use Groove\List\Folio_List_Table;
-use Groove\Menu\All_Folios_Menu_Item;
-use Groove\Menu\Menu_Manager;
-use Groove\Pages\Overview;
-use Groove\Pages\Page;
-use Groove\Utils\Request;
-use Groove\Utils\Utils;
+use Enrove\Contents\FolioPage\Publishing;
+use Enrove\List\Folio_List_Table;
+use Enrove\Menu\All_Folios_Menu_Item;
+use Enrove\Menu\Menu_Manager;
+use Enrove\Pages\Overview;
+use Enrove\Pages\Page;
+use Enrove\Utils\Request;
+use Enrove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
@@ -16,10 +16,10 @@ if (!defined('ABSPATH')) {
 
 class All_Folios extends Page
 {
-	const PAGE_ID = 'groove-all-folios';
-	const POST_TYPE = 'groove_folio';
+	const PAGE_ID = 'enrove-all-folios';
+	const POST_TYPE = 'enrove_folio';
 	/** Nonce action on the Duplicate row action. */
-	const DUPLICATE_NONCE = 'groove_duplicate_folio';
+	const DUPLICATE_NONCE = 'enrove_duplicate_folio';
 
 	public function get_title()
 	{
@@ -35,15 +35,15 @@ class All_Folios extends Page
 	{
 		$this->left_button_items = [
 			array(
-				'text'        => esc_html__('Add New', 'groove-folios'),
+				'text'        => esc_html__('Add New', 'enrove-folios'),
 				'type'        => 'primary',
-				'action'      => 'groove_open_add_new',
+				'action'      => 'enrove_open_add_new',
 				'button_type' => 'button',
-				'attrs'       => ['data-groove-open-add-new' => '1'],
+				'attrs'       => ['data-enrove-open-add-new' => '1'],
 			)
 		];
 
-		add_action('groove/menu/register', function (Menu_Manager $menu) {
+		add_action('enrove/menu/register', function (Menu_Manager $menu) {
 			$menu->register(static::PAGE_ID, new All_Folios_Menu_Item($this));
 		}, Overview::MENU_PRIORITY + 20);
 
@@ -65,12 +65,12 @@ class All_Folios extends Page
 	{
 		return array(
 			'cb' => '',
-			'title' => esc_html__('Folio Name', 'groove-folios'),
-			'theme_name' => esc_html__('Theme Name', 'groove-folios'),
-			'collection_tags' => esc_html__('Collection Tags', 'groove-folios'),
-			'page_count' => esc_html__('Page Count', 'groove-folios'),
-			'publish_status' => esc_html__('Publish Status', 'groove-folios'),
-			'modified' => esc_html__('Last Updated', 'groove-folios'),
+			'title' => esc_html__('Folio Name', 'enrove-folios'),
+			'theme_name' => esc_html__('Theme Name', 'enrove-folios'),
+			'collection_tags' => esc_html__('Collection Tags', 'enrove-folios'),
+			'page_count' => esc_html__('Page Count', 'enrove-folios'),
+			'publish_status' => esc_html__('Publish Status', 'enrove-folios'),
+			'modified' => esc_html__('Last Updated', 'enrove-folios'),
 		);
 	}
 
@@ -156,7 +156,7 @@ class All_Folios extends Page
 	}
 
 	/**
-	 * The Duplicate row action: a link naming the folio in groove_duplicate,
+	 * The Duplicate row action: a link naming the folio in enrove_duplicate,
 	 * with a nonce that is verified before the ID is read.
 	 *
 	 * @param int   $post_id
@@ -169,19 +169,19 @@ class All_Folios extends Page
 		return add_query_arg(
 			'_wpnonce',
 			wp_create_nonce(self::DUPLICATE_NONCE),
-			Request::admin_url(static::PAGE_ID, array_merge($view_args, array('groove_duplicate' => (int) $post_id)))
+			Request::admin_url(static::PAGE_ID, array_merge($view_args, array('enrove_duplicate' => (int) $post_id)))
 		);
 	}
 
 	public function handle_duplicate_action()
 	{
 		global $plugin_page;
-		if ($plugin_page !== static::PAGE_ID || !isset($_GET['groove_duplicate'])) {
+		if ($plugin_page !== static::PAGE_ID || !isset($_GET['enrove_duplicate'])) {
 			return;
 		}
 		check_admin_referer(self::DUPLICATE_NONCE);
 
-		$post_id = absint(wp_unslash($_GET['groove_duplicate']));
+		$post_id = absint(wp_unslash($_GET['enrove_duplicate']));
 		if (get_post_type($post_id) !== static::POST_TYPE || !current_user_can('edit_post', $post_id)) {
 			return;
 		}
@@ -228,7 +228,7 @@ class All_Folios extends Page
 	private function get_collection_tag_terms()
 	{
 		$terms = get_terms(array(
-			'taxonomy' => 'groove_collection_tag',
+			'taxonomy' => 'enrove_collection_tag',
 			'hide_empty' => false,
 			'orderby' => 'name',
 			'order' => 'ASC',
@@ -239,7 +239,7 @@ class All_Folios extends Page
 
 	private function get_collection_tag_links($post_id, $status, $search, $orderby, $order)
 	{
-		$terms = get_the_terms((int) $post_id, 'groove_collection_tag');
+		$terms = get_the_terms((int) $post_id, 'enrove_collection_tag');
 		if (is_wp_error($terms) || empty($terms)) {
 			return '';
 		}
@@ -304,7 +304,7 @@ class All_Folios extends Page
 	}
 
 	/**
-	 * The theme filter (from a theme card's Folios link on Groove → Themes),
+	 * The theme filter (from a theme card's Folios link on Enrove → Themes),
 	 * or '' for every theme.
 	 */
 	private function get_current_theme_filter()
@@ -339,17 +339,17 @@ class All_Folios extends Page
 	{
 		switch ($status) {
 			case 'publish':
-				return esc_html__('Published', 'groove-folios');
+				return esc_html__('Published', 'enrove-folios');
 			case 'draft':
-				return esc_html__('Draft', 'groove-folios');
+				return esc_html__('Draft', 'enrove-folios');
 			case 'pending':
-				return esc_html__('Pending', 'groove-folios');
+				return esc_html__('Pending', 'enrove-folios');
 			case 'private':
-				return esc_html__('Private', 'groove-folios');
+				return esc_html__('Private', 'enrove-folios');
 			case 'trash':
-				return esc_html__('Trash', 'groove-folios');
+				return esc_html__('Trash', 'enrove-folios');
 			default:
-				return esc_html__('All', 'groove-folios');
+				return esc_html__('All', 'enrove-folios');
 		}
 	}
 
@@ -393,7 +393,7 @@ class All_Folios extends Page
 		if (!empty($collection_tags)) {
 			$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- The collection tag filter the operator picked.
 				array(
-					'taxonomy' => 'groove_collection_tag',
+					'taxonomy' => 'enrove_collection_tag',
 					'field' => 'slug',
 					'terms' => $collection_tags,
 					'operator' => 'IN',
@@ -429,7 +429,7 @@ class All_Folios extends Page
 				AND CAST(pm.meta_value AS UNSIGNED) IN (" . implode(',', array_fill(0, count($ids), '%d')) . ")
 			GROUP BY pm.meta_value
 		",
-				array_merge(array('groove_folio_page', 'folio_id'), $ids)
+				array_merge(array('enrove_folio_page', 'folio_id'), $ids)
 			)
 		);
 
@@ -484,7 +484,7 @@ class All_Folios extends Page
 		if (!empty($collection_tags)) {
 			$ids_query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- The collection tag filter the operator picked.
 				array(
-					'taxonomy' => 'groove_collection_tag',
+					'taxonomy' => 'enrove_collection_tag',
 					'field' => 'slug',
 					'terms' => $collection_tags,
 					'operator' => 'IN',
@@ -556,14 +556,14 @@ class All_Folios extends Page
 	{
 		if ($status === 'trash') {
 			return array(
-				'untrash' => esc_html__('Restore', 'groove-folios'),
-				'delete' => esc_html__('Delete Permanently', 'groove-folios'),
+				'untrash' => esc_html__('Restore', 'enrove-folios'),
+				'delete' => esc_html__('Delete Permanently', 'enrove-folios'),
 			);
 		}
 
 		return array(
-			'duplicate' => esc_html__('Duplicate', 'groove-folios'),
-			'trash' => esc_html__('Move to Trash', 'groove-folios'),
+			'duplicate' => esc_html__('Duplicate', 'enrove-folios'),
+			'trash' => esc_html__('Move to Trash', 'enrove-folios'),
 		);
 	}
 
@@ -571,10 +571,10 @@ class All_Folios extends Page
 	{
 		// Only the list form carries this nonce. It is verified before the
 		// chosen action or the selected folios are read.
-		if (!isset($_REQUEST['_groove_bulk_nonce'])) {
+		if (!isset($_REQUEST['_enrove_bulk_nonce'])) {
 			return;
 		}
-		check_admin_referer('groove_bulk_folios_action', '_groove_bulk_nonce');
+		check_admin_referer('enrove_bulk_folios_action', '_enrove_bulk_nonce');
 
 		$action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '-1';
 		if ($action === '-1') {
@@ -652,8 +652,8 @@ class All_Folios extends Page
 	 */
 	private function queue_bulk_toast()
 	{
-		if (Request::key('groove_notice') === 'folio_link') {
-			\Groove\Toast::info(__('That folio link has expired. Open the folio from this list.', 'groove-folios'), array('groove_notice'), 6000);
+		if (Request::key('enrove_notice') === 'folio_link') {
+			\Enrove\Toast::info(__('That folio link has expired. Open the folio from this list.', 'enrove-folios'), array('enrove_notice'), 6000);
 		}
 
 		$action = Request::key('bulk_action');
@@ -663,36 +663,36 @@ class All_Folios extends Page
 		}
 
 		$message = '';
-		$type = \Groove\Toast::SUCCESS;
+		$type = \Enrove\Toast::SUCCESS;
 
 		switch ($action) {
 			case 'trash':
 				$message = sprintf(
 					/* translators: %s: number of folios moved to trash */
-					_n('%s folio moved to Trash.', '%s folios moved to Trash.', $count, 'groove-folios'),
+					_n('%s folio moved to Trash.', '%s folios moved to Trash.', $count, 'enrove-folios'),
 					number_format_i18n($count)
 				);
-				$type = \Groove\Toast::INFO;
+				$type = \Enrove\Toast::INFO;
 				break;
 			case 'untrash':
 				$message = sprintf(
 					/* translators: %s: number of folios restored */
-					_n('%s folio restored.', '%s folios restored.', $count, 'groove-folios'),
+					_n('%s folio restored.', '%s folios restored.', $count, 'enrove-folios'),
 					number_format_i18n($count)
 				);
 				break;
 			case 'delete':
 				$message = sprintf(
 					/* translators: %s: number of folios deleted */
-					_n('%s folio deleted permanently.', '%s folios deleted permanently.', $count, 'groove-folios'),
+					_n('%s folio deleted permanently.', '%s folios deleted permanently.', $count, 'enrove-folios'),
 					number_format_i18n($count)
 				);
-				$type = \Groove\Toast::INFO;
+				$type = \Enrove\Toast::INFO;
 				break;
 			case 'duplicate':
 				$message = sprintf(
 					/* translators: %s: number of folios duplicated */
-					_n('%s folio duplicated.', '%s folios duplicated.', $count, 'groove-folios'),
+					_n('%s folio duplicated.', '%s folios duplicated.', $count, 'enrove-folios'),
 					number_format_i18n($count)
 				);
 				break;
@@ -702,7 +702,7 @@ class All_Folios extends Page
 			return;
 		}
 
-		\Groove\Toast::add($message, $type, array('bulk_action', 'bulk_count'));
+		\Enrove\Toast::add($message, $type, array('bulk_action', 'bulk_count'));
 	}
 
 	private function duplicate_folio($post_id)
@@ -714,7 +714,7 @@ class All_Folios extends Page
 
 		$new_title = sprintf(
 			/* translators: %s: original folio title */
-			__('Copy of %s', 'groove-folios'),
+			__('Copy of %s', 'enrove-folios'),
 			$source->post_title
 		);
 
@@ -740,14 +740,14 @@ class All_Folios extends Page
 		$skip_keys = array('_edit_lock', '_edit_last', '_wp_old_slug', Publishing::HELD_STATUS_META);
 		$this->copy_post_meta_values($post_id, $new_folio_id, $skip_keys);
 
-		$term_ids = wp_get_object_terms($post_id, 'groove_collection_tag', array('fields' => 'ids'));
+		$term_ids = wp_get_object_terms($post_id, 'enrove_collection_tag', array('fields' => 'ids'));
 		if (!is_wp_error($term_ids) && !empty($term_ids)) {
-			wp_set_object_terms($new_folio_id, array_map('intval', $term_ids), 'groove_collection_tag', false);
+			wp_set_object_terms($new_folio_id, array_map('intval', $term_ids), 'enrove_collection_tag', false);
 		}
 
 		// Duplicate child folio pages.
 		$pages = get_posts(array(
-			'post_type'      => 'groove_folio_page',
+			'post_type'      => 'enrove_folio_page',
 			'post_status'    => array('publish', 'draft', 'pending', 'private', 'future'),
 			'posts_per_page' => -1,
 			'meta_key'       => 'folio_id', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- folio_id meta is the page-to-folio link; this fetches one folio's pages to duplicate them.
@@ -759,7 +759,7 @@ class All_Folios extends Page
 		$page_id_map = array();
 		foreach ($pages as $page) {
 			$new_page_id = wp_insert_post(wp_slash(array(
-				'post_type'    => 'groove_folio_page',
+				'post_type'    => 'enrove_folio_page',
 				'post_title'   => $page->post_title,
 				'post_status'  => 'draft',
 				'post_author'  => get_current_user_id(),
@@ -776,7 +776,7 @@ class All_Folios extends Page
 				sanitize_title((string) $page->post_title),
 				(int) $new_page_id,
 				'draft',
-				'groove_folio_page',
+				'enrove_folio_page',
 				0
 			);
 			if ($new_page_slug !== '') {
@@ -962,12 +962,12 @@ class All_Folios extends Page
 	private function get_frontend_folio_url(int $post_id, int $folio_id = 0): string
 	{
 		$post = get_post($post_id);
-		if (!$post || !Utils::is_groove_post($post)) {
+		if (!$post || !Utils::is_enrove_post($post)) {
 			return '';
 		}
 
 		$prefix = '';
-		if ($post->post_type === 'groove_folio_page') {
+		if ($post->post_type === 'enrove_folio_page') {
 			$resolved_folio_id = $folio_id > 0 ? $folio_id : (int) get_post_meta($post_id, 'folio_id', true);
 			$folio = get_post($resolved_folio_id);
 			if ($folio) {
@@ -1049,7 +1049,7 @@ class All_Folios extends Page
 		}
 
 		$author = get_userdata((int) get_post_field('post_author', $post_id));
-		return $author ? $author->display_name : esc_html__('Unknown user', 'groove-folios');
+		return $author ? $author->display_name : esc_html__('Unknown user', 'enrove-folios');
 	}
 
 	public function display_content()
@@ -1081,12 +1081,12 @@ class All_Folios extends Page
 			<?php foreach ($current_collection_tags as $collection_tag): ?>
 				<input type="hidden" name="collection_tag[]" value="<?php echo esc_attr($collection_tag); ?>" />
 			<?php endforeach; ?>
-			<?php wp_nonce_field('groove_bulk_folios_action', '_groove_bulk_nonce'); ?>
+			<?php wp_nonce_field('enrove_bulk_folios_action', '_enrove_bulk_nonce'); ?>
 			<?php Request::nonce_field(); ?>
 
 			<div class="g-all-folios__filters-row">
 				<?php if (!empty($collection_tag_terms)): ?>
-					<div class="g-all-folios__collection-filters" aria-label="<?php esc_attr_e('Collection tag filters', 'groove-folios'); ?>">
+					<div class="g-all-folios__collection-filters" aria-label="<?php esc_attr_e('Collection tag filters', 'enrove-folios'); ?>">
 						<a
 							href="<?php echo esc_url($this->build_page_url(array_filter(array(
 								'post_status' => $status !== 'all' ? $status : null,
@@ -1097,8 +1097,8 @@ class All_Folios extends Page
 								return $value !== null;
 							}))); ?>"
 							class="g-all-folios__collection-pill<?php echo empty($current_collection_tags) ? ' is-active' : ''; ?>"
-							data-tooltip="<?php esc_attr_e('Show all collections', 'groove-folios'); ?>">
-							<?php esc_html_e('All Collections', 'groove-folios'); ?>
+							data-tooltip="<?php esc_attr_e('Show all collections', 'enrove-folios'); ?>">
+							<?php esc_html_e('All Collections', 'enrove-folios'); ?>
 						</a>
 						<?php foreach ($collection_tag_terms as $term): ?>
 							<?php if (!$term instanceof \WP_Term) {
@@ -1107,7 +1107,7 @@ class All_Folios extends Page
 							<a
 								href="<?php echo esc_url($this->get_collection_tag_toggle_url($term->slug, $status, $search, $orderby, $order)); ?>"
 								class="g-all-folios__collection-pill<?php echo in_array($term->slug, $current_collection_tags, true) ? ' is-active' : ''; ?>"
-								data-tooltip="<?php esc_attr_e('Show collection', 'groove-folios'); ?>">
+								data-tooltip="<?php esc_attr_e('Show collection', 'enrove-folios'); ?>">
 								<?php echo esc_html($term->name); ?>
 							</a>
 						<?php endforeach; ?>
@@ -1150,24 +1150,24 @@ class All_Folios extends Page
 
 			<p class="search-box">
 				<label class="screen-reader-text"
-					for="post-search-input"><?php esc_html_e('Search folios', 'groove-folios'); ?>:</label>
+					for="post-search-input"><?php esc_html_e('Search folios', 'enrove-folios'); ?>:</label>
 				<input type="search" id="post-search-input" name="s" value="<?php echo esc_attr($search); ?>" />
 				<input type="submit" id="search-submit" class="button"
-					value="<?php esc_attr_e('Search Folios', 'groove-folios'); ?>" />
+					value="<?php esc_attr_e('Search Folios', 'enrove-folios'); ?>" />
 			</p>
 
 			<div class="tablenav top">
 				<div class="alignleft actions bulkactions">
 					<label for="bulk-action-selector-top"
-						class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove-folios'); ?></label>
+						class="screen-reader-text"><?php esc_html_e('Select bulk action', 'enrove-folios'); ?></label>
 					<select name="action" id="bulk-action-selector-top">
-						<option value="-1"><?php esc_html_e('Bulk actions', 'groove-folios'); ?></option>
+						<option value="-1"><?php esc_html_e('Bulk actions', 'enrove-folios'); ?></option>
 						<?php foreach ($bulk_actions as $action_key => $action_label): ?>
 							<option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
 						<?php endforeach; ?>
 					</select>
 					<input type="submit" id="doaction" class="button action"
-						value="<?php esc_attr_e('Apply', 'groove-folios'); ?>" />
+						value="<?php esc_attr_e('Apply', 'enrove-folios'); ?>" />
 				</div>
 				<div class="tablenav-pages">
 					<?php if ($total_pages > 1): ?>
@@ -1197,7 +1197,7 @@ class All_Folios extends Page
 							<?php
 							printf(
 								/* translators: %s: number of items */
-								esc_html(_n('%s item', '%s items', $total_items, 'groove-folios')),
+								esc_html(_n('%s item', '%s items', $total_items, 'enrove-folios')),
 								esc_html(number_format_i18n($total_items))
 							);
 							?>
@@ -1210,7 +1210,7 @@ class All_Folios extends Page
 							<?php
 							printf(
 								/* translators: %s: number of items */
-								esc_html(_n('%s item', '%s items', $total_items, 'groove-folios')),
+								esc_html(_n('%s item', '%s items', $total_items, 'enrove-folios')),
 								esc_html(number_format_i18n($total_items))
 							);
 							?>
@@ -1226,14 +1226,14 @@ class All_Folios extends Page
 						<th scope="col" id="cb"
 							class="<?php echo esc_attr($this->column_classes('cb', $hidden_columns, 'manage-column check-column')); ?>">
 							<label class="screen-reader-text"
-								for="cb-select-all-1"><?php esc_html_e('Select all folios', 'groove-folios'); ?></label>
+								for="cb-select-all-1"><?php esc_html_e('Select all folios', 'enrove-folios'); ?></label>
 							<input id="cb-select-all-1" type="checkbox" />
 						</th>
 						<th scope="col" id="title"
 							class="<?php echo esc_attr($this->column_classes('title', $hidden_columns, 'manage-column column-primary ' . ($orderby === 'title' ? 'sorted ' . strtolower($order) : 'sortable desc'))); ?>">
 							<a
 								href="<?php echo esc_url($this->get_sort_url('title', $orderby, $order, $status, $search)); ?>">
-								<span><?php esc_html_e('Folio Name', 'groove-folios'); ?></span>
+								<span><?php esc_html_e('Folio Name', 'enrove-folios'); ?></span>
 								<span class="sorting-indicators"><span class="sorting-indicator asc"
 										aria-hidden="true"></span><span class="sorting-indicator desc"
 										aria-hidden="true"></span></span>
@@ -1243,7 +1243,7 @@ class All_Folios extends Page
 							class="<?php echo esc_attr($this->column_classes('theme_name', $hidden_columns, 'manage-column ' . ($orderby === 'theme_name' ? 'sorted ' . strtolower($order) : 'sortable desc'))); ?>">
 							<a
 								href="<?php echo esc_url($this->get_sort_url('theme_name', $orderby, $order, $status, $search)); ?>">
-								<span><?php esc_html_e('Theme Name', 'groove-folios'); ?></span>
+								<span><?php esc_html_e('Theme Name', 'enrove-folios'); ?></span>
 								<span class="sorting-indicators"><span class="sorting-indicator asc"
 										aria-hidden="true"></span><span class="sorting-indicator desc"
 										aria-hidden="true"></span></span>
@@ -1251,13 +1251,13 @@ class All_Folios extends Page
 						</th>
 						<th scope="col" id="collection_tags"
 							class="<?php echo esc_attr($this->column_classes('collection_tags', $hidden_columns, 'manage-column')); ?>">
-							<?php esc_html_e('Collection Tags', 'groove-folios'); ?>
+							<?php esc_html_e('Collection Tags', 'enrove-folios'); ?>
 						</th>
 						<th scope="col" id="page_count"
 							class="<?php echo esc_attr($this->column_classes('page_count', $hidden_columns, 'manage-column ' . ($orderby === 'page_count' ? 'sorted ' . strtolower($order) : 'sortable desc'))); ?>">
 							<a
 								href="<?php echo esc_url($this->get_sort_url('page_count', $orderby, $order, $status, $search)); ?>">
-								<span><?php esc_html_e('Page Count', 'groove-folios'); ?></span>
+								<span><?php esc_html_e('Page Count', 'enrove-folios'); ?></span>
 								<span class="sorting-indicators"><span class="sorting-indicator asc"
 										aria-hidden="true"></span><span class="sorting-indicator desc"
 										aria-hidden="true"></span></span>
@@ -1265,13 +1265,13 @@ class All_Folios extends Page
 						</th>
 						<th scope="col" id="publish_status"
 							class="<?php echo esc_attr($this->column_classes('publish_status', $hidden_columns, 'manage-column')); ?>">
-							<?php esc_html_e('Publish Status', 'groove-folios'); ?>
+							<?php esc_html_e('Publish Status', 'enrove-folios'); ?>
 						</th>
 						<th scope="col" id="modified"
 							class="<?php echo esc_attr($this->column_classes('modified', $hidden_columns, 'manage-column ' . ($orderby === 'modified' ? 'sorted ' . strtolower($order) : 'sortable desc'))); ?>">
 							<a
 								href="<?php echo esc_url($this->get_sort_url('modified', $orderby, $order, $status, $search)); ?>">
-								<span><?php esc_html_e('Last Updated', 'groove-folios'); ?></span>
+								<span><?php esc_html_e('Last Updated', 'enrove-folios'); ?></span>
 								<span class="sorting-indicators"><span class="sorting-indicator asc"
 										aria-hidden="true"></span><span class="sorting-indicator desc"
 										aria-hidden="true"></span></span>
@@ -1296,10 +1296,10 @@ class All_Folios extends Page
 							}
 							$is_preview_status = in_array($post_status, array('draft', 'pending', 'future'), true);
 							$row_view_url = $view_url;
-							$row_view_label = $is_preview_status ? esc_html__('Preview', 'groove-folios') : esc_html__('View', 'groove-folios');
+							$row_view_label = $is_preview_status ? esc_html__('Preview', 'enrove-folios') : esc_html__('View', 'enrove-folios');
 							$modified_label = sprintf(
 								/* translators: 1: date/time value, 2: user display name */
-								esc_html__('%1$s by %2$s', 'groove-folios'),
+								esc_html__('%1$s by %2$s', 'enrove-folios'),
 								get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post_id),
 								$this->get_last_modified_by($post_id)
 							);
@@ -1307,10 +1307,10 @@ class All_Folios extends Page
 							// without the actions they could not take.
 							$can_edit = current_user_can('edit_post', $post_id);
 							$can_delete = current_user_can('delete_post', $post_id);
-							$quick_edit_title = $title !== '' ? $title : esc_html__('(no title)', 'groove-folios');
+							$quick_edit_title = $title !== '' ? $title : esc_html__('(no title)', 'enrove-folios');
 							$quick_edit_aria_label = sprintf(
 								/* translators: %s: Folio title. */
-								esc_attr__('Quick edit "%s" inline', 'groove-folios'),
+								esc_attr__('Quick edit "%s" inline', 'enrove-folios'),
 								wp_strip_all_tags($quick_edit_title)
 							);
 							?>
@@ -1318,34 +1318,34 @@ class All_Folios extends Page
 								<th scope="row"
 									class="<?php echo esc_attr($this->column_classes('cb', $hidden_columns, 'check-column')); ?>">
 									<label class="screen-reader-text"
-										for="cb-select-<?php echo esc_attr((string) $post_id); ?>"><?php esc_html_e('Select folio', 'groove-folios'); ?></label>
+										for="cb-select-<?php echo esc_attr((string) $post_id); ?>"><?php esc_html_e('Select folio', 'enrove-folios'); ?></label>
 									<?php if ($can_edit): ?>
 									<input id="cb-select-<?php echo esc_attr((string) $post_id); ?>" type="checkbox" name="post[]"
 										value="<?php echo esc_attr((string) $post_id); ?>" />
 									<?php endif; ?>
 								</th>
 								<td class="<?php echo esc_attr($this->column_classes('title', $hidden_columns, 'title has-row-actions column-primary page-title')); ?>"
-									data-colname="<?php esc_attr_e('Folio Name', 'groove-folios'); ?>">
+									data-colname="<?php esc_attr_e('Folio Name', 'enrove-folios'); ?>">
 									<strong>
 										<?php if ($can_edit): ?>
 										<a class="row-title" href="<?php echo esc_url($edit_url); ?>">
-											<?php echo esc_html($title !== '' ? $title : esc_html__('(no title)', 'groove-folios')); ?>
+											<?php echo esc_html($title !== '' ? $title : esc_html__('(no title)', 'enrove-folios')); ?>
 										</a>
 										<?php else: ?>
-											<?php echo esc_html($title !== '' ? $title : esc_html__('(no title)', 'groove-folios')); ?>
+											<?php echo esc_html($title !== '' ? $title : esc_html__('(no title)', 'enrove-folios')); ?>
 										<?php endif; ?>
 									</strong>
 									<div class="row-actions">
 										<?php if ($can_edit): ?>
 										<span class="edit">
-											<a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove-folios'); ?></a> |
+											<a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'enrove-folios'); ?></a> |
 										</span>
 										<?php endif; ?>
 										<?php if ($can_edit && $post_status !== 'trash'): ?>
 											<span class="inline hide-if-no-js">
 												<button type="button" class="button-link editinline"
 													aria-label="<?php echo esc_attr($quick_edit_aria_label); ?>"
-													aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove-folios'); ?></button> |
+													aria-expanded="false"><?php esc_html_e('Quick Edit', 'enrove-folios'); ?></button> |
 											</span>
 										<?php endif; ?>
 										<?php if ($can_edit && $post_status !== 'trash'): ?>
@@ -1358,7 +1358,7 @@ class All_Folios extends Page
 													'collection_tag' => $this->get_collection_tag_query_arg($current_collection_tags),
 												), function ($value) {
 													return $value !== null;
-												}))); ?>"><?php esc_html_e('Duplicate', 'groove-folios'); ?></a> |
+												}))); ?>"><?php esc_html_e('Duplicate', 'enrove-folios'); ?></a> |
 											</span>
 										<?php endif; ?>
 										<span class="view">
@@ -1368,17 +1368,17 @@ class All_Folios extends Page
 										<?php if ($can_delete && $post_status === 'trash'): ?>
 											<span class="untrash">
 												<a
-													href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove-folios'); ?></a>
+													href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'enrove-folios'); ?></a>
 												|
 											</span>
 											<span class="delete">
 												<a class="submitdelete"
-													href="<?php echo esc_url(get_delete_post_link($post_id, '', true)); ?>"><?php esc_html_e('Delete Permanently', 'groove-folios'); ?></a>
+													href="<?php echo esc_url(get_delete_post_link($post_id, '', true)); ?>"><?php esc_html_e('Delete Permanently', 'enrove-folios'); ?></a>
 											</span>
 										<?php elseif ($can_delete): ?>
 											<span class="trash">
 												<a class="submitdelete"
-													href="<?php echo esc_url(get_delete_post_link($post_id)); ?>"><?php esc_html_e('Trash', 'groove-folios'); ?></a>
+													href="<?php echo esc_url(get_delete_post_link($post_id)); ?>"><?php esc_html_e('Trash', 'enrove-folios'); ?></a>
 											</span>
 										<?php endif; ?>
 									</div>
@@ -1388,38 +1388,38 @@ class All_Folios extends Page
 									}
 									?>
 									<button type="button" class="toggle-row"><span
-											class="screen-reader-text"><?php esc_html_e('Show more details', 'groove-folios'); ?></span></button>
+											class="screen-reader-text"><?php esc_html_e('Show more details', 'enrove-folios'); ?></span></button>
 								</td>
 								<td class="<?php echo esc_attr($this->column_classes('theme_name', $hidden_columns)); ?>"
-									data-colname="<?php esc_attr_e('Theme Name', 'groove-folios'); ?>">
+									data-colname="<?php esc_attr_e('Theme Name', 'enrove-folios'); ?>">
 									<?php
-									$all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
+									$all_themes = \Enrove\Themes\Themes_Manager::get_all_themes();
 									if (isset($all_themes[$theme_id])) {
 										echo esc_html($all_themes[$theme_id]['name']);
 									} else {
-										echo esc_html($theme_id) . ' ' . esc_html__('(Unknown)', 'groove-folios');
+										echo esc_html($theme_id) . ' ' . esc_html__('(Unknown)', 'enrove-folios');
 									}
 									?>
 								</td>
 								<td class="<?php echo esc_attr($this->column_classes('collection_tags', $hidden_columns)); ?>"
-									data-colname="<?php esc_attr_e('Collection Tags', 'groove-folios'); ?>">
+									data-colname="<?php esc_attr_e('Collection Tags', 'enrove-folios'); ?>">
 									<?php
 									$collection_tag_links = $this->get_collection_tag_links($post_id, $status, $search, $orderby, $order);
 									echo $collection_tag_links !== '' ? wp_kses_post($collection_tag_links) : '&mdash;';
 									?>
 								</td>
 								<td class="<?php echo esc_attr($this->column_classes('page_count', $hidden_columns)); ?>"
-									data-colname="<?php esc_attr_e('Page Count', 'groove-folios'); ?>">
+									data-colname="<?php esc_attr_e('Page Count', 'enrove-folios'); ?>">
 									<a href="<?php echo esc_url($pages_url); ?>">
 										<?php echo esc_html(number_format_i18n($page_count)); ?>
 									</a>
 								</td>
 								<td class="<?php echo esc_attr($this->column_classes('publish_status', $hidden_columns)); ?>"
-									data-colname="<?php esc_attr_e('Publish Status', 'groove-folios'); ?>">
+									data-colname="<?php esc_attr_e('Publish Status', 'enrove-folios'); ?>">
 									<?php echo esc_html($this->get_post_status_display_label($post_status)); ?>
 								</td>
 								<td class="<?php echo esc_attr($this->column_classes('modified', $hidden_columns)); ?>"
-									data-colname="<?php esc_attr_e('Last Updated', 'groove-folios'); ?>">
+									data-colname="<?php esc_attr_e('Last Updated', 'enrove-folios'); ?>">
 									<?php echo esc_html($modified_label); ?>
 								</td>
 							</tr>
@@ -1427,7 +1427,7 @@ class All_Folios extends Page
 					<?php else: ?>
 						<tr class="no-items">
 							<td class="colspanchange" colspan="<?php echo esc_attr((string) $visible_column_count); ?>">
-								<?php esc_html_e('No folios found for the current filters.', 'groove-folios'); ?>
+								<?php esc_html_e('No folios found for the current filters.', 'enrove-folios'); ?>
 							</td>
 						</tr>
 					<?php endif; ?>
@@ -1436,32 +1436,32 @@ class All_Folios extends Page
 					<tr>
 						<td class="<?php echo esc_attr($this->column_classes('cb', $hidden_columns, 'manage-column check-column')); ?>">
 							<label class="screen-reader-text"
-								for="cb-select-all-2"><?php esc_html_e('Select all folios', 'groove-folios'); ?></label>
+								for="cb-select-all-2"><?php esc_html_e('Select all folios', 'enrove-folios'); ?></label>
 							<input id="cb-select-all-2" type="checkbox" />
 						</td>
 						<th scope="col"
 							class="<?php echo esc_attr($this->column_classes('title', $hidden_columns, 'manage-column column-primary')); ?>">
-							<?php esc_html_e('Folio Name', 'groove-folios'); ?>
+							<?php esc_html_e('Folio Name', 'enrove-folios'); ?>
 						</th>
 						<th scope="col"
 							class="<?php echo esc_attr($this->column_classes('theme_name', $hidden_columns, 'manage-column')); ?>">
-							<?php esc_html_e('Theme Name', 'groove-folios'); ?>
+							<?php esc_html_e('Theme Name', 'enrove-folios'); ?>
 						</th>
 						<th scope="col"
 							class="<?php echo esc_attr($this->column_classes('collection_tags', $hidden_columns, 'manage-column')); ?>">
-							<?php esc_html_e('Collection Tags', 'groove-folios'); ?>
+							<?php esc_html_e('Collection Tags', 'enrove-folios'); ?>
 						</th>
 						<th scope="col"
 							class="<?php echo esc_attr($this->column_classes('page_count', $hidden_columns, 'manage-column')); ?>">
-							<?php esc_html_e('Page Count', 'groove-folios'); ?>
+							<?php esc_html_e('Page Count', 'enrove-folios'); ?>
 						</th>
 						<th scope="col"
 							class="<?php echo esc_attr($this->column_classes('publish_status', $hidden_columns, 'manage-column')); ?>">
-							<?php esc_html_e('Publish Status', 'groove-folios'); ?>
+							<?php esc_html_e('Publish Status', 'enrove-folios'); ?>
 						</th>
 						<th scope="col"
 							class="<?php echo esc_attr($this->column_classes('modified', $hidden_columns, 'manage-column')); ?>">
-							<?php esc_html_e('Last Updated', 'groove-folios'); ?>
+							<?php esc_html_e('Last Updated', 'enrove-folios'); ?>
 						</th>
 					</tr>
 				</tfoot>
@@ -1483,22 +1483,22 @@ class All_Folios extends Page
 				<div class="tablenav bottom">
 					<div class="alignleft actions bulkactions">
 						<label for="bulk-action-selector-bottom"
-							class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove-folios'); ?></label>
+							class="screen-reader-text"><?php esc_html_e('Select bulk action', 'enrove-folios'); ?></label>
 						<select name="action2" id="bulk-action-selector-bottom">
-							<option value="-1"><?php esc_html_e('Bulk actions', 'groove-folios'); ?></option>
+							<option value="-1"><?php esc_html_e('Bulk actions', 'enrove-folios'); ?></option>
 							<?php foreach ($bulk_actions as $action_key => $action_label): ?>
 								<option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
 							<?php endforeach; ?>
 						</select>
 						<input type="submit" id="doaction2" class="button action"
-							value="<?php esc_attr_e('Apply', 'groove-folios'); ?>" />
+							value="<?php esc_attr_e('Apply', 'enrove-folios'); ?>" />
 					</div>
 					<div class="tablenav-pages">
 						<span class="displaying-num">
 							<?php
 							printf(
 								/* translators: %s: number of items */
-								esc_html(_n('%s item', '%s items', $total_items, 'groove-folios')),
+								esc_html(_n('%s item', '%s items', $total_items, 'enrove-folios')),
 								esc_html(number_format_i18n($total_items))
 							);
 							?>
@@ -1534,15 +1534,15 @@ class All_Folios extends Page
 				<div class="tablenav bottom">
 					<div class="alignleft actions bulkactions">
 						<label for="bulk-action-selector-bottom"
-							class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove-folios'); ?></label>
+							class="screen-reader-text"><?php esc_html_e('Select bulk action', 'enrove-folios'); ?></label>
 						<select name="action2" id="bulk-action-selector-bottom">
-							<option value="-1"><?php esc_html_e('Bulk actions', 'groove-folios'); ?></option>
+							<option value="-1"><?php esc_html_e('Bulk actions', 'enrove-folios'); ?></option>
 							<?php foreach ($bulk_actions as $action_key => $action_label): ?>
 								<option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
 							<?php endforeach; ?>
 						</select>
 						<input type="submit" id="doaction2" class="button action"
-							value="<?php esc_attr_e('Apply', 'groove-folios'); ?>" />
+							value="<?php esc_attr_e('Apply', 'enrove-folios'); ?>" />
 					</div>
 					<br class="clear" />
 				</div>
@@ -1561,10 +1561,10 @@ class All_Folios extends Page
 			<div class="g-add-new-modal__dialog">
 				<div class="g-add-new-modal__header">
 					<h2 id="g-add-new-modal-title" class="g-add-new-modal__title">
-						<?php echo esc_html__('Themes', 'groove-folios'); ?>
+						<?php echo esc_html__('Themes', 'enrove-folios'); ?>
 					</h2>
 					<button type="button" class="g-add-new-modal__close"
-						aria-label="<?php echo esc_attr__('Close', 'groove-folios'); ?>">
+						aria-label="<?php echo esc_attr__('Close', 'enrove-folios'); ?>">
 						<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
 							<path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75"
 								stroke-linecap="round" />
@@ -1572,7 +1572,7 @@ class All_Folios extends Page
 					</button>
 				</div>
 				<div class="g-add-new-modal__body">
-					<?php \Groove\Plugin::instance()->add_new->display__themes(); ?>
+					<?php \Enrove\Plugin::instance()->add_new->display__themes(); ?>
 				</div>
 			</div>
 		</div>

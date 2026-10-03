@@ -1,11 +1,11 @@
 <?php
-namespace Groove\Pages;
+namespace Enrove\Pages;
 
-use Groove\Pages\Page;
-use Groove\Pages\Overview;
-use Groove\Menu\Menu_Manager;
-use Groove\Menu\Add_New_Menu_Item;
-use Groove\Utils\Request;
+use Enrove\Pages\Page;
+use Enrove\Pages\Overview;
+use Enrove\Menu\Menu_Manager;
+use Enrove\Menu\Add_New_Menu_Item;
+use Enrove\Utils\Request;
 
 
 if (!defined('ABSPATH')) {
@@ -15,14 +15,14 @@ if (!defined('ABSPATH')) {
 
 class Add_New extends Page
 {
-  const PAGE_ID = 'groove-add-new';
-  const POST_TYPE = 'groove_folio_page';
+  const PAGE_ID = 'enrove-add-new';
+  const POST_TYPE = 'enrove_folio_page';
 
   public function __construct()
   {
-    $this->add_post_action('groove_create_folio', 'create_folio');
+    $this->add_post_action('enrove_create_folio', 'create_folio');
 
-    add_action('groove/menu/register', function (Menu_Manager $menu) {
+    add_action('enrove/menu/register', function (Menu_Manager $menu) {
       $menu->register(static::PAGE_ID, new Add_New_Menu_Item($this));
     }, Overview::MENU_PRIORITY + 20);
 
@@ -38,33 +38,33 @@ class Add_New extends Page
 
   public function create_folio()
   {
-    // Hooked on admin_post_groove_create_folio, so the action is already
+    // Hooked on admin_post_enrove_create_folio, so the action is already
     // known: the nonce is checked first, before any field is read.
-    check_admin_referer('groove_create_folio_action', 'groove_nonce');
+    check_admin_referer('enrove_create_folio_action', 'enrove_nonce');
 
     if (!current_user_can('edit_posts')) {
-      wp_die(esc_html__('You do not have permission to create folios.', 'groove-folios'));
+      wp_die(esc_html__('You do not have permission to create folios.', 'enrove-folios'));
     }
 
-    $themes = \Groove\Themes\Themes_Manager::get_all_themes();
+    $themes = \Enrove\Themes\Themes_Manager::get_all_themes();
     if (empty($themes)) {
-      wp_die(esc_html__('No themes are available.', 'groove-folios'));
+      wp_die(esc_html__('No themes are available.', 'enrove-folios'));
     }
 
-    $default_theme_id = (string) get_option('groove_default_theme_id', '');
+    $default_theme_id = (string) get_option('enrove_default_theme_id', '');
     if ($default_theme_id === '' || !isset($themes[$default_theme_id])) {
       $default_theme_id = (string) array_key_first($themes);
     }
 
     $theme_id = isset($_POST['themeId']) ? sanitize_key(wp_unslash($_POST['themeId'])) : $default_theme_id;
     if (empty($theme_id) || !isset($themes[$theme_id])) {
-      wp_die(esc_html__('Invalid theme selection.', 'groove-folios'));
+      wp_die(esc_html__('Invalid theme selection.', 'enrove-folios'));
     }
     // Any theme shipping a sample-content.php can be seeded. The definition
     // is null for themes that ship none, which also disables the request.
-    $sample_content = \Groove\Themes\Themes_Manager::get_sample_content($theme_id);
+    $sample_content = \Enrove\Themes\Themes_Manager::get_sample_content($theme_id);
     // `seed_sample_content` is the current field; `seed_proposal_sample` is
-    // the one this flow used while only groove-proposal could be seeded, still
+    // the one this flow used while only enrove-proposal could be seeded, still
     // accepted so a form submitted from a cached page keeps working. The
     // paired hidden input means '0' arrives when the box is unticked.
     $seed_requested = false;
@@ -75,14 +75,14 @@ class Add_New extends Page
     }
     $seed_sample_content = $sample_content !== null && $seed_requested;
 
-    $default_status = (string) get_option('groove_default_folio_status', 'draft');
+    $default_status = (string) get_option('enrove_default_folio_status', 'draft');
     if (!in_array($default_status, ['draft', 'publish'], true)) {
       $default_status = 'draft';
     }
 
     // The default is a site setting, not permission to publish: a user who
     // may only edit (a Contributor) starts a draft, as core would give them.
-    if ($default_status === 'publish' && !\Groove\Pages\Folio::can_publish_folios()) {
+    if ($default_status === 'publish' && !\Enrove\Pages\Folio::can_publish_folios()) {
       $default_status = 'draft';
     }
 
@@ -97,13 +97,13 @@ class Add_New extends Page
     // An explicit default folio title always wins. Left blank, the title comes
     // from the theme being created, so a magazine starts as "A New Issue" and
     // a proposal as "A New Proposal" rather than everything sharing one name.
-    $title = trim((string) get_option('groove_default_folio_title', ''));
+    $title = trim((string) get_option('enrove_default_folio_title', ''));
     if ($title === '') {
-      $title = \Groove\Themes\Themes_Manager::get_default_folio_title($theme_id);
+      $title = \Enrove\Themes\Themes_Manager::get_default_folio_title($theme_id);
     }
 
     $fields = array(
-      'post_type' => 'groove_folio',
+      'post_type' => 'enrove_folio',
       'post_status' => $default_status,
       'post_title' => $title,
       'post_name' => sanitize_title($title),
@@ -117,7 +117,7 @@ class Add_New extends Page
       ),
     );
 
-    if ($theme_id === 'groove-proposal') {
+    if ($theme_id === 'enrove-proposal') {
       $fields['meta_input']['proposal_show_in_page_nav'] = '1';
       $fields['meta_input']['proposal_color_scheme'] = 'default';
     }
@@ -149,7 +149,7 @@ class Add_New extends Page
 
   public function get_title()
   {
-    return esc_html__('Add New', 'groove-folios');
+    return esc_html__('Add New', 'enrove-folios');
   }
 
   public function create_tabs()
@@ -162,7 +162,7 @@ class Add_New extends Page
    *
    * Shared by the Add New picker and the folio editor's Change theme dialog,
    * so choosing a theme looks and behaves the same in both. Must sit inside a
-   * `.g-folio__themes` radiogroup; groove-main.js moves the selection.
+   * `.g-folio__themes` radiogroup; enrove-main.js moves the selection.
    *
    * @param array $theme A Themes_Manager::get_all_themes() entry.
    */
@@ -170,7 +170,7 @@ class Add_New extends Page
   {
     // Radius and border width are the stylesheet's — the inner corners are
     // derived from them there. Only the border colour changes per state, and
-    // groove-main.js swaps exactly these classes when the selection moves.
+    // enrove-main.js swaps exactly these classes when the selection moves.
     $card_classes = 'g-folio__theme-option g-folio__theme-option--add-new relative cursor-pointer transition-all';
     $card_classes .= $selected ? ' border-indigo-600 ring-1 ring-indigo-600' : ' border-gray-200 hover:border-gray-300';
     echo '<div class="g-folio__theme-card-wrap">';
@@ -189,23 +189,23 @@ class Add_New extends Page
     echo esc_html($theme['name']);
     echo '</div>';
     echo '<span class="active-badge absolute -top-2 -right-2 inline-flex items-center rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-medium text-white shadow-sm ring-2 ring-white ' . ($selected ? '' : 'hidden') . '">';
-    echo esc_html__('Selected', 'groove-folios');
+    echo esc_html__('Selected', 'enrove-folios');
     echo '</span>';
     echo '</button>';
     /* translators: %s: theme name */
-    echo '<button type="button" class="g-theme-preview-btn" data-theme-id="' . esc_attr($id) . '" aria-label="' . esc_attr(sprintf(__('Preview %s theme', 'groove-folios'), $theme['name'])) . '">';
-    echo esc_html__('Preview', 'groove-folios');
+    echo '<button type="button" class="g-theme-preview-btn" data-theme-id="' . esc_attr($id) . '" aria-label="' . esc_attr(sprintf(__('Preview %s theme', 'enrove-folios'), $theme['name'])) . '">';
+    echo esc_html__('Preview', 'enrove-folios');
     echo '</button>';
     echo '</div>';
   }
 
   public function display__themes()
   {
-    $themes = \Groove\Themes\Themes_Manager::get_all_themes();
+    $themes = \Enrove\Themes\Themes_Manager::get_all_themes();
     $first_theme_id = '';
     $first_theme_name = '';
     if (!empty($themes)) {
-      $saved_default = (string) get_option('groove_default_theme_id', '');
+      $saved_default = (string) get_option('enrove_default_theme_id', '');
       if ($saved_default !== '' && isset($themes[$saved_default])) {
         $first_theme_id = $saved_default;
       } else {
@@ -218,18 +218,18 @@ class Add_New extends Page
     }
 
     if (empty($themes)) {
-      echo '<p>' . esc_html__('No themes available. Please install a theme first.', 'groove-folios') . '</p>';
+      echo '<p>' . esc_html__('No themes available. Please install a theme first.', 'enrove-folios') . '</p>';
       return;
     }
 
     $theme_count = count($themes);
 
     // One toggle per theme that ships sample-content.php. Only the toggle for
-    // the selected theme is visible; groove-main.js swaps them on selection via
+    // the selected theme is visible; enrove-main.js swaps them on selection via
     // data-add-new-theme-target and re-enables the fields it un-hides.
     $sample_definitions = array();
     foreach (array_keys($themes) as $theme_id) {
-      $definition = \Groove\Themes\Themes_Manager::get_sample_content((string) $theme_id);
+      $definition = \Enrove\Themes\Themes_Manager::get_sample_content((string) $theme_id);
       if ($definition !== null) {
         $sample_definitions[(string) $theme_id] = $definition;
       }
@@ -239,21 +239,21 @@ class Add_New extends Page
   <?php
   $themes_help_text = sprintf(
     /* translators: %s: number of available themes */
-    _n('Choose a theme to get started. %s theme available.', 'Choose a theme to get started. %s themes available.', $theme_count, 'groove-folios'),
+    _n('Choose a theme to get started. %s theme available.', 'Choose a theme to get started. %s themes available.', $theme_count, 'enrove-folios'),
     number_format_i18n($theme_count)
   );
   echo esc_html($themes_help_text);
   ?>
 </p>
 <p class="g-folio__themes-selected">
-  <?php echo esc_html__('Selected theme:', 'groove-folios'); ?>
+  <?php echo esc_html__('Selected theme:', 'enrove-folios'); ?>
   <strong id="g-folio-selected-theme-name"><?php echo esc_html($first_theme_name); ?></strong>
 </p>
 <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-  <?php wp_nonce_field('groove_create_folio_action', 'groove_nonce'); ?>
-  <input type="hidden" name="action" value="groove_create_folio" />
+  <?php wp_nonce_field('enrove_create_folio_action', 'enrove_nonce'); ?>
+  <input type="hidden" name="action" value="enrove_create_folio" />
 
-  <div class="g-folio__themes" role="radiogroup" aria-label="<?php echo esc_attr__('Available themes', 'groove-folios'); ?>">
+  <div class="g-folio__themes" role="radiogroup" aria-label="<?php echo esc_attr__('Available themes', 'enrove-folios'); ?>">
     <?php
     foreach ($themes as $id => $theme) {
       self::display_theme_card((string) $id, $theme, $id === $first_theme_id);
@@ -264,17 +264,17 @@ class Add_New extends Page
   <div class="g-folio__theme-button">
     <?php
     // A WordPress.org install has no sample photos until they are downloaded
-    // (see \Groove\Pexels\Library). Seeding without them still works: inline
+    // (see \Enrove\Pexels\Library). Seeding without them still works: inline
     // images fill in once the photos arrive, but page featured images are only
     // attached at seed time. Say so where the choice is made.
-    $photos_missing = !empty(\Groove\Pexels\Library::status()['missing']);
+    $photos_missing = !empty(\Enrove\Pexels\Library::status()['missing']);
     foreach ($sample_definitions as $sample_theme_id => $sample) :
       $is_selected_theme = ($sample_theme_id === $first_theme_id);
       if ($photos_missing) {
-        $sample['description'] = trim($sample['description'] . ' ' . __('The sample photos are not on this site yet. Download them from Settings → Imagery first to get the full sample, including each page’s featured image.', 'groove-folios'));
+        $sample['description'] = trim($sample['description'] . ' ' . __('The sample photos are not on this site yet. Download them from Settings → Imagery first to get the full sample, including each page’s featured image.', 'enrove-folios'));
       }
       // Fields in a hidden section start disabled so a no-JS submit cannot seed
-      // the wrong theme's content; groove-main.js re-enables the visible one.
+      // the wrong theme's content; enrove-main.js re-enables the visible one.
       $field_disabled = !$is_selected_theme;
       $field_id = 'seed_sample_content_' . sanitize_key($sample_theme_id);
       ?>
@@ -299,7 +299,7 @@ class Add_New extends Page
     </div>
     <?php endforeach; ?>
     <button type="submit" class="button button-primary">
-      <?php echo esc_html__('Continue', 'groove-folios'); ?>
+      <?php echo esc_html__('Continue', 'enrove-folios'); ?>
     </button>
   </div>
 </form>
@@ -320,7 +320,7 @@ class Add_New extends Page
       // wp_insert_post() unslashes what it is given; the sample content is
       // not slashed, so a backslash in a block's attributes would be lost.
       $page_id = wp_insert_post(wp_slash(array(
-        'post_type' => 'groove_folio_page',
+        'post_type' => 'enrove_folio_page',
         'post_status' => $status,
         'post_title' => $page['title'],
         'post_content' => $page['content'],
@@ -349,7 +349,7 @@ class Add_New extends Page
    *
    * The placeholder pool lives on disk rather than in the media library, so the
    * first seed that wants one copies it into uploads and tags the attachment
-   * with `_groove_pexels_slug` so later seeds reuse it instead of duplicating.
+   * with `_enrove_pexels_slug` so later seeds reuse it instead of duplicating.
    *
    * @param string $slug  Manifest slug, e.g. 'ph-cityscape'.
    * @return int          0 when the file has not been curated or the import failed.
@@ -368,7 +368,7 @@ class Add_New extends Page
 
     $resolved[$slug] = 0;
 
-    $source = \Groove\Themes\Themes_Manager::sample_image_path($slug);
+    $source = \Enrove\Themes\Themes_Manager::sample_image_path($slug);
     if ($source === '' || !is_readable($source)) {
       return 0; // Curation has not run — the page simply has no featured image.
     }
@@ -379,7 +379,7 @@ class Add_New extends Page
       'posts_per_page' => 1,
       'fields' => 'ids',
       'no_found_rows' => true,
-      'meta_key' => '_groove_pexels_slug', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- One-row lookup of an imported sample image, run only while seeding a new folio.
+      'meta_key' => '_enrove_pexels_slug', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- One-row lookup of an imported sample image, run only while seeding a new folio.
       'meta_value' => $slug, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- As above.
     ));
     if (!empty($existing)) {
@@ -392,7 +392,7 @@ class Add_New extends Page
       return 0;
     }
 
-    $upload = wp_upload_bits('groove-' . $slug . '.jpg', null, $contents);
+    $upload = wp_upload_bits('enrove-' . $slug . '.jpg', null, $contents);
     if (!is_array($upload) || !empty($upload['error']) || empty($upload['file'])) {
       return 0;
     }
@@ -414,12 +414,12 @@ class Add_New extends Page
       wp_generate_attachment_metadata((int) $attachment_id, $upload['file'])
     );
 
-    update_post_meta((int) $attachment_id, '_groove_pexels_slug', $slug);
+    update_post_meta((int) $attachment_id, '_enrove_pexels_slug', $slug);
 
     // Alt text comes from the Pexels manifest when it exists; never fatal when
     // the integration or credits.json is absent.
-    if (class_exists('\Groove\Pexels\Credits')) {
-      $credit = \Groove\Pexels\Credits::get($slug);
+    if (class_exists('\Enrove\Pexels\Credits')) {
+      $credit = \Enrove\Pexels\Credits::get($slug);
       $alt = is_array($credit) && !empty($credit['alt']) ? sanitize_text_field((string) $credit['alt']) : '';
       if ($alt !== '') {
         update_post_meta((int) $attachment_id, '_wp_attachment_image_alt', $alt);

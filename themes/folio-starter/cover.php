@@ -1,8 +1,8 @@
 <?php
-namespace Groove\Themes\Folio_Starter;
+namespace Enrove\Themes\Folio_Starter;
 
-use Groove\Themes\Base_Theme;
-use Groove\Utils\Utils;
+use Enrove\Themes\Base_Theme;
+use Enrove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -22,11 +22,11 @@ class Cover extends Base_Theme
   function display_nav()
   {
     ?>
-    <nav class="g-folio__theme-nav" aria-label="<?php echo esc_attr__('Folio contents', 'groove-folios'); ?>"
-      data-groove-drawer=".g-folio__theme-nav-button">
+    <nav class="g-folio__theme-nav" aria-label="<?php echo esc_attr__('Folio contents', 'enrove-folios'); ?>"
+      data-enrove-drawer=".g-folio__theme-nav-button">
       <?php // Outside the -content box, which is the scroller: the close button
         // used to scroll away with a long contents list. ?>
-      <button type="button" class="g-folio__theme-nav-close" aria-label="<?php echo esc_attr__('Close navigation', 'groove-folios'); ?>">
+      <button type="button" class="g-folio__theme-nav-close" aria-label="<?php echo esc_attr__('Close navigation', 'enrove-folios'); ?>">
         <svg class="g-folio__theme-close-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <line x1="6" y1="6" x2="18" y2="18"></line>
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -36,7 +36,7 @@ class Cover extends Base_Theme
         <h3 class="g-folio__theme-nav-name">
           <?php echo esc_html($this->theme_name); ?>
         </h3>
-        <p class="g-folio__theme-nav-label"><?php echo esc_html__('Contents', 'groove-folios'); ?></p>
+        <p class="g-folio__theme-nav-label"><?php echo esc_html__('Contents', 'enrove-folios'); ?></p>
         <div class="g-folio__theme-navs">
           <?php
           $index = 1;
@@ -69,7 +69,7 @@ class Cover extends Base_Theme
 
         <div class="g-folio__theme-header">
           <div class="g-folio__theme-header-inner">
-            <button type="button" class="g-folio__theme-nav-button" aria-label="<?php echo esc_attr__('Open navigation', 'groove-folios'); ?>"
+            <button type="button" class="g-folio__theme-nav-button" aria-label="<?php echo esc_attr__('Open navigation', 'enrove-folios'); ?>"
               aria-expanded="false">
               <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -96,7 +96,7 @@ class Cover extends Base_Theme
             <p class="g-folio__theme-author">
               <?php
               /* translators: %s: folio author name. */
-              echo esc_html(sprintf(__('By %s', 'groove-folios'), $this->author));
+              echo esc_html(sprintf(__('By %s', 'enrove-folios'), $this->author));
               ?>
             </p>
           <?php endif; ?>
@@ -104,7 +104,7 @@ class Cover extends Base_Theme
           <div class="g-folio__theme-fields g-folio__theme-password-form">
             <?php if (!empty($this->pages) && $page): ?>
               <a class="g-folio__theme-fields-submit" href="<?php echo esc_url(Utils::get_folio_permalink_by_id($page->ID)); ?>">
-                <?php echo esc_html__('Open folio', 'groove-folios'); ?>
+                <?php echo esc_html__('Open folio', 'enrove-folios'); ?>
               </a>
             <?php endif; ?>
           </div>
@@ -115,7 +115,7 @@ class Cover extends Base_Theme
               </div>
             <?php endif; ?>
             <?php
-            // Credit, not rendered: "Powered by Groove Folios. Theme designed by
+            // Credit, not rendered: "Powered by Enrove Folios. Theme designed by
             // {author}", the author linking to the site. WordPress.org guideline 10
             // allows no public credit without the site admin opting in.
             ?>

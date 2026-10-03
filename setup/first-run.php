@@ -1,8 +1,8 @@
 <?php
-namespace Groove\Setup;
+namespace Enrove\Setup;
 
-use Groove\Pexels\Library;
-use Groove\Themes\Font_Library;
+use Enrove\Pexels\Library;
+use Enrove\Themes\Font_Library;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -12,12 +12,12 @@ if (!defined('ABSPATH')) {
  * First-run setup: the fonts and photos a fresh install does not have.
  *
  * A site installed from WordPress.org starts with neither (Font_Library and
- * \Groove\Pexels\Library say why), and nothing about a folio says so: the fonts
+ * \Enrove\Pexels\Library say why), and nothing about a folio says so: the fonts
  * fall back to system ones and the covers to a gradient, quietly. Left to the
  * Settings tabs, most people would never find out, and would take the themes
  * for plainer than they are.
  *
- * So the first Groove screen an administrator opens asks, once, in a dialog
+ * So the first Enrove screen an administrator opens asks, once, in a dialog
  * that also runs the downloads and shows their progress. Each item is a choice
  * with a real "no" — system fonts instead of Google's, gradients instead of
  * photos — and an answer either way settles that item. Closing the dialog
@@ -41,9 +41,9 @@ class First_Run
    * per-site option rather than plain user meta, so on a multisite network
    * each site asks its own administrators once.
    */
-  const PROMPTED_META = 'groove_setup_prompted';
+  const PROMPTED_META = 'enrove_setup_prompted';
 
-  const NONCE = 'groove_first_run';
+  const NONCE = 'enrove_first_run';
 
   /**
    * Seconds each step of a download may spend before it stops starting new
@@ -57,7 +57,7 @@ class First_Run
   private static $instance = null;
 
   /**
-   * status() for this request. Every Groove screen asks several times (the
+   * status() for this request. Every Enrove screen asks several times (the
    * menu, the header, the panel, the dialog) and each answer stats every font
    * and photo, so it is worked out once and cleared whenever a choice or a
    * download changes it.
@@ -71,7 +71,7 @@ class First_Run
     _doing_it_wrong(
       __FUNCTION__,
       sprintf('Cloning instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
-      esc_html(GROOVE_VERSION)
+      esc_html(ENROVE_VERSION)
     );
   }
 
@@ -80,7 +80,7 @@ class First_Run
     _doing_it_wrong(
       __FUNCTION__,
       sprintf('Unserializing instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
-      esc_html(GROOVE_VERSION)
+      esc_html(ENROVE_VERSION)
     );
   }
 
@@ -95,8 +95,8 @@ class First_Run
 
   private function __construct()
   {
-    add_action('wp_ajax_groove_first_run_step', array($this, 'ajax_step'));
-    add_action('wp_ajax_groove_first_run_decline', array($this, 'ajax_decline'));
+    add_action('wp_ajax_enrove_first_run_step', array($this, 'ajax_step'));
+    add_action('wp_ajax_enrove_first_run_decline', array($this, 'ajax_decline'));
   }
 
   // ── State ──────────────────────────────────────────────────────────────
@@ -126,7 +126,7 @@ class First_Run
     $photos = array('total' => 0, 'present' => 0, 'missing' => array());
     $photo_source = '';
     $photo_declined = 'none';
-    if (class_exists('\Groove\Pexels\Library') && class_exists('\Groove\Pexels\Credits')) {
+    if (class_exists('\Enrove\Pexels\Library') && class_exists('\Enrove\Pexels\Credits')) {
       $photos = Library::status();
       $photo_source = Library::source();
       $photo_declined = Library::SOURCE_NONE;
@@ -286,16 +286,16 @@ class First_Run
     check_ajax_referer(self::NONCE, 'nonce');
 
     if (!current_user_can('manage_options')) {
-      wp_send_json_error(array('message' => __('You do not have permission to modify settings.', 'groove-folios')), 403);
+      wp_send_json_error(array('message' => __('You do not have permission to modify settings.', 'enrove-folios')), 403);
     }
 
     $item = isset($_POST['item']) ? sanitize_key(wp_unslash($_POST['item'])) : '';
     if (!in_array($item, self::ITEMS, true)) {
-      wp_send_json_error(array('message' => __('Unknown setup item.', 'groove-folios')), 400);
+      wp_send_json_error(array('message' => __('Unknown setup item.', 'enrove-folios')), 400);
     }
 
-    if ($item === 'photos' && !class_exists('\Groove\Pexels\Library')) {
-      wp_send_json_error(array('message' => __('The Pexels helpers are missing from this copy of the plugin.', 'groove-folios')), 500);
+    if ($item === 'photos' && !class_exists('\Enrove\Pexels\Library')) {
+      wp_send_json_error(array('message' => __('The Pexels helpers are missing from this copy of the plugin.', 'enrove-folios')), 500);
     }
 
     return $item;
@@ -305,7 +305,7 @@ class First_Run
 
   /**
    * Whether the dialog should open by itself on this request: the first
-   * Groove screen this administrator opens, and only once. Reading it marks
+   * Enrove screen this administrator opens, and only once. Reading it marks
    * it done, so a reload or the next screen does not ask again.
    *
    * @return bool
@@ -323,7 +323,7 @@ class First_Run
   }
 
   /**
-   * Config for assets/js/groove-setup.js.
+   * Config for assets/js/enrove-setup.js.
    *
    * @param bool $auto_open
    * @return array
@@ -336,27 +336,27 @@ class First_Run
       'autoOpen' => $auto_open,
       'i18n' => array(
         /* translators: 1: files downloaded so far, 2: files in total. */
-        'progress' => __('%1$s of %2$s', 'groove-folios'),
-        'preparing' => __('Starting…', 'groove-folios'),
-        'downloading' => __('Downloading…', 'groove-folios'),
-        'download' => __('Download', 'groove-folios'),
-        'downloadBoth' => __('Download fonts and photos', 'groove-folios'),
-        'downloadFonts' => __('Download fonts', 'groove-folios'),
-        'downloadPhotos' => __('Download photos', 'groove-folios'),
-        'saveChoices' => __('Save choices', 'groove-folios'),
-        'retry' => __('Try again', 'groove-folios'),
-        'done' => __('Done', 'groove-folios'),
-        'notNow' => __('Not now', 'groove-folios'),
-        'close' => __('Close', 'groove-folios'),
+        'progress' => __('%1$s of %2$s', 'enrove-folios'),
+        'preparing' => __('Starting…', 'enrove-folios'),
+        'downloading' => __('Downloading…', 'enrove-folios'),
+        'download' => __('Download', 'enrove-folios'),
+        'downloadBoth' => __('Download fonts and photos', 'enrove-folios'),
+        'downloadFonts' => __('Download fonts', 'enrove-folios'),
+        'downloadPhotos' => __('Download photos', 'enrove-folios'),
+        'saveChoices' => __('Save choices', 'enrove-folios'),
+        'retry' => __('Try again', 'enrove-folios'),
+        'done' => __('Done', 'enrove-folios'),
+        'notNow' => __('Not now', 'enrove-folios'),
+        'close' => __('Close', 'enrove-folios'),
         /* translators: %s: the reason the download failed. */
-        'failed' => __('Stopped: %s', 'groove-folios'),
-        'network' => __('The server did not answer. Check your connection and try again.', 'groove-folios'),
-        'expired' => __('This page has been open too long. Reload it and try again.', 'groove-folios'),
-        'stalled' => __('The download stopped making progress. Try again, or check that the uploads folder is writable.', 'groove-folios'),
-        'finished' => __('Setup finished. Folios now use their full fonts and photos.', 'groove-folios'),
-        'finishedDeclined' => __('Setup finished.', 'groove-folios'),
-        'leaveWarning' => __('Downloads are still running. Leave anyway?', 'groove-folios'),
-        'keptChoice' => __('Your earlier choice is kept.', 'groove-folios'),
+        'failed' => __('Stopped: %s', 'enrove-folios'),
+        'network' => __('The server did not answer. Check your connection and try again.', 'enrove-folios'),
+        'expired' => __('This page has been open too long. Reload it and try again.', 'enrove-folios'),
+        'stalled' => __('The download stopped making progress. Try again, or check that the uploads folder is writable.', 'enrove-folios'),
+        'finished' => __('Setup finished. Folios now use their full fonts and photos.', 'enrove-folios'),
+        'finishedDeclined' => __('Setup finished.', 'enrove-folios'),
+        'leaveWarning' => __('Downloads are still running. Leave anyway?', 'enrove-folios'),
+        'keptChoice' => __('Your earlier choice is kept.', 'enrove-folios'),
       ),
     );
   }
@@ -374,14 +374,14 @@ class First_Run
     $photos = in_array($status['photos']['state'], array('pending', 'partial'), true);
 
     if ($fonts && $photos) {
-      return __('The theme fonts and sample photos are not on this site yet, so folios use system fonts and gradient covers for now.', 'groove-folios');
+      return __('The theme fonts and sample photos are not on this site yet, so folios use system fonts and gradient covers for now.', 'enrove-folios');
     }
 
     if ($fonts) {
-      return __('The theme fonts are not on this site yet, so folios use system fonts for now.', 'groove-folios');
+      return __('The theme fonts are not on this site yet, so folios use system fonts for now.', 'enrove-folios');
     }
 
-    return __('The sample photos are not on this site yet, so folio covers use gradients for now.', 'groove-folios');
+    return __('The sample photos are not on this site yet, so folio covers use gradients for now.', 'enrove-folios');
   }
 
   /**
@@ -392,13 +392,13 @@ class First_Run
   public static function display_overview_panel(): void
   {
     ?>
-<section class="g-setup-panel" data-groove-setup-entry aria-labelledby="g-setup-panel-title">
+<section class="g-setup-panel" data-enrove-setup-entry aria-labelledby="g-setup-panel-title">
   <div class="g-setup-panel__text">
-    <h2 id="g-setup-panel-title" class="g-setup-panel__title"><?php esc_html_e('Finish setting up', 'groove-folios'); ?></h2>
+    <h2 id="g-setup-panel-title" class="g-setup-panel__title"><?php esc_html_e('Finish setting up', 'enrove-folios'); ?></h2>
     <p class="g-setup-panel__desc"><?php echo esc_html(static::summary()); ?></p>
   </div>
-  <button type="button" class="button button-primary" data-groove-setup-open aria-haspopup="dialog">
-    <?php esc_html_e('Set up fonts and photos', 'groove-folios'); ?>
+  <button type="button" class="button button-primary" data-enrove-setup-open aria-haspopup="dialog">
+    <?php esc_html_e('Set up fonts and photos', 'enrove-folios'); ?>
   </button>
 </section>
 <?php
@@ -418,33 +418,33 @@ class First_Run
 
     if (count($declined) === 2) {
       if ($fonts_here && $photos_here) {
-        $desc = __('Folios use system fonts and gradient covers. The theme fonts and photos are on this site, so you can switch back to them at any time.', 'groove-folios');
+        $desc = __('Folios use system fonts and gradient covers. The theme fonts and photos are on this site, so you can switch back to them at any time.', 'enrove-folios');
       } elseif ($fonts_here) {
-        $desc = __('Folios use system fonts and gradient covers. You can switch back to the theme fonts, which are on this site, or download the photos at any time.', 'groove-folios');
+        $desc = __('Folios use system fonts and gradient covers. You can switch back to the theme fonts, which are on this site, or download the photos at any time.', 'enrove-folios');
       } elseif ($photos_here) {
-        $desc = __('Folios use system fonts and gradient covers. You can download the theme fonts, or switch back to the photos, which are on this site, at any time.', 'groove-folios');
+        $desc = __('Folios use system fonts and gradient covers. You can download the theme fonts, or switch back to the photos, which are on this site, at any time.', 'enrove-folios');
       } else {
-        $desc = __('Folios use system fonts and gradient covers. You can download the theme fonts and photos at any time.', 'groove-folios');
+        $desc = __('Folios use system fonts and gradient covers. You can download the theme fonts and photos at any time.', 'enrove-folios');
       }
-      $button = __('Set up fonts and photos', 'groove-folios');
+      $button = __('Set up fonts and photos', 'enrove-folios');
     } elseif ($declined === array('fonts')) {
       $desc = $fonts_here
-        ? __('Folios use system fonts. The theme fonts are on this site, so you can switch back to them at any time.', 'groove-folios')
-        : __('Folios use system fonts. You can download the theme fonts at any time.', 'groove-folios');
-      $button = __('Set up fonts', 'groove-folios');
+        ? __('Folios use system fonts. The theme fonts are on this site, so you can switch back to them at any time.', 'enrove-folios')
+        : __('Folios use system fonts. You can download the theme fonts at any time.', 'enrove-folios');
+      $button = __('Set up fonts', 'enrove-folios');
     } else {
       $desc = $photos_here
-        ? __('Folio covers use gradients. The photos are on this site, so you can switch back to them at any time.', 'groove-folios')
-        : __('Folio covers use gradients. You can download the sample photos at any time.', 'groove-folios');
-      $button = __('Set up photos', 'groove-folios');
+        ? __('Folio covers use gradients. The photos are on this site, so you can switch back to them at any time.', 'enrove-folios')
+        : __('Folio covers use gradients. You can download the sample photos at any time.', 'enrove-folios');
+      $button = __('Set up photos', 'enrove-folios');
     }
     ?>
-<section class="g-setup-panel g-setup-panel--quiet" data-groove-setup-entry aria-labelledby="g-setup-panel-title">
+<section class="g-setup-panel g-setup-panel--quiet" data-enrove-setup-entry aria-labelledby="g-setup-panel-title">
   <div class="g-setup-panel__text">
-    <h2 id="g-setup-panel-title" class="g-setup-panel__title"><?php esc_html_e('Fonts and photos', 'groove-folios'); ?></h2>
+    <h2 id="g-setup-panel-title" class="g-setup-panel__title"><?php esc_html_e('Fonts and photos', 'enrove-folios'); ?></h2>
     <p class="g-setup-panel__desc"><?php echo esc_html($desc); ?></p>
   </div>
-  <button type="button" class="button button-secondary" data-groove-setup-open aria-haspopup="dialog">
+  <button type="button" class="button button-secondary" data-enrove-setup-open aria-haspopup="dialog">
     <?php echo esc_html($button); ?>
   </button>
 </section>
@@ -468,15 +468,15 @@ class First_Run
   public static function display_header_entry(): void
   {
     ?>
-<button type="button" class="button button-secondary g-setup-entry" data-groove-setup-open data-groove-setup-entry aria-haspopup="dialog">
+<button type="button" class="button button-secondary g-setup-entry" data-enrove-setup-open data-enrove-setup-entry aria-haspopup="dialog">
   <span class="g-setup-entry__dot" aria-hidden="true"></span>
-  <?php esc_html_e('Finish setup', 'groove-folios'); ?>
+  <?php esc_html_e('Finish setup', 'enrove-folios'); ?>
 </button>
 <?php
   }
 
   /**
-   * The dialog. Printed in the admin footer of every Groove screen while
+   * The dialog. Printed in the admin footer of every Enrove screen while
    * something is undecided, and of Overview while something is declined, so
    * every entry point opens the same one.
    *
@@ -493,84 +493,84 @@ class First_Run
     $photos = $status['photos'];
 
     // A development checkout carries the photos rather than downloading them.
-    $photos_bundled = $photos['state'] === 'ready' && class_exists('\Groove\Pexels\Library') && Library::downloaded_count() === 0;
+    $photos_bundled = $photos['state'] === 'ready' && class_exists('\Enrove\Pexels\Library') && Library::downloaded_count() === 0;
     ?>
 <div id="g-setup-modal" class="g-theme-details g-setup" role="dialog" aria-modal="true"
   aria-labelledby="g-setup-title" aria-describedby="g-setup-intro" hidden>
-  <div class="g-theme-details__backdrop" data-groove-setup-close></div>
+  <div class="g-theme-details__backdrop" data-enrove-setup-close></div>
   <div class="g-theme-details__dialog g-setup__dialog" tabindex="-1">
     <div class="g-theme-details__header">
-      <h2 id="g-setup-title" class="g-theme-details__title"><?php echo static::needs_attention() ? esc_html__('Finish setting up Groove Folios', 'groove-folios') : esc_html__('Fonts and photos', 'groove-folios'); ?></h2>
-      <button type="button" class="g-theme-details__close" data-groove-setup-close
-        aria-label="<?php esc_attr_e('Close', 'groove-folios'); ?>">
+      <h2 id="g-setup-title" class="g-theme-details__title"><?php echo static::needs_attention() ? esc_html__('Finish setting up Enrove Folios', 'enrove-folios') : esc_html__('Fonts and photos', 'enrove-folios'); ?></h2>
+      <button type="button" class="g-theme-details__close" data-enrove-setup-close
+        aria-label="<?php esc_attr_e('Close', 'enrove-folios'); ?>">
         <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
       </button>
     </div>
     <div class="g-theme-details__body g-setup__body">
       <p id="g-setup-intro" class="g-setup__intro">
-        <?php esc_html_e('Folio themes are designed around web fonts and photographs. Neither comes with the plugin, so your site can download its own copy — once, and only if you choose to.', 'groove-folios'); ?>
+        <?php esc_html_e('Folio themes are designed around web fonts and photographs. Neither comes with the plugin, so your site can download its own copy — once, and only if you choose to.', 'enrove-folios'); ?>
       </p>
 
       <?php
       static::render_item('fonts', $fonts, array(
-        'title' => __('Fonts', 'groove-folios'),
+        'title' => __('Fonts', 'enrove-folios'),
         'desc' => sprintf(
           /* translators: %s: number of font families. */
           _n(
             '%s font family from Google Fonts, about 4 MB. It is saved to your uploads folder and served from your site, so readers never contact Google.',
             '%s font families from Google Fonts, about 4 MB. They are saved to your uploads folder and served from your site, so readers never contact Google.',
             $fonts['total'],
-            'groove-folios'
+            'enrove-folios'
           ),
           number_format_i18n($fonts['total'])
         ),
-        'download' => static::is_on_site($fonts) ? __('Use the theme fonts', 'groove-folios') : __('Download from Google Fonts', 'groove-folios'),
-        'download_hint' => static::is_on_site($fonts) ? __('Already on this site. Nothing is downloaded.', 'groove-folios') : __('How the themes are designed to look.', 'groove-folios'),
-        'decline' => __('Use system fonts', 'groove-folios'),
-        'decline_hint' => __('The fonts the WordPress dashboard uses. Nothing is downloaded.', 'groove-folios'),
-        'bar_label' => __('Fonts downloaded', 'groove-folios'),
+        'download' => static::is_on_site($fonts) ? __('Use the theme fonts', 'enrove-folios') : __('Download from Google Fonts', 'enrove-folios'),
+        'download_hint' => static::is_on_site($fonts) ? __('Already on this site. Nothing is downloaded.', 'enrove-folios') : __('How the themes are designed to look.', 'enrove-folios'),
+        'decline' => __('Use system fonts', 'enrove-folios'),
+        'decline_hint' => __('The fonts the WordPress dashboard uses. Nothing is downloaded.', 'enrove-folios'),
+        'bar_label' => __('Fonts downloaded', 'enrove-folios'),
         // Switching back to fonts already here downloads nothing, so it is not
         // reported as a download.
         'ready' => $fonts['state'] === 'declined' && static::is_on_site($fonts)
-          ? __('Folios use the theme fonts.', 'groove-folios')
-          : __('Downloaded. Folios use the theme fonts.', 'groove-folios'),
-        'declined' => __('Using system fonts. You can download the theme fonts later in Settings → Fonts.', 'groove-folios'),
+          ? __('Folios use the theme fonts.', 'enrove-folios')
+          : __('Downloaded. Folios use the theme fonts.', 'enrove-folios'),
+        'declined' => __('Using system fonts. You can download the theme fonts later in Settings → Fonts.', 'enrove-folios'),
       ));
 
       static::render_item('photos', $photos, array(
-        'title' => __('Photos', 'groove-folios'),
+        'title' => __('Photos', 'enrove-folios'),
         'desc' => sprintf(
           /* translators: %s: number of photos. */
           _n(
             '%s photo from Pexels for theme covers and sample content, about 4 MB, saved to your uploads folder.',
             '%s photos from Pexels for theme covers and sample content, about 4 MB, saved to your uploads folder.',
             $photos['total'],
-            'groove-folios'
+            'enrove-folios'
           ),
           number_format_i18n($photos['total'])
         ),
-        'download' => static::is_on_site($photos) ? __('Use the photos', 'groove-folios') : __('Download from Pexels', 'groove-folios'),
-        'download_hint' => static::is_on_site($photos) ? __('Already on this site. Nothing is downloaded.', 'groove-folios') : __('Photo covers, and sample folios with their pictures.', 'groove-folios'),
-        'decline' => __('Use gradient covers', 'groove-folios'),
-        'decline_hint' => __('A soft gradient in the theme’s colours until you add your own image.', 'groove-folios'),
-        'bar_label' => __('Photos downloaded', 'groove-folios'),
+        'download' => static::is_on_site($photos) ? __('Use the photos', 'enrove-folios') : __('Download from Pexels', 'enrove-folios'),
+        'download_hint' => static::is_on_site($photos) ? __('Already on this site. Nothing is downloaded.', 'enrove-folios') : __('Photo covers, and sample folios with their pictures.', 'enrove-folios'),
+        'decline' => __('Use gradient covers', 'enrove-folios'),
+        'decline_hint' => __('A soft gradient in the theme’s colours until you add your own image.', 'enrove-folios'),
+        'bar_label' => __('Photos downloaded', 'enrove-folios'),
         'ready' => $photos_bundled
-          ? __('Included with this copy of the plugin. Nothing to download.', 'groove-folios')
+          ? __('Included with this copy of the plugin. Nothing to download.', 'enrove-folios')
           : ($photos['state'] === 'declined' && static::is_on_site($photos)
-            ? __('Covers and sample folios use the photos.', 'groove-folios')
-            : __('Downloaded. Covers and sample folios use the photos.', 'groove-folios')),
-        'declined' => __('Using gradient covers. You can download the photos later in Settings → Imagery.', 'groove-folios'),
+            ? __('Covers and sample folios use the photos.', 'enrove-folios')
+            : __('Downloaded. Covers and sample folios use the photos.', 'enrove-folios')),
+        'declined' => __('Using gradient covers. You can download the photos later in Settings → Imagery.', 'enrove-folios'),
       ));
       ?>
 
       <p class="g-setup__note">
-        <?php esc_html_e('You can change either choice later under Settings → Fonts and Settings → Imagery.', 'groove-folios'); ?>
+        <?php esc_html_e('You can change either choice later under Settings → Fonts and Settings → Imagery.', 'enrove-folios'); ?>
       </p>
-      <p class="screen-reader-text" aria-live="polite" data-groove-setup-live></p>
+      <p class="screen-reader-text" aria-live="polite" data-enrove-setup-live></p>
     </div>
     <div class="g-theme-details__footer">
-      <button type="button" class="button button-secondary" data-groove-setup-close data-groove-setup-dismiss><?php esc_html_e('Not now', 'groove-folios'); ?></button>
-      <button type="button" class="button button-primary" data-groove-setup-run><?php esc_html_e('Download fonts and photos', 'groove-folios'); ?></button>
+      <button type="button" class="button button-secondary" data-enrove-setup-close data-enrove-setup-dismiss><?php esc_html_e('Not now', 'enrove-folios'); ?></button>
+      <button type="button" class="button button-primary" data-enrove-setup-run><?php esc_html_e('Download fonts and photos', 'enrove-folios'); ?></button>
     </div>
   </div>
 </div>
@@ -600,10 +600,10 @@ class First_Run
       $status_text = $copy['declined'];
     } else {
       /* translators: 1: files downloaded so far, 2: files in total. */
-      $status_text = sprintf(__('%1$s of %2$s', 'groove-folios'), number_format_i18n($present), number_format_i18n($total));
+      $status_text = sprintf(__('%1$s of %2$s', 'enrove-folios'), number_format_i18n($present), number_format_i18n($total));
     }
     ?>
-      <fieldset class="g-setup__item" data-groove-setup-item="<?php echo esc_attr($key); ?>" data-state="<?php echo esc_attr($item['state']); ?>"
+      <fieldset class="g-setup__item" data-enrove-setup-item="<?php echo esc_attr($key); ?>" data-state="<?php echo esc_attr($item['state']); ?>"
         data-total="<?php echo esc_attr((string) $total); ?>" data-present="<?php echo esc_attr((string) $present); ?>"
         data-ready-text="<?php echo esc_attr($copy['ready']); ?>" data-declined-text="<?php echo esc_attr($copy['declined']); ?>"
         data-was-declined="<?php echo $declined ? '1' : '0'; ?>">
@@ -630,7 +630,7 @@ class First_Run
             aria-valuemin="0" aria-valuemax="<?php echo esc_attr((string) $total); ?>" aria-valuenow="<?php echo esc_attr((string) $present); ?>">
             <span class="g-setup__bar-fill" style="width: <?php echo esc_attr((string) $pct); ?>%"></span>
           </div>
-          <p class="g-setup__status" data-groove-setup-status><?php echo esc_html($status_text); ?></p>
+          <p class="g-setup__status" data-enrove-setup-status><?php echo esc_html($status_text); ?></p>
         </div>
       </fieldset>
 <?php

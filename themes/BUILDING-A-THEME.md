@@ -1,4 +1,4 @@
-# Building a Groove Folio Theme — a development playbook
+# Building an Enrove Folio Theme — a development playbook
 
 Two documents cover theme work, and they do not overlap:
 
@@ -54,12 +54,12 @@ Pick a two-letter CSS prefix at the same time (`gd`, `gn`, `gm`, `gp`) and use B
 | Copy | For |
 |---|---|
 | `folio-starter` | The baseline shape. Also the reference for responsive, reduced motion, and the opt-in drawer |
-| `groove-ebook` | A block kit styled entirely from `theme.css`; cross-document view transitions with no JS; a mobile-first desktop-only sidebar |
-| `groove-newsletter` | A shared nav pane via `dependencies`; `body.groove .gn` scoping throughout; runtime palette |
-| `groove-magazine` | Theme JS, runtime palette extraction from the feature image, dark-mode bootstrap |
-| `groove-proposal` | Folio-level settings, custom blocks, and the reference three-state light/dark logic |
+| `enrove-ebook` | A block kit styled entirely from `theme.css`; cross-document view transitions with no JS; a mobile-first desktop-only sidebar |
+| `enrove-newsletter` | A shared nav pane via `dependencies`; `body.enrove .gn` scoping throughout; runtime palette |
+| `enrove-magazine` | Theme JS, runtime palette extraction from the feature image, dark-mode bootstrap |
+| `enrove-proposal` | Folio-level settings, custom blocks, and the reference three-state light/dark logic |
 
-Copy structure, not class names: `folio-starter` and `groove-ebook` still use legacy bare
+Copy structure, not class names: `folio-starter` and `enrove-ebook` still use legacy bare
 `.g-folio__theme-1` / `-2` roots.
 
 ### Built in, for now
@@ -67,7 +67,7 @@ Copy structure, not class names: `folio-starter` and `groove-ebook` still use le
 Every theme is a folder in this plugin's `themes/`, found by `load_builtin_themes()` globbing
 `themes/*`. You name the folder, and it must match the derived ID. Installing a theme from a ZIP was
 removed in 0.5.1 (README §10); support for third-party themes is coming. Build to the spec anyway, and
-use the path helpers rather than `GROOVE_PATH . 'themes/…'`, so the theme does not assume where it lives.
+use the path helpers rather than `ENROVE_PATH . 'themes/…'`, so the theme does not assume where it lives.
 
 **Declare both `version` and `last_updated`** in anything you intend to distribute.
 
@@ -123,7 +123,7 @@ get_folio_data  get_current_index  get_prev_page  get_next_page  to_anchor_name 
 What is still yours: `get_html()` (which headings you collect), `get_content()` (how blocks become
 HTML), and every `display_*()` method.
 
-Need a different page order? Reorder `$this->pages` in `get_data()` the way `groove-magazine` does —
+Need a different page order? Reorder `$this->pages` in `get_data()` the way `enrove-magazine` does —
 the helpers read the list through `get_ordered_pages()`, which re-indexes, so an `array_filter()` will
 not throw prev/next off by one.
 
@@ -161,12 +161,12 @@ With a local WordPress (WP-CLI, or the Studio MCP server's `wp_cli`):
 ```php
 // wp eval-file, or wp eval '<this>'
 $fid = wp_insert_post([
-  'post_type' => 'groove_folio', 'post_title' => 'Smoke Test',
+  'post_type' => 'enrove_folio', 'post_title' => 'Smoke Test',
   'post_name' => 'smoke', 'post_status' => 'publish',
 ]);
 update_post_meta($fid, 'theme_id', '<your-theme-id>');
 
-$s = Groove\Themes\Themes_Manager::get_sample_content('<your-theme-id>');
+$s = Enrove\Themes\Themes_Manager::get_sample_content('<your-theme-id>');
 update_post_meta($fid, 'subtitle', $s['subtitle']);
 foreach (($s['folio_meta'] ?? []) as $k => $v) { update_post_meta($fid, $k, $v); }
 
@@ -174,12 +174,12 @@ $order = 0;
 foreach ($s['pages'] as $p) {
   $order += 10;
   $pid = wp_insert_post([
-    'post_type' => 'groove_folio_page', 'post_title' => $p['title'],
+    'post_type' => 'enrove_folio_page', 'post_title' => $p['title'],
     'post_content' => $p['content'], 'post_status' => 'publish', 'menu_order' => $order,
   ]);
   update_post_meta($pid, 'folio_id', $fid);
 }
-echo Groove\Utils\Utils::get_folio_permalink_by_id($fid), "\n";
+echo Enrove\Utils\Utils::get_folio_permalink_by_id($fid), "\n";
 ```
 
 Seeding from `get_sample_content()` rather than lorem ipsum is deliberate: it exercises the heading
@@ -209,8 +209,8 @@ curl -s "http://localhost:PORT/folio/smoke/page/one" \
 ### Confirm the wiring, not just the paint
 
 ```bash
-curl -s "<page url>" | grep -oE 'data-groove-drawer="[^"]*"|class="g-folio__theme-page-nav[^"]*"'
-curl -s "<page url>" | grep -oE 'groove-folios/fonts/[^"]*|--g-folio-(header|body)-font: [^;]*'
+curl -s "<page url>" | grep -oE 'data-enrove-drawer="[^"]*"|class="g-folio__theme-page-nav[^"]*"'
+curl -s "<page url>" | grep -oE 'enrove-folios/fonts/[^"]*|--g-folio-(header|body)-font: [^;]*'
 curl -s "<page url>" | grep -oE '<div class="<prefix> [^"]*"'   # root classes
 ```
 
@@ -222,7 +222,7 @@ Escape, click outside, Tab into it while closed.
 ## 5. The contract checker
 
 The checker and its self-test are development tools, not part of the installed plugin. Run them from a
-checkout of [the plugin's repository](https://github.com/StudioEN/groove-folios-wp-plugin).
+checkout of [the plugin's repository](https://github.com/StudioEN/enrove-folios-wp-plugin).
 
 ```bash
 php bin/check-theme-contract.php --theme=<id>            # a bundled theme
@@ -270,7 +270,7 @@ Everything it catches, and what each one means:
 | Warning | Means |
 |---|---|
 | backwards alias: X reads Y | **The slot must carry the value, your private name is the alias.** The mistake it looks for hardest |
-| `--folio-*` on `:root` without a scheme toggle | Leaks into wp-admin, which also carries `body.groove`. Legitimate only when a scheme class on `:root` drives the tokens |
+| `--folio-*` on `:root` without a scheme toggle | Leaks into wp-admin, which also carries `body.enrove`. Legitimate only when a scheme class on `:root` drives the tokens |
 | an `@import` | Fonts are declared in `setup.php` |
 | X is Npx at every width | Display type that adapts at no width. An icon or control may legitimately stay fixed; a heading may not |
 | only N width breakpoints | Intermediate widths get a layout built for another size |
@@ -355,7 +355,7 @@ stops being an inversion at all.
 
 Scheme blocks redeclare the **slots**, never the aliases — the aliases already point at the slots, so
 re-pointing them is a no-op that breaks the chain. New themes use `.folio-scheme-light` /
-`.folio-scheme-dark` on `:root`. Copy `groove-proposal`'s three-state logic rather than inventing one:
+`.folio-scheme-dark` on `:root`. Copy `enrove-proposal`'s three-state logic rather than inventing one:
 explicit dark, explicit light, and a system fallback whose `:not()` guard is load-bearing — it is what
 lets someone who chose light stay light on a machine set to dark.
 
@@ -382,20 +382,20 @@ a background) extends past the words. `width: min-content` breaks at the longest
 are both (0,1,1), and the block library wins on source order. Outrank it — `.gd-prose table td` —
 rather than matching it.
 
-**`body.groove` is on wp-admin too**, via the `admin_body_class` filter. Unscoped rules leak. Scope to
-your own prefix. `body.groove` scoping is *not* settled practice in this codebase — newsletter uses it
+**`body.enrove` is on wp-admin too**, via the `admin_body_class` filter. Unscoped rules leak. Scope to
+your own prefix. `body.enrove` scoping is *not* settled practice in this codebase — newsletter uses it
 throughout, magazine and proposal not at all. You are picking a side, not following a convention.
 
 ### PHP
 
 **The `ensure_script()` form every bundled theme uses is not portable.** All three themes that ship
-JS — `groove-magazine`, `groove-newsletter`, `groove-proposal` — build the `filemtime()` path as
-`trailingslashit(GROOVE_PATH) . 'themes/' . static::get_id() . '/assets/js/…'` while taking the URL
+JS — `enrove-magazine`, `enrove-newsletter`, `enrove-proposal` — build the `filemtime()` path as
+`trailingslashit(ENROVE_PATH) . 'themes/' . static::get_id() . '/assets/js/…'` while taking the URL
 from `get_theme_assets_url()`. The URL half is portable; the path half only resolves for a theme
 bundled in the plugin.
 
 Nothing 404s, which is why this survives: for a theme anywhere else the path simply does not exist,
-`file_exists()` returns false, and the version silently falls back to `GROOVE_VERSION`. The script
+`file_exists()` returns false, and the version silently falls back to `ENROVE_VERSION`. The script
 loads — and then stops cache-busting, so your next edit to it reaches nobody who already has the old
 one. Use `get_theme_assets_path()` for the path, and the helpers generally:
 `get_theme_assets_path()`, `get_theme_assets_url()`, `get_theme_folder_url()`.
@@ -431,16 +431,16 @@ looks wrong, and the contract checker catches only the font case, so check the r
 
 ### Behaviour
 
-**Do not write a drawer script.** `groove-main.js` owns opening and closing via the shared
+**Do not write a drawer script.** `enrove-main.js` owns opening and closing via the shared
 `…-nav-button` / `…-nav-close` classes. Everything else — ARIA state, Escape, click-outside, scroll
-lock, focus moved in and returned — is opt-in with `data-groove-drawer="<trigger selector>"` on the
-pane. Add `data-groove-drawer-lock="off"` for a dropdown-style panel.
+lock, focus moved in and returned — is opt-in with `data-enrove-drawer="<trigger selector>"` on the
+pane. Add `data-enrove-drawer-lock="off"` for a dropdown-style panel.
 
 Two things your CSS still owns: **`visibility`, not just `transform`** (a pane translated off-screen is
 still in the tab order — and drop `visibility` from the `.visible` rule's transition list so it flips
 instantly on open, or focus cannot move in), and **scroll the content box, not the pane**.
 
-Before adding any theme JS, ask whether the behaviour belongs in `groove-main.js` behind an opt-in
+Before adding any theme JS, ask whether the behaviour belongs in `enrove-main.js` behind an opt-in
 attribute instead. That is what makes it available to the next theme. `folio-starter` carried a
 private 139-line copy of the drawer controller until it moved.
 
@@ -463,7 +463,7 @@ Mechanical, in order:
 By eye, in all four combinations (light/dark × desktop/mobile):
 
 - [ ] Cover at `/<base-slug>/<folio-slug>`; page at `/<base-slug>/<folio-slug>/page/<page-slug>`
-- [ ] Draft folio via `?groove_preview=1&folio_id=<id>`
+- [ ] Draft folio via `?enrove_preview=1&folio_id=<id>`
 - [ ] Picker preview, **both** views — open it from the picker, a hand-typed URL 403s on the nonce
 - [ ] A folio with **zero pages** renders both views without a fatal
 - [ ] The **last** page, where there is no "next"
@@ -488,7 +488,7 @@ anything shared.
 
 ## 9. When it does not appear in the picker
 
-**Open *Groove → Themes* and read the problem panel before reading any code.** Every loader guard
+**Open *Enrove → Themes* and read the problem panel before reading any code.** Every loader guard
 records a reason code; the panel names the folder and the fault.
 
 | Reason | Means |
@@ -514,7 +514,7 @@ A folder carrying **none** of the four marker files (`setup.php`, `cover.php`, `
 | Empty theme | `display_theme()` missing `parent::display_theme()` |
 | Preview empty but live fine | `get_data()` missing the `is_preview_mode` guard |
 | Nav does not open | Not using the shared `g-folio__theme-*-nav-button` / `-close` classes |
-| Nav opens but Escape does nothing | Missing `data-groove-drawer` on the pane |
+| Nav opens but Escape does nothing | Missing `data-enrove-drawer` on the pane |
 | Tab walks into a closed drawer | Pane hidden by `transform` alone — add `visibility` |
 | Embeds render as plain URLs | `get_content()` not passed through `apply_embed_processing()` |
 | "Create with sample content" missing | `sample-content.php` absent, not returning an array, or every page entry lacking a `title` |

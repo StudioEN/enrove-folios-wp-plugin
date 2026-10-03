@@ -5,8 +5,8 @@ if (!defined('ABSPATH')) {
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Required from inside a closure (Plugin's template_redirect handler), so these variables are local to it, not globals.
 
-use Groove\Themes\Font_Loader;
-use Groove\Themes\Themes_Manager;
+use Enrove\Themes\Font_Loader;
+use Enrove\Themes\Themes_Manager;
 
 // NOTE: Themes_Manager::register_defaults() is already called in Plugin::__construct().
 // Do NOT call it again here — it would double-register all themes and re-run migrations.
@@ -66,20 +66,20 @@ $theme = Themes_Manager::create_theme_for_current_request();
       $_pw_bg = '#f0f0f1';
     }
 
-    wp_register_style('groove-password-gate', false, [], GROOVE_VERSION);
+    wp_register_style('enrove-password-gate', false, [], ENROVE_VERSION);
     // wp_strip_all_tags() is the late escape for a <style> element: no tag,
     // </style> included, can survive it.
-    wp_add_inline_style('groove-password-gate', wp_strip_all_tags(implode("\n", array(
+    wp_add_inline_style('enrove-password-gate', wp_strip_all_tags(implode("\n", array(
       '* { box-sizing: border-box; margin: 0; padding: 0; }',
       'body { font-family: ' . $_pw_body_stack . '; color: #1d2327; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; background: ' . $_pw_bg . '; }',
-      '.groove-password-wrap { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 40px; max-width: 420px; width: 100%; text-align: left; }',
-      '.groove-password-wrap h1 { font-family: ' . $_pw_heading_stack . '; font-size: 20px; font-weight: 600; margin-bottom: 24px; }',
-      '.groove-password-wrap p { font-size: 14px; color: #646970; margin-bottom: 24px; }',
-      '.groove-password-wrap label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }',
-      '.groove-password-wrap input[type="password"] { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #8c8f94; border-radius: 4px; margin-bottom: 16px; }',
-      '.groove-password-wrap input[type="password"]:focus { border-color: ' . $_pw_accent . '; box-shadow: 0 0 0 1px ' . $_pw_accent . '; outline: none; }',
-      '.groove-password-wrap input[type="submit"] { display: block; width: 100%; background: ' . $_pw_accent . '; color: #fff; border: none; border-radius: 4px; padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; }',
-      '.groove-password-wrap input[type="submit"]:hover { background: ' . $_pw_accent_hover . '; }',
+      '.enrove-password-wrap { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 40px; max-width: 420px; width: 100%; text-align: left; }',
+      '.enrove-password-wrap h1 { font-family: ' . $_pw_heading_stack . '; font-size: 20px; font-weight: 600; margin-bottom: 24px; }',
+      '.enrove-password-wrap p { font-size: 14px; color: #646970; margin-bottom: 24px; }',
+      '.enrove-password-wrap label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }',
+      '.enrove-password-wrap input[type="password"] { width: 100%; padding: 8px 12px; font-size: 14px; border: 1px solid #8c8f94; border-radius: 4px; margin-bottom: 16px; }',
+      '.enrove-password-wrap input[type="password"]:focus { border-color: ' . $_pw_accent . '; box-shadow: 0 0 0 1px ' . $_pw_accent . '; outline: none; }',
+      '.enrove-password-wrap input[type="submit"] { display: block; width: 100%; background: ' . $_pw_accent . '; color: #fff; border: none; border-radius: 4px; padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; }',
+      '.enrove-password-wrap input[type="submit"]:hover { background: ' . $_pw_accent_hover . '; }',
     ))));
 ?>
 <!DOCTYPE html>
@@ -88,10 +88,10 @@ $theme = Themes_Manager::create_theme_for_current_request();
   <meta charset="<?php bloginfo('charset'); ?>" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><?php echo esc_html($password_post->post_title); ?></title>
-  <?php wp_print_styles(array_merge(Font_Loader::enqueue_files($_pw_fonts), array('groove-password-gate'))); ?>
+  <?php wp_print_styles(array_merge(Font_Loader::enqueue_files($_pw_fonts), array('enrove-password-gate'))); ?>
 </head>
 <body>
-  <div class="groove-password-wrap">
+  <div class="enrove-password-wrap">
     <h1><?php echo esc_html($password_post->post_title); ?></h1>
     <?php
       // Replace WordPress's default password form with cleaner copy.
@@ -99,10 +99,10 @@ $theme = Themes_Manager::create_theme_for_current_request();
       $_pw_action_url = site_url('wp-login.php?action=postpass', 'login_post');
     ?>
     <form action="<?php echo esc_url($_pw_action_url); ?>" class="post-password-form" method="post">
-      <p><?php echo esc_html__('Enter the password to view this folio.', 'groove-folios'); ?></p>
-      <label for="pwbox-<?php echo (int) $_pw_post_id; ?>"><?php echo esc_html__('Password', 'groove-folios'); ?></label>
+      <p><?php echo esc_html__('Enter the password to view this folio.', 'enrove-folios'); ?></p>
+      <label for="pwbox-<?php echo (int) $_pw_post_id; ?>"><?php echo esc_html__('Password', 'enrove-folios'); ?></label>
       <input name="post_password" id="pwbox-<?php echo (int) $_pw_post_id; ?>" type="password" spellcheck="false" />
-      <input type="submit" name="Submit" value="<?php echo esc_attr__('Unlock', 'groove-folios'); ?>" />
+      <input type="submit" name="Submit" value="<?php echo esc_attr__('Unlock', 'enrove-folios'); ?>" />
     </form>
   </div>
 </body>
@@ -116,25 +116,25 @@ $theme = Themes_Manager::create_theme_for_current_request();
 // session that may see it. The theme is fine in that case, so the message sent
 // people looking for a broken theme instead of an unpublished folio.
 $_gv_post = null;
-$_gv_id = \Groove\Utils\Utils::get_groove_post_id();
+$_gv_id = \Enrove\Utils\Utils::get_enrove_post_id();
 if ($_gv_id) {
   $_gv_post = get_post($_gv_id);
 }
 
-if (!$_gv_post || !\Groove\Utils\Utils::is_groove_post($_gv_post)) {
+if (!$_gv_post || !\Enrove\Utils\Utils::is_enrove_post($_gv_post)) {
   // Nothing here at all: a bad link, or the folio was deleted.
   $_gv_status = 404;
-  $_gv_title = __('Folio not found', 'groove-folios');
-  $_gv_message = __('This folio no longer exists, or the link is wrong.', 'groove-folios');
+  $_gv_title = __('Folio not found', 'enrove-folios');
+  $_gv_message = __('This folio no longer exists, or the link is wrong.', 'enrove-folios');
 }
-elseif (!\Groove\Utils\Utils::can_current_request_view_post($_gv_post)) {
+elseif (!\Enrove\Utils\Utils::can_current_request_view_post($_gv_post)) {
   // It exists but this visitor may not see it — in practice, a draft folio.
   // 404 rather than 403 so an unpublished folio's existence stays private.
   $_gv_status = 404;
-  $_gv_title = __('Not published yet', 'groove-folios');
+  $_gv_title = __('Not published yet', 'enrove-folios');
   $_gv_message = is_user_logged_in()
-    ? __('This folio is not published yet, and your account cannot preview it.', 'groove-folios')
-    : __('This folio is not published yet. Sign in to preview it, or publish it to share the link.', 'groove-folios');
+    ? __('This folio is not published yet, and your account cannot preview it.', 'enrove-folios')
+    : __('This folio is not published yet. Sign in to preview it, or publish it to share the link.', 'enrove-folios');
 }
 else {
   // Genuinely no usable theme: the folio names a theme_id nothing on this site
@@ -146,8 +146,8 @@ else {
   // an empty one, so a folio whose theme failed to load rendered in a different
   // theme at HTTP 200 and this notice never ran.
   $_gv_status = 404;
-  $_gv_title = __('Theme not found', 'groove-folios');
-  $_gv_message = __('This folio points at a theme that is not installed.', 'groove-folios');
+  $_gv_title = __('Theme not found', 'enrove-folios');
+  $_gv_message = __('This folio points at a theme that is not installed.', 'enrove-folios');
 }
 
 status_header($_gv_status);
@@ -163,20 +163,20 @@ nocache_headers();
   <?php
   // A bare document with no wp_head(), so the one stylesheet it needs is
   // printed on its own.
-  wp_register_style('groove-folio-notice', false, [], GROOVE_VERSION);
+  wp_register_style('enrove-folio-notice', false, [], ENROVE_VERSION);
   wp_add_inline_style(
-    'groove-folio-notice',
+    'enrove-folio-notice',
     "body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f0f0f1; color: #1d2327; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }"
-    . ' .groove-notice { max-width: 26rem; padding: 2rem; text-align: center; }'
-    . ' .groove-notice h1 { margin: 0 0 0.5rem; font-size: 1.125rem; font-weight: 600; }'
-    . ' .groove-notice p { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: #50575e; }'
+    . ' .enrove-notice { max-width: 26rem; padding: 2rem; text-align: center; }'
+    . ' .enrove-notice h1 { margin: 0 0 0.5rem; font-size: 1.125rem; font-weight: 600; }'
+    . ' .enrove-notice p { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: #50575e; }'
   );
-  wp_print_styles('groove-folio-notice');
+  wp_print_styles('enrove-folio-notice');
   ?>
 </head>
 
 <body>
-  <div class="groove-notice">
+  <div class="enrove-notice">
     <h1><?php echo esc_html($_gv_title); ?></h1>
     <p><?php echo esc_html($_gv_message); ?></p>
   </div>
@@ -198,11 +198,11 @@ $GLOBALS['wp_query']->is_404 = false;
 // The document is titled after the folio, and a page after itself and its
 // folio. Core's title tag would title it after the main query, which found
 // nothing here, so it is left out.
-$_gv_doc_post = get_post((int) \Groove\Utils\Utils::get_groove_post_id());
+$_gv_doc_post = get_post((int) \Enrove\Utils\Utils::get_enrove_post_id());
 $_gv_doc_title = array();
 if ($_gv_doc_post instanceof \WP_Post) {
   $_gv_doc_title[] = $_gv_doc_post->post_title;
-  if ($_gv_doc_post->post_type === 'groove_folio_page') {
+  if ($_gv_doc_post->post_type === 'enrove_folio_page') {
     $_gv_doc_folio = get_post((int) get_post_meta($_gv_doc_post->ID, 'folio_id', true));
     if ($_gv_doc_folio instanceof \WP_Post && $_gv_doc_folio->post_title !== '') {
       $_gv_doc_title[] = $_gv_doc_folio->post_title;
@@ -222,7 +222,7 @@ remove_action('wp_head', '_wp_render_title_tag', 1);
   <?php wp_head(); ?>
 </head>
 
-<body <?php body_class('groove'); ?>>
+<body <?php body_class('enrove'); ?>>
   <?php $theme->display_theme(); ?>
   <?php wp_footer(); ?>
 </body>

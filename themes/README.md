@@ -1,6 +1,6 @@
-# Groove Folio Themes — Architecture
+# Enrove Folio Themes — Architecture
 
-How a Groove Folio theme is built, registered, resolved, and rendered.
+How an Enrove Folio theme is built, registered, resolved, and rendered.
 
 This file is the **spec**, organised by subsystem. If you are actually building a theme rather than
 looking something up, start with [BUILDING-A-THEME.md](BUILDING-A-THEME.md) — the order of work, how
@@ -11,19 +11,19 @@ silently. It cites the sections here rather than restating them.
 
 ## 1. What a theme is
 
-A Groove Folio theme is a **self-contained folder** that renders two views of a folio:
+An Enrove Folio theme is a **self-contained folder** that renders two views of a folio:
 
 | View | Class | Renders |
 |------|-------|---------|
-| **Cover** | `cover.php` → `Cover` | The `groove_folio` post — title, subtitle, byline, table of contents, entry link |
-| **Page** | `page.php` → `Page` | A `groove_folio_page` post — the actual reading experience |
+| **Cover** | `cover.php` → `Cover` | The `enrove_folio` post — title, subtitle, byline, table of contents, entry link |
+| **Page** | `page.php` → `Page` | A `enrove_folio_page` post — the actual reading experience |
 
-Both classes extend `Groove\Themes\Base_Theme` ([base-theme.php](base-theme.php)), which handles data loading,
+Both classes extend `Enrove\Themes\Base_Theme` ([base-theme.php](base-theme.php)), which handles data loading,
 asset enqueueing, font injection, and theme metadata. A theme subclass supplies **markup and styling only**.
 
 Themes are built in: a folder inside `themes/`, auto-discovered on every request. Installing a theme from
-a ZIP on *Groove → Themes* was removed in 0.5.1, because it wrote the package's PHP into
-`wp-content/groove-themes/`, and WordPress.org does not allow a plugin to write executable code there.
+a ZIP on *Enrove → Themes* was removed in 0.5.1, because it wrote the package's PHP into
+`wp-content/enrove-themes/`, and WordPress.org does not allow a plugin to write executable code there.
 Support for third-party themes is coming back by a route that does not write files (see §10).
 
 ---
@@ -57,10 +57,10 @@ and cache-busted by `filemtime()`.
 | Theme | Character | Learn from it |
 |-------|-----------|---------------|
 | [folio-starter/](folio-starter/) | Minimal, no JS, no nav pane | The baseline shape of a theme |
-| [groove-ebook/](groove-ebook/) | Minimal + full-bleed cover, frosted chrome, book blocks | Cross-document view transitions with no JS; `@supports`-guarded `backdrop-filter`; a block kit styled entirely from `theme.css` |
-| [groove-newsletter/](groove-newsletter/) | Shared nav pane, scoped tokens, view transitions | `dependencies`, `body.groove .gn` scoping |
-| [groove-magazine/](groove-magazine/) | Runtime palette extraction from feature images | Theme JS, dark mode bootstrap |
-| [groove-proposal/](groove-proposal/) | Folio-level meta fields, custom blocks, dark mode | Theme-specific admin UI + blocks |
+| [enrove-ebook/](enrove-ebook/) | Minimal + full-bleed cover, frosted chrome, book blocks | Cross-document view transitions with no JS; `@supports`-guarded `backdrop-filter`; a block kit styled entirely from `theme.css` |
+| [enrove-newsletter/](enrove-newsletter/) | Shared nav pane, scoped tokens, view transitions | `dependencies`, `body.enrove .gn` scoping |
+| [enrove-magazine/](enrove-magazine/) | Runtime palette extraction from feature images | Theme JS, dark mode bootstrap |
+| [enrove-proposal/](enrove-proposal/) | Folio-level meta fields, custom blocks, dark mode | Theme-specific admin UI + blocks |
 
 ---
 
@@ -72,7 +72,7 @@ Returns a plain array. **No side effects** — it is `include`d repeatedly (disc
 ```php
 <?php
 return [
-    'name'          => 'Groove Newsletter',           // Human name. The theme ID is sanitize_title() of this.
+    'name'          => 'Enrove Newsletter',           // Human name. The theme ID is sanitize_title() of this.
     'default_title' => 'A new issue',                 // Optional. Title a new folio gets — see below.
     'thumbnail'     => 'theme-thumb.png',             // Filename only, resolved under assets/images/
     'cover'         => 'theme-cover.jpg',
@@ -87,9 +87,9 @@ return [
     'features'      => ['dynamic-color', 'page-transitions'], // Optional, max 4, shown in the theme picker
     'author'        => 'StudioEN',
     'last_updated'  => '2026-03-12',
-    'namespace'     => 'Groove\Themes\Groove_Newsletter',
-    'cover_class'   => 'Groove\Themes\Groove_Newsletter\Cover',
-    'page_class'    => 'Groove\Themes\Groove_Newsletter\Page',
+    'namespace'     => 'Enrove\Themes\Enrove_Newsletter',
+    'cover_class'   => 'Enrove\Themes\Enrove_Newsletter\Cover',
+    'page_class'    => 'Enrove\Themes\Enrove_Newsletter\Page',
     'dependencies'  => ['navigation-pane.php'],       // Optional, relative paths, require_once'd before cover/page
 ];
 ```
@@ -147,10 +147,10 @@ it failed permanently for every third-party theme, and the only way to satisfy i
 which the next update overwrote.
 
 **The theme ID is derived, never declared.** `Base_Theme::get_id()` returns `sanitize_title(get_name())`,
-so `'Groove Newsletter'` → `groove-newsletter`. The folder name must match, because the ID is what folios
+so `'Enrove Newsletter'` → `enrove-newsletter`. The folder name must match, because the ID is what folios
 store and what the registry, the picker and migrations key on. Asset URLs are not what breaks:
 `resolve_theme_folder_url()` builds them from the class file's real path, and uses
-`GROOVE_URL . 'themes/' . get_id() . '/'` only as a fallback for a plugin installed outside `wp-content`.
+`ENROVE_URL . 'themes/' . get_id() . '/'` only as a fallback for a plugin installed outside `wp-content`.
 **Renaming `name` renames the ID and orphans every folio that stored the old one** — see §9 for migrations.
 
 `version` is informational: nothing reads it since the package installer was removed.
@@ -166,7 +166,7 @@ store and what the registry, the picker and migrations key on. Asset URLs are no
    with `setup.php` + `cover.php` + `page.php`: requires every declared `dependency`, requires cover/page,
    verifies both classes exist and are `is_subclass_of(Base_Theme::class)`, then `register()`s them.
    Any failing check skips the folder and records why with `record_skipped_theme()`; the problem panel
-   on *Groove → Themes* names the folder and the fault, so a theme missing from the picker is diagnosed
+   on *Enrove → Themes* names the folder and the fault, so a theme missing from the picker is diagnosed
    there first (the reason codes are tabled in [BUILDING-A-THEME.md](BUILDING-A-THEME.md) §9). A declared dependency that is not on disk skips the theme too: it
    used to be ignored and the theme registered anyway, which produced a theme that looked healthy in every
    admin screen and fataled on the first visitor, because dependencies declare functions rather than
@@ -201,11 +201,11 @@ registry key `''`.
 > request, front end included. Two consequences worth knowing before you edit a theme on a live site.
 >
 > First, **a broken theme file can take the whole site down**, wp-admin with it — which is the part that
-> hurts, because *Groove → Themes* is where you would have removed the theme that did it. Which
+> hurts, because *Enrove → Themes* is where you would have removed the theme that did it. Which
 > breakages do that and which are merely skipped is exact rather than intuitive, and not what folklore
 > says: see [§13](#13-known-warts).
 >
-> Second, **`__()` does not work in the loaders.** The `groove-folios` text domain loads just in time, on the
+> Second, **`__()` does not work in the loaders.** The `enrove-folios` text domain loads just in time, on the
 > first translation call after `init`, so a translation call here returns English and trips `_load_textdomain_just_in_time` on WordPress 6.7+,
 > on every request. That is why `record_skipped_theme()` stores a reason code plus raw context and
 > `describe_skipped_theme()` turns it into a sentence later, in admin code where translation works.
@@ -214,17 +214,17 @@ registry key `''`.
 
 ## 5. Request routing — how a theme reaches the browser
 
-Groove deliberately registers **no rewrite rules** (see the comment in `Plugin::add_rewrite()`).
+Enrove deliberately registers **no rewrite rules** (see the comment in `Plugin::add_rewrite()`).
 Adding them makes WordPress see a CPT archive query and `redirect_canonical` bounces the visitor home
 before templates run. Instead, a `template_redirect` hook at **priority 5** (before `redirect_canonical`)
 intercepts and `exit`s:
 
 ```
 template_redirect (prio 5) in includes/plugin.php
-├── ?groove_theme_preview=<id>  → includes/theme-picker-preview-template.php  (admin-only, nonce'd)
+├── ?enrove_theme_preview=<id>  → includes/theme-picker-preview-template.php  (admin-only, nonce'd)
 └── path matches /<base-slug>/  → includes/folio-preview-template.php
-    OR ?groove_preview=1
-    OR ?folio_id= / ?p= pointing at a groove post
+    OR ?enrove_preview=1
+    OR ?folio_id= / ?p= pointing at an enrove post
 ```
 
 [`folio-preview-template.php`](../includes/folio-preview-template.php) then:
@@ -232,7 +232,7 @@ template_redirect (prio 5) in includes/plugin.php
 1. Calls `Themes_Manager::create_theme_for_current_request()`.
 2. If that returns `null`, checks for a password-protected folio and renders a themed password gate
    (colours from the theme's `gate` block in `setup.php` — see §3), otherwise 404s.
-3. Otherwise emits a bare document: `<head>` + `wp_head()`, `<body class="… groove">`, `$theme->display_theme()`,
+3. Otherwise emits a bare document: `<head>` + `wp_head()`, `<body class="… enrove">`, `$theme->display_theme()`,
    `wp_footer()`. **The active WordPress site theme is bypassed entirely.**
 
 Bypassing the site theme's templates is not enough on its own, because `wp_head()` would still bring its
@@ -250,8 +250,8 @@ else's output, so it still arrives.
 
 `create_theme_for_current_request()` resolves the folio like this:
 
-- `Utils::get_groove_post_id()` / `get_groove_post_type()` identify the requested post.
-- Viewability is checked (`is_groove_post`, `can_current_request_view_post`).
+- `Utils::get_enrove_post_id()` / `get_enrove_post_type()` identify the requested post.
+- Viewability is checked (`is_enrove_post`, `can_current_request_view_post`).
 - For a **folio page**, the parent folio is resolved **URL-first** — the folio slug in
   `/<base>/<folio>/page/<page>` wins over the `folio_id` meta, because that meta goes stale after
   duplicate-then-delete. Meta is the fallback.
@@ -266,9 +266,9 @@ else's output, so it still arrives.
 |---------|-----|
 | Published folio | `/{base_slug}/{folio-slug}` |
 | Published page | `/{base_slug}/{folio-slug}/page/{page-slug}` |
-| Draft / no pretty permalinks / admin | `?groove_preview=1&folio_id=…` or `?groove_preview=1&p=…&post_type=groove_folio_page` |
+| Draft / no pretty permalinks / admin | `?enrove_preview=1&folio_id=…` or `?enrove_preview=1&p=…&post_type=enrove_folio_page` |
 
-`{base_slug}` is the `groove_folio_base_slug` option, default `folio`. Never hardcode `/folio/` —
+`{base_slug}` is the `enrove_folio_base_slug` option, default `folio`. Never hardcode `/folio/` —
 call `Utils::get_folio_base_slug()`.
 
 ---
@@ -279,9 +279,9 @@ call `Utils::get_folio_base_slug()`.
 
 | Property | Source |
 |----------|--------|
-| `$id`, `$post_type` | Current request (`Utils::get_groove_post_id/type`) |
+| `$id`, `$post_type` | Current request (`Utils::get_enrove_post_id/type`) |
 | `$title`, `$content`, `$author`, `$feature_image`, `$page` | `get_page_data()` — a `WP_Query` over the current post |
-| `$pages` | `get_pages_data($id)` — sibling `groove_folio_page`s ordered by `menu_order ASC`, filtered by `folio_id` meta. Only published pages in a published folio, for editors too; every page an editor may preview in an unpublished one. A theme listing pages itself uses `Utils::get_listed_page_statuses($folio_id)` for the same rule |
+| `$pages` | `get_pages_data($id)` — sibling `enrove_folio_page`s ordered by `menu_order ASC`, filtered by `folio_id` meta. Only published pages in a published folio, for editors too; every page an editor may preview in an unpublished one. A theme listing pages itself uses `Utils::get_listed_page_statuses($folio_id)` for the same rule |
 | `$theme_id`, `$theme_name`, `$theme_cover_url`, `$theme_logo_url`, `$show_logo` | `get_theme_data()` — resolved through `Themes_Manager` |
 | `$copyright` | `copyright` meta on the folio |
 | `$is_preview_mode` | `true` only under the theme-picker preview |
@@ -315,15 +315,15 @@ That call is what loads the data. Skipping it renders an empty theme.
 `Base_Theme::ensure_script()` runs on `wp_enqueue_scripts` and:
 
 - calls `show_admin_bar(false)`
-- enqueues `groove` (assets/css/groove-main.css) — the shared reset/layout — with an inline style
+- enqueues `enrove` (assets/css/enrove-main.css) — the shared reset/layout — with an inline style
   cancelling the admin bar's `margin-top` bump
-- enqueues `groove-folio-contract` (assets/css/folio-contract.css) — the `--folio-*` token
-  contract and its fallbacks, dependent on `groove`
-- enqueues `groove-theme-<theme-id>` from `assets/css/theme.css`, dependent on `groove` and
-  `groove-folio-contract`, versioned by `filemtime()`
+- enqueues `enrove-folio-contract` (assets/css/folio-contract.css) — the `--folio-*` token
+  contract and its fallbacks, dependent on `enrove`
+- enqueues `enrove-theme-<theme-id>` from `assets/css/theme.css`, dependent on `enrove` and
+  `enrove-folio-contract`, versioned by `filemtime()`
 - calls `enqueue_folio_fonts()` (see below)
-- enqueues `groove` JS (assets/js/groove-main.js) with jQuery, preceded by an inline
-  `window.GROOVE_IS_PREVIEW = true` that tells it it is on a folio rather than in wp-admin
+- enqueues `enrove` JS (assets/js/enrove-main.js) with jQuery, preceded by an inline
+  `window.ENROVE_IS_PREVIEW = true` that tells it it is on a folio rather than in wp-admin
 
 To add theme JS, **override and call `parent::ensure_script()` first** — in *both* `Cover` and `Page`:
 
@@ -333,7 +333,7 @@ public function ensure_script()
     parent::ensure_script();
 
     $js_path = $this->get_theme_assets_path() . 'js/my-theme.js';
-    $version = file_exists($js_path) ? filemtime($js_path) : GROOVE_VERSION;
+    $version = file_exists($js_path) ? filemtime($js_path) : ENROVE_VERSION;
 
     wp_enqueue_script(
         'my-theme',
@@ -345,9 +345,9 @@ public function ensure_script()
 }
 ```
 
-Build the `filemtime()` path from `get_theme_assets_path()`, not from `GROOVE_PATH . 'themes/…'`: the
+Build the `filemtime()` path from `get_theme_assets_path()`, not from `ENROVE_PATH . 'themes/…'`: the
 latter assumes the theme sits in this plugin's `themes/` folder, which a theme distributed some other way
-will not, and it then silently falls back to `GROOVE_VERSION` and stops cache-busting its script. The
+will not, and it then silently falls back to `ENROVE_VERSION` and stops cache-busting its script. The
 bundled themes still use that older form; do not copy it.
 
 Path helpers available: `get_theme_folder_path()`, `get_theme_folder_url()`, `get_theme_assets_path()`,
@@ -358,11 +358,11 @@ file's real path, wherever the theme folder is, so prefer them over `plugin_dir_
 
 **A theme must not load a font itself.** No `@import` in `theme.css`, no `wp_enqueue_style()` of a
 Google Fonts URL in `ensure_script()`, no hand-written `<link>`. Everything goes through
-`Groove\Themes\Font_Loader`, and a folio never loads a font from a CDN at all: a reader's browser asking
+`Enrove\Themes\Font_Loader`, and a folio never loads a font from a CDN at all: a reader's browser asking
 Google for a font hands Google the reader's IP address, which WordPress.org counts as phoning home.
-`Groove\Themes\Font_Library` downloads every family into `uploads/groove-folios/fonts/` when an
-administrator chooses to — in the setup dialog the first Groove screen offers, or with *Download Fonts* on
-*Groove → Settings → Fonts* — and folios load those copies. The administrator can choose system fonts
+`Enrove\Themes\Font_Library` downloads every family into `uploads/enrove-folios/fonts/` when an
+administrator chooses to — in the setup dialog the first Enrove screen offers, or with *Download Fonts* on
+*Enrove → Settings → Fonts* — and folios load those copies. The administrator can choose system fonts
 instead, and then no folio loads a downloaded family even if it is on disk.
 
 Declare the theme's defaults in `setup.php` instead:
@@ -399,12 +399,12 @@ written into its own CSS.
 3. nothing — the fallback stack in your CSS applies.
 
 Whatever wins, each distinct family that has been downloaded is enqueued from uploads as its own
-stylesheet, handle `groove-folio-font-<slug>`; one that has not loads nothing. Then these variables are
+stylesheet, handle `enrove-folio-font-<slug>`; one that has not loads nothing. Then these variables are
 injected on the theme handle:
 
 ```css
 .g-folio__theme-cover,
-body.groove [class*="g-folio__theme-"][class$="-page"] {
+body.enrove [class*="g-folio__theme-"][class$="-page"] {
   --g-folio-header-font: …;
   --g-folio-body-font: …;
   --g-folio-primary-font: var(--g-folio-body-font);
@@ -437,13 +437,13 @@ renders a theme:
 
 | Surface | Path |
 | --- | --- |
-| Folio cover / page, published or `?groove_preview=1` | `Base_Theme::ensure_script()` |
+| Folio cover / page, published or `?enrove_preview=1` | `Base_Theme::ensure_script()` |
 | Theme-picker preview (Add New → *Preview*) | same — the template instantiates the theme |
 | Password gate | `includes/folio-preview-template.php`, resolved by `Font_Loader` and printed with `wp_print_styles()` (the gate is a bare document with no `wp_head()`) |
 | Block editor, folio pages | the theme's `blocks.php`, **gated on the edited folio actually using that theme** |
 
 Nothing loads a font on a plain admin screen, on another theme's folio, or plugin-wide. If you add an
-editor-side font load, gate it the same way `groove-proposal/blocks.php` does — resolve the folio, check
+editor-side font load, gate it the same way `enrove-proposal/blocks.php` does — resolve the folio, check
 its `theme_id`, and hand the result to `Font_Loader::enqueue()` with the `.editor-styles-wrapper` selector.
 
 Folio-selectable fonts are the fixed list in `Utils::get_supported_primary_fonts()` (DM Sans, Inter, Lato,
@@ -469,7 +469,7 @@ Merriweather, Montserrat, Noto Sans, Noto Serif, Nunito Sans, Poppins, Roboto).
   `<script>` and `<style>` elements whole, so their contents never reach the page as text.
 - `get_content_allowed_html()` — the `wp_kses()` allowlist a page body is echoed through (§8): the post
   allowlist plus oEmbed iframes, inline SVG icons, the Search block's form, `<source>` and a featured
-  image's `srcset`. Filterable with `groove_folios_content_allowed_html`.
+  image's `srcset`. Filterable with `enrove_folios_content_allowed_html`.
 - `get_folio_id_for_customization()` — the folio ID for the current request, whether the request is a
   cover or a page (URL path first, then `folio_id` meta).
 - `resolve_page_folio_id()` — the canonical parent-folio resolver for `Page` subclasses. Order: URL path →
@@ -503,7 +503,7 @@ redeclare them.
 
 All of them guard an empty, null or non-array `$this->pages` and an `$this->id` that is not in the list,
 so they are safe under the theme-picker preview's fabricated posts. They are ordinary public methods, so
-a theme with a genuine reason can still override one — `groove-magazine` does not need to, because it
+a theme with a genuine reason can still override one — `enrove-magazine` does not need to, because it
 reorders `$this->pages` in `get_data()` before these ever read it.
 
 **Reordering `$this->pages` is supported, filtering included.** The helpers read the list through
@@ -519,23 +519,23 @@ wrong page or off the end.
 ### Two class layers
 
 1. **Shared behavioural classes** (`g-folio__theme-*`) — wired to jQuery handlers in
-   [assets/js/groove-main.js](../assets/js/groove-main.js) and to the font selector. Use these for anything
+   [assets/js/enrove-main.js](../assets/js/enrove-main.js) and to the font selector. Use these for anything
    that must *work*:
 
-   | Class | Behaviour (groove-main.js) |
+   | Class | Behaviour (enrove-main.js) |
    |-------|---------------------------|
    | `.g-folio__theme-nav-button` | opens `.g-folio__theme-nav` (adds `.visible`) |
    | `.g-folio__theme-nav-close` | closes it |
    | `.g-folio__theme-page-nav-button` / `-close` | same pair for `.g-folio__theme-page-nav` |
-   | `.g-folio__theme-page-nav-bar-toggle` | toggles `.g-folio__theme-page-mobile-nav.visible` — opt out with `data-groove-nav-toggle="own"` |
-   | `.g-folio__theme-page-nav-bar` | gains `.is-scrolled` past 96px — opt out with `data-groove-navbar="own"` |
+   | `.g-folio__theme-page-nav-bar-toggle` | toggles `.g-folio__theme-page-mobile-nav.visible` — opt out with `data-enrove-nav-toggle="own"` |
+   | `.g-folio__theme-page-nav-bar` | gains `.is-scrolled` past 96px — opt out with `data-enrove-navbar="own"` |
    | `.g-folio__theme-page-mobile-nav-back` | scroll to top |
    | `.g-folio__theme-cover` / root ending `-page` | font variable injection target |
 
    **The two opt-outs are declared on the element, not on a list of theme names inside
-   `groove-main.js`.** Both were a hardcoded `.closest('.gn-page, .gp-page')` filter until a sixth
+   `enrove-main.js`.** Both were a hardcoded `.closest('.gn-page, .gp-page')` filter until a sixth
    theme would have had to edit shared code to join or leave them. Opt out only when your own JS
-   genuinely does that job — `groove-proposal` sat behind the old filter while shipping a closer for
+   genuinely does that job — `enrove-proposal` sat behind the old filter while shipping a closer for
    its sections panel and no opener, so the panel could never open at all.
 
    The theme-picker preview additionally neutralises `.g-folio__theme-fields-submit`,
@@ -551,15 +551,15 @@ shared class for behaviour, private class for looks.
 
 ### CSS scoping
 
-The rendered document has `<body class="… groove">`. Scope theme CSS to a theme-private root
-(`body.groove .gn { … }`) so it cannot leak into the WordPress admin, which also carries `body.groove`
-via the `admin_body_class` filter. `folio-starter` and `groove-ebook` use bare `.g-folio__theme-1` roots —
+The rendered document has `<body class="… enrove">`. Scope theme CSS to a theme-private root
+(`body.enrove .gn { … }`) so it cannot leak into the WordPress admin, which also carries `body.enrove`
+via the `admin_body_class` filter. `folio-starter` and `enrove-ebook` use bare `.g-folio__theme-1` roots —
 that is legacy, not the pattern to copy.
 
 Define design tokens as custom properties on the theme root, not on `:root`, for the same reason.
 The exception is a theme that ships a light/dark toggle: its scheme class sits on `:root`, and custom
 properties inherit downward, so declaring tokens on a closer, more specific element would defeat the
-override. `groove-magazine` and `groove-proposal` declare on `:root` for exactly that reason. A theme
+override. `enrove-magazine` and `enrove-proposal` declare on `:root` for exactly that reason. A theme
 with no scheme toggle has no excuse.
 
 ### Design tokens — the `--folio-*` contract
@@ -600,7 +600,7 @@ agrees on. This is the same handoff `Font_Loader` already performs for `--g-foli
 The **slot carries the value; your private token is the alias** — never the reverse:
 
 ```css
-body.groove .my-theme {
+body.enrove .my-theme {
   --folio-surface: #f7f1e6;              /* the slot holds the literal */
   --my-surface: var(--folio-surface);    /* your name is an alias onto it */
 }
@@ -612,7 +612,7 @@ per-folio accent override — gets the right answer. Reverse it and an override 
 silently does nothing.
 
 Leave a slot **unfilled** rather than inventing a value for it: the contract file carries a WordPress
-admin-palette fallback, so an unfilled slot degrades to something recognisably Groove instead of to
+admin-palette fallback, so an unfilled slot degrades to something recognisably Enrove instead of to
 unstyled HTML. A theme is not required to fill all twenty-two.
 
 #### Light and dark
@@ -627,9 +627,9 @@ the aliases already point at the slots, so re-pointing them is a no-op that brea
 ```
 
 New themes should use `.folio-scheme-light` / `.folio-scheme-dark` on `:root`.
-`groove-magazine` and `groove-proposal` predate that name and carry their own
+`enrove-magazine` and `enrove-proposal` predate that name and carry their own
 (`gm-theme-*`, `gp-theme-*`), read and written by their theme JS; both now also answer to the
-canonical names via a selector list. `groove-proposal` has the reference implementation of the
+canonical names via a selector list. `enrove-proposal` has the reference implementation of the
 three-state logic — explicit dark, explicit light, and a system-preference fallback guarded with
 `:not()` so an explicit choice always wins. Copy that pattern rather than inventing one.
 
@@ -640,7 +640,7 @@ three-state logic — explicit dark, explicit light, and a system-preference fal
 (§5), but core's block styles and every other plugin's front-end stylesheets still load alongside
 yours. Anything your theme leaves unsaid about a link, *some other stylesheet says instead*. Before the
 site theme was kept out, that stylesheet was often the theme's own, and a great many WordPress themes
-ship `a:hover { text-decoration: none }`. That is not a hypothetical: it is exactly how `groove-ebook`
+ship `a:hover { text-decoration: none }`. That is not a hypothetical: it is exactly how `enrove-ebook`
 came to remove a link's underline on hover without a single `:hover` rule anywhere in the theme.
 Silence is not neutrality; it is a delegation to a stylesheet you have never seen.
 
@@ -667,15 +667,15 @@ And give **every** interactive element a focus ring:
 ```
 
 `--folio-focus` defaults to `--folio-accent`, which is right on a pale ground. Override it when your
-ground is chromatic — `groove-newsletter` uses near-black because its warm accent vanishes against the
-paper, and `groove-ebook` keeps the accent for its white chrome but flips to white for the handful of
+ground is chromatic — `enrove-newsletter` uses near-black because its warm accent vanishes against the
+paper, and `enrove-ebook` keeps the accent for its white chrome but flips to white for the handful of
 controls that sit on its blue field. **Never ship `outline: none` without a ring to replace it**;
 `bin/check-theme-contract.php` fails a theme that does, and fails one with no `:hover` or
 `:focus-visible` rules at all.
 
 #### Drawers: one attribute, not a script
 
-`groove-main.js` owns opening and closing — reuse `g-folio__theme-nav-button` / `-nav-close` /
+`enrove-main.js` owns opening and closing — reuse `g-folio__theme-nav-button` / `-nav-close` /
 `-page-nav-button` / `-page-nav-close` and it toggles `.visible` on the pane for you. Everything a bare
 `addClass` cannot give you — ARIA state, Escape, click-outside dismissal, scroll lock, and focus moved
 in and returned on close — is **opt-in on the pane**:
@@ -683,13 +683,13 @@ in and returned on close — is **opt-in on the pane**:
 ```html
 <nav class="g-folio__theme-nav"
      aria-label="Folio contents"
-     data-groove-drawer=".g-folio__theme-nav-button">
+     data-enrove-drawer=".g-folio__theme-nav-button">
 ```
 
-The attribute's value is the CSS selector of the pane's trigger. Add `data-groove-drawer-lock="off"`
-for a dropdown-style panel that should not lock the page behind it — `groove-ebook`'s mobile "on this
-page" list uses that, and so does `groove-proposal`'s sections panel. It is opt-in rather than
-automatic because `groove-newsletter` ships its own drawer controller and would otherwise
+The attribute's value is the CSS selector of the pane's trigger. Add `data-enrove-drawer-lock="off"`
+for a dropdown-style panel that should not lock the page behind it — `enrove-ebook`'s mobile "on this
+page" list uses that, and so does `enrove-proposal`'s sections panel. It is opt-in rather than
+automatic because `enrove-newsletter` ships its own drawer controller and would otherwise
 double-handle every event; a theme that owns its drawers simply says nothing.
 
 Two things your CSS still owns, and both matter:
@@ -703,7 +703,7 @@ Two things your CSS still owns, and both matter:
   Inside it, the button scrolls away with a long contents list. Give it the pane's own background so
   the list passes behind it rather than through it.
 
-`folio-starter` and `groove-ebook` are both worked examples. `folio-starter` carried a private
+`folio-starter` and `enrove-ebook` are both worked examples. `folio-starter` carried a private
 140-line copy of this controller until it moved here.
 
 #### Reduced motion is your job, not the contract's
@@ -730,8 +730,8 @@ The values are `folio-starter`'s, which is the theme that was rebuilt for respon
 reference for the rest. They exist so a **new** theme gets a working fluid ramp without deriving one,
 and so a theme being modernised has something to adopt rather than inventing a parallel scale.
 
-A theme with its own scale should ignore them entirely — `groove-newsletter` and `groove-proposal` are
-heavily `clamp()`ed already in their own idiom, and `groove-magazine` deliberately mixes fluid display
+A theme with its own scale should ignore them entirely — `enrove-newsletter` and `enrove-proposal` are
+heavily `clamp()`ed already in their own idiom, and `enrove-magazine` deliberately mixes fluid display
 type with fixed UI chrome. Retrofitting those would move pixels for no gain. Adopting the ramp is the
 right move only when a theme has **no** scale of its own.
 
@@ -751,16 +751,16 @@ and the contract quietly lies.
 
 Three of the five themes repaint, and all three now write slots:
 
-- **`groove-magazine`** — `applyPalette()` sets `--folio-accent`, `-accent-hover` and `-accent-soft`
+- **`enrove-magazine`** — `applyPalette()` sets `--folio-accent`, `-accent-hover` and `-accent-soft`
   from a per-folio extracted accent. Its other four accent names hold literals in `theme.css` and stay
   private; `--gm-hero-overlay` in particular is *not* `--folio-overlay` (a hero scrim and a modal scrim
   are different jobs), so writing the slot there would have repainted the nav.
-- **`groove-newsletter`** — `applyPalette()` sets ten slots for a time-of-day palette. This is the one
+- **`enrove-newsletter`** — `applyPalette()` sets ten slots for a time-of-day palette. This is the one
   that shows the coupling to watch for: `--folio-rule` and `--folio-rule-strong` are `color-mix()`
   expressions that used to read `--gn-text` / `--gn-bg` *precisely because* the JS set those inline.
   They now read `var(--folio-text)` / `var(--folio-ground)`. Moving the JS without moving the mixes
   would have frozen both rules at the static colour with nothing visibly broken.
-- **`groove-proposal`** — `applyDynamicPalette()` sets eleven slots from a feature-image dominant
+- **`enrove-proposal`** — `applyDynamicPalette()` sets eleven slots from a feature-image dominant
   colour, when a folio opts in with `data-gp-color-scheme="dynamic"`. Note its
   `DYNAMIC_ACCENT_PROPERTIES` list, which `clearDynamicPalette()` uses to tear the palette down when a
   folio leaves dynamic mode: **it has to name exactly what the setter writes.** A property written but
@@ -776,7 +776,7 @@ CSS declares as `--private: var(--folio-*)` — because a private holding a lite
 written directly, and flagging every private write would be noise rather than a rule.
 
 **And prefer a class to a property.** There is a fourth repaint that is not a palette:
-`setNavBarBackgroundColor()` in `assets/js/groove-main.js` used to write two literal `rgba()` values
+`setNavBarBackgroundColor()` in `assets/js/enrove-main.js` used to write two literal `rgba()` values
 straight onto the top bar's `background-color` as the page scrolled — so the bar ignored
 `--folio-overlay` and no theme could restyle either state. It now toggles `.is-scrolled` and the
 colours live in the theme:
@@ -787,7 +787,7 @@ colours live in the theme:
 ```
 
 Every theme that renders the bar gets this by default. A theme whose own JS paints the bar says
-`data-groove-navbar="own"` on the bar and the shared handler skips it — `groove-newsletter` does,
+`data-enrove-navbar="own"` on the bar and the shared handler skips it — `enrove-newsletter` does,
 because it tracks its masthead with `gn-page--feature-out` instead. Where the runtime is choosing
 between two states rather than computing a value, a class is the better handoff than a property — it
 leaves both states in CSS, where a theme can see and change them.
@@ -798,7 +798,7 @@ Where a theme genuinely has no distinct value for a slot, point it at the slot i
 rather than leaving it unfilled:
 
 ```css
---folio-rule-strong: var(--folio-rule);   /* groove-magazine has one line tone */
+--folio-rule-strong: var(--folio-rule);   /* enrove-magazine has one line tone */
 --folio-ground: var(--folio-surface);     /* folio-starter's ground and plane are the same white */
 ```
 
@@ -811,7 +811,7 @@ on the accent.
 
 #### One ordering dependency worth knowing
 
-`Base_Theme::ensure_script()` enqueues `theme.css` with `groove-folio-contract` as a dependency, so the
+`Base_Theme::ensure_script()` enqueues `theme.css` with `enrove-folio-contract` as a dependency, so the
 contract's `:root` fallbacks always load *before* your stylesheet. Your slot declarations then win on
 source order at equal specificity — or outright, if you declare on a theme root. If that ordering ever
 inverts, every theme's ground turns white.
@@ -822,7 +822,7 @@ Every dynamic value is escaped at output: `esc_html()`, `esc_attr()`, `esc_url()
 Page content is no exception. `get_content()` returns HTML and never echoes it, and the page template echoes
 it through `wp_kses()` with the shared allowlist (§8). WordPress.org does not accept a `phpcs:ignore` on
 rendered post content, whatever reason the comment gives.
-All user-facing strings go through `__()` / `esc_html__()` with the `groove-folios` text domain.
+All user-facing strings go through `__()` / `esc_html__()` with the `enrove-folios` text domain.
 
 ### What WordPress.org rejects
 
@@ -833,7 +833,7 @@ cannot ship:
 - **No `<script>` or `<style>` tag in output.** Inline JS or CSS goes through `wp_add_inline_script()` /
   `wp_add_inline_style()` on a handle; a handle registered with `false` as its source is fine when there
   is no file to attach it to. See "Theme JS" in §9 for the dark-mode bootstrap.
-- **No public credit.** No "Powered by Groove Folios", no "Theme by …" line on a cover or page. WordPress.org
+- **No public credit.** No "Powered by Enrove Folios", no "Theme by …" line on a cover or page. WordPress.org
   allows one only behind an opt-in the site admin turns on, and the plugin has none. The built-in themes
   keep their old credit lines as PHP comments; the markup where a credit sat in a footer grid is an empty
   `aria-hidden` cell, so the layout does not move.
@@ -879,7 +879,7 @@ The allowlist keeps what block rendering and oEmbed produce: YouTube, Vimeo, Spo
 players, WordPress post embeds, social-link and lightbox SVG, the Search form, and every core block's
 saved markup. It keeps no `<script>`. An embed that depends on its provider's script (X, Instagram,
 TikTok) renders the provider's own fallback instead, a quoted post with a link to the original. A
-theme that needs more markup extends the list through the `groove_folios_content_allowed_html` filter,
+theme that needs more markup extends the list through the `enrove_folios_content_allowed_html` filter,
 never by echoing around it.
 
 Anchors are generated by `to_anchor_name()` (lowercase, hyphenated) and consumed by `display_catalogs()`
@@ -897,17 +897,17 @@ All three are inherited from `Base_Theme` — see §6.
 ## 9. Theme-specific data
 
 Themes that need their own fields store them as **post meta on the folio** and add UI in
-[pages/folio.php](../pages/folio.php). `groove-proposal` is the worked example:
+[pages/folio.php](../pages/folio.php). `enrove-proposal` is the worked example:
 
 - ~20 `proposal_*` meta keys, sanitized and saved in `Folio::save()` (pages/folio.php:429+).
 - A whole extra editor tab, gated in `create_tabs()`:
   ```php
-  $is_proposal_theme = (string) ($fields->theme_id ?? '') === 'groove-proposal';
+  $is_proposal_theme = (string) ($fields->theme_id ?? '') === 'enrove-proposal';
   if ($is_proposal_theme) {
-      $tabs['proposal'] = ['label' => …, 'attrs' => ['data-theme-target' => 'groove-proposal']];
+      $tabs['proposal'] = ['label' => …, 'attrs' => ['data-theme-target' => 'enrove-proposal']];
   }
   ```
-  `data-theme-target` / `data-add-new-theme-target` are handled in groove-main.js:1051 and :1097 —
+  `data-theme-target` / `data-add-new-theme-target` are handled in enrove-main.js:1051 and :1097 —
   elements show only while that theme is selected in the picker, without a page reload.
 - The theme reads them back in `get_data()` into `$this->proposal_meta`.
 - Defaults are declared in [fields/folio-fields.php](../fields/folio-fields.php).
@@ -919,17 +919,17 @@ colours travel with the theme in `setup.php['gate']`.
 
 ### Custom blocks
 
-Two themes ship blocks: `groove-proposal` (fourteen, with folio-level settings behind them) and
-`groove-ebook` (seven, no settings, and an editor enqueue driven by one manifest array rather than a
+Two themes ship blocks: `enrove-proposal` (fourteen, with folio-level settings behind them) and
+`enrove-ebook` (seven, no settings, and an editor enqueue driven by one manifest array rather than a
 `wp_enqueue_script` call per block).
 
 `blocks.php` (loaded via `dependencies`) registers server-rendered blocks with
 `register_block_type(..., ['render_callback' => …])`, adds a block category via `block_categories_all`,
-and enqueues editor JS on `enqueue_block_editor_assets` **gated on `$screen->post_type === 'groove_folio_page'`**.
+and enqueues editor JS on `enqueue_block_editor_assets` **gated on `$screen->post_type === 'enrove_folio_page'`**.
 
 **Name every block `<theme-id>/<block>`.** The namespace is how the plugin knows a block is yours. Every
 theme's `blocks.php` loads on every request, so without that rule a Magazine page would offer Proposal
-pricing tables that render unstyled. `Groove\Themes\Theme_Blocks` hides blocks whose namespace is another
+pricing tables that render unstyled. `Enrove\Themes\Theme_Blocks` hides blocks whose namespace is another
 theme's ID from the inserter of a page whose folio uses a different theme. They stay registered, so a
 page that already holds one after a theme switch still opens and edits it, under an editor-only note
 naming its theme, and the Change theme dialog counts them by the same rule. Keep registering and enqueueing unconditionally, as the two shipped themes
@@ -943,7 +943,7 @@ seed as literal block comments. One that carries **markup** in an attribute cann
 have to be escaped before the JSON can sit inside an HTML comment, which is what `serializeAttributes()`
 in `@wordpress/blocks` does on save. Escape them the same way and the seeded block is byte-identical to
 what the editor writes back, instead of showing a diff the first time somebody saves the page. See the
-`$block()` helper in `groove-ebook/sample-content.php`.
+`$block()` helper in `enrove-ebook/sample-content.php`.
 
 For placeholder imagery, `Themes_Manager::theme_image_url($theme, $role)` gives the picture and one of two
 credit helpers gives its attribution: `theme_image_caption()` returns a `<figcaption>` for `core/image`,
@@ -956,7 +956,7 @@ Editor scripts depend on `['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-com
 
 ### Theme JS
 
-`groove-magazine` and `groove-proposal` put a light/dark class on `<html>` before first paint, to avoid a
+`enrove-magazine` and `enrove-proposal` put a light/dark class on `<html>` before first paint, to avoid a
 flash, persist the choice in `localStorage`, and load a dependency-free IIFE from `assets/js/`. The
 bootstrap is a few lines of inline JS, attached in `ensure_script()` to a script handle of its own with no
 file, registered for the header rather than the footer:
@@ -974,29 +974,35 @@ palette into CSS custom properties.
 
 **A theme should rarely need its own drawer script.** `folio-starter` had one and no longer does — see
 "Drawers: one attribute, not a script" in §7. Before adding theme JS, check whether the behaviour
-belongs in `groove-main.js` behind an opt-in attribute instead; that is what makes it available to the
+belongs in `enrove-main.js` behind an opt-in attribute instead; that is what makes it available to the
 next theme rather than to this one only.
 
 ### Migrations
 
 `Themes_Manager::run_migrations()` remaps legacy `theme_id` meta values directly in `$wpdb->postmeta`,
-guarded by the `groove_theme_migration_v1` option. Changing a theme's `name` (and therefore its ID) needs
+guarded by the `enrove_theme_migration_v1` option. Changing a theme's `name` (and therefore its ID) needs
 the same treatment, or every folio using it 404s with "Theme not found" — a set `theme_id` that no
 longer resolves is not silently swapped for another theme.
+
+The plugin's rename from Groove Folios to Enrove Folios is the worked example. It renamed four themes
+(`groove-ebook` became `enrove-ebook`, and so on) along with every stored name, so
+`Enrove\Setup\Legacy_Names::migrate()` remaps `theme_id`, the default theme setting, the block names
+written into page content (`wp:groove-ebook/…` to `wp:enrove-ebook/…`) and the downloaded cover photos,
+which are named after the theme.
 
 ---
 
 ## 10. Distributing a theme
 
-Not possible yet. Until 0.5.1 `Themes_Manager::install_theme_from_zip()` took a ZIP on *Groove → Themes*
-and copied it to `wp-content/groove-themes/<theme-id>/`. WordPress.org does not allow a plugin to write
+Not possible yet. Until 0.5.1 `Themes_Manager::install_theme_from_zip()` took a ZIP on *Enrove → Themes*
+and copied it to `wp-content/enrove-themes/<theme-id>/`. WordPress.org does not allow a plugin to write
 executable code outside its own folder, so the installer, the replace and remove flows, and
 `load_installed_themes()` were removed. Support for third-party themes is coming; it will not work by
 writing PHP files, and a theme written to this spec today is what it will load.
 
 The contract checker already runs on a theme folder anywhere, so a theme can be checked while it waits.
 It is a development tool, so it is not in the installed plugin: run it from a checkout of
-[the plugin's repository](https://github.com/StudioEN/groove-folios-wp-plugin).
+[the plugin's repository](https://github.com/StudioEN/enrove-folios-wp-plugin).
 
 
 ```bash
@@ -1056,8 +1062,8 @@ Consequences for theme code:
    disappears on hover is the one thing this contract will not have. Never `outline: none` without a
    ring to replace it.
 9. Drawers (§7): reuse `g-folio__theme-nav-button` / `-nav-close` / `-page-nav-button` /
-   `-page-nav-close` so `groove-main.js` wires open and close, then add
-   `data-groove-drawer="<trigger selector>"` to the pane for ARIA, Escape, click-outside, scroll lock
+   `-page-nav-close` so `enrove-main.js` wires open and close, then add
+   `data-enrove-drawer="<trigger selector>"` to the pane for ARIA, Escape, click-outside, scroll lock
    and focus. Hide the pane with `visibility` rather than transform alone, and scroll `…-nav-content`
    with the close button outside it. Do not write a drawer script.
 10. Responsive: no fixed `font-size` in px — use `clamp()` or the contract ramp. Degrade progressively
@@ -1067,7 +1073,7 @@ Consequences for theme code:
    between the two gets a layout built for some other size. Intrinsic sizing instead of a step is the
    goal; one step standing in for a whole range is not. Declare a desktop-only
    component mobile-first — absent by default, added back at a `min-width` — rather than adding it
-   everywhere and walking it back down; `groove-ebook`'s contents sidebar is the reference. Size
+   everywhere and walking it back down; `enrove-ebook`'s contents sidebar is the reference. Size
    full-height boxes in `dvh` with a `vh` fallback, keep the document as the only scroller (a nested
    `height: 100vh; overflow: scroll` silently breaks every `window.scrollY` listener above the phone
    breakpoint), give anchored headings a `scroll-margin-top` that clears your fixed bar, and never
@@ -1100,10 +1106,10 @@ Consequences for theme code:
     a throwaway copy of a real theme and asserts what the checker says: either it breaks a contract and
     the warning must name it, or it writes something unusual but **correct** and the checker must stay
     quiet. It runs against two subject themes, because the page-root check was once dead on
-    `groove-newsletter` while every case against `folio-starter` reported a tick. Run it if you add a
+    `enrove-newsletter` while every case against `folio-starter` reported a tick. Run it if you add a
     check — a check that never fires looks exactly like a codebase with no bugs.
-14. Verify: theme appears in *Groove → Themes*, the picker preview renders (`?groove_theme_preview=<id>`),
-    a published folio cover and page render, a draft folio renders via `?groove_preview=1`, fonts respond
+14. Verify: theme appears in *Enrove → Themes*, the picker preview renders (`?enrove_theme_preview=<id>`),
+    a published folio cover and page render, a draft folio renders via `?enrove_preview=1`, fonts respond
     to the folio's font pickers, and a password-protected folio shows a matching gate.
 
 ---
@@ -1113,7 +1119,7 @@ Consequences for theme code:
 ### The structural one: theme files are `require`d with nothing above them to catch anything
 
 `Themes_Manager::register_defaults()` runs from `Plugin::__construct()`, called at **file scope** at the
-bottom of `includes/plugin.php`, which `groove-folios.php` `require_once`s unconditionally. Theme files
+bottom of `includes/plugin.php`, which `enrove-folios.php` `require_once`s unconditionally. Theme files
 are therefore `require`d while the plugin is still being included — on every request, before any hook has
 fired, with nothing in the call stack that catches anything.
 
@@ -1164,15 +1170,15 @@ Until the first three are wrapped, treat all four the same way operationally:
   in `Utils` are vestigial.
 - **`themes/landing-page.html` and `landing-page-v8 2.html`** in this directory are marketing page drafts,
   not themes. `load_builtin_themes()` only scans directories, so they are ignored.
-- **`groove-magazine` deliberately mixes two responsive idioms.** Its cover and page titles are
+- **`enrove-magazine` deliberately mixes two responsive idioms.** Its cover and page titles are
   `clamp()`ed *and* overridden at the 768px breakpoint; its nav chrome is stepped only. Both adapt, so
   neither is a defect — and they cannot be unified without changing what renders: `.gm-cover__title`
   steps to a flat 36px below 768, which is *under* its clamp's 40px floor, so no single clamp
   reproduces both endpoints. Left as it is on purpose. The two sizes that genuinely adapted at no
   width (`.gm-page__content` h2 and h3) are now fluid.
-- **`--folio-shadow` is filled in a theme that never paints it** (`groove-newsletter`). It authored a
+- **`--folio-shadow` is filled in a theme that never paints it** (`enrove-newsletter`). It authored a
   considered shadow that no rule applies — probably a regression rather than a decision. The slot keeps
   the value, because a consumer asking "what shadow does this theme use" is better served by the theme's
   own on-brand answer than by the WordPress admin fallback. Worth deciding separately whether the theme
-  should paint it again. `groove-proposal` was in this list until its mobile contents dropdown started
+  should paint it again. `enrove-proposal` was in this list until its mobile contents dropdown started
   using the shadow it had been carrying.

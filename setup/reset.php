@@ -1,7 +1,7 @@
 <?php
-namespace Groove\Setup;
+namespace Enrove\Setup;
 
-use Groove\Themes\Font_Library;
+use Enrove\Themes\Font_Library;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -17,9 +17,9 @@ if (!defined('ABSPATH')) {
  * default and deleting them is a separate, explicit answer.
  *
  * What it leaves alone, on purpose:
- * - the markers of one-time migrations and clean-ups (_groove_installed_time,
- *   _groove_removed_features_cleaned, groove_theme_migration_v1,
- *   groove_page_publishing_migration_v1). They record
+ * - the markers of one-time migrations and clean-ups (_enrove_installed_time,
+ *   _enrove_removed_features_cleaned, enrove_theme_migration_v1, enrove_legacy_names_migration_v1,
+ *   enrove_page_publishing_migration_v1). They record
  *   that old data was already converted, and clearing them would only run the
  *   conversions again over folios that do not need it;
  * - Media Library items, including sample images copied there when a folio
@@ -33,16 +33,16 @@ class Reset
 {
   /** Every setting the plugin stores for this site. */
   const OPTIONS = array(
-    'groove_default_theme_id',
-    'groove_default_folio_status',
-    'groove_default_folio_title',
-    'groove_default_allow_pdf_download',
-    'groove_folio_base_slug',
-    'groove_cpt_support',
-    'groove_pexels_api_key',
+    'enrove_default_theme_id',
+    'enrove_default_folio_status',
+    'enrove_default_folio_title',
+    'enrove_default_allow_pdf_download',
+    'enrove_folio_base_slug',
+    'enrove_cpt_support',
+    'enrove_pexels_api_key',
   );
 
-  const TAXONOMY = 'groove_collection_tag';
+  const TAXONOMY = 'enrove_collection_tag';
 
   /**
    * How much content a reset could delete: every folio and folio page in any
@@ -55,8 +55,8 @@ class Reset
     $tags = wp_count_terms(array('taxonomy' => self::TAXONOMY, 'hide_empty' => false));
 
     return array(
-      'folios' => static::count_posts('groove_folio'),
-      'pages' => static::count_posts('groove_folio_page'),
+      'folios' => static::count_posts('enrove_folio'),
+      'pages' => static::count_posts('enrove_folio_page'),
       'tags' => is_wp_error($tags) ? 0 : (int) $tags,
     );
   }
@@ -94,8 +94,8 @@ class Reset
 
     // Each clears its download and forgets its choice.
     Font_Library::remove_downloaded();
-    if (class_exists('\Groove\Pexels\Library')) {
-      \Groove\Pexels\Library::remove_downloaded();
+    if (class_exists('\Enrove\Pexels\Library')) {
+      \Enrove\Pexels\Library::remove_downloaded();
     }
 
     // The two downloads share a parent folder; leave nothing behind when it
@@ -103,7 +103,7 @@ class Reset
     // anything else in it.
     $uploads = wp_get_upload_dir();
     if (!empty($uploads['basedir'])) {
-      $parent = trailingslashit($uploads['basedir']) . 'groove-folios';
+      $parent = trailingslashit($uploads['basedir']) . 'enrove-folios';
       if (is_dir($parent)) {
         require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
         require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
@@ -123,7 +123,7 @@ class Reset
 
     // Every status, trash and auto-drafts included, so nothing is left behind
     // to surface later. Pages first, so none is ever without its folio.
-    foreach (array('groove_folio_page' => 'pages', 'groove_folio' => 'folios') as $post_type => $key) {
+    foreach (array('enrove_folio_page' => 'pages', 'enrove_folio' => 'folios') as $post_type => $key) {
       $ids = get_posts(array(
         'post_type' => $post_type,
         'post_status' => array_keys(get_post_stati()),

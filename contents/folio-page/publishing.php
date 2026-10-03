@@ -1,7 +1,7 @@
 <?php
-namespace Groove\Contents\FolioPage;
+namespace Enrove\Contents\FolioPage;
 
-use Groove\Pages\Folio;
+use Enrove\Pages\Folio;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -46,12 +46,12 @@ class Publishing
    * The status a page had when its folio took it down, so the folio's going
    * live again puts it back as it was.
    */
-  const HELD_STATUS_META = '_groove_status_before_folio';
+  const HELD_STATUS_META = '_enrove_status_before_folio';
 
-  const EDITOR_SCRIPT_HANDLE = 'groove-page-publishing';
+  const EDITOR_SCRIPT_HANDLE = 'enrove-page-publishing';
 
   /** Set once migrate_existing_pages() has run. */
-  const MIGRATION_OPTION = 'groove_page_publishing_migration_v1';
+  const MIGRATION_OPTION = 'enrove_page_publishing_migration_v1';
 
   /** Posts wp_delete_post() is deleting in this request; see note_deletion(). */
   private static $deleting = array();
@@ -61,8 +61,8 @@ class Publishing
     add_filter('wp_insert_post_data', array(static::class, 'hold_page_for_folio'), 10, 2);
     // After Content::guard_rest_folio_link() (10) has refused a folio the
     // user may not link to.
-    add_filter('rest_pre_insert_groove_folio_page', array(static::class, 'refuse_rest_publish'), 20, 2);
-    add_filter('rest_prepare_groove_folio_page', array(static::class, 'withhold_publish_action'), 10, 2);
+    add_filter('rest_pre_insert_enrove_folio_page', array(static::class, 'refuse_rest_publish'), 20, 2);
+    add_filter('rest_prepare_enrove_folio_page', array(static::class, 'withhold_publish_action'), 10, 2);
     add_action('transition_post_status', array(static::class, 'follow_folio_status'), 10, 3);
     add_action('transition_post_status', array(static::class, 'follow_page_status'), 10, 3);
     add_action('before_delete_post', array(static::class, 'note_deletion'), 10, 2);
@@ -92,7 +92,7 @@ class Publishing
     }
 
     $page_ids = get_posts(array(
-      'post_type' => 'groove_folio_page',
+      'post_type' => 'enrove_folio_page',
       'post_status' => self::LIVE_PAGE_STATUSES,
       'posts_per_page' => -1,
       'fields' => 'ids',
@@ -123,7 +123,7 @@ class Publishing
     $folio_id = (int) $folio_id;
 
     return $folio_id > 0
-      && get_post_type($folio_id) === 'groove_folio'
+      && get_post_type($folio_id) === 'enrove_folio'
       && in_array(get_post_status($folio_id), self::LIVE_FOLIO_STATUSES, true);
   }
 
@@ -137,7 +137,7 @@ class Publishing
   public static function get_pages($folio_id, array $statuses)
   {
     return get_posts(array(
-      'post_type' => 'groove_folio_page',
+      'post_type' => 'enrove_folio_page',
       'post_status' => $statuses,
       'posts_per_page' => -1,
       'no_found_rows' => true,
@@ -282,7 +282,7 @@ class Publishing
   {
     if (
       !is_array($data)
-      || ($data['post_type'] ?? '') !== 'groove_folio_page'
+      || ($data['post_type'] ?? '') !== 'enrove_folio_page'
       || !in_array($data['post_status'] ?? '', self::LIVE_PAGE_STATUSES, true)
       || static::is_importing()
     ) {
@@ -334,8 +334,8 @@ class Publishing
     }
 
     return new \WP_Error(
-      'groove_folio_not_published',
-      __('Publish its folio first. A folio’s pages go live with it.', 'groove-folios'),
+      'enrove_folio_not_published',
+      __('Publish its folio first. A folio’s pages go live with it.', 'enrove-folios'),
       array('status' => 409)
     );
   }
@@ -383,7 +383,7 @@ class Publishing
    */
   public static function follow_folio_status($new_status, $old_status, $post)
   {
-    if (!$post instanceof \WP_Post || $post->post_type !== 'groove_folio' || $new_status === $old_status || static::is_importing()) {
+    if (!$post instanceof \WP_Post || $post->post_type !== 'enrove_folio' || $new_status === $old_status || static::is_importing()) {
       return;
     }
 
@@ -431,7 +431,7 @@ class Publishing
   {
     if (
       !$post instanceof \WP_Post
-      || $post->post_type !== 'groove_folio_page'
+      || $post->post_type !== 'enrove_folio_page'
       || !in_array($new_status, self::LIVE_PAGE_STATUSES, true)
       || static::is_importing()
     ) {
@@ -461,7 +461,7 @@ class Publishing
   {
     self::$deleting[(int) $post_id] = true;
 
-    if (get_post_type($post_id) !== 'groove_folio') {
+    if (get_post_type($post_id) !== 'enrove_folio') {
       return;
     }
 
@@ -490,7 +490,7 @@ class Publishing
     $page = get_post($object_id);
     if (
       !$page instanceof \WP_Post
-      || $page->post_type !== 'groove_folio_page'
+      || $page->post_type !== 'enrove_folio_page'
       || !in_array($page->post_status, self::LIVE_PAGE_STATUSES, true)
       || static::is_folio_live((int) get_post_meta($page->ID, 'folio_id', true))
     ) {
@@ -507,7 +507,7 @@ class Publishing
   public static function enqueue_editor_notice()
   {
     $page = get_post();
-    if (!$page || $page->post_type !== 'groove_folio_page') {
+    if (!$page || $page->post_type !== 'enrove_folio_page') {
       return;
     }
 
@@ -516,30 +516,30 @@ class Publishing
       return;
     }
 
-    $has_folio = $folio_id > 0 && get_post_type($folio_id) === 'groove_folio';
+    $has_folio = $folio_id > 0 && get_post_type($folio_id) === 'enrove_folio';
     $settings = array(
       'message' => $has_folio
-        ? __('This page’s folio isn’t published, so the page can’t be published yet. It goes live when you publish the folio.', 'groove-folios')
-        : __('This page isn’t in a folio, so it can’t be published. Add pages from a folio’s Pages tab.', 'groove-folios'),
+        ? __('This page’s folio isn’t published, so the page can’t be published yet. It goes live when you publish the folio.', 'enrove-folios')
+        : __('This page isn’t in a folio, so it can’t be published. Add pages from a folio’s Pages tab.', 'enrove-folios'),
       'actionLabel' => '',
       'actionUrl' => '',
     );
     if ($has_folio && current_user_can('edit_post', $folio_id)) {
-      $settings['actionLabel'] = __('Open the folio', 'groove-folios');
+      $settings['actionLabel'] = __('Open the folio', 'enrove-folios');
       $settings['actionUrl'] = Folio::get_edit_url($folio_id);
     }
 
-    $path = GROOVE_PATH . 'assets/js/groove-page-publishing.js';
+    $path = ENROVE_PATH . 'assets/js/enrove-page-publishing.js';
     wp_enqueue_script(
       self::EDITOR_SCRIPT_HANDLE,
-      GROOVE_URL . 'assets/js/groove-page-publishing.js',
+      ENROVE_URL . 'assets/js/enrove-page-publishing.js',
       array('wp-data', 'wp-notices', 'wp-dom-ready'),
-      file_exists($path) ? (string) filemtime($path) : GROOVE_VERSION,
+      file_exists($path) ? (string) filemtime($path) : ENROVE_VERSION,
       true
     );
     wp_add_inline_script(
       self::EDITOR_SCRIPT_HANDLE,
-      'window.GROOVE_PAGE_PUBLISHING = ' . wp_json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP) . ';',
+      'window.ENROVE_PAGE_PUBLISHING = ' . wp_json_encode($settings, JSON_HEX_TAG | JSON_HEX_AMP) . ';',
       'before'
     );
   }

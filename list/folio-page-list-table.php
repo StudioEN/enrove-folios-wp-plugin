@@ -1,8 +1,8 @@
 <?php
-namespace Groove\List;
-use Groove\List\List_Table;
-use Groove\Pages\Folio;
-use Groove\Contents\FolioPage\Publishing;
+namespace Enrove\List;
+use Enrove\List\List_Table;
+use Enrove\Pages\Folio;
+use Enrove\Contents\FolioPage\Publishing;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -28,10 +28,10 @@ class Folio_Page_List_Table extends List_Table
   {
     $posts_columns = array();
     $posts_columns['cb'] = '<input type="checkbox" />';
-    $posts_columns['title'] = esc_html__('Page Name', 'groove-folios');
-    $posts_columns['menu_order'] = esc_html__('Menu Position', 'groove-folios');
-    $posts_columns['publish_status'] = esc_html__('Publish Status', 'groove-folios');
-    $posts_columns['modified'] = esc_html__('Last Updated', 'groove-folios');
+    $posts_columns['title'] = esc_html__('Page Name', 'enrove-folios');
+    $posts_columns['menu_order'] = esc_html__('Menu Position', 'enrove-folios');
+    $posts_columns['publish_status'] = esc_html__('Publish Status', 'enrove-folios');
+    $posts_columns['modified'] = esc_html__('Last Updated', 'enrove-folios');
 
     return $posts_columns;
   }
@@ -39,9 +39,9 @@ class Folio_Page_List_Table extends List_Table
   protected function get_sortable_columns()
   {
     $sortables = array(
-      'title' => array('title', false, __('Page Name', 'groove-folios'), __('Table ordered by Page Name.', 'groove-folios')),
-      'menu_order' => array('menu_order', false, __('Menu Position', 'groove-folios'), __('Table ordered by Menu Position.', 'groove-folios')),
-      'modified' => array('modified', true, __('Last Updated', 'groove-folios'), __('Table ordered by Last Updated.', 'groove-folios'), 'desc'),
+      'title' => array('title', false, __('Page Name', 'enrove-folios'), __('Table ordered by Page Name.', 'enrove-folios')),
+      'menu_order' => array('menu_order', false, __('Menu Position', 'enrove-folios'), __('Table ordered by Menu Position.', 'enrove-folios')),
+      'modified' => array('modified', true, __('Last Updated', 'enrove-folios'), __('Table ordered by Last Updated.', 'enrove-folios'), 'desc'),
     );
 
     return $sortables;
@@ -64,11 +64,11 @@ class Folio_Page_List_Table extends List_Table
       }
       if (empty($display_name)) {
         $author = get_userdata((int) $post->post_author);
-        $display_name = $author ? $author->display_name : esc_html__('Unknown user', 'groove-folios');
+        $display_name = $author ? $author->display_name : esc_html__('Unknown user', 'enrove-folios');
       }
       $modified_label = sprintf(
         /* translators: 1: date/time value, 2: user display name */
-        esc_html__('%1$s by %2$s', 'groove-folios'),
+        esc_html__('%1$s by %2$s', 'enrove-folios'),
         get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post->ID),
         $display_name
       );
@@ -88,7 +88,7 @@ class Folio_Page_List_Table extends List_Table
       if ($lock_holder) {
         $lock_holder = get_userdata($lock_holder);
         /* translators: %s: Display name of the user editing the page. */
-        $locked_text = sprintf(__('%s is currently editing', 'groove-folios'), $lock_holder->display_name);
+        $locked_text = sprintf(__('%s is currently editing', 'enrove-folios'), $lock_holder->display_name);
       } else {
         $locked_text = '';
       }
@@ -104,7 +104,7 @@ class Folio_Page_List_Table extends List_Table
 
     $title = (string) $post->post_title;
     if ($title === '') {
-      $title_display = __('(no title)', 'groove-folios');
+      $title_display = __('(no title)', 'enrove-folios');
     } else {
       $title_display = $title;
     }
@@ -114,7 +114,7 @@ class Folio_Page_List_Table extends List_Table
         '<a class="row-title g-folio__truncate-text" href="%s" aria-label="%s" title="%s">%s%s</a>',
         esc_url(get_edit_post_link($post->ID)),
         /* translators: %s: Page title. */
-        esc_attr(sprintf(__('&#8220;%s&#8221; (Edit)', 'groove-folios'), $title !== '' ? $title : __('(no title)', 'groove-folios'))),
+        esc_attr(sprintf(__('&#8220;%s&#8221; (Edit)', 'enrove-folios'), $title !== '' ? $title : __('(no title)', 'enrove-folios'))),
         esc_attr($title),
         esc_html($pad),
         esc_html($title_display)

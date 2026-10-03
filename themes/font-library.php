@@ -1,7 +1,7 @@
 <?php
-namespace Groove\Themes;
+namespace Enrove\Themes;
 
-use Groove\Utils\Utils;
+use Enrove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
  * to Google without their say, which WordPress.org counts as phoning home. So
  * a folio only ever loads fonts from this site: an administrator presses
  * Download Fonts on Settings → Fonts once, and this class fetches every family
- * the plugin can use into uploads/groove-folios/fonts/. Until then, and for any
+ * the plugin can use into uploads/enrove-folios/fonts/. Until then, and for any
  * family that failed, a folio falls through to the rest of its font stack.
  *
  * One family fragment (the `google_family` value from Utils or a theme's
@@ -29,7 +29,7 @@ if (!defined('ABSPATH')) {
 class Font_Library
 {
   /** Folder under the uploads base directory that holds the fonts. */
-  const UPLOAD_SUBDIR = 'groove-folios/fonts';
+  const UPLOAD_SUBDIR = 'enrove-folios/fonts';
 
   /** The CSS API a download asks, and the only host a font file may come from. */
   const API_BASE = 'https://fonts.googleapis.com/css2';
@@ -57,7 +57,7 @@ class Font_Library
    * not a missing download: folios then use the system fonts WordPress's own
    * dashboard uses, even for families that happen to be on disk.
    */
-  const SOURCE_OPTION = 'groove_font_source';
+  const SOURCE_OPTION = 'enrove_font_source';
   const SOURCE_GOOGLE = 'google';
   const SOURCE_SYSTEM = 'system';
 
@@ -245,7 +245,7 @@ class Font_Library
     if ($dir === '' || !wp_mkdir_p($dir)) {
       $result['failed']['*'] = sprintf(
         /* translators: %s: directory path. */
-        __('Could not create %s.', 'groove-folios'),
+        __('Could not create %s.', 'enrove-folios'),
         $dir !== '' ? $dir : 'uploads/' . self::UPLOAD_SUBDIR
       );
       return $result;
@@ -296,7 +296,7 @@ class Font_Library
     if ((int) wp_remote_retrieve_response_code($response) !== 200 || $css === '') {
       return sprintf(
         /* translators: 1: font family name, 2: HTTP status code. */
-        __('Google Fonts did not return %1$s (HTTP %2$s).', 'groove-folios'),
+        __('Google Fonts did not return %1$s (HTTP %2$s).', 'enrove-folios'),
         $label,
         (string) wp_remote_retrieve_response_code($response)
       );
@@ -308,7 +308,7 @@ class Font_Library
     if (empty($urls)) {
       return sprintf(
         /* translators: %s: font family name. */
-        __('Google Fonts named no font files for %s.', 'groove-folios'),
+        __('Google Fonts named no font files for %s.', 'enrove-folios'),
         $label
       );
     }
@@ -334,7 +334,7 @@ class Font_Library
         wp_delete_file($temp);
         return sprintf(
           /* translators: %s: font family name. */
-          __('A file Google Fonts sent for %s was not a font.', 'groove-folios'),
+          __('A file Google Fonts sent for %s was not a font.', 'enrove-folios'),
           $label
         );
       }
@@ -346,7 +346,7 @@ class Font_Library
       if (!$copied) {
         return sprintf(
           /* translators: %s: file path. */
-          __('Could not write %s.', 'groove-folios'),
+          __('Could not write %s.', 'enrove-folios'),
           $dir . $name
         );
       }
@@ -363,7 +363,7 @@ class Font_Library
     if (preg_match('#url\(\s*[\'"]?(?:https?:)?//#i', $css) || stripos($css, '@import') !== false) {
       return sprintf(
         /* translators: %s: font family name. */
-        __('The Google Fonts stylesheet for %s had something in it other than fonts.', 'groove-folios'),
+        __('The Google Fonts stylesheet for %s had something in it other than fonts.', 'enrove-folios'),
         $label
       );
     }
@@ -372,7 +372,7 @@ class Font_Library
     if (!$fs->put_contents($dir . $slug . '.css', $css, $mode)) {
       return sprintf(
         /* translators: %s: file path. */
-        __('Could not write %s.', 'groove-folios'),
+        __('Could not write %s.', 'enrove-folios'),
         $dir . $slug . '.css'
       );
     }

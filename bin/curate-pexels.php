@@ -1,6 +1,6 @@
 <?php
 /**
- * Groove Folios — Pexels curation CLI.
+ * Enrove Folios — Pexels curation CLI.
  *
  * Downloads the theme covers and the shared placeholder pool from Pexels once,
  * so the shipped plugin never talks to the Pexels API at runtime.
@@ -20,12 +20,12 @@
  *   --help               Show this help.
  *
  * The API key is never printed. Supply it via one of (highest priority first):
- *   1. GROOVE_PEXELS_API_KEY constant in wp-config.php
+ *   1. ENROVE_PEXELS_API_KEY constant in wp-config.php
  *   2. PEXELS_API_KEY environment variable
  *   3. .pexels-key file in the plugin root (gitignored, single line)
  *   4. Settings → Imagery in the WordPress admin
  *
- * @package Groove
+ * @package Enrove
  */
 
 // ---------------------------------------------------------------------------
@@ -41,24 +41,24 @@ if (isset($_SERVER['REQUEST_METHOD']) && !defined('WP_CLI')) {
   exit('This script can only be run from the command line.');
 }
 
-if (!defined('GROOVE_PEXELS_CLI')) {
-  define('GROOVE_PEXELS_CLI', true);
+if (!defined('ENROVE_PEXELS_CLI')) {
+  define('ENROVE_PEXELS_CLI', true);
 }
 
-define('GROOVE_PEXELS_CLI_PLUGIN_DIR', dirname(__DIR__));
+define('ENROVE_PEXELS_CLI_PLUGIN_DIR', dirname(__DIR__));
 
 // ---------------------------------------------------------------------------
 // Small output helpers.
 // ---------------------------------------------------------------------------
 
-if (!function_exists('groove_pexels_cli_out')) {
+if (!function_exists('enrove_pexels_cli_out')) {
   /**
    * Write a line to STDOUT.
    *
    * @param string $line Line to write.
    * @return void
    */
-  function groove_pexels_cli_out($line = '')
+  function enrove_pexels_cli_out($line = '')
   {
     fwrite(STDOUT, $line . PHP_EOL);
   }
@@ -69,7 +69,7 @@ if (!function_exists('groove_pexels_cli_out')) {
    * @param string $line Line to write.
    * @return void
    */
-  function groove_pexels_cli_err($line = '')
+  function enrove_pexels_cli_err($line = '')
   {
     fwrite(STDERR, $line . PHP_EOL);
   }
@@ -79,10 +79,10 @@ if (!function_exists('groove_pexels_cli_out')) {
    *
    * @return string
    */
-  function groove_pexels_cli_usage()
+  function enrove_pexels_cli_usage()
   {
     return implode(PHP_EOL, array(
-      'Groove Folios — Pexels curation',
+      'Enrove Folios — Pexels curation',
       '',
       'Usage:',
       '  php bin/curate-pexels.php [options]',
@@ -99,10 +99,10 @@ if (!function_exists('groove_pexels_cli_out')) {
       '  --help               Show this help.',
       '',
       'API key sources, highest priority first:',
-      '  1. GROOVE_PEXELS_API_KEY constant in wp-config.php   (recommended for production)',
+      '  1. ENROVE_PEXELS_API_KEY constant in wp-config.php   (recommended for production)',
       '  2. PEXELS_API_KEY environment variable',
       '  3. .pexels-key file in the plugin root               (recommended for local dev)',
-      '  4. The groove_pexels_api_key WordPress option (Settings → Imagery)',
+      '  4. The enrove_pexels_api_key WordPress option (Settings → Imagery)',
       '',
       'The key itself is never printed by this script.',
     ));
@@ -118,9 +118,9 @@ if (!function_exists('groove_pexels_cli_out')) {
    * @param string $theme Theme slug.
    * @return string Set slug, or '' when the theme declares none.
    */
-  function groove_pexels_cli_theme_set($theme)
+  function enrove_pexels_cli_theme_set($theme)
   {
-    $setup = GROOVE_PEXELS_CLI_PLUGIN_DIR . '/themes/' . $theme . '/setup.php';
+    $setup = ENROVE_PEXELS_CLI_PLUGIN_DIR . '/themes/' . $theme . '/setup.php';
     if (!is_readable($setup)) {
       return '';
     }
@@ -136,7 +136,7 @@ if (!function_exists('groove_pexels_cli_out')) {
    * @param array $argv Raw arguments.
    * @return array
    */
-  function groove_pexels_cli_parse_args($argv)
+  function enrove_pexels_cli_parse_args($argv)
   {
     $opts = array(
       'slots' => array(),
@@ -226,7 +226,7 @@ if (!function_exists('groove_pexels_cli_out')) {
    * @param string $plugin_dir Plugin directory (real path).
    * @return bool
    */
-  function groove_pexels_cli_root_hosts_plugin($root, $plugin_dir)
+  function enrove_pexels_cli_root_hosts_plugin($root, $plugin_dir)
   {
     $plugins_dir = rtrim($root, '/') . '/wp-content/plugins';
     if (!is_dir($plugins_dir)) {
@@ -247,7 +247,7 @@ if (!function_exists('groove_pexels_cli_out')) {
   /**
    * Locate a WordPress root containing wp-load.php.
    *
-   * Checks --wp, then GROOVE_WP_ROOT, then walks up from the plugin directory
+   * Checks --wp, then ENROVE_WP_ROOT, then walks up from the plugin directory
    * (and peeks one level into each ancestor, because this plugin is commonly
    * symlinked into wp-content/plugins from a sibling checkout).
    *
@@ -255,7 +255,7 @@ if (!function_exists('groove_pexels_cli_out')) {
    * @param string $plugin_dir Plugin directory.
    * @return string Absolute path to the WordPress root, or '' when not found.
    */
-  function groove_pexels_cli_find_wp_root($explicit, $plugin_dir)
+  function enrove_pexels_cli_find_wp_root($explicit, $plugin_dir)
   {
     $candidates = array();
 
@@ -263,7 +263,7 @@ if (!function_exists('groove_pexels_cli_out')) {
       $candidates[] = rtrim($explicit, '/');
     }
 
-    $env_root = getenv('GROOVE_WP_ROOT');
+    $env_root = getenv('ENROVE_WP_ROOT');
     if (is_string($env_root) && $env_root !== '') {
       $candidates[] = rtrim($env_root, '/');
     }
@@ -298,7 +298,7 @@ if (!function_exists('groove_pexels_cli_out')) {
       }
 
       $score = 1;
-      if (groove_pexels_cli_root_hosts_plugin($candidate, $plugin_dir)) {
+      if (enrove_pexels_cli_root_hosts_plugin($candidate, $plugin_dir)) {
         $score += 2;
       }
       if (is_file($candidate . '/wp-config.php')) {
@@ -321,7 +321,7 @@ if (!function_exists('groove_pexels_cli_out')) {
    * @param mixed      $entry Manifest value.
    * @return array|null
    */
-  function groove_pexels_cli_normalise_slot($key, $entry)
+  function enrove_pexels_cli_normalise_slot($key, $entry)
   {
     if (!is_array($entry)) {
       return null;
@@ -375,7 +375,7 @@ if (!function_exists('groove_pexels_cli_out')) {
    * @param array $rows    Rows of columns.
    * @return string
    */
-  function groove_pexels_cli_table($headers, $rows)
+  function enrove_pexels_cli_table($headers, $rows)
   {
     $widths = array();
     foreach ($headers as $index => $header) {
@@ -417,23 +417,23 @@ if (!function_exists('groove_pexels_cli_out')) {
 // Arguments.
 // ---------------------------------------------------------------------------
 
-$groove_argv = isset($argv) && is_array($argv) ? $argv : array();
-$groove_opts = groove_pexels_cli_parse_args($groove_argv);
+$enrove_argv = isset($argv) && is_array($argv) ? $argv : array();
+$enrove_opts = enrove_pexels_cli_parse_args($enrove_argv);
 
-if ($groove_opts['help']) {
-  groove_pexels_cli_out(groove_pexels_cli_usage());
+if ($enrove_opts['help']) {
+  enrove_pexels_cli_out(enrove_pexels_cli_usage());
   exit(0);
 }
 
-if (!empty($groove_opts['unknown'])) {
-  groove_pexels_cli_err('Unknown option(s): --' . implode(', --', $groove_opts['unknown']));
-  groove_pexels_cli_err('');
-  groove_pexels_cli_err(groove_pexels_cli_usage());
+if (!empty($enrove_opts['unknown'])) {
+  enrove_pexels_cli_err('Unknown option(s): --' . implode(', --', $enrove_opts['unknown']));
+  enrove_pexels_cli_err('');
+  enrove_pexels_cli_err(enrove_pexels_cli_usage());
   exit(1);
 }
 
-if ($groove_opts['covers_only'] && $groove_opts['placeholders_only']) {
-  groove_pexels_cli_err('--covers-only and --placeholders-only are mutually exclusive.');
+if ($enrove_opts['covers_only'] && $enrove_opts['placeholders_only']) {
+  enrove_pexels_cli_err('--covers-only and --placeholders-only are mutually exclusive.');
   exit(1);
 }
 
@@ -442,17 +442,17 @@ if ($groove_opts['covers_only'] && $groove_opts['placeholders_only']) {
 // ---------------------------------------------------------------------------
 
 if (!defined('ABSPATH')) {
-  if ($groove_opts['wp'] !== '' && !is_file(rtrim($groove_opts['wp'], '/') . '/wp-load.php')) {
-    groove_pexels_cli_err('No wp-load.php in --wp=' . $groove_opts['wp']);
+  if ($enrove_opts['wp'] !== '' && !is_file(rtrim($enrove_opts['wp'], '/') . '/wp-load.php')) {
+    enrove_pexels_cli_err('No wp-load.php in --wp=' . $enrove_opts['wp']);
     exit(1);
   }
 
-  $groove_wp_root = groove_pexels_cli_find_wp_root($groove_opts['wp'], GROOVE_PEXELS_CLI_PLUGIN_DIR);
+  $enrove_wp_root = enrove_pexels_cli_find_wp_root($enrove_opts['wp'], ENROVE_PEXELS_CLI_PLUGIN_DIR);
 
-  if ($groove_wp_root === '') {
-    groove_pexels_cli_err('Could not locate wp-load.php.');
-    groove_pexels_cli_err('Pass the WordPress root explicitly, e.g.:');
-    groove_pexels_cli_err('  php bin/curate-pexels.php --wp=/path/to/wordpress');
+  if ($enrove_wp_root === '') {
+    enrove_pexels_cli_err('Could not locate wp-load.php.');
+    enrove_pexels_cli_err('Pass the WordPress root explicitly, e.g.:');
+    enrove_pexels_cli_err('  php bin/curate-pexels.php --wp=/path/to/wordpress');
     exit(1);
   }
 
@@ -468,14 +468,14 @@ if (!defined('ABSPATH')) {
   $_SERVER['SCRIPT_FILENAME'] = isset($_SERVER['SCRIPT_FILENAME']) ? $_SERVER['SCRIPT_FILENAME'] : '/index.php';
   unset($_SERVER['REQUEST_METHOD']);
 
-  require_once $groove_wp_root . '/wp-load.php';
+  require_once $enrove_wp_root . '/wp-load.php';
 
-  groove_pexels_cli_out('WordPress: ' . $groove_wp_root);
+  enrove_pexels_cli_out('WordPress: ' . $enrove_wp_root);
 }
 
-if (!defined('GROOVE_PATH')) {
-  groove_pexels_cli_err('The Groove Folios plugin is not active on this site — GROOVE_PATH is undefined.');
-  groove_pexels_cli_err('Activate the plugin, then run this script again.');
+if (!defined('ENROVE_PATH')) {
+  enrove_pexels_cli_err('The Enrove Folios plugin is not active on this site — ENROVE_PATH is undefined.');
+  enrove_pexels_cli_err('Activate the plugin, then run this script again.');
   exit(1);
 }
 
@@ -492,9 +492,9 @@ if (!function_exists('wp_read_image_metadata')) {
 // Classes.
 // ---------------------------------------------------------------------------
 
-if (!class_exists('\Groove\Pexels\Key') || !class_exists('\Groove\Pexels\Client') || !class_exists('\Groove\Pexels\Curator')) {
-  groove_pexels_cli_err('The Groove\\Pexels classes could not be autoloaded.');
-  groove_pexels_cli_err('Expected them in: ' . GROOVE_PATH . 'pexels/');
+if (!class_exists('\Enrove\Pexels\Key') || !class_exists('\Enrove\Pexels\Client') || !class_exists('\Enrove\Pexels\Curator')) {
+  enrove_pexels_cli_err('The Enrove\\Pexels classes could not be autoloaded.');
+  enrove_pexels_cli_err('Expected them in: ' . ENROVE_PATH . 'pexels/');
   exit(1);
 }
 
@@ -502,274 +502,274 @@ if (!class_exists('\Groove\Pexels\Key') || !class_exists('\Groove\Pexels\Client'
 // Key.
 // ---------------------------------------------------------------------------
 
-$groove_key_source = \Groove\Pexels\Key::source();
+$enrove_key_source = \Enrove\Pexels\Key::source();
 
-if ($groove_key_source === '' || \Groove\Pexels\Key::resolve() === '') {
-  groove_pexels_cli_err('No Pexels API key found.');
-  groove_pexels_cli_err('');
-  groove_pexels_cli_err('Supply it in one of these ways (checked in this order):');
-  groove_pexels_cli_err('');
-  groove_pexels_cli_err('  1. wp-config.php constant (recommended for production)');
-  groove_pexels_cli_err("       define('GROOVE_PEXELS_API_KEY', 'your-key-here');");
-  groove_pexels_cli_err('');
-  groove_pexels_cli_err('  2. Environment variable');
-  groove_pexels_cli_err('       PEXELS_API_KEY=your-key-here php bin/curate-pexels.php');
-  groove_pexels_cli_err('');
-  groove_pexels_cli_err('  3. Key file in the plugin root (gitignored, recommended for local dev)');
-  groove_pexels_cli_err('       printf %s "your-key-here" > ' . GROOVE_PEXELS_CLI_PLUGIN_DIR . '/.pexels-key');
-  groove_pexels_cli_err('');
-  groove_pexels_cli_err('  4. WordPress setting');
-  groove_pexels_cli_err('       WP Admin → Groove → Settings → Imagery → Pexels API key');
-  groove_pexels_cli_err('');
-  groove_pexels_cli_err('Get a free key at https://www.pexels.com/api/');
+if ($enrove_key_source === '' || \Enrove\Pexels\Key::resolve() === '') {
+  enrove_pexels_cli_err('No Pexels API key found.');
+  enrove_pexels_cli_err('');
+  enrove_pexels_cli_err('Supply it in one of these ways (checked in this order):');
+  enrove_pexels_cli_err('');
+  enrove_pexels_cli_err('  1. wp-config.php constant (recommended for production)');
+  enrove_pexels_cli_err("       define('ENROVE_PEXELS_API_KEY', 'your-key-here');");
+  enrove_pexels_cli_err('');
+  enrove_pexels_cli_err('  2. Environment variable');
+  enrove_pexels_cli_err('       PEXELS_API_KEY=your-key-here php bin/curate-pexels.php');
+  enrove_pexels_cli_err('');
+  enrove_pexels_cli_err('  3. Key file in the plugin root (gitignored, recommended for local dev)');
+  enrove_pexels_cli_err('       printf %s "your-key-here" > ' . ENROVE_PEXELS_CLI_PLUGIN_DIR . '/.pexels-key');
+  enrove_pexels_cli_err('');
+  enrove_pexels_cli_err('  4. WordPress setting');
+  enrove_pexels_cli_err('       WP Admin → Enrove → Settings → Imagery → Pexels API key');
+  enrove_pexels_cli_err('');
+  enrove_pexels_cli_err('Get a free key at https://www.pexels.com/api/');
   exit(1);
 }
 
-groove_pexels_cli_out('Key source: ' . $groove_key_source . ' (' . \Groove\Pexels\Key::masked() . ')');
+enrove_pexels_cli_out('Key source: ' . $enrove_key_source . ' (' . \Enrove\Pexels\Key::masked() . ')');
 
 // ---------------------------------------------------------------------------
 // Manifest + slot selection.
 // ---------------------------------------------------------------------------
 
-$groove_manifest_file = '';
-foreach (array(GROOVE_PATH . 'pexels/manifest.php', GROOVE_PATH . 'includes/pexels/manifest.php') as $groove_candidate) {
-  if (is_readable($groove_candidate)) {
-    $groove_manifest_file = $groove_candidate;
+$enrove_manifest_file = '';
+foreach (array(ENROVE_PATH . 'pexels/manifest.php', ENROVE_PATH . 'includes/pexels/manifest.php') as $enrove_candidate) {
+  if (is_readable($enrove_candidate)) {
+    $enrove_manifest_file = $enrove_candidate;
     break;
   }
 }
 
-if ($groove_manifest_file === '') {
-  groove_pexels_cli_err('Slot manifest not found (looked for pexels/manifest.php).');
+if ($enrove_manifest_file === '') {
+  enrove_pexels_cli_err('Slot manifest not found (looked for pexels/manifest.php).');
   exit(1);
 }
 
-$groove_manifest = require $groove_manifest_file;
-if (!is_array($groove_manifest) || empty($groove_manifest)) {
-  groove_pexels_cli_err('Slot manifest is empty or did not return an array: ' . $groove_manifest_file);
+$enrove_manifest = require $enrove_manifest_file;
+if (!is_array($enrove_manifest) || empty($enrove_manifest)) {
+  enrove_pexels_cli_err('Slot manifest is empty or did not return an array: ' . $enrove_manifest_file);
   exit(1);
 }
 
-$groove_slots = array();
-foreach ($groove_manifest as $groove_key => $groove_entry) {
-  $groove_slot = groove_pexels_cli_normalise_slot($groove_key, $groove_entry);
-  if ($groove_slot === null) {
+$enrove_slots = array();
+foreach ($enrove_manifest as $enrove_key => $enrove_entry) {
+  $enrove_slot = enrove_pexels_cli_normalise_slot($enrove_key, $enrove_entry);
+  if ($enrove_slot === null) {
     continue;
   }
-  $groove_slots[$groove_slot['slug']] = $groove_slot;
+  $enrove_slots[$enrove_slot['slug']] = $enrove_slot;
 }
 
-$groove_selected = $groove_slots;
+$enrove_selected = $enrove_slots;
 
-if ($groove_opts['covers_only']) {
-  $groove_selected = array_filter($groove_selected, function ($slot) {
+if ($enrove_opts['covers_only']) {
+  $enrove_selected = array_filter($enrove_selected, function ($slot) {
     return $slot['kind'] === 'cover';
   });
 }
 
-if ($groove_opts['placeholders_only']) {
-  $groove_selected = array_filter($groove_selected, function ($slot) {
+if ($enrove_opts['placeholders_only']) {
+  $enrove_selected = array_filter($enrove_selected, function ($slot) {
     return $slot['kind'] !== 'cover';
   });
 }
 
-if ($groove_opts['theme'] !== '') {
-  $groove_theme = $groove_opts['theme'];
-  $groove_theme_slots = array_filter($groove_selected, function ($slot) use ($groove_theme) {
-    return isset($slot['theme']) && $slot['theme'] === $groove_theme;
+if ($enrove_opts['theme'] !== '') {
+  $enrove_theme = $enrove_opts['theme'];
+  $enrove_theme_slots = array_filter($enrove_selected, function ($slot) use ($enrove_theme) {
+    return isset($slot['theme']) && $slot['theme'] === $enrove_theme;
   });
 
-  if (empty($groove_theme_slots)) {
-    groove_pexels_cli_err('No slots found for theme "' . $groove_theme . '".');
+  if (empty($enrove_theme_slots)) {
+    enrove_pexels_cli_err('No slots found for theme "' . $enrove_theme . '".');
     exit(1);
   }
 
   // A theme run means its cover plus the imagery set it seeds from. A theme
   // that declares no set predates sets.php, so it still gets the whole shared
   // pool — that is the only imagery it can possibly reference.
-  if (!$groove_opts['covers_only']) {
-    $groove_theme_set = groove_pexels_cli_theme_set($groove_theme);
+  if (!$enrove_opts['covers_only']) {
+    $enrove_theme_set = enrove_pexels_cli_theme_set($enrove_theme);
 
-    foreach ($groove_selected as $groove_slug => $groove_slot) {
-      if ($groove_slot['kind'] === 'cover') {
+    foreach ($enrove_selected as $enrove_slug => $enrove_slot) {
+      if ($enrove_slot['kind'] === 'cover') {
         continue;
       }
-      $groove_slot_set = isset($groove_slot['set']) ? (string) $groove_slot['set'] : '';
-      if ($groove_theme_set === '' ? $groove_slot_set === '' : $groove_slot_set === $groove_theme_set) {
-        $groove_theme_slots[$groove_slug] = $groove_slot;
+      $enrove_slot_set = isset($enrove_slot['set']) ? (string) $enrove_slot['set'] : '';
+      if ($enrove_theme_set === '' ? $enrove_slot_set === '' : $enrove_slot_set === $enrove_theme_set) {
+        $enrove_theme_slots[$enrove_slug] = $enrove_slot;
       }
     }
   }
 
-  $groove_selected = $groove_theme_slots;
+  $enrove_selected = $enrove_theme_slots;
 }
 
-if ($groove_opts['set'] !== '') {
-  $groove_set = $groove_opts['set'];
-  $groove_selected = array_filter($groove_selected, function ($slot) use ($groove_set) {
-    return isset($slot['set']) && $slot['set'] === $groove_set;
+if ($enrove_opts['set'] !== '') {
+  $enrove_set = $enrove_opts['set'];
+  $enrove_selected = array_filter($enrove_selected, function ($slot) use ($enrove_set) {
+    return isset($slot['set']) && $slot['set'] === $enrove_set;
   });
 
-  if (empty($groove_selected)) {
-    groove_pexels_cli_err('No slots found for set "' . $groove_set . '".');
+  if (empty($enrove_selected)) {
+    enrove_pexels_cli_err('No slots found for set "' . $enrove_set . '".');
     exit(1);
   }
 }
 
-if (!empty($groove_opts['slots'])) {
-  $groove_missing = array();
-  $groove_wanted = array();
-  foreach ($groove_opts['slots'] as $groove_slug) {
-    if (isset($groove_selected[$groove_slug])) {
-      $groove_wanted[$groove_slug] = $groove_selected[$groove_slug];
-    } elseif (isset($groove_slots[$groove_slug])) {
+if (!empty($enrove_opts['slots'])) {
+  $enrove_missing = array();
+  $enrove_wanted = array();
+  foreach ($enrove_opts['slots'] as $enrove_slug) {
+    if (isset($enrove_selected[$enrove_slug])) {
+      $enrove_wanted[$enrove_slug] = $enrove_selected[$enrove_slug];
+    } elseif (isset($enrove_slots[$enrove_slug])) {
       // Named explicitly but excluded by another filter — honour the explicit name.
-      $groove_wanted[$groove_slug] = $groove_slots[$groove_slug];
+      $enrove_wanted[$enrove_slug] = $enrove_slots[$enrove_slug];
     } else {
-      $groove_missing[] = $groove_slug;
+      $enrove_missing[] = $enrove_slug;
     }
   }
 
-  if (!empty($groove_missing)) {
-    groove_pexels_cli_err('Unknown slot(s): ' . implode(', ', $groove_missing));
-    groove_pexels_cli_err('Known slots: ' . implode(', ', array_keys($groove_slots)));
+  if (!empty($enrove_missing)) {
+    enrove_pexels_cli_err('Unknown slot(s): ' . implode(', ', $enrove_missing));
+    enrove_pexels_cli_err('Known slots: ' . implode(', ', array_keys($enrove_slots)));
     exit(1);
   }
 
-  $groove_selected = $groove_wanted;
+  $enrove_selected = $enrove_wanted;
 }
 
-if (empty($groove_selected)) {
-  groove_pexels_cli_err('No slots selected.');
+if (empty($enrove_selected)) {
+  enrove_pexels_cli_err('No slots selected.');
   exit(1);
 }
 
-groove_pexels_cli_out('Slots: ' . count($groove_selected) . ' of ' . count($groove_slots)
-  . ($groove_opts['dry_run'] ? '  (dry run)' : '')
-  . ($groove_opts['force'] ? '  (force)' : ''));
-groove_pexels_cli_out('');
+enrove_pexels_cli_out('Slots: ' . count($enrove_selected) . ' of ' . count($enrove_slots)
+  . ($enrove_opts['dry_run'] ? '  (dry run)' : '')
+  . ($enrove_opts['force'] ? '  (force)' : ''));
+enrove_pexels_cli_out('');
 
 // ---------------------------------------------------------------------------
 // Run.
 // ---------------------------------------------------------------------------
 
-$groove_client = new \Groove\Pexels\Client();
+$enrove_client = new \Enrove\Pexels\Client();
 
-if (!$groove_client->has_key()) {
-  groove_pexels_cli_err('The Pexels client reports no usable key.');
+if (!$enrove_client->has_key()) {
+  enrove_pexels_cli_err('The Pexels client reports no usable key.');
   exit(1);
 }
 
-$groove_probe = $groove_client->verify();
-if (is_wp_error($groove_probe)) {
-  groove_pexels_cli_err('Pexels rejected the key: ' . $groove_probe->get_error_message());
-  groove_pexels_cli_err('Check the key supplied via "' . $groove_key_source . '".');
+$enrove_probe = $enrove_client->verify();
+if (is_wp_error($enrove_probe)) {
+  enrove_pexels_cli_err('Pexels rejected the key: ' . $enrove_probe->get_error_message());
+  enrove_pexels_cli_err('Check the key supplied via "' . $enrove_key_source . '".');
   exit(1);
 }
 
-$groove_curator = new \Groove\Pexels\Curator($groove_client);
-$groove_results = $groove_curator->run($groove_selected, array(
-  'force' => (bool) $groove_opts['force'],
-  'dry_run' => (bool) $groove_opts['dry_run'],
+$enrove_curator = new \Enrove\Pexels\Curator($enrove_client);
+$enrove_results = $enrove_curator->run($enrove_selected, array(
+  'force' => (bool) $enrove_opts['force'],
+  'dry_run' => (bool) $enrove_opts['dry_run'],
 ));
 
 // ---------------------------------------------------------------------------
 // Report.
 // ---------------------------------------------------------------------------
 
-$groove_rows = array();
-$groove_failed = 0;
-$groove_plugin_path = rtrim(GROOVE_PATH, '/') . '/';
+$enrove_rows = array();
+$enrove_failed = 0;
+$enrove_plugin_path = rtrim(ENROVE_PATH, '/') . '/';
 
-foreach ((array) $groove_results as $groove_result) {
-  if (!is_array($groove_result)) {
+foreach ((array) $enrove_results as $enrove_result) {
+  if (!is_array($enrove_result)) {
     continue;
   }
 
-  $groove_slug = isset($groove_result['slot']) ? (string) $groove_result['slot'] : '';
-  if ($groove_slug === '' && isset($groove_result['slug'])) {
-    $groove_slug = (string) $groove_result['slug'];
+  $enrove_slug = isset($enrove_result['slot']) ? (string) $enrove_result['slot'] : '';
+  if ($enrove_slug === '' && isset($enrove_result['slug'])) {
+    $enrove_slug = (string) $enrove_result['slug'];
   }
 
-  $groove_status = isset($groove_result['status']) ? (string) $groove_result['status'] : 'unknown';
-  if ($groove_status === 'failed' || $groove_status === 'error') {
-    $groove_failed++;
+  $enrove_status = isset($enrove_result['status']) ? (string) $enrove_result['status'] : 'unknown';
+  if ($enrove_status === 'failed' || $enrove_status === 'error') {
+    $enrove_failed++;
   }
 
-  $groove_dest = isset($groove_result['path']) ? (string) $groove_result['path'] : '';
-  if ($groove_dest !== '' && strpos($groove_dest, $groove_plugin_path) === 0) {
-    $groove_dest = substr($groove_dest, strlen($groove_plugin_path));
+  $enrove_dest = isset($enrove_result['path']) ? (string) $enrove_result['path'] : '';
+  if ($enrove_dest !== '' && strpos($enrove_dest, $enrove_plugin_path) === 0) {
+    $enrove_dest = substr($enrove_dest, strlen($enrove_plugin_path));
   }
 
-  $groove_note = '';
-  if (!empty($groove_result['error'])) {
-    $groove_note = is_string($groove_result['error']) ? $groove_result['error'] : 'error';
+  $enrove_note = '';
+  if (!empty($enrove_result['error'])) {
+    $enrove_note = is_string($enrove_result['error']) ? $enrove_result['error'] : 'error';
   } else {
-    $groove_credit = null;
-    if (class_exists('\Groove\Pexels\Credits') && $groove_slug !== '') {
-      $groove_credit = \Groove\Pexels\Credits::get($groove_slug);
+    $enrove_credit = null;
+    if (class_exists('\Enrove\Pexels\Credits') && $enrove_slug !== '') {
+      $enrove_credit = \Enrove\Pexels\Credits::get($enrove_slug);
     }
 
-    $groove_photographer = '';
-    $groove_id = '';
-    if (is_array($groove_credit)) {
-      $groove_photographer = isset($groove_credit['photographer']) ? (string) $groove_credit['photographer'] : '';
-      $groove_id = isset($groove_credit['pexels_id']) ? (string) $groove_credit['pexels_id'] : '';
+    $enrove_photographer = '';
+    $enrove_id = '';
+    if (is_array($enrove_credit)) {
+      $enrove_photographer = isset($enrove_credit['photographer']) ? (string) $enrove_credit['photographer'] : '';
+      $enrove_id = isset($enrove_credit['pexels_id']) ? (string) $enrove_credit['pexels_id'] : '';
     }
-    if ($groove_photographer === '' && !empty($groove_result['photographer'])) {
-      $groove_photographer = (string) $groove_result['photographer'];
+    if ($enrove_photographer === '' && !empty($enrove_result['photographer'])) {
+      $enrove_photographer = (string) $enrove_result['photographer'];
     }
-    if ($groove_id === '' && !empty($groove_result['pexels_id'])) {
-      $groove_id = (string) $groove_result['pexels_id'];
+    if ($enrove_id === '' && !empty($enrove_result['pexels_id'])) {
+      $enrove_id = (string) $enrove_result['pexels_id'];
     }
 
-    if ($groove_photographer !== '' || $groove_id !== '') {
-      $groove_note = trim($groove_photographer . ($groove_id !== '' ? ' (#' . $groove_id . ')' : ''));
+    if ($enrove_photographer !== '' || $enrove_id !== '') {
+      $enrove_note = trim($enrove_photographer . ($enrove_id !== '' ? ' (#' . $enrove_id . ')' : ''));
     }
   }
 
-  $groove_rows[] = array($groove_slug, $groove_status, $groove_dest, $groove_note);
+  $enrove_rows[] = array($enrove_slug, $enrove_status, $enrove_dest, $enrove_note);
 }
 
-if (empty($groove_rows)) {
-  groove_pexels_cli_err('The curator returned no results.');
+if (empty($enrove_rows)) {
+  enrove_pexels_cli_err('The curator returned no results.');
   exit(1);
 }
 
-groove_pexels_cli_out(groove_pexels_cli_table(
+enrove_pexels_cli_out(enrove_pexels_cli_table(
   array('SLOT', 'STATUS', 'DESTINATION', 'PHOTO'),
-  $groove_rows
+  $enrove_rows
 ));
-groove_pexels_cli_out('');
+enrove_pexels_cli_out('');
 
-$groove_counts = array();
-foreach ($groove_rows as $groove_row) {
-  $groove_counts[$groove_row[1]] = isset($groove_counts[$groove_row[1]]) ? $groove_counts[$groove_row[1]] + 1 : 1;
+$enrove_counts = array();
+foreach ($enrove_rows as $enrove_row) {
+  $enrove_counts[$enrove_row[1]] = isset($enrove_counts[$enrove_row[1]]) ? $enrove_counts[$enrove_row[1]] + 1 : 1;
 }
-$groove_summary = array();
-foreach ($groove_counts as $groove_status_name => $groove_count) {
-  $groove_summary[] = $groove_count . ' ' . $groove_status_name;
+$enrove_summary = array();
+foreach ($enrove_counts as $enrove_status_name => $enrove_count) {
+  $enrove_summary[] = $enrove_count . ' ' . $enrove_status_name;
 }
-groove_pexels_cli_out('Result: ' . implode(', ', $groove_summary));
+enrove_pexels_cli_out('Result: ' . implode(', ', $enrove_summary));
 
-$groove_rate = $groove_client->verify();
-if (!is_wp_error($groove_rate) && is_array($groove_rate)) {
-  $groove_remaining = isset($groove_rate['remaining']) ? (int) $groove_rate['remaining'] : 0;
-  $groove_limit = isset($groove_rate['limit']) ? (int) $groove_rate['limit'] : 0;
-  groove_pexels_cli_out('Rate limit: ' . $groove_remaining . ' of ' . $groove_limit . ' requests remaining.');
+$enrove_rate = $enrove_client->verify();
+if (!is_wp_error($enrove_rate) && is_array($enrove_rate)) {
+  $enrove_remaining = isset($enrove_rate['remaining']) ? (int) $enrove_rate['remaining'] : 0;
+  $enrove_limit = isset($enrove_rate['limit']) ? (int) $enrove_rate['limit'] : 0;
+  enrove_pexels_cli_out('Rate limit: ' . $enrove_remaining . ' of ' . $enrove_limit . ' requests remaining.');
 } else {
-  groove_pexels_cli_out('Rate limit: unavailable.');
+  enrove_pexels_cli_out('Rate limit: unavailable.');
 }
 
-if (class_exists('\Groove\Pexels\Credits')) {
-  groove_pexels_cli_out('Credits: ' . \Groove\Pexels\Credits::path());
+if (class_exists('\Enrove\Pexels\Credits')) {
+  enrove_pexels_cli_out('Credits: ' . \Enrove\Pexels\Credits::path());
 }
 
-groove_pexels_cli_out('');
-groove_pexels_cli_out('Pexels licence: credit photographers and keep a visible "Photos provided by Pexels" link.');
+enrove_pexels_cli_out('');
+enrove_pexels_cli_out('Pexels licence: credit photographers and keep a visible "Photos provided by Pexels" link.');
 
-if ($groove_failed > 0) {
-  groove_pexels_cli_err($groove_failed . ' slot(s) failed.');
+if ($enrove_failed > 0) {
+  enrove_pexels_cli_err($enrove_failed . ' slot(s) failed.');
   exit(1);
 }
 

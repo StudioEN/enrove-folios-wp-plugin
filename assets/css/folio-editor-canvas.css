@@ -6,7 +6,7 @@
    ink, a centred reading column, and the folio's own fonts wherever its theme
    loads them into the editor (Font_Loader::enqueue() with the
    .editor-styles-wrapper selector sets the two variables below). It is loaded into the canvas iframe only, on a
-   groove_folio_page edit screen only.
+   enrove_folio_page edit screen only.
 
    Everything but the side padding is wrapped in :where() so a theme's editor
    styles win without having to out-specify this file.

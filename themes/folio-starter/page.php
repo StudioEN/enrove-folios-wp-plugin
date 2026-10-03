@@ -1,8 +1,8 @@
 <?php
-namespace Groove\Themes\Folio_Starter;
+namespace Enrove\Themes\Folio_Starter;
 
-use Groove\Themes\Base_Theme;
-use Groove\Utils\Utils;
+use Enrove\Themes\Base_Theme;
+use Enrove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -159,7 +159,7 @@ class Page extends Base_Theme
     ?>
     <div class="g-folio__theme-page-nav-bar">
       <div class="g-folio__theme-page-nav-bar-main">
-        <button type="button" class="g-folio__theme-page-nav-button" aria-label="<?php echo esc_attr__('Open navigation', 'groove-folios'); ?>"
+        <button type="button" class="g-folio__theme-page-nav-button" aria-label="<?php echo esc_attr__('Open navigation', 'enrove-folios'); ?>"
           aria-expanded="false">
           <svg class="g-folio__theme-menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -170,7 +170,7 @@ class Page extends Base_Theme
         <div class="g-folio__theme-page-name"><span class="g-folio__theme-folio-name">
             <?php echo esc_html(isset($this->folio->post_title) ? $this->folio->post_title : ''); ?> |
           </span>
-          <?php echo esc_html($this->page->post_title ?? __('Page', 'groove-folios')); ?>
+          <?php echo esc_html($this->page->post_title ?? __('Page', 'enrove-folios')); ?>
         </div>
       </div>
 
@@ -219,7 +219,7 @@ class Page extends Base_Theme
       $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
       if (preg_match($pattern, $current_path, $matches)) {
         $folio_slug = rtrim($matches[1], '/');
-        $folio = Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+        $folio = Utils::get_enrove_post_by_post_type_and_post_name('enrove_folio', $folio_slug);
       }
     }
     $folio_title = isset($folio->post_title) ? (string) $folio->post_title : '';
@@ -228,11 +228,11 @@ class Page extends Base_Theme
       $folio_url = Utils::get_folio_permalink_by_id($folio->ID);
     }
     ?>
-    <nav class="g-folio__theme-page-nav" aria-label="<?php echo esc_attr__('Folio contents', 'groove-folios'); ?>"
-      data-groove-drawer=".g-folio__theme-page-nav-button">
+    <nav class="g-folio__theme-page-nav" aria-label="<?php echo esc_attr__('Folio contents', 'enrove-folios'); ?>"
+      data-enrove-drawer=".g-folio__theme-page-nav-button">
       <?php // Outside the -content box, which is the scroller: the close button
         // used to scroll away with a long contents list. ?>
-      <button type="button" class="g-folio__theme-page-nav-close" aria-label="<?php echo esc_attr__('Close navigation', 'groove-folios'); ?>">
+      <button type="button" class="g-folio__theme-page-nav-close" aria-label="<?php echo esc_attr__('Close navigation', 'enrove-folios'); ?>">
         <svg class="g-folio__theme-close-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <line x1="6" y1="6" x2="18" y2="18"></line>
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -248,7 +248,7 @@ class Page extends Base_Theme
             <?php echo esc_html($folio_title); ?>
           <?php endif; ?>
         </h3>
-        <p class="g-folio__theme-page-nav-label"><?php echo esc_html__('Contents', 'groove-folios'); ?></p>
+        <p class="g-folio__theme-page-nav-label"><?php echo esc_html__('Contents', 'enrove-folios'); ?></p>
         <div class="g-folio__theme-page-navs">
           <?php
           $index = 1;
@@ -295,7 +295,7 @@ class Page extends Base_Theme
       </div>
 
       <?php
-      // Credit, not rendered: "Powered by Groove Folios". WordPress.org
+      // Credit, not rendered: "Powered by Enrove Folios". WordPress.org
       // guideline 10 allows no public credit without the site admin opting in.
       // The empty cell stays: it is the middle column of the footer grid.
       ?>

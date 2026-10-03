@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Modules;
+namespace Enrove\Modules;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; 
@@ -56,7 +56,7 @@ abstract class Assets {
 
 	
 	public function get_assets_base_url() {
-		return GROOVE_URL;
+		return ENROVE_URL;
 	}
 
 	

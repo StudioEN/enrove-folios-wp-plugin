@@ -1,9 +1,9 @@
 <?php
 
-namespace Groove\Menu;
+namespace Enrove\Menu;
 
-use Groove\Menu\Menu_Item;
-use Groove\Menu\Menu_Item_Page;
+use Enrove\Menu\Menu_Item;
+use Enrove\Menu\Menu_Item_Page;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
@@ -43,7 +43,7 @@ class Menu_Manager {
 	}
 
 	private function register_wp_menus() {
-		do_action( 'groove/menu/register', $this );
+		do_action( 'enrove/menu/register', $this );
 
 		$hooks = [];
 
@@ -57,7 +57,7 @@ class Menu_Manager {
 			}
 		}
 
-		do_action( 'groove/menu/after_register', $this, $hooks );
+		do_action( 'enrove/menu/after_register', $this, $hooks );
 	}
 
 	private function register_top_level_menu( $item_slug, Menu_Item $item ) {

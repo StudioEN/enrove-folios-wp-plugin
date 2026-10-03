@@ -1,14 +1,14 @@
 <?php
-namespace Groove;
+namespace Enrove;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
 /**
- * Groove autoloader.
+ * Enrove autoloader.
  *
- * Groove autoloader handler class is responsible for loading the different
+ * Enrove autoloader handler class is responsible for loading the different
  * classes needed to run the plugin.
  *
  * @since 1.6.0
@@ -18,20 +18,20 @@ class Autoloader {
 	/**
 	 * Classes map.
 	 *
-	 * Maps Groove classes to file names.
+	 * Maps Enrove classes to file names.
 	 *
 	 * @since 1.6.0
 	 * @access private
 	 * @static
 	 *
-	 * @var array Classes used by groove.
+	 * @var array Classes used by enrove.
 	 */
 	private static $classes_map;
 
 	/**
 	 * Classes aliases.
 	 *
-	 * Maps Groove classes to aliases.
+	 * Maps Enrove classes to aliases.
 	 *
 	 * @since 1.6.0
 	 * @access private
@@ -69,7 +69,7 @@ class Autoloader {
 	 */
 	public static function run($default_path = '', $default_namespace = '') {
 		if ( '' === $default_path ) {
-			$default_path = GROOVE_PATH;
+			$default_path = ENROVE_PATH;
 		}
 
 		if ('' === $default_namespace) {

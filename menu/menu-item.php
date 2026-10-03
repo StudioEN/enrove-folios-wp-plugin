@@ -1,7 +1,7 @@
 <?php
 
-namespace Groove\Menu;
-use Groove\Pages\Page;
+namespace Enrove\Menu;
+use Enrove\Pages\Page;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly

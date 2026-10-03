@@ -16,9 +16,9 @@ return [
         'accent_hover' => '#2c47ba',
         'background' => '#F0F6FC',
     ],
-    'namespace' => 'Groove\Themes\Folio_Starter',
-    'cover_class' => 'Groove\Themes\Folio_Starter\Cover',
-    'page_class' => 'Groove\Themes\Folio_Starter\Page',
+    'namespace' => 'Enrove\Themes\Folio_Starter',
+    'cover_class' => 'Enrove\Themes\Folio_Starter\Cover',
+    'page_class' => 'Enrove\Themes\Folio_Starter\Page',
     // Theme typeface defaults. A folio's own font pickers override these;
     // Base_Theme loads whichever wins in one request. See themes/README.md.
     'fonts' => [

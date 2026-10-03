@@ -217,7 +217,7 @@ html:has(.g-folio__theme-1-page) {
   --folio-shadow: 0 8px 32px rgba(16, 21, 23, .12);
   /* The translucent top bar. It was a literal at its one call site and the
      slot read "this theme has no scrim", which was wrong — and it mattered,
-     because groove-main.js repainted that bar on scroll with its own hardcoded
+     because enrove-main.js repainted that bar on scroll with its own hardcoded
      rgba() and the slot could not have changed it. */
   --folio-overlay: rgba(255, 255, 255, 0.90);
 
@@ -756,7 +756,7 @@ html:has(.g-folio__theme-1-page) {
 }
 
 /* Past the first screenful the bar goes opaque so type does not read through
-   it. groove-main.js used to write both colours inline as literal rgba(),
+   it. enrove-main.js used to write both colours inline as literal rgba(),
    which meant the slot above was decorative; it now toggles this class. */
 .g-folio__theme-1-page .g-folio__theme-page-nav-bar.is-scrolled {
   background-color: var(--fs-surface);

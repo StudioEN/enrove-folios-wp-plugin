@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Pexels;
+namespace Enrove\Pexels;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -141,11 +141,11 @@ class Curator
     $relative = isset($slot['path']) ? ltrim((string) $slot['path'], '/\\') : '';
 
     if ('' === $relative) {
-      return $this->result($slug, 'failed', '', __('The slot has no destination path.', 'groove-folios'));
+      return $this->result($slug, 'failed', '', __('The slot has no destination path.', 'enrove-folios'));
     }
 
     if (empty($slot['query'])) {
-      return $this->result($slug, 'failed', '', __('The slot has no search query.', 'groove-folios'));
+      return $this->result($slug, 'failed', '', __('The slot has no search query.', 'enrove-folios'));
     }
 
     $destination = $this->plugin_path() . $relative;
@@ -165,7 +165,7 @@ class Curator
         null,
         [
           'relative_path' => $relative,
-          'message'       => __('Destination already exists. Re-run with force to replace it.', 'groove-folios'),
+          'message'       => __('Destination already exists. Re-run with force to replace it.', 'enrove-folios'),
         ]
       );
     }
@@ -183,7 +183,7 @@ class Curator
     if ('' === $src_url) {
       return $this->result($slug, 'failed', $destination, sprintf(
         /* translators: %s: Pexels src size name, e.g. large2x. */
-        __('The chosen photo has no usable "%s" source.', 'groove-folios'),
+        __('The chosen photo has no usable "%s" source.', 'enrove-folios'),
         $src_size
       ), ['relative_path' => $relative]);
     }
@@ -201,7 +201,7 @@ class Curator
     ];
 
     if (!empty($opts['dry_run'])) {
-      $meta['message'] = __('Dry run: nothing was written.', 'groove-folios');
+      $meta['message'] = __('Dry run: nothing was written.', 'enrove-folios');
 
       return $this->result($slug, 'dry-run', $destination, null, $meta);
     }
@@ -210,7 +210,7 @@ class Curator
     if (!is_dir($dir) && !wp_mkdir_p($dir)) {
       return $this->result($slug, 'failed', $destination, sprintf(
         /* translators: %s: directory path. */
-        __('Could not create the directory %s.', 'groove-folios'),
+        __('Could not create the directory %s.', 'enrove-folios'),
         $dir
       ), $meta);
     }
@@ -226,7 +226,7 @@ class Curator
     if (!is_array($size) || empty($size[0]) || empty($size[1])) {
       wp_delete_file($temp);
 
-      return $this->result($slug, 'failed', $destination, __('The downloaded file is not a valid image.', 'groove-folios'), $meta);
+      return $this->result($slug, 'failed', $destination, __('The downloaded file is not a valid image.', 'enrove-folios'), $meta);
     }
 
     if (!$this->move($temp, $destination)) {
@@ -234,7 +234,7 @@ class Curator
 
       return $this->result($slug, 'failed', $destination, sprintf(
         /* translators: %s: file path. */
-        __('Could not write %s.', 'groove-folios'),
+        __('Could not write %s.', 'enrove-folios'),
         $destination
       ), $meta);
     }
@@ -244,7 +244,7 @@ class Curator
 
     $recorded = $this->write_credit($slug, $this->credit_record($slug, $slot, $photo, $relative, $src_size, $meta));
     if (!$recorded) {
-      $meta['message'] = __('Image saved, but the credit could not be written to credits.json.', 'groove-folios');
+      $meta['message'] = __('Image saved, but the credit could not be written to credits.json.', 'enrove-folios');
     }
 
     return $this->result($slug, 'downloaded', $destination, null, $meta);
@@ -290,7 +290,7 @@ class Curator
       if (is_wp_error($response)) {
         // A key or quota problem will not improve on the next attempt.
         $code = $response->get_error_code();
-        if (in_array($code, ['groove_pexels_no_key', 'groove_pexels_unauthorized', 'groove_pexels_rate_limited'], true)) {
+        if (in_array($code, ['enrove_pexels_no_key', 'enrove_pexels_unauthorized', 'enrove_pexels_rate_limited'], true)) {
           return $response;
         }
 
@@ -310,10 +310,10 @@ class Curator
     }
 
     return new \WP_Error(
-      'groove_pexels_no_results',
+      'enrove_pexels_no_results',
       sprintf(
         /* translators: %s: search query. */
-        __('Pexels returned no usable photos for “%s”.', 'groove-folios'),
+        __('Pexels returned no usable photos for “%s”.', 'enrove-folios'),
         (string) $slot['query']
       )
     );
@@ -439,10 +439,10 @@ class Curator
     $status = (int) wp_remote_retrieve_response_code($response);
     if (200 !== $status) {
       return new \WP_Error(
-        'groove_pexels_download_failed',
+        'enrove_pexels_download_failed',
         sprintf(
           /* translators: %d: HTTP status code. */
-          __('Downloading the image failed with HTTP %d.', 'groove-folios'),
+          __('Downloading the image failed with HTTP %d.', 'enrove-folios'),
           $status
         )
       );
@@ -450,18 +450,18 @@ class Curator
 
     $body = wp_remote_retrieve_body($response);
     if ('' === $body) {
-      return new \WP_Error('groove_pexels_download_empty', __('The image download returned an empty body.', 'groove-folios'));
+      return new \WP_Error('enrove_pexels_download_empty', __('The image download returned an empty body.', 'enrove-folios'));
     }
 
-    $temp = function_exists('wp_tempnam') ? wp_tempnam('groove-pexels') : tempnam(sys_get_temp_dir(), 'groove-pexels');
+    $temp = function_exists('wp_tempnam') ? wp_tempnam('enrove-pexels') : tempnam(sys_get_temp_dir(), 'enrove-pexels');
     if (!$temp) {
-      return new \WP_Error('groove_pexels_temp_failed', __('Could not create a temporary file for the download.', 'groove-folios'));
+      return new \WP_Error('enrove_pexels_temp_failed', __('Could not create a temporary file for the download.', 'enrove-folios'));
     }
 
     if (false === file_put_contents($temp, $body)) {
       wp_delete_file($temp);
 
-      return new \WP_Error('groove_pexels_temp_failed', __('Could not write the temporary download file.', 'groove-folios'));
+      return new \WP_Error('enrove_pexels_temp_failed', __('Could not write the temporary download file.', 'enrove-folios'));
     }
 
     return (string) $temp;
@@ -629,6 +629,6 @@ class Curator
    */
   private function plugin_path(): string
   {
-    return defined('GROOVE_PATH') ? trailingslashit(GROOVE_PATH) : dirname(__DIR__) . DIRECTORY_SEPARATOR;
+    return defined('ENROVE_PATH') ? trailingslashit(ENROVE_PATH) : dirname(__DIR__) . DIRECTORY_SEPARATOR;
   }
 }

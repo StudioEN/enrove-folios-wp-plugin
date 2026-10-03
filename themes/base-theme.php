@@ -1,8 +1,8 @@
 <?php
-namespace Groove\Themes;
+namespace Enrove\Themes;
 
-use Groove\Modules\Assets;
-use Groove\Utils\Utils;
+use Enrove\Modules\Assets;
+use Enrove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -34,8 +34,8 @@ abstract class Base_Theme extends Assets
 
   public function __construct()
   {
-    $this->post_type = Utils::get_groove_post_type();
-    $this->id = Utils::get_groove_post_id();
+    $this->post_type = Utils::get_enrove_post_type();
+    $this->id = Utils::get_enrove_post_id();
 
     add_action('wp_enqueue_scripts', [$this, 'ensure_script']);
   }
@@ -45,38 +45,38 @@ abstract class Base_Theme extends Assets
     show_admin_bar(false);
 
     // Shared plugin CSS (admin bar reset, global layout).
-    wp_enqueue_style('groove', $this->get_css_assets_url('groove-main', null, 'default', true), [], GROOVE_VERSION);
+    wp_enqueue_style('enrove', $this->get_css_assets_url('enrove-main', null, 'default', true), [], ENROVE_VERSION);
     // The admin bar is off above, but its bump (`html { margin-top: 32px
     // !important }`) is registered before this runs. `html:root` outranks
     // that `html` whichever of the two prints last.
-    wp_add_inline_style('groove', 'html:root { margin-top: 0 !important; }');
+    wp_add_inline_style('enrove', 'html:root { margin-top: 0 !important; }');
 
     // The theme contract: the --folio-* slots every theme fills, with WordPress
     // admin-palette fallbacks. Loaded before theme CSS so a theme's own
-    // declarations win, and after 'groove' so --g-folio-* fonts are in scope.
+    // declarations win, and after 'enrove' so --g-folio-* fonts are in scope.
     wp_enqueue_style(
-      'groove-folio-contract',
+      'enrove-folio-contract',
       $this->get_css_assets_url('folio-contract'),
-      ['groove'],
-      GROOVE_VERSION
+      ['enrove'],
+      ENROVE_VERSION
     );
 
     // Per-theme CSS.
     $theme_css_path = $this->get_theme_css_path();
-    $version = file_exists($theme_css_path) ? filemtime($theme_css_path) : GROOVE_VERSION;
+    $version = file_exists($theme_css_path) ? filemtime($theme_css_path) : ENROVE_VERSION;
 
     wp_enqueue_style(
-      'groove-theme-' . static::get_id(),
+      'enrove-theme-' . static::get_id(),
       $this->get_theme_css_url(),
-      ['groove', 'groove-folio-contract'],
+      ['enrove', 'enrove-folio-contract'],
       $version
     );
 
-    $this->enqueue_folio_fonts('groove-theme-' . static::get_id());
+    $this->enqueue_folio_fonts('enrove-theme-' . static::get_id());
 
-    wp_enqueue_script('groove', $this->get_js_assets_url('groove-main'), ['jquery'], GROOVE_VERSION, true);
-    // Tells groove-main.js it is running on a rendered folio, not in wp-admin.
-    wp_add_inline_script('groove', 'window.GROOVE_IS_PREVIEW = true;', 'before');
+    wp_enqueue_script('enrove', $this->get_js_assets_url('enrove-main'), ['jquery'], ENROVE_VERSION, true);
+    // Tells enrove-main.js it is running on a rendered folio, not in wp-admin.
+    wp_add_inline_script('enrove', 'window.ENROVE_IS_PREVIEW = true;', 'before');
   }
 
   protected function get_folio_id_for_customization()
@@ -86,11 +86,11 @@ abstract class Base_Theme extends Assets
       return 0;
     }
 
-    if ($this->post_type === 'groove_folio') {
+    if ($this->post_type === 'enrove_folio') {
       return $post_id;
     }
 
-    if ($this->post_type !== 'groove_folio_page') {
+    if ($this->post_type !== 'enrove_folio_page') {
       return 0;
     }
 
@@ -119,7 +119,7 @@ abstract class Base_Theme extends Assets
    * Rendering never writes the link: a page joins its folio only through a
    * nonce-checked Add Page link (Contents\FolioPage\Content). Meta that merely
    * disagrees with the URL is left alone: page lookup in
-   * Utils::get_groove_post_by_post_type_and_post_name() is itself scoped by
+   * Utils::get_enrove_post_by_post_type_and_post_name() is itself scoped by
    * folio_id, so a page that resolved from a folio path already matches it.
    *
    * Page themes should call this from their constructor rather than re-implementing it.
@@ -130,7 +130,7 @@ abstract class Base_Theme extends Assets
   {
     $post_id = (int) $this->id;
 
-    if ($this->post_type === 'groove_folio_page') {
+    if ($this->post_type === 'enrove_folio_page') {
       $meta_folio_id = $post_id > 0 ? (int) get_post_meta($post_id, 'folio_id', true) : 0;
       $path_folio_id = (int) Utils::get_folio_id_from_current_path();
 
@@ -505,7 +505,7 @@ abstract class Base_Theme extends Assets
   /**
    * Auto-generate a URL-safe theme ID from the human name.
    * "Folio Starter" -> "folio-starter"
-   * "Groove eBook"  -> "groove-ebook"
+   * "Enrove eBook"  -> "enrove-ebook"
    *
    * @return string
    */
@@ -545,7 +545,7 @@ abstract class Base_Theme extends Assets
    * A theme package carries its own cover. The built-in themes' covers are
    * Pexels photos, which the WordPress.org package cannot carry, so when the
    * file is not in the theme folder the downloaded copy is used instead (see
-   * \Groove\Pexels\Library) — and when that is not there either, '' rather
+   * \Enrove\Pexels\Library) — and when that is not there either, '' rather
    * than a URL to nothing, so each theme falls back to its own background.
    *
    * @param string $theme_assets_url The theme's assets/ URL, trailing slash.
@@ -562,8 +562,8 @@ abstract class Base_Theme extends Assets
       return $theme_assets_url . 'images/' . $filename;
     }
 
-    if (class_exists('\\Groove\\Pexels\\Library')) {
-      return \Groove\Pexels\Library::existing_url('cover-' . static::get_id());
+    if (class_exists('\\Enrove\\Pexels\\Library')) {
+      return \Enrove\Pexels\Library::existing_url('cover-' . static::get_id());
     }
 
     return '';
@@ -612,7 +612,7 @@ abstract class Base_Theme extends Assets
       $this->feature_image = get_the_post_thumbnail($page->ID);
       $this->page = $page;
     } else {
-      $this->title = esc_html__('Not Found', 'groove-folios');
+      $this->title = esc_html__('Not Found', 'enrove-folios');
       $this->content = '';
       $this->author = '';
       $this->feature_image = '';
@@ -781,7 +781,7 @@ abstract class Base_Theme extends Assets
      *
      * @param array $allowed Allowed-HTML array for wp_kses().
      */
-    $allowed = (array) apply_filters('groove_folios_content_allowed_html', $allowed);
+    $allowed = (array) apply_filters('enrove_folios_content_allowed_html', $allowed);
 
     return $allowed;
   }
@@ -789,7 +789,7 @@ abstract class Base_Theme extends Assets
   function get_pages_data($id)
   {
     $args = array(
-      'post_type' => 'groove_folio_page',
+      'post_type' => 'enrove_folio_page',
       'orderby' => 'menu_order',
       'order' => 'ASC',
       'post_status' => Utils::get_listed_page_statuses((int) $id),
@@ -813,7 +813,7 @@ abstract class Base_Theme extends Assets
   // Every Page subclass needs the same four things: its parent folio, where it
   // sits in the folio's page order, its neighbours, and an anchor name for a
   // heading. These lived as byte-identical copies in all five themes until the
-  // copies drifted — groove-proposal hardened two of them and the fix never
+  // copies drifted — enrove-proposal hardened two of them and the fix never
   // travelled. They are here so the next theme inherits the fixed versions.
   //
   // A theme is still free to override any of them; magazine reorders $pages in
@@ -833,7 +833,7 @@ abstract class Base_Theme extends Assets
     $wp_query = $this->get_the_wp_query(array(
       'post__in' => array((int) $this->folio_id),
       'post_status' => Utils::get_viewable_post_statuses(),
-      'post_type' => 'groove_folio',
+      'post_type' => 'enrove_folio',
     ));
 
     $folio = $wp_query->post;
@@ -843,7 +843,7 @@ abstract class Base_Theme extends Assets
     // the post_status arg that would otherwise have enforced it.
     if (!$folio && (int) $this->folio_id > 0) {
       $direct = get_post((int) $this->folio_id);
-      if ($direct && $direct->post_type === 'groove_folio' && Utils::can_current_request_view_post($direct)) {
+      if ($direct && $direct->post_type === 'enrove_folio' && Utils::can_current_request_view_post($direct)) {
         $folio = $direct;
       }
     }
@@ -856,7 +856,7 @@ abstract class Base_Theme extends Assets
   /**
    * The page list as an ordered, 0-indexed list.
    *
-   * A theme is invited to reorder $this->pages in get_data() (groove-magazine
+   * A theme is invited to reorder $this->pages in get_data() (enrove-magazine
    * does), and a reorder that filters rather than sorts leaves the original keys
    * behind. Position and key would then disagree, and prev/next — which step by
    * one from the current index — would walk to the wrong page or to nothing.
@@ -952,7 +952,7 @@ abstract class Base_Theme extends Assets
     $folio_id = isset($args['folio_id']) ? (int) $args['folio_id'] : $this->get_folio_id_for_customization();
     $current_page_id = isset($args['current_page_id'])
       ? (int) $args['current_page_id']
-      : (($this->post_type === 'groove_folio_page') ? (int) $this->id : 0);
+      : (($this->post_type === 'enrove_folio_page') ? (int) $this->id : 0);
 
     $pages = array();
     if (isset($args['pages']) && is_array($args['pages'])) {
@@ -966,7 +966,7 @@ abstract class Base_Theme extends Assets
 
     $title = array_key_exists('title', $args) ? (string) $args['title'] : '';
     if ($title === '') {
-      if ($this->post_type === 'groove_folio') {
+      if ($this->post_type === 'enrove_folio') {
         $title = !empty($this->title) ? (string) $this->title : (string) $this->theme_name;
       } else {
         if (property_exists($this, 'folio') && isset($this->folio) && isset($this->folio->post_title)) {

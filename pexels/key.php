@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Pexels;
+namespace Enrove\Pexels;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -10,10 +10,10 @@ if (!defined('ABSPATH')) {
  *
  * Resolves the Pexels API key from the first available source, in order:
  *
- *   1. the GROOVE_PEXELS_API_KEY constant (wp-config.php)
+ *   1. the ENROVE_PEXELS_API_KEY constant (wp-config.php)
  *   2. the PEXELS_API_KEY environment variable
  *   3. a single-line `.pexels-key` file at the plugin root
- *   4. the `groove_pexels_api_key` option
+ *   4. the `enrove_pexels_api_key` option
  *
  * The key is only ever read by the curation path. Nothing in this class
  * returns, logs or renders the full value except resolve() itself — use
@@ -25,7 +25,7 @@ class Key
 {
 
   /** Name of the wp-config.php constant that always wins. */
-  const CONSTANT = 'GROOVE_PEXELS_API_KEY';
+  const CONSTANT = 'ENROVE_PEXELS_API_KEY';
 
   /** Name of the environment variable checked second. */
   const ENV_VAR = 'PEXELS_API_KEY';
@@ -34,7 +34,7 @@ class Key
   const KEY_FILE = '.pexels-key';
 
   /** Option name checked last. Stored with autoload = no. */
-  const OPTION = 'groove_pexels_api_key';
+  const OPTION = 'enrove_pexels_api_key';
 
   // ── Public API ───────────────────────────────────────────────────────────
 
@@ -125,23 +125,23 @@ class Key
       case 'constant':
         return sprintf(
           /* translators: %s: PHP constant name. */
-          __('the %s constant in wp-config.php', 'groove-folios'),
+          __('the %s constant in wp-config.php', 'enrove-folios'),
           self::CONSTANT
         );
       case 'env':
         return sprintf(
           /* translators: %s: environment variable name. */
-          __('the %s environment variable', 'groove-folios'),
+          __('the %s environment variable', 'enrove-folios'),
           self::ENV_VAR
         );
       case 'file':
         return sprintf(
           /* translators: %s: filename. */
-          __('the %s file at the plugin root', 'groove-folios'),
+          __('the %s file at the plugin root', 'enrove-folios'),
           self::KEY_FILE
         );
       case 'option':
-        return __('the Groove settings screen', 'groove-folios');
+        return __('the Enrove settings screen', 'enrove-folios');
       default:
         return '';
     }
@@ -255,8 +255,8 @@ class Key
    */
   private static function plugin_path(): string
   {
-    if (defined('GROOVE_PATH')) {
-      return trailingslashit(GROOVE_PATH);
+    if (defined('ENROVE_PATH')) {
+      return trailingslashit(ENROVE_PATH);
     }
 
     return dirname(__DIR__) . DIRECTORY_SEPARATOR;

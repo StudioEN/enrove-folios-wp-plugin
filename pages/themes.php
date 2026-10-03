@@ -1,14 +1,14 @@
 <?php
-namespace Groove\Pages;
+namespace Enrove\Pages;
 
-use Groove\Pages\Page;
-use Groove\Pages\Overview;
-use Groove\Menu\Menu_Manager;
-use Groove\Menu\Themes_Menu_Item;
-use Groove\Themes\Themes_Manager;
-use Groove\Utils\Markdown;
-use Groove\Utils\Request;
-use Groove\Utils\Theme_Docs;
+use Enrove\Pages\Page;
+use Enrove\Pages\Overview;
+use Enrove\Menu\Menu_Manager;
+use Enrove\Menu\Themes_Menu_Item;
+use Enrove\Themes\Themes_Manager;
+use Enrove\Utils\Markdown;
+use Enrove\Utils\Request;
+use Enrove\Utils\Theme_Docs;
 
 if (!defined('ABSPATH')) {
 	exit;
@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
  */
 class Themes extends Page
 {
-	const PAGE_ID = 'groove-themes';
+	const PAGE_ID = 'enrove-themes';
 
 	/**
 	 * The tab holding the theme grid. Every other tab key names a document in
@@ -36,7 +36,7 @@ class Themes extends Page
 
 	public function get_title()
 	{
-		return esc_html__('Themes', 'groove-folios');
+		return esc_html__('Themes', 'enrove-folios');
 	}
 
 	/**
@@ -50,9 +50,9 @@ class Themes extends Page
 	public function create_tabs()
 	{
 		return [
-			self::TAB_THEMES => ['label' => esc_html__('Themes', 'groove-folios')],
-			'spec' => ['label' => esc_html__('Spec', 'groove-folios')],
-			'playbook' => ['label' => esc_html__('Playbook', 'groove-folios')],
+			self::TAB_THEMES => ['label' => esc_html__('Themes', 'enrove-folios')],
+			'spec' => ['label' => esc_html__('Spec', 'enrove-folios')],
+			'playbook' => ['label' => esc_html__('Playbook', 'enrove-folios')],
 		];
 	}
 
@@ -72,7 +72,7 @@ class Themes extends Page
 
 	public function __construct()
 	{
-		add_action('groove/menu/register', function (Menu_Manager $menu) {
+		add_action('enrove/menu/register', function (Menu_Manager $menu) {
 			$menu->register(static::PAGE_ID, new Themes_Menu_Item($this));
 		}, Overview::MENU_PRIORITY + 20);
 	}
@@ -116,7 +116,7 @@ class Themes extends Page
 		$tabs = $this->get_tabs();
 		$tab_key = $this->current_tab();
 		?>
-		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Themes tabs', 'groove-folios'); ?>">
+		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Themes tabs', 'enrove-folios'); ?>">
 			<?php
 			foreach ($tabs as $tab_id => $tab) {
 				$active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
@@ -151,7 +151,7 @@ class Themes extends Page
 						<?php
 						printf(
 							/* translators: %s: path to the documentation file, relative to the plugin folder */
-							esc_html__('This document is not on disk. It ships with the plugin at %s, and a deployment that copies only PHP files leaves this tab with nothing to render.', 'groove-folios'),
+							esc_html__('This document is not on disk. It ships with the plugin at %s, and a deployment that copies only PHP files leaves this tab with nothing to render.', 'enrove-folios'),
 							'<code>' . esc_html($relative) . '</code>'
 						);
 						?>
@@ -164,23 +164,23 @@ class Themes extends Page
 					   own name, which is the name the two documents use for each other. */
 					$file_name = basename($relative);
 					/* translators: %s: file name of the documentation, e.g. README.md */
-					$download_label = sprintf(__('Download %s', 'groove-folios'), $file_name);
+					$download_label = sprintf(__('Download %s', 'enrove-folios'), $file_name);
 					?>
 					<div class="g-docs__source">
 						<p class="g-docs__source-text">
 							<?php
 							printf(
 								/* translators: %s: path to the documentation file, relative to the plugin folder */
-								esc_html__('Rendered from %s, which ships with the plugin. Edit that file to change this page.', 'groove-folios'),
+								esc_html__('Rendered from %s, which ships with the plugin. Edit that file to change this page.', 'enrove-folios'),
 								'<code>' . esc_html($relative) . '</code>'
 							);
 							?>
 						</p>
-						<a href="<?php echo esc_url(GROOVE_URL . $relative); ?>"
+						<a href="<?php echo esc_url(ENROVE_URL . $relative); ?>"
 							download="<?php echo esc_attr($file_name); ?>"
 							class="button button-secondary g-page-header__icon-button g-tooltip-button g-docs__download"
 							aria-label="<?php echo esc_attr($download_label); ?>"
-							data-tooltip-text="<?php esc_attr_e('Download', 'groove-folios'); ?>"
+							data-tooltip-text="<?php esc_attr_e('Download', 'enrove-folios'); ?>"
 							data-tooltip-keeps-label>
 							<span class="dashicons dashicons-download" aria-hidden="true"></span>
 						</a>
@@ -205,7 +205,7 @@ class Themes extends Page
 				<?php endif; ?>
 			</section>
 		<?php
-		// The contents rail's current-section marker is in assets/js/groove-themes.js.
+		// The contents rail's current-section marker is in assets/js/enrove-themes.js.
 	}
 
 	/**
@@ -236,7 +236,7 @@ class Themes extends Page
 		<?php /* Named by the heading it already shows rather than by an aria-label
 		         repeating the same word, so a screen reader announces the rail once. */ ?>
 		<nav class="g-docs__toc" aria-labelledby="g-docs-toc-title">
-			<p class="g-docs__toc-title" id="g-docs-toc-title"><?php esc_html_e('Contents', 'groove-folios'); ?></p>
+			<p class="g-docs__toc-title" id="g-docs-toc-title"><?php esc_html_e('Contents', 'enrove-folios'); ?></p>
 			<ul class="g-docs__toc-list">
 				<?php foreach ($entries as $entry): ?>
 					<li class="g-docs__toc-item">
@@ -270,7 +270,7 @@ class Themes extends Page
 		$all_themes = Themes_Manager::get_all_themes();
 		$folio_counts = $this->get_folio_counts_by_theme();
 		$total_themes = count($all_themes);
-		$default_theme_id = (string) get_option('groove_default_theme_id', '');
+		$default_theme_id = (string) get_option('enrove_default_theme_id', '');
 		?>
 		<div class="space-y-4">
 
@@ -278,14 +278,14 @@ class Themes extends Page
 
 			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
 				<div>
-					<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Your Themes', 'groove-folios'); ?></h2>
+					<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Your Themes', 'enrove-folios'); ?></h2>
 					<p class="mt-1 mb-0 text-sm text-gray-600">
 						<?php
 						/* The three summary tiles that used to sit above the grid counted
 						   what the grid already shows, so the counts moved into this line
 						   and the tiles came out. */
 						if ($total_themes === 0) {
-							esc_html_e('No themes are available yet.', 'groove-folios');
+							esc_html_e('No themes are available yet.', 'enrove-folios');
 						} else {
 							printf(
 								esc_html(
@@ -294,7 +294,7 @@ class Themes extends Page
 										'%s theme available. Select it for details.',
 										'%s themes available. Select one for details.',
 										$total_themes,
-										'groove-folios'
+										'enrove-folios'
 									)
 								),
 								esc_html(number_format_i18n($total_themes))
@@ -312,8 +312,8 @@ class Themes extends Page
 						<p><?php
 							echo esc_html(
 								Themes_Manager::get_skipped_themes()
-									? __('No themes loaded. Every theme folder on this site failed to register — see above.', 'groove-folios')
-									: __('No themes are available.', 'groove-folios')
+									? __('No themes loaded. Every theme folder on this site failed to register — see above.', 'enrove-folios')
+									: __('No themes are available.', 'enrove-folios')
 							);
 						?></p>
 					</div>
@@ -322,11 +322,11 @@ class Themes extends Page
 						<?php foreach ($all_themes as $id => $theme):
 							$folio_count = isset($folio_counts[$id]) ? (int) $folio_counts[$id] : 0;
 							?>
-							<button type="button" class="g-themes-card" data-groove-theme-open="<?php echo esc_attr($id); ?>"
+							<button type="button" class="g-themes-card" data-enrove-theme-open="<?php echo esc_attr($id); ?>"
 								data-theme-name="<?php echo esc_attr($theme['name']); ?>"
 								<?php /* The dialog's header wears the same badges this card stands for,
 								         so it takes them from the card rather than re-deriving them. */ ?>
-								data-theme-badge="<?php echo esc_attr__('Built-in', 'groove-folios'); ?>"
+								data-theme-badge="<?php echo esc_attr__('Built-in', 'enrove-folios'); ?>"
 								data-theme-default="<?php echo ((string) $id === $default_theme_id) ? '1' : '0'; ?>"
 								aria-haspopup="dialog">
 								<span class="g-themes-card-thumb">
@@ -341,10 +341,10 @@ class Themes extends Page
 											$folio_count > 0
 												? sprintf(
 													/* translators: %s: number of folios using this theme */
-													_n('%s folio', '%s folios', $folio_count, 'groove-folios'),
+													_n('%s folio', '%s folios', $folio_count, 'enrove-folios'),
 													number_format_i18n($folio_count)
 												)
-												: __('Unused', 'groove-folios')
+												: __('Unused', 'enrove-folios')
 										);
 										?>
 									</span>
@@ -356,12 +356,12 @@ class Themes extends Page
 			</section>
 
 			<?php /* An "Install a Theme" panel took a .zip here until 0.5.1. It copied
-			         the package's PHP into wp-content/groove-themes/, which WordPress.org
+			         the package's PHP into wp-content/enrove-themes/, which WordPress.org
 			         does not allow a plugin to do, so it came out with the installer. */ ?>
 			<section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-				<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Third-Party Themes', 'groove-folios'); ?></h2>
+				<h2 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Third-Party Themes', 'enrove-folios'); ?></h2>
 				<p class="mt-1 mb-0 text-sm text-gray-600">
-					<?php esc_html_e('Support for themes from other authors is coming soon. Until then, Groove Folios comes with the themes above.', 'groove-folios'); ?>
+					<?php esc_html_e('Support for themes from other authors is coming soon. Until then, Enrove Folios comes with the themes above.', 'enrove-folios'); ?>
 				</p>
 			</section>
 		</div>
@@ -390,7 +390,7 @@ class Themes extends Page
 		?>
 		<div id="g-theme-details-modal" class="g-theme-details" role="dialog" aria-modal="true"
 			aria-labelledby="g-theme-details-title" hidden>
-			<div class="g-theme-details__backdrop" data-groove-theme-close></div>
+			<div class="g-theme-details__backdrop" data-enrove-theme-close></div>
 			<div class="g-theme-details__dialog" tabindex="-1">
 				<div class="g-theme-details__header">
 					<?php /* Name and badges sit together: what the theme is called and what
@@ -398,13 +398,13 @@ class Themes extends Page
 					         line saves the body a row of chrome. Filled in on open. */ ?>
 					<div class="g-theme-details__ident">
 						<h2 id="g-theme-details-title" class="g-theme-details__title"></h2>
-						<span class="g-themes-tag" data-groove-theme-badge hidden></span>
-						<span class="g-themes-tag g-themes-tag--default" data-groove-theme-default hidden>
-							<?php esc_html_e('Default', 'groove-folios'); ?>
+						<span class="g-themes-tag" data-enrove-theme-badge hidden></span>
+						<span class="g-themes-tag g-themes-tag--default" data-enrove-theme-default hidden>
+							<?php esc_html_e('Default', 'enrove-folios'); ?>
 						</span>
 					</div>
-					<button type="button" class="g-theme-details__close" data-groove-theme-close
-						aria-label="<?php esc_attr_e('Close theme details', 'groove-folios'); ?>">
+					<button type="button" class="g-theme-details__close" data-enrove-theme-close
+						aria-label="<?php esc_attr_e('Close theme details', 'enrove-folios'); ?>">
 						<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
 					</button>
 				</div>
@@ -420,8 +420,8 @@ class Themes extends Page
 						$updated_label = $updated_ts ? date_i18n(get_option('date_format'), $updated_ts) : $updated;
 						$folios_url = Request::admin_url(All_Folios::PAGE_ID, ['theme_id' => (string) $id]);
 						?>
-						<div class="g-theme-details__panel" data-groove-theme-panel="<?php echo esc_attr($id); ?>" hidden>
-							<div class="g-dialog-screen" data-groove-theme-screen>
+						<div class="g-theme-details__panel" data-enrove-theme-panel="<?php echo esc_attr($id); ?>" hidden>
+							<div class="g-dialog-screen" data-enrove-theme-screen>
 								<?php
 								/*
 								 * The picture and the facts share a row rather than stacking. At
@@ -464,10 +464,10 @@ class Themes extends Page
 										<button type="button" class="g-theme-preview-btn" data-theme-id="<?php echo esc_attr($id); ?>"
 											aria-label="<?php echo esc_attr(sprintf(
 												/* translators: %s: theme name */
-												__('Preview %s theme', 'groove-folios'),
+												__('Preview %s theme', 'enrove-folios'),
 												$theme['name']
 											)); ?>">
-											<?php esc_html_e('Preview', 'groove-folios'); ?>
+											<?php esc_html_e('Preview', 'enrove-folios'); ?>
 										</button>
 									</div>
 
@@ -502,31 +502,31 @@ class Themes extends Page
 
 										<dl class="g-theme-details__stats">
 											<div class="g-theme-details__stat">
-												<dt><?php esc_html_e('Folios', 'groove-folios'); ?></dt>
+												<dt><?php esc_html_e('Folios', 'enrove-folios'); ?></dt>
 												<dd>
 													<?php if ($folio_count > 0): ?>
 														<a href="<?php echo esc_url($folios_url); ?>">
 															<?php echo esc_html(number_format_i18n($folio_count)); ?>
 														</a>
 													<?php else: ?>
-														<span class="g-theme-details__muted"><?php esc_html_e('None yet', 'groove-folios'); ?></span>
+														<span class="g-theme-details__muted"><?php esc_html_e('None yet', 'enrove-folios'); ?></span>
 													<?php endif; ?>
 												</dd>
 											</div>
 											<?php if (!empty($theme['author'])): ?>
 												<div class="g-theme-details__stat">
-													<dt><?php esc_html_e('Author', 'groove-folios'); ?></dt>
+													<dt><?php esc_html_e('Author', 'enrove-folios'); ?></dt>
 													<dd><?php echo esc_html($theme['author']); ?></dd>
 												</div>
 											<?php endif; ?>
 											<?php if ($updated_label !== ''): ?>
 												<div class="g-theme-details__stat">
-													<dt><?php esc_html_e('Updated', 'groove-folios'); ?></dt>
+													<dt><?php esc_html_e('Updated', 'enrove-folios'); ?></dt>
 													<dd><?php echo esc_html($updated_label); ?></dd>
 												</div>
 											<?php endif; ?>
 											<div class="g-theme-details__stat">
-												<dt><?php esc_html_e('Theme ID', 'groove-folios'); ?></dt>
+												<dt><?php esc_html_e('Theme ID', 'enrove-folios'); ?></dt>
 												<dd><code><?php echo esc_html($id); ?></code></dd>
 											</div>
 										</dl>
@@ -549,8 +549,8 @@ class Themes extends Page
 								<?php if ($can_create): ?>
 									<form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
 										class="<?php echo esc_attr($row_classes); ?>">
-										<?php wp_nonce_field('groove_create_folio_action', 'groove_nonce'); ?>
-										<input type="hidden" name="action" value="groove_create_folio" />
+										<?php wp_nonce_field('enrove_create_folio_action', 'enrove_nonce'); ?>
+										<input type="hidden" name="action" value="enrove_create_folio" />
 										<input type="hidden" name="themeId" value="<?php echo esc_attr($id); ?>" />
 
 										<?php if ($sample !== null): ?>
@@ -574,7 +574,7 @@ class Themes extends Page
 										<?php endif; ?>
 
 										<button type="submit" class="button button-primary">
-											<?php esc_html_e('Create a folio', 'groove-folios'); ?>
+											<?php esc_html_e('Create a folio', 'enrove-folios'); ?>
 										</button>
 									</form>
 								<?php endif; ?>
@@ -606,7 +606,7 @@ class Themes extends Page
 			   FROM {$wpdb->postmeta} pm
 			   INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
 			  WHERE pm.meta_key = 'theme_id'
-			    AND p.post_type = 'groove_folio'
+			    AND p.post_type = 'enrove_folio'
 			    AND p.post_status NOT IN ('auto-draft', 'trash', 'inherit')
 			  GROUP BY pm.meta_value",
 			ARRAY_A
@@ -656,14 +656,14 @@ class Themes extends Page
 								'%s theme folder did not load.',
 								'%s theme folders did not load.',
 								count($skipped),
-								'groove-folios'
+								'enrove-folios'
 							)),
 							esc_html(number_format_i18n(count($skipped)))
 						);
 						?>
 					</h2>
 					<p class="mt-1 mb-0 text-sm text-gray-600">
-						<?php esc_html_e('They are not in the theme picker. Until now they failed in silence — a theme simply was not there, with nothing to say why.', 'groove-folios'); ?>
+						<?php esc_html_e('They are not in the theme picker. Until now they failed in silence — a theme simply was not there, with nothing to say why.', 'enrove-folios'); ?>
 						<?php /* Each row below names a fault and a fix in a sentence. The
 						         playbook's section 9 is a table of every fault a loader can
 						         record, which is the thing to read when the sentence is not
@@ -671,7 +671,7 @@ class Themes extends Page
 						         nine rows that would all point at the same table. */ ?>
 						<a class="g-docs__link" href="<?php echo esc_url(
 							$this->tab_url(Theme_Docs::SKIPPED_THEME_DOC, Theme_Docs::SKIPPED_THEME_ANCHOR)
-						); ?>"><?php esc_html_e('What each fault means', 'groove-folios'); ?></a>
+						); ?>"><?php esc_html_e('What each fault means', 'enrove-folios'); ?></a>
 					</p>
 				</div>
 
@@ -684,7 +684,7 @@ class Themes extends Page
 						<li class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm space-y-1">
 							<div class="flex items-center gap-2">
 								<code class="text-gray-800"><?php echo esc_html($folder); ?></code>
-								<span class="g-themes-tag g-themes-tag--builtin"><?php esc_html_e('Built-in', 'groove-folios'); ?></span>
+								<span class="g-themes-tag g-themes-tag--builtin"><?php esc_html_e('Built-in', 'enrove-folios'); ?></span>
 							</div>
 							<div class="text-gray-800"><?php echo esc_html($described->get_error_message()); ?></div>
 							<?php $fix = (string) $described->get_error_data(); ?>
@@ -700,12 +700,12 @@ class Themes extends Page
 											'%s folio points at this theme and will not open.',
 											'%s folios point at this theme and will not open.',
 											$folio_count,
-											'groove-folios'
+											'enrove-folios'
 										)),
 										esc_html(number_format_i18n($folio_count))
 									);
 									?>
-									<a href="<?php echo esc_url(Request::admin_url(All_Folios::PAGE_ID, ['theme_id' => (string) $folder])); ?>"><?php esc_html_e('View them', 'groove-folios'); ?></a>
+									<a href="<?php echo esc_url(Request::admin_url(All_Folios::PAGE_ID, ['theme_id' => (string) $folder])); ?>"><?php esc_html_e('View them', 'enrove-folios'); ?></a>
 								</div>
 							<?php endif; ?>
 						</li>

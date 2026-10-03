@@ -14,10 +14,10 @@
  * Its "On this page" rail is built from h2 headings, so every section leads
  * with one.
  *
- * @package Groove
+ * @package Enrove
  */
 
-use Groove\Themes\Themes_Manager;
+use Enrove\Themes\Themes_Manager;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -44,13 +44,13 @@ $cap_process = Themes_Manager::theme_image_caption($theme, 'process');
 $cap_texture = Themes_Manager::theme_image_caption($theme, 'texture');
 
 return array(
-  'label'       => __('Create with sample portfolio content', 'groove-folios'),
-  'description' => __('Seeds a four-page starter portfolio: an introduction, selected work, a note on process, and a contact page.', 'groove-folios'),
-  'subtitle'    => __('Selected work and working notes', 'groove-folios'),
+  'label'       => __('Create with sample portfolio content', 'enrove-folios'),
+  'description' => __('Seeds a four-page starter portfolio: an introduction, selected work, a note on process, and a contact page.', 'enrove-folios'),
+  'subtitle'    => __('Selected work and working notes', 'enrove-folios'),
   'folio_meta'  => array(),
   'pages'       => array(
     array(
-      'title' => __('Introduction', 'groove-folios'),
+      'title' => __('Introduction', 'enrove-folios'),
       'content' => (string) ('<!-- wp:paragraph {"dropCap":true} -->
 <p class="has-drop-cap">This folio collects four years of work made mostly in quiet: identity systems, publications, and the occasional building sign. It is not a complete record. It is the part I would want to talk about if we sat down together.</p>
 <!-- /wp:paragraph -->
@@ -83,7 +83,7 @@ return array(
 <!-- /wp:paragraph -->'),
     ),
     array(
-      'title' => __('Selected Work', 'groove-folios'),
+      'title' => __('Selected Work', 'enrove-folios'),
       'content' => (string) ('<!-- wp:paragraph -->
 <p>Three projects, chosen because each one solved a different kind of problem.</p>
 <!-- /wp:paragraph -->
@@ -118,7 +118,7 @@ return array(
 <!-- /wp:image -->'),
     ),
     array(
-      'title' => __('How I Work', 'groove-folios'),
+      'title' => __('How I Work', 'enrove-folios'),
       'content' => (string) ('<!-- wp:paragraph -->
 <p>Every project runs the same four steps, whether it lasts three weeks or two years. The steps do not change; how long each one takes does.</p>
 <!-- /wp:paragraph -->
@@ -174,7 +174,7 @@ return array(
 <!-- /wp:image -->'),
     ),
     array(
-      'title' => __('About and Contact', 'groove-folios'),
+      'title' => __('About and Contact', 'enrove-folios'),
       'content' => (string) ('<!-- wp:heading {"level":2} -->
 <h2>About</h2>
 <!-- /wp:heading -->

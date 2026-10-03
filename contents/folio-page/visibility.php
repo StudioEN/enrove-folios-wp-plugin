@@ -1,7 +1,7 @@
 <?php
-namespace Groove\Contents\FolioPage;
+namespace Enrove\Contents\FolioPage;
 
-use Groove\Utils\Utils;
+use Enrove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
  * A folio page is no more visible than its folio. The plugin's own addresses
  * check that (Utils::can_current_request_view_post()), but a folio page is
  * also a public post type, and core serves those at addresses of its own:
- * ?groove_folio_page=<slug>, the REST API, the post search endpoint, feeds,
+ * ?enrove_folio_page=<slug>, the REST API, the post search endpoint, feeds,
  * searches and the sitemap. A published page of a private, password-locked
  * or unpublished folio stays published (Publishing leaves a page's status
  * alone when its folio goes private), so each of those is told to leave it
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
  */
 class Visibility
 {
-  const POST_TYPES = array('groove_folio', 'groove_folio_page');
+  const POST_TYPES = array('enrove_folio', 'enrove_folio_page');
 
   /** get_hidden_page_ids() results for this request, by mode. */
   private static $hidden_page_ids = array();
@@ -32,7 +32,7 @@ class Visibility
     add_action('pre_get_posts', array(static::class, 'hide_pages_from_main_query'));
     // After the plugin's own routes, which run at 5 and exit.
     add_action('template_redirect', array(static::class, 'send_to_folio_address'), 6);
-    add_filter('rest_groove_folio_page_query', array(static::class, 'hide_pages_from_rest_query'));
+    add_filter('rest_enrove_folio_page_query', array(static::class, 'hide_pages_from_rest_query'));
     add_filter('rest_request_before_callbacks', array(static::class, 'refuse_rest_read'), 10, 3);
     add_filter('rest_post_search_query', array(static::class, 'hide_pages_from_rest_query'));
     add_filter('wp_sitemaps_posts_query_args', array(static::class, 'hide_pages_from_sitemap'), 10, 2);
@@ -55,7 +55,7 @@ class Visibility
     }
 
     $query = array(
-      'post_type' => 'groove_folio',
+      'post_type' => 'enrove_folio',
       'posts_per_page' => -1,
       'no_found_rows' => true,
       'update_post_meta_cache' => false,
@@ -78,7 +78,7 @@ class Visibility
     $page_ids = array();
     if ($folio_ids) {
       $page_ids = get_posts(array(
-        'post_type' => 'groove_folio_page',
+        'post_type' => 'enrove_folio_page',
         'post_status' => array('publish', 'private'),
         'posts_per_page' => -1,
         'fields' => 'ids',
@@ -113,13 +113,13 @@ class Visibility
   public static function is_page_hidden($page)
   {
     return $page instanceof \WP_Post
-      && $page->post_type === 'groove_folio_page'
+      && $page->post_type === 'enrove_folio_page'
       && in_array((int) $page->ID, static::get_hidden_page_ids(), true);
   }
 
   /**
    * Leaves hidden pages out of a front-end main query that names folio pages:
-   * ?groove_folio_page=<slug> then 404s like any post the visitor may not
+   * ?enrove_folio_page=<slug> then 404s like any post the visitor may not
    * read, and a feed or search of folio pages lists only visible ones.
    *
    * @param \WP_Query $query
@@ -129,7 +129,7 @@ class Visibility
     if (is_admin() || !$query->is_main_query()) {
       return;
     }
-    if (!in_array('groove_folio_page', (array) $query->get('post_type'), true)) {
+    if (!in_array('enrove_folio_page', (array) $query->get('post_type'), true)) {
       return;
     }
 
@@ -191,7 +191,7 @@ class Visibility
       return $response;
     }
     // The page itself and anything under it (revisions, autosaves).
-    if (!preg_match('#^/wp/v2/groove_folio_page/(\d+)(?:/|$)#', $request->get_route(), $match)) {
+    if (!preg_match('#^/wp/v2/enrove_folio_page/(\d+)(?:/|$)#', $request->get_route(), $match)) {
       return $response;
     }
     if (!static::is_page_hidden(get_post((int) $match[1]))) {
@@ -200,7 +200,7 @@ class Visibility
 
     return new \WP_Error(
       'rest_forbidden',
-      __('Sorry, you are not allowed to do that.', 'groove-folios'),
+      __('Sorry, you are not allowed to do that.', 'enrove-folios'),
       array('status' => rest_authorization_required_code())
     );
   }
@@ -215,7 +215,7 @@ class Visibility
    */
   public static function hide_pages_from_sitemap($args, $post_type)
   {
-    if ($post_type !== 'groove_folio_page') {
+    if ($post_type !== 'enrove_folio_page') {
       return $args;
     }
 

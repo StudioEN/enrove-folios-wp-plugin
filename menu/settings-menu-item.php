@@ -1,9 +1,9 @@
 <?php
-namespace Groove\Menu;
+namespace Enrove\Menu;
 
-use Groove\Menu\Menu_Item_Page;
-use Groove\Pages\Overview;
-use Groove\Pages\Settings;
+use Enrove\Menu\Menu_Item_Page;
+use Enrove\Pages\Overview;
+use Enrove\Pages\Settings;
 
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -22,11 +22,11 @@ class Settings_Menu_Item extends Menu_Item_Page {
 	}
 
 	public function get_label() {
-		return esc_html__( 'Settings', 'groove-folios' );
+		return esc_html__( 'Settings', 'enrove-folios' );
 	}
 
 	public function get_page_title() {
-		return esc_html__( 'Groove Folios Settings', 'groove-folios' );
+		return esc_html__( 'Enrove Folios Settings', 'enrove-folios' );
 	}
 
 	public function get_capability() {

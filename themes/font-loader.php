@@ -1,14 +1,14 @@
 <?php
-namespace Groove\Themes;
+namespace Enrove\Themes;
 
-use Groove\Utils\Utils;
+use Enrove\Utils\Utils;
 
 if (!defined('ABSPATH')) {
   exit;
 }
 
 /**
- * The single place Groove loads web fonts.
+ * The single place Enrove loads web fonts.
  *
  * Two sources feed it, in priority order:
  *
@@ -33,10 +33,10 @@ if (!defined('ABSPATH')) {
 class Font_Loader
 {
   /** Handle prefix of the per-family local stylesheets. */
-  const HANDLE = 'groove-folio-font';
+  const HANDLE = 'enrove-folio-font';
 
   /** Roots the CSS variables are injected on when a theme renders. */
-  const FRONTEND_SELECTOR = '.g-folio__theme-cover, body.groove [class*="g-folio__theme-"][class$="-page"]';
+  const FRONTEND_SELECTOR = '.g-folio__theme-cover, body.enrove [class*="g-folio__theme-"][class$="-page"]';
 
   /** The block editor canvas: the one other root the variables are set on. */
   const EDITOR_SELECTOR = '.editor-styles-wrapper';
@@ -288,7 +288,7 @@ class Font_Loader
    * The custom properties theme CSS consumes.
    *
    * `--g-folio-primary-font` is the pre-role-split name and stays aliased to
-   * the body font for older theme CSS (groove-ebook still reads it).
+   * the body font for older theme CSS (enrove-ebook still reads it).
    *
    * Every value is validated again here, where it is interpolated, and not
    * only when it was read: the selector must be one of the two this class
@@ -350,7 +350,7 @@ class Font_Loader
     }
 
     if (!wp_style_is($inline_handle, 'registered')) {
-      wp_register_style($inline_handle, false, [], GROOVE_VERSION);
+      wp_register_style($inline_handle, false, [], ENROVE_VERSION);
     }
 
     wp_enqueue_style($inline_handle);

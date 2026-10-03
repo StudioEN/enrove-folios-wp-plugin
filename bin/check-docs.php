@@ -2,7 +2,7 @@
 /**
  * Conformance check for the documentation the Themes screen renders.
  *
- * `Groove\Utils\Markdown` covers the Markdown these documents use rather than
+ * `Enrove\Utils\Markdown` covers the Markdown these documents use rather than
  * Markdown in general, which is a safe trade only while something is watching
  * the documents. Unsupported syntax does not raise anything — it renders as
  * literal asterisks and pipes in the middle of the spec — so this script is
@@ -68,8 +68,8 @@ $root = dirname(__DIR__);
 require_once $root . '/utils/markdown.php';
 require_once $root . '/utils/theme-docs.php';
 
-use Groove\Utils\Markdown;
-use Groove\Utils\Theme_Docs;
+use Enrove\Utils\Markdown;
+use Enrove\Utils\Theme_Docs;
 
 $verbose = in_array('--verbose', $argv, true);
 $failures = array();
@@ -80,7 +80,7 @@ $notes = array();
  * syntax does not trip over a document that is *describing* that syntax. Both of
  * these files quote Markdown, CSS and PHP at length.
  */
-function groove_mask_code($markdown)
+function enrove_mask_code($markdown)
 {
 	$lines = explode("\n", str_replace(array("\r\n", "\r"), "\n", $markdown));
 	$in_fence = false;
@@ -120,7 +120,7 @@ function groove_mask_code($markdown)
 /**
  * Every construct the renderer does not implement, and what to write instead.
  */
-function groove_unsupported_syntax(array $masked)
+function enrove_unsupported_syntax(array $masked)
 {
 	$found = array();
 	$previous = '';
@@ -176,7 +176,7 @@ function groove_unsupported_syntax(array $masked)
 /**
  * Markdown that survived into the output, which is what a missing rule looks like.
  */
-function groove_leftover_markdown($html)
+function enrove_leftover_markdown($html)
 {
 	// Code is meant to hold literal punctuation; everything else is not.
 	$prose = preg_replace('#<pre[^>]*>[\s\S]*?</pre>#', '', $html);
@@ -205,7 +205,7 @@ function groove_leftover_markdown($html)
  * Table rows that do not have the column count their header promised, which is
  * what an unescaped pipe in a cell produces.
  */
-function groove_ragged_tables($html)
+function enrove_ragged_tables($html)
 {
 	$found = array();
 
@@ -240,7 +240,7 @@ function groove_ragged_tables($html)
 /**
  * Same-document anchors a doc links to, so they can be checked against its headings.
  */
-function groove_internal_anchors(array $masked)
+function enrove_internal_anchors(array $masked)
 {
 	$anchors = array();
 
@@ -259,7 +259,7 @@ function groove_internal_anchors(array $masked)
 // Run
 // ---------------------------------------------------------------------------
 
-echo "Groove documentation check\n";
+echo "Enrove documentation check\n";
 echo str_repeat('=', 60) . "\n\n";
 
 $anchors_by_doc = array();
@@ -276,7 +276,7 @@ foreach (Theme_Docs::DOCS as $key => $relative) {
 	}
 
 	$markdown = file_get_contents($path);
-	$masked = groove_mask_code($markdown);
+	$masked = enrove_mask_code($markdown);
 
 	$render_args = array(
 		'doc_links' => array('README.md' => '#', 'BUILDING-A-THEME.md' => '#'),
@@ -317,7 +317,7 @@ foreach (Theme_Docs::DOCS as $key => $relative) {
 		}
 	}
 
-	foreach (groove_unsupported_syntax($masked) as $item) {
+	foreach (enrove_unsupported_syntax($masked) as $item) {
 		list($line_number, $reason, $excerpt) = $item;
 		$failures[] = sprintf('%s:%d %s', $relative, $line_number, $reason);
 		printf("  ! line %d — %s\n", $line_number, $reason);
@@ -327,19 +327,19 @@ foreach (Theme_Docs::DOCS as $key => $relative) {
 		$problems++;
 	}
 
-	foreach (groove_leftover_markdown($html) as $leftover) {
+	foreach (enrove_leftover_markdown($html) as $leftover) {
 		$failures[] = sprintf('%s: %s', $relative, $leftover);
 		printf("  ! %s\n", $leftover);
 		$problems++;
 	}
 
-	foreach (groove_ragged_tables($html) as $ragged) {
+	foreach (enrove_ragged_tables($html) as $ragged) {
 		$failures[] = sprintf('%s: %s', $relative, $ragged);
 		printf("  ! %s\n", $ragged);
 		$problems++;
 	}
 
-	foreach (groove_internal_anchors($masked) as $anchor) {
+	foreach (enrove_internal_anchors($masked) as $anchor) {
 		if (!in_array($anchor, $anchors, true)) {
 			$failures[] = sprintf('%s: links to #%s, which is not a heading in it', $relative, $anchor);
 			printf("  ! links to #%s, which is not a heading in it\n", $anchor);

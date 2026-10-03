@@ -35,7 +35,7 @@
 
    The values below are fallbacks, not a house style: they are the WordPress
    admin palette, so a theme that fills nothing still renders as recognisably
-   Groove rather than as unstyled HTML. Every one of them is meant to be
+   Enrove rather than as unstyled HTML. Every one of them is meant to be
    overridden.
    ────────────────────────────────────────────────────────────────────── */
 
@@ -56,7 +56,7 @@
   /* Text that sits ON a coloured fill. Two slots, because they are two
      different questions: --folio-on-accent is type on the accent (a button, a
      tag), --folio-on-ground is type on the page ground, which most themes leave
-     alone but a theme with a chromatic ground needs — groove-ebook puts white
+     alone but a theme with a chromatic ground needs — enrove-ebook puts white
      type on a blue field at thirteen sites. The default defers to --folio-text,
      which is correct for the white ground above; override it the moment your
      ground stops being pale. */
@@ -95,8 +95,8 @@
 
   /* A second hue, for emphasis that is NOT interactive — the primary accent
      owns links and buttons; this owns pull quotes, ordinals, tags, stat rules.
-     Two themes had one privately before it was named here: groove-proposal's
-     warm family and groove-ebook's green. The defaults collapse onto the
+     Two themes had one privately before it was named here: enrove-proposal's
+     warm family and enrove-ebook's green. The defaults collapse onto the
      primary, so a single-hue theme fills nothing and still reads correctly. */
   --folio-accent-2: var(--folio-accent);
   --folio-accent-2-soft: var(--folio-accent-soft);

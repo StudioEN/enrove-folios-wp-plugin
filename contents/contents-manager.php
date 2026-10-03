@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Contents;
+namespace Enrove\Contents;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -43,7 +43,7 @@ class Contents_Manager {
   }
 
   protected function get_contents_namespace_prefix () {
-    return 'Groove';
+    return 'Enrove';
   }
 }
 

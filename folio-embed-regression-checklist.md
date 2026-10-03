@@ -3,8 +3,8 @@
 Use this checklist whenever folio page rendering, block rendering, or theme page templates change.
 
 ## Scope
-1. Post type: `groove_folio_page`
-2. Themes: `folio-starter`, `groove-ebook`, `groove-newsletter`, `groove-magazine`, `groove-proposal`
+1. Post type: `enrove_folio_page`
+2. Themes: `folio-starter`, `enrove-ebook`, `enrove-newsletter`, `enrove-magazine`, `enrove-proposal`
 3. Embed providers: Spotify (episode/track/playlist), YouTube (watch URL), X/Twitter (post URL)
 
 ## Preconditions
@@ -50,10 +50,10 @@ Use this checklist whenever folio page rendering, block rendering, or theme page
 | Theme | Spotify | YouTube | X/Twitter (fallback) | Inline URL Control | Nav/Anchors | Mobile Layout | Result | Notes |
 |---|---|---|---|---|---|---|---|---|
 | folio-starter |  |  |  |  |  |  |  |  |
-| groove-ebook |  |  |  |  |  |  |  |  |
-| groove-newsletter |  |  |  |  |  |  |  |  |
-| groove-magazine |  |  |  |  |  |  |  |  |
-| groove-proposal |  |  |  |  |  |  |  |  |
+| enrove-ebook |  |  |  |  |  |  |  |  |
+| enrove-newsletter |  |  |  |  |  |  |  |  |
+| enrove-magazine |  |  |  |  |  |  |  |  |
+| enrove-proposal |  |  |  |  |  |  |  |  |
 
 ## If a Regression Is Found
 1. Capture theme ID, folio page URL, and exact provider URL.

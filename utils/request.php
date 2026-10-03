@@ -1,12 +1,12 @@
 <?php
-namespace Groove\Utils;
+namespace Enrove\Utils;
 
 if (!defined('ABSPATH')) {
   exit;
 }
 
 /**
- * View parameters on Groove's admin screens: which folio is open, which tab,
+ * View parameters on Enrove's admin screens: which folio is open, which tab,
  * and a list's filter, search, sort and page.
  *
  * Every link and GET form that carries one is built here and signed with a
@@ -17,19 +17,19 @@ if (!defined('ABSPATH')) {
  * nonce is not authorization: each screen still checks the user's capability
  * against whatever the parameter names.
  *
- * Action outcomes (bulk_action, groove_reset, message…) ride on the same
+ * Action outcomes (bulk_action, enrove_reset, message…) ride on the same
  * signed redirect, so they are read the same way.
  */
 final class Request
 {
   /** Nonce action for view links. */
-  const NONCE_ACTION = 'groove_view';
+  const NONCE_ACTION = 'enrove_view';
 
   /** Query argument that carries it. */
-  const NONCE_ARG = '_groove_view';
+  const NONCE_ARG = '_enrove_view';
 
   /**
-   * A signed admin.php URL for one of Groove's screens.
+   * A signed admin.php URL for one of Enrove's screens.
    *
    * @param string $page PAGE_ID of the screen.
    * @param array  $args Query arguments; null and '' values are left out.

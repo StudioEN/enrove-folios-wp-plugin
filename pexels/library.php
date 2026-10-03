@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Pexels;
+namespace Enrove\Pexels;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
  *
  * The download needs no API key. credits.json records, for every photo, the
  * src_url the curator fetched it from on Pexels's image CDN; this class fetches
- * the same bytes from the same address into uploads/groove-folios/photos/.
+ * the same bytes from the same address into uploads/enrove-folios/photos/.
  *
  * Resolution for a slug is the bundled file first, then the downloaded copy.
  * url() is the exception that returns an address with nothing behind it yet:
@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
 class Library
 {
   /** Folder under the uploads base directory that holds downloaded photos. */
-  const UPLOAD_SUBDIR = 'groove-folios/photos';
+  const UPLOAD_SUBDIR = 'enrove-folios/photos';
 
   /** The only host a download may come from. */
   const ALLOWED_HOST = 'images.pexels.com';
@@ -54,7 +54,7 @@ class Library
    * 'pexels', 'none', or '' for not asked yet. 'none' only means "do not ask
    * again" — covers without a photo fall back to a gradient either way.
    */
-  const SOURCE_OPTION = 'groove_photo_source';
+  const SOURCE_OPTION = 'enrove_photo_source';
   const SOURCE_PEXELS = 'pexels';
   const SOURCE_NONE = 'none';
 
@@ -80,7 +80,7 @@ class Library
       $file = 'assets/images/pexels/' . $slug . '.jpg';
     }
 
-    return GROOVE_PATH . $file;
+    return ENROVE_PATH . $file;
   }
 
   /**
@@ -208,8 +208,8 @@ class Library
 
     $bundled = static::bundled_path($slug);
     if ($bundled !== '' && is_readable($bundled)) {
-      $relative = ltrim(substr(wp_normalize_path($bundled), strlen(wp_normalize_path(GROOVE_PATH))), '/');
-      return GROOVE_URL . $relative;
+      $relative = ltrim(substr(wp_normalize_path($bundled), strlen(wp_normalize_path(ENROVE_PATH))), '/');
+      return ENROVE_URL . $relative;
     }
 
     return static::downloaded_url($slug);
@@ -304,7 +304,7 @@ class Library
     if (!wp_mkdir_p($dir)) {
       $result['failed']['*'] = sprintf(
         /* translators: %s: directory path. */
-        __('Could not create %s.', 'groove-folios'),
+        __('Could not create %s.', 'enrove-folios'),
         $dir
       );
       return $result;
@@ -341,7 +341,7 @@ class Library
     $src = is_array($credit) && !empty($credit['src_url']) ? (string) $credit['src_url'] : '';
 
     if ($src === '' || wp_parse_url($src, PHP_URL_SCHEME) !== 'https' || wp_parse_url($src, PHP_URL_HOST) !== self::ALLOWED_HOST) {
-      return __('credits.json has no Pexels download address for this photo.', 'groove-folios');
+      return __('credits.json has no Pexels download address for this photo.', 'enrove-folios');
     }
 
     $temp = download_url($src, self::TIMEOUT);
@@ -352,7 +352,7 @@ class Library
     $size = getimagesize($temp);
     if (!is_array($size) || empty($size[0]) || (isset($size[2]) && $size[2] !== IMAGETYPE_JPEG)) {
       wp_delete_file($temp);
-      return __('The download was not a JPEG image.', 'groove-folios');
+      return __('The download was not a JPEG image.', 'enrove-folios');
     }
 
     // WordPress's direct filesystem, as for the fonts: the destination is
@@ -369,7 +369,7 @@ class Library
     if (!$moved) {
       return sprintf(
         /* translators: %s: file path. */
-        __('Could not write %s.', 'groove-folios'),
+        __('Could not write %s.', 'enrove-folios'),
         $destination
       );
     }

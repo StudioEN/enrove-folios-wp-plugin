@@ -41,7 +41,7 @@
  * plenty of negative space where type sits. Nothing bright, saturated or
  * obviously "stock".
  *
- * @package Groove
+ * @package Enrove
  * @since 0.3.0
  */
 
@@ -52,7 +52,7 @@ if (!defined('ABSPATH')) {
 return [
 
   // ── studio ───────────────────────────────────────────────────────────────
-  // folio-starter (typography-led) and groove-proposal (indigo + bronze).
+  // folio-starter (typography-led) and enrove-proposal (indigo + bronze).
   // Both want architecture and material rather than people or incident.
 
   'studio' => [
@@ -130,7 +130,7 @@ return [
   ],
 
   // ── paper ────────────────────────────────────────────────────────────────
-  // groove-ebook. Print, ink and the reading moment; warm rather than cool.
+  // enrove-ebook. Print, ink and the reading moment; warm rather than cool.
 
   'paper' => [
     'label' => 'Paper',
@@ -185,7 +185,7 @@ return [
   ],
 
   // ── editorial ────────────────────────────────────────────────────────────
-  // groove-magazine. Culture and street; the only set where faces carry weight.
+  // enrove-magazine. Culture and street; the only set where faces carry weight.
 
   'editorial' => [
     'label' => 'Editorial',
@@ -306,7 +306,7 @@ return [
   ],
 
   // ── daylight ─────────────────────────────────────────────────────────────
-  // groove-newsletter. Domestic and warm — the one set that is allowed to be
+  // enrove-newsletter. Domestic and warm — the one set that is allowed to be
   // friendly, because a newsletter arrives in someone's morning.
 
   'daylight' => [

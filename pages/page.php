@@ -1,8 +1,8 @@
 <?php
 
-namespace Groove\Pages;
+namespace Enrove\Pages;
 
-use Groove\Modules\Assets;
+use Enrove\Modules\Assets;
 
 if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
@@ -254,12 +254,12 @@ abstract class Page extends Assets
 	}
 
 	/**
-	 * The More actions menu: at phone width (groove-main.css) it stands in for
+	 * The More actions menu: at phone width (enrove-main.css) it stands in for
 	 * the header items that carry 'overflow', which are hidden there. A link
 	 * is repeated as a link (re-read from the bar's copy when it has an id,
-	 * data-groove-menu-mirror); an action item's menu entry presses the real
-	 * control (data-groove-menu-proxy), so whatever script drives that control
-	 * still does. groove-main.js runs the menu.
+	 * data-enrove-menu-mirror); an action item's menu entry presses the real
+	 * control (data-enrove-menu-proxy), so whatever script drives that control
+	 * still does. enrove-main.js runs the menu.
 	 *
 	 * @param array[] $items From get_overflow_items().
 	 */
@@ -271,19 +271,19 @@ abstract class Page extends Assets
 
 		$menu_id = 'g-page-header-menu';
 		?>
-		<div class="g-page-header__more" data-groove-menu>
-			<button type="button" class="button button-secondary g-page-header__icon-button" data-groove-menu-toggle
+		<div class="g-page-header__more" data-enrove-menu>
+			<button type="button" class="button button-secondary g-page-header__icon-button" data-enrove-menu-toggle
 				aria-haspopup="menu" aria-expanded="false" aria-controls="<?php echo esc_attr($menu_id); ?>"
-				aria-label="<?php esc_attr_e('More actions', 'groove-folios'); ?>">
+				aria-label="<?php esc_attr_e('More actions', 'enrove-folios'); ?>">
 				<span class="dashicons dashicons-ellipsis" aria-hidden="true"></span>
 			</button>
-			<div class="g-menu" id="<?php echo esc_attr($menu_id); ?>" role="menu" aria-label="<?php esc_attr_e('More actions', 'groove-folios'); ?>" hidden>
+			<div class="g-menu" id="<?php echo esc_attr($menu_id); ?>" role="menu" aria-label="<?php esc_attr_e('More actions', 'enrove-folios'); ?>" hidden>
 				<?php foreach ($items as $item):
 					$label = isset($item['menu_text']) ? (string) $item['menu_text'] : (isset($item['text']) ? (string) $item['text'] : '');
 					if (isset($item['link'])): ?>
-						<a class="g-menu__item" role="menuitem" tabindex="-1" href="<?php echo esc_url($item['link']); ?>"<?php echo !empty($item['attrs']['id']) ? ' data-groove-menu-mirror="' . esc_attr($item['attrs']['id']) . '"' : ''; ?>><?php echo esc_html($label); ?></a>
+						<a class="g-menu__item" role="menuitem" tabindex="-1" href="<?php echo esc_url($item['link']); ?>"<?php echo !empty($item['attrs']['id']) ? ' data-enrove-menu-mirror="' . esc_attr($item['attrs']['id']) . '"' : ''; ?>><?php echo esc_html($label); ?></a>
 					<?php else: ?>
-						<button type="button" class="g-menu__item" role="menuitem" tabindex="-1" data-groove-menu-proxy="<?php echo esc_attr($item['attrs']['id']); ?>"><?php echo esc_html($label); ?></button>
+						<button type="button" class="g-menu__item" role="menuitem" tabindex="-1" data-enrove-menu-proxy="<?php echo esc_attr($item['attrs']['id']); ?>"><?php echo esc_html($label); ?></button>
 					<?php endif;
 				endforeach; ?>
 			</div>
@@ -310,7 +310,7 @@ abstract class Page extends Assets
 	public function display_nav()
 	{
 		$tabs = $this->get_tabs();
-		$setup_entry = $this->shows_setup_entry() && \Groove\Setup\First_Run::should_offer();
+		$setup_entry = $this->shows_setup_entry() && \Enrove\Setup\First_Run::should_offer();
 		$overflow_items = $this->get_overflow_items();
 		?>
 		<div class="g-page-header">
@@ -320,7 +320,7 @@ abstract class Page extends Assets
 			</div>
 			<?php if (!empty($this->right_button_items) || $setup_entry || !empty($overflow_items)): ?>
 			<div class="g-page-header__right">
-				<?php if ($setup_entry) { \Groove\Setup\First_Run::display_header_entry(); } ?>
+				<?php if ($setup_entry) { \Enrove\Setup\First_Run::display_header_entry(); } ?>
 				<?php $this->display_right_button_items(); ?>
 				<?php $this->display_overflow_menu($overflow_items); ?>
 			</div>
@@ -347,7 +347,7 @@ abstract class Page extends Assets
 			$this->tabs = $this->create_tabs();
 			$page_id = static::PAGE_ID;
 
-			do_action("groove/after_create_page/{$page_id}", $this);
+			do_action("enrove/after_create_page/{$page_id}", $this);
 		}
 	}
 }

@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Pexels;
+namespace Enrove\Pexels;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -27,7 +27,7 @@ class Client
   const API_BASE = 'https://api.pexels.com/v1/';
 
   /** Transient key prefix. */
-  const CACHE_PREFIX = 'groove_pexels_';
+  const CACHE_PREFIX = 'enrove_pexels_';
 
   /** Seconds a successful response stays cached. */
   const CACHE_TTL = 3600;
@@ -90,8 +90,8 @@ class Client
     $query = trim($query);
     if ('' === $query) {
       return new \WP_Error(
-        'groove_pexels_bad_request',
-        __('A Pexels search needs a non-empty query.', 'groove-folios')
+        'enrove_pexels_bad_request',
+        __('A Pexels search needs a non-empty query.', 'enrove-folios')
       );
     }
 
@@ -123,8 +123,8 @@ class Client
   {
     if ($id <= 0) {
       return new \WP_Error(
-        'groove_pexels_bad_request',
-        __('A Pexels photo ID must be a positive integer.', 'groove-folios')
+        'enrove_pexels_bad_request',
+        __('A Pexels photo ID must be a positive integer.', 'enrove-folios')
       );
     }
 
@@ -218,8 +218,8 @@ class Client
   {
     if (!$this->has_key()) {
       return new \WP_Error(
-        'groove_pexels_no_key',
-        __('No Pexels API key is configured. Add one in Groove settings, or define GROOVE_PEXELS_API_KEY in wp-config.php.', 'groove-folios')
+        'enrove_pexels_no_key',
+        __('No Pexels API key is configured. Add one in Enrove settings, or define ENROVE_PEXELS_API_KEY in wp-config.php.', 'enrove-folios')
       );
     }
 
@@ -250,7 +250,7 @@ class Client
       $url,
       [
         'timeout'    => self::TIMEOUT,
-        'user-agent' => 'GrooveFolios/' . (defined('GROOVE_VERSION') ? GROOVE_VERSION : '0.0.0'),
+        'user-agent' => 'EnroveFolios/' . (defined('ENROVE_VERSION') ? ENROVE_VERSION : '0.0.0'),
         'headers'    => [
           // Pexels expects the raw key — no "Bearer " prefix.
           'Authorization' => $this->api_key,
@@ -261,10 +261,10 @@ class Client
 
     if (is_wp_error($response)) {
       return new \WP_Error(
-        'groove_pexels_transport_error',
+        'enrove_pexels_transport_error',
         sprintf(
           /* translators: %s: HTTP transport error message. */
-          __('Could not reach the Pexels API: %s', 'groove-folios'),
+          __('Could not reach the Pexels API: %s', 'enrove-folios'),
           $response->get_error_message()
         ),
         ['endpoint' => $endpoint]
@@ -285,8 +285,8 @@ class Client
 
     if (!is_array($data)) {
       return new \WP_Error(
-        'groove_pexels_invalid_json',
-        __('The Pexels API returned a response that could not be decoded as JSON.', 'groove-folios'),
+        'enrove_pexels_invalid_json',
+        __('The Pexels API returned a response that could not be decoded as JSON.', 'enrove-folios'),
         ['endpoint' => $endpoint, 'status' => $status]
       );
     }
@@ -389,10 +389,10 @@ class Client
   private function probe_query(): string
   {
     if (function_exists('wp_generate_password')) {
-      return 'groove-verify-' . strtolower(wp_generate_password(12, false, false));
+      return 'enrove-verify-' . strtolower(wp_generate_password(12, false, false));
     }
 
-    return 'groove-verify-' . bin2hex(random_bytes(6));
+    return 'enrove-verify-' . bin2hex(random_bytes(6));
   }
 
   /**
@@ -415,10 +415,10 @@ class Client
 
     if (401 === $status || 403 === $status) {
       return new \WP_Error(
-        'groove_pexels_unauthorized',
+        'enrove_pexels_unauthorized',
         sprintf(
           /* translators: %s: masked API key, e.g. ••••••••abcd. */
-          __('Pexels rejected the API key (%s). Check the key and try again.', 'groove-folios'),
+          __('Pexels rejected the API key (%s). Check the key and try again.', 'enrove-folios'),
           Key::masked()
         ),
         $data
@@ -427,25 +427,25 @@ class Client
 
     if (429 === $status) {
       return new \WP_Error(
-        'groove_pexels_rate_limited',
-        __('The Pexels rate limit has been reached. Wait for the window to reset and re-run.', 'groove-folios'),
+        'enrove_pexels_rate_limited',
+        __('The Pexels rate limit has been reached. Wait for the window to reset and re-run.', 'enrove-folios'),
         $data
       );
     }
 
     if (404 === $status) {
       return new \WP_Error(
-        'groove_pexels_not_found',
-        __('The requested Pexels resource does not exist.', 'groove-folios'),
+        'enrove_pexels_not_found',
+        __('The requested Pexels resource does not exist.', 'enrove-folios'),
         $data
       );
     }
 
     return new \WP_Error(
-      'groove_pexels_http_error',
+      'enrove_pexels_http_error',
       sprintf(
         /* translators: 1: HTTP status code, 2: HTTP status message. */
-        __('The Pexels API responded with HTTP %1$d %2$s.', 'groove-folios'),
+        __('The Pexels API responded with HTTP %1$d %2$s.', 'enrove-folios'),
         $status,
         $status_message
       ),

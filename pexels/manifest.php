@@ -29,7 +29,7 @@
  * plenty of negative space where cover type sits. Nothing bright, saturated or
  * obviously "stock".
  *
- * @package Groove
+ * @package Enrove
  * @since 0.2.0
  */
 
@@ -37,7 +37,7 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-$groove_manifest_slots = [
+$enrove_manifest_slots = [
 
   // ── Theme covers ─────────────────────────────────────────────────────────
   // themes/<theme>/assets/images/theme-cover.jpg — landscape, large2x.
@@ -56,11 +56,11 @@ $groove_manifest_slots = [
     'note'           => 'Typography-led default theme: a near-empty plane of concrete or plaster so the title has somewhere quiet to sit.',
   ],
 
-  'cover-groove-ebook' => [
-    'slug'           => 'cover-groove-ebook',
+  'cover-enrove-ebook' => [
+    'slug'           => 'cover-enrove-ebook',
     'kind'           => 'cover',
-    'theme'          => 'groove-ebook',
-    'path'           => 'themes/groove-ebook/assets/images/theme-cover.jpg',
+    'theme'          => 'enrove-ebook',
+    'path'           => 'themes/enrove-ebook/assets/images/theme-cover.jpg',
     'query'          => 'open book wooden desk soft light',
     'fallback_query' => 'open book desk',
     'orientation'    => 'landscape',
@@ -70,11 +70,11 @@ $groove_manifest_slots = [
     'note'           => 'A quiet reading desk. Paper and shadow, no faces, no clutter — the long-form promise of the ebook theme.',
   ],
 
-  'cover-groove-magazine' => [
-    'slug'           => 'cover-groove-magazine',
+  'cover-enrove-magazine' => [
+    'slug'           => 'cover-enrove-magazine',
     'kind'           => 'cover',
-    'theme'          => 'groove-magazine',
-    'path'           => 'themes/groove-magazine/assets/images/theme-cover.jpg',
+    'theme'          => 'enrove-magazine',
+    'path'           => 'themes/enrove-magazine/assets/images/theme-cover.jpg',
     'query'          => 'printed magazine paper texture',
     'fallback_query' => 'paper texture',
     'orientation'    => 'landscape',
@@ -84,11 +84,11 @@ $groove_manifest_slots = [
     'note'           => 'Editorial and tactile: printed stock, fold, grain. Texture rather than subject, so headlines stay legible over it.',
   ],
 
-  'cover-groove-newsletter' => [
-    'slug'           => 'cover-groove-newsletter',
+  'cover-enrove-newsletter' => [
+    'slug'           => 'cover-enrove-newsletter',
     'kind'           => 'cover',
-    'theme'          => 'groove-newsletter',
-    'path'           => 'themes/groove-newsletter/assets/images/theme-cover.jpg',
+    'theme'          => 'enrove-newsletter',
+    'path'           => 'themes/enrove-newsletter/assets/images/theme-cover.jpg',
     'query'          => 'morning light window interior calm',
     'fallback_query' => 'window light interior',
     'orientation'    => 'landscape',
@@ -98,11 +98,11 @@ $groove_manifest_slots = [
     'note'           => 'Light, airy, lived-in. Diffuse daylight across a wall gives the masthead a low-contrast field to sit on.',
   ],
 
-  'cover-groove-proposal' => [
-    'slug'           => 'cover-groove-proposal',
+  'cover-enrove-proposal' => [
+    'slug'           => 'cover-enrove-proposal',
     'kind'           => 'cover',
-    'theme'          => 'groove-proposal',
-    'path'           => 'themes/groove-proposal/assets/images/theme-cover.jpg',
+    'theme'          => 'enrove-proposal',
+    'path'           => 'themes/enrove-proposal/assets/images/theme-cover.jpg',
     'query'          => 'modern office building facade dusk',
     'fallback_query' => 'modern architecture facade',
     'orientation'    => 'landscape',
@@ -114,7 +114,7 @@ $groove_manifest_slots = [
 
   // ── Shared placeholder pool ──────────────────────────────────────────────
   // assets/images/pexels/<slug>.jpg — referenced from sample content as
-  // GROOVE_URL . 'assets/images/pexels/<slug>.jpg'.
+  // ENROVE_URL . 'assets/images/pexels/<slug>.jpg'.
 
   'ph-workspace' => [
     'slug'           => 'ph-workspace',
@@ -324,32 +324,32 @@ $groove_manifest_slots = [
 // existed have those URLs written into post_content, so removing the files
 // would break imagery in content that is already saved.
 
-$groove_manifest_sets = require __DIR__ . '/sets.php';
+$enrove_manifest_sets = require __DIR__ . '/sets.php';
 
-foreach ($groove_manifest_sets as $groove_manifest_set_slug => $groove_manifest_set) {
-  if (empty($groove_manifest_set['roles']) || !is_array($groove_manifest_set['roles'])) {
+foreach ($enrove_manifest_sets as $enrove_manifest_set_slug => $enrove_manifest_set) {
+  if (empty($enrove_manifest_set['roles']) || !is_array($enrove_manifest_set['roles'])) {
     continue;
   }
 
-  foreach ($groove_manifest_set['roles'] as $groove_manifest_role => $groove_manifest_role_def) {
-    $groove_manifest_slug = $groove_manifest_set_slug . '-' . $groove_manifest_role;
+  foreach ($enrove_manifest_set['roles'] as $enrove_manifest_role => $enrove_manifest_role_def) {
+    $enrove_manifest_slug = $enrove_manifest_set_slug . '-' . $enrove_manifest_role;
 
-    $groove_manifest_slots[$groove_manifest_slug] = [
-      'slug'           => $groove_manifest_slug,
+    $enrove_manifest_slots[$enrove_manifest_slug] = [
+      'slug'           => $enrove_manifest_slug,
       'kind'           => 'placeholder',
       'theme'          => '',
-      'set'            => $groove_manifest_set_slug,
-      'role'           => $groove_manifest_role,
-      'path'           => 'assets/images/pexels/' . $groove_manifest_slug . '.jpg',
-      'query'          => isset($groove_manifest_role_def['query']) ? (string) $groove_manifest_role_def['query'] : '',
-      'fallback_query' => isset($groove_manifest_role_def['fallback_query']) ? (string) $groove_manifest_role_def['fallback_query'] : '',
-      'orientation'    => isset($groove_manifest_role_def['orientation']) ? (string) $groove_manifest_role_def['orientation'] : 'landscape',
-      'src_size'       => isset($groove_manifest_role_def['src_size']) ? (string) $groove_manifest_role_def['src_size'] : 'large',
-      'color'          => isset($groove_manifest_role_def['color']) ? (string) $groove_manifest_role_def['color'] : '',
-      'ratio'          => isset($groove_manifest_role_def['ratio']) ? (array) $groove_manifest_role_def['ratio'] : [1.2, 2.2],
-      'note'           => isset($groove_manifest_role_def['note']) ? (string) $groove_manifest_role_def['note'] : '',
+      'set'            => $enrove_manifest_set_slug,
+      'role'           => $enrove_manifest_role,
+      'path'           => 'assets/images/pexels/' . $enrove_manifest_slug . '.jpg',
+      'query'          => isset($enrove_manifest_role_def['query']) ? (string) $enrove_manifest_role_def['query'] : '',
+      'fallback_query' => isset($enrove_manifest_role_def['fallback_query']) ? (string) $enrove_manifest_role_def['fallback_query'] : '',
+      'orientation'    => isset($enrove_manifest_role_def['orientation']) ? (string) $enrove_manifest_role_def['orientation'] : 'landscape',
+      'src_size'       => isset($enrove_manifest_role_def['src_size']) ? (string) $enrove_manifest_role_def['src_size'] : 'large',
+      'color'          => isset($enrove_manifest_role_def['color']) ? (string) $enrove_manifest_role_def['color'] : '',
+      'ratio'          => isset($enrove_manifest_role_def['ratio']) ? (array) $enrove_manifest_role_def['ratio'] : [1.2, 2.2],
+      'note'           => isset($enrove_manifest_role_def['note']) ? (string) $enrove_manifest_role_def['note'] : '',
     ];
   }
 }
 
-return $groove_manifest_slots;
+return $enrove_manifest_slots;

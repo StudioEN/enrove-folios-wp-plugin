@@ -118,7 +118,7 @@ build
 
 # ...except the plugin's own compiled Tailwind, which is not a build artefact
 # in the disposable sense: there is no packaging step, so the plugin ships as
-# this repo, and modules/groove-main/module.php reads assets/build/.vite/
+# this repo, and modules/enrove-main/module.php reads assets/build/.vite/
 # manifest.json at runtime to find the stylesheet. The generic `build` rule
 # above was catching it — assets/build is the only build directory here — so a
 # clone-and-deploy without `npm run build` loaded the whole admin unstyled.

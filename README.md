@@ -1,10 +1,10 @@
-# Groove Folios
+# Enrove Folios
 
-Create, manage, and publish beautiful digital literature directly within WordPress — ebooks, newsletters, product catalogs, portfolios, proposals, and more. Groove Folios provides custom themes, access permissions, dynamic previews, and a dedicated folio builder interface powered by the Block Editor.
+Create, manage, and publish beautiful digital literature directly within WordPress — ebooks, newsletters, product catalogs, portfolios, proposals, and more. Enrove Folios provides custom themes, access permissions, dynamic previews, and a dedicated folio builder interface powered by the Block Editor.
 
 A "Folio" is a general-purpose multi-page document container; the theme you pick determines whether it reads as an ebook, newsletter, portfolio, proposal, or another format.
 
-- **Plugin URI:** https://groove.studioen.us/
+- **Plugin URI:** https://enrove.studioen.us/
 - **Author:** [StudioEN](https://studioen.us/)
 - **Requires:** PHP 7.1+, WordPress 5.9+
 
@@ -12,7 +12,7 @@ A "Folio" is a general-purpose multi-page document container; the theme you pick
 
 - Custom post types for Folios and Folio Pages, organized with a flat Collection Tags taxonomy
 - A dedicated Folio editor and Add New Folio flow, with Quick Edit support from the All Folios list
-- Multiple built-in themes (Folio Starter, Groove eBook, Groove Newsletter, Groove Magazine, Groove Proposal), each with cover/page/setup templates
+- Multiple built-in themes (Folio Starter, Enrove eBook, Enrove Newsletter, Enrove Magazine, Enrove Proposal), each with cover/page/setup templates
 - Folio duplication, password-protected folios, custom logo and typeface support
 - Configurable Folio URL routing/permalinks
 - Collects nothing: no analytics, no telemetry, no phone-home (Settings → Privacy states what the plugin does and does not send)
@@ -32,7 +32,7 @@ npm run dev    # watch mode
 npm run build  # production build
 ```
 
-Admin UI is scoped under `body.groove` and built with Tailwind utility classes and jQuery. See `assets/js/groove-main.js` for the shared JS entry point.
+Admin UI is scoped under `body.enrove` and built with Tailwind utility classes and jQuery. See `assets/js/enrove-main.js` for the shared JS entry point.
 
 ## Imagery (Pexels)
 
@@ -46,7 +46,7 @@ licence forbids redistributing unaltered copies, which the GPL requires. Only
 running a fresh checkout, fetches its own copy from `images.pexels.com` when an
 administrator presses **Download Photos** on Settings → Imagery. That download
 needs no API key: it uses the `src_url` the curator records for each photo in
-`credits.json`. See `Groove\Pexels\Library` for where photos resolve from.
+`credits.json`. See `Enrove\Pexels\Library` for where photos resolve from.
 
 ### Supplying the API key
 
@@ -55,14 +55,14 @@ that is set:
 
 | # | Source | Notes |
 |---|---|---|
-| 1 | `GROOVE_PEXELS_API_KEY` constant in `wp-config.php` | Recommended for production/staging |
+| 1 | `ENROVE_PEXELS_API_KEY` constant in `wp-config.php` | Recommended for production/staging |
 | 2 | `PEXELS_API_KEY` environment variable | Handy for CI or one-off runs |
 | 3 | `.pexels-key` file in the plugin root (single line) | Recommended for local dev — gitignored |
-| 4 | Settings → Imagery → Pexels API Key | Stored in the `groove_pexels_api_key` option with autoload off |
+| 4 | Settings → Imagery → Pexels API Key | Stored in the `enrove_pexels_api_key` option with autoload off |
 
 ```php
 // wp-config.php
-define('GROOVE_PEXELS_API_KEY', 'your-key-here');
+define('ENROVE_PEXELS_API_KEY', 'your-key-here');
 ```
 
 ```bash
@@ -79,7 +79,7 @@ the CLI only ever show the source and a masked value such as `••••••
 php bin/curate-pexels.php --help          # usage
 php bin/curate-pexels.php --dry-run       # resolve everything, download nothing
 php bin/curate-pexels.php                 # curate every slot
-php bin/curate-pexels.php --theme=groove-proposal
+php bin/curate-pexels.php --theme=enrove-proposal
 php bin/curate-pexels.php --covers-only
 php bin/curate-pexels.php --slots=ph-workspace,ph-reading --force
 php bin/curate-pexels.php --wp=/path/to/wordpress
@@ -102,7 +102,7 @@ required "Photos provided by Pexels" link. Do not remove these.
 
 | Path | Purpose |
 |---|---|
-| `groove-folios.php` | Plugin bootstrap |
+| `enrove-folios.php` | Plugin bootstrap |
 | `includes/` | Core plugin wiring (CPTs, taxonomy, hooks) |
 | `pages/` | Admin page templates (All Folios, Folio editor, Settings, Themes, etc.) |
 | `list/` | WP_List_Table implementations for the admin list views |
@@ -122,7 +122,7 @@ authoritative spec** — read it before writing or editing one.
 
 ```bash
 php bin/check-theme-contract.php                        # every theme
-php bin/check-theme-contract.php --theme=groove-ebook   # one theme
+php bin/check-theme-contract.php --theme=enrove-ebook   # one theme
 php bin/check-theme-contract.php --dir=/path/to/theme   # a package you are about to zip
 php bin/check-theme-contract.php --strict               # non-zero exit on warnings, for CI
 ```
@@ -133,8 +133,8 @@ with no WordPress installed.
 > **Lint theme PHP before it reaches a server.** Themes are loaded while the plugin file is still being
 > included, so a broken theme file can white-screen the whole site — wp-admin included, which is where
 > you would have gone to remove it. The contract checker tokenises and will not catch a syntax error the
-> compiler rejects, so run `php -l` as well, and install packaged themes through *Groove → Themes* rather
-> than unzipping into `wp-content/groove-themes/` by hand. [themes/README.md §13](themes/README.md#13-known-warts)
+> compiler rejects, so run `php -l` as well, and install packaged themes through *Enrove → Themes* rather
+> than unzipping into `wp-content/enrove-themes/` by hand. [themes/README.md §13](themes/README.md#13-known-warts)
 > sets out exactly which failures are recoverable and which are not.
 
 ## Testing
@@ -148,6 +148,10 @@ php bin/check-theme-contract-selftest.php       # the checker's own test suite
 
 `folio-embed-regression-checklist.md` documents the **manual** regression checklist for folio-page embed
 rendering (Spotify, YouTube, X/Twitter) — run it whenever folio page or theme rendering changes.
+
+## Support
+
+Questions and bug reports: <enrove@studioen.us>. For a security problem, see [SECURITY.md](SECURITY.md).
 
 ## Changelog
 

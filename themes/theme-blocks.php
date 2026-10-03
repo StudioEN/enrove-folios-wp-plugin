@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Themes;
+namespace Enrove\Themes;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
  *
  * Keeps each folio page's block inserter to the blocks its folio's theme can
  * style. A block belongs to a theme when its namespace is that theme's ID
- * (`groove-proposal/timeline`); every theme's blocks.php is loaded on every
+ * (`enrove-proposal/timeline`); every theme's blocks.php is loaded on every
  * request, so without this a Magazine page offers Proposal pricing tables that
  * render unstyled.
  *
@@ -28,7 +28,7 @@ if (!defined('ABSPATH')) {
  */
 class Theme_Blocks
 {
-    const SCRIPT_HANDLE = 'groove-block-scope';
+    const SCRIPT_HANDLE = 'enrove-block-scope';
 
     public static function register(): void
     {
@@ -40,7 +40,7 @@ class Theme_Blocks
     /**
      * The theme that owns a block, or '' when no registered theme does.
      *
-     * @param string   $block_name e.g. 'groove-proposal/timeline'.
+     * @param string   $block_name e.g. 'enrove-proposal/timeline'.
      * @param string[] $theme_ids  Registered theme IDs.
      */
     public static function get_owner(string $block_name, array $theme_ids): string
@@ -85,7 +85,7 @@ class Theme_Blocks
     public static function enqueue_editor_scope(): void
     {
         $page = get_post();
-        if (!$page || $page->post_type !== 'groove_folio_page') {
+        if (!$page || $page->post_type !== 'enrove_folio_page') {
             return;
         }
 
@@ -107,8 +107,8 @@ class Theme_Blocks
                 continue;
             }
             $notes[$other_id] = sprintf(
-                /* translators: 1: the block's theme, e.g. Groove Proposal; 2: this folio's theme */
-                __('%1$s block: %2$s doesn\'t style it, so readers see it unstyled.', 'groove-folios'),
+                /* translators: 1: the block's theme, e.g. Enrove Proposal; 2: this folio's theme */
+                __('%1$s block: %2$s doesn\'t style it, so readers see it unstyled.', 'enrove-folios'),
                 (string) ($theme['name'] ?? $other_id),
                 $current_name
             );
@@ -117,17 +117,17 @@ class Theme_Blocks
             return;
         }
 
-        $path = GROOVE_PATH . 'assets/js/groove-block-scope.js';
+        $path = ENROVE_PATH . 'assets/js/enrove-block-scope.js';
         wp_enqueue_script(
             self::SCRIPT_HANDLE,
-            GROOVE_URL . 'assets/js/groove-block-scope.js',
+            ENROVE_URL . 'assets/js/enrove-block-scope.js',
             ['wp-hooks', 'wp-blocks', 'wp-compose', 'wp-element'],
-            file_exists($path) ? (string) filemtime($path) : GROOVE_VERSION,
+            file_exists($path) ? (string) filemtime($path) : ENROVE_VERSION,
             true
         );
         wp_add_inline_script(
             self::SCRIPT_HANDLE,
-            'window.GROOVE_BLOCK_SCOPE = ' . wp_json_encode(['notes' => $notes], JSON_HEX_TAG | JSON_HEX_AMP) . ';',
+            'window.ENROVE_BLOCK_SCOPE = ' . wp_json_encode(['notes' => $notes], JSON_HEX_TAG | JSON_HEX_AMP) . ';',
             'before'
         );
     }

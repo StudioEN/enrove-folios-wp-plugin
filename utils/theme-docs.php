@@ -1,6 +1,6 @@
 <?php
 
-namespace Groove\Utils;
+namespace Enrove\Utils;
 
 if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
@@ -63,7 +63,7 @@ class Theme_Docs
 	 * Absolute path of a document, or '' for a key that names none.
 	 *
 	 * @param string $key
-	 * @param string $root Plugin root, trailing slash optional. Defaults to GROOVE_PATH.
+	 * @param string $root Plugin root, trailing slash optional. Defaults to ENROVE_PATH.
 	 * @return string
 	 */
 	public static function path($key, $root = '')
@@ -73,7 +73,7 @@ class Theme_Docs
 		}
 
 		if ($root === '') {
-			$root = defined('GROOVE_PATH') ? GROOVE_PATH : '';
+			$root = defined('ENROVE_PATH') ? ENROVE_PATH : '';
 		}
 
 		return rtrim($root, '/\\') . '/' . self::DOCS[$key];

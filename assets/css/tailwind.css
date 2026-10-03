@@ -10,11 +10,11 @@
    admin palette, so `text-gray-500`, `ring-indigo-500` and friends render in
    core admin colours without touching the markup.
 
-   Tokens are defined in assets/css/groove-main.css; the hex fallbacks are the
+   Tokens are defined in assets/css/enrove-main.css; the hex fallbacks are the
    same values, in case only this stylesheet is loaded.
 
    @theme lands on :root, which is out of reach of the accent — WordPress
-   publishes the admin colour scheme on <body>, so groove-main.css declares
+   publishes the admin colour scheme on <body>, so enrove-main.css declares
    --g-accent there and re-points the indigo scale with it. The accent values
    below are therefore fallbacks only.
    ────────────────────────────────────────────────────────────────────── */

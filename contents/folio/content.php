@@ -1,7 +1,7 @@
 <?php
-namespace Groove\Contents\Folio;
+namespace Enrove\Contents\Folio;
 
-use Groove\Contents\BaseContent;
+use Enrove\Contents\BaseContent;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -23,18 +23,18 @@ class Content extends BaseContent
   public function create_posttype()
   {
     $labels = array(
-      'name' => _x('Folios', 'post type general name', 'groove-folios'),
-      'singular_name' => _x('Folio', 'post type singular name', 'groove-folios'),
-      'menu_name' => _x('Folios', 'admin menu', 'groove-folios'),
-      'all_items' => __('All Folios', 'groove-folios'),
-      'add_new' => __('Add New', 'groove-folios'),
-      'add_new_item' => __('Add New Folio', 'groove-folios'),
-      'edit_item' => __('Edit Folio', 'groove-folios'),
-      'new_item' => __('New Folio', 'groove-folios'),
-      'view_item' => __('View Folio', 'groove-folios'),
-      'search_items' => __('Search Folios', 'groove-folios'),
-      'not_found' => __('No folios found', 'groove-folios'),
-      'not_found_in_trash' => __('No folios found in trash', 'groove-folios'),
+      'name' => _x('Folios', 'post type general name', 'enrove-folios'),
+      'singular_name' => _x('Folio', 'post type singular name', 'enrove-folios'),
+      'menu_name' => _x('Folios', 'admin menu', 'enrove-folios'),
+      'all_items' => __('All Folios', 'enrove-folios'),
+      'add_new' => __('Add New', 'enrove-folios'),
+      'add_new_item' => __('Add New Folio', 'enrove-folios'),
+      'edit_item' => __('Edit Folio', 'enrove-folios'),
+      'new_item' => __('New Folio', 'enrove-folios'),
+      'view_item' => __('View Folio', 'enrove-folios'),
+      'search_items' => __('Search Folios', 'enrove-folios'),
+      'not_found' => __('No folios found', 'enrove-folios'),
+      'not_found_in_trash' => __('No folios found in trash', 'enrove-folios'),
     );
 
     $args = array(
@@ -54,26 +54,26 @@ class Content extends BaseContent
       'menu_position' => 1,
     );
 
-    register_post_type('groove_' . $this->get_key(), $args);
+    register_post_type('enrove_' . $this->get_key(), $args);
 
     $taxonomy_labels = array(
-      'name' => _x('Collection Tags', 'taxonomy general name', 'groove-folios'),
-      'singular_name' => _x('Collection Tag', 'taxonomy singular name', 'groove-folios'),
-      'search_items' => __('Search Collection Tags', 'groove-folios'),
-      'popular_items' => __('Popular Collection Tags', 'groove-folios'),
-      'all_items' => __('All Collection Tags', 'groove-folios'),
-      'edit_item' => __('Edit Collection Tag', 'groove-folios'),
-      'update_item' => __('Update Collection Tag', 'groove-folios'),
-      'add_new_item' => __('Add New Collection Tag', 'groove-folios'),
-      'new_item_name' => __('New Collection Tag Name', 'groove-folios'),
-      'separate_items_with_commas' => __('Separate collection tags with commas', 'groove-folios'),
-      'add_or_remove_items' => __('Add or remove collection tags', 'groove-folios'),
-      'choose_from_most_used' => __('Choose from the most used collection tags', 'groove-folios'),
-      'not_found' => __('No collection tags found.', 'groove-folios'),
-      'menu_name' => __('Collection Tags', 'groove-folios'),
+      'name' => _x('Collection Tags', 'taxonomy general name', 'enrove-folios'),
+      'singular_name' => _x('Collection Tag', 'taxonomy singular name', 'enrove-folios'),
+      'search_items' => __('Search Collection Tags', 'enrove-folios'),
+      'popular_items' => __('Popular Collection Tags', 'enrove-folios'),
+      'all_items' => __('All Collection Tags', 'enrove-folios'),
+      'edit_item' => __('Edit Collection Tag', 'enrove-folios'),
+      'update_item' => __('Update Collection Tag', 'enrove-folios'),
+      'add_new_item' => __('Add New Collection Tag', 'enrove-folios'),
+      'new_item_name' => __('New Collection Tag Name', 'enrove-folios'),
+      'separate_items_with_commas' => __('Separate collection tags with commas', 'enrove-folios'),
+      'add_or_remove_items' => __('Add or remove collection tags', 'enrove-folios'),
+      'choose_from_most_used' => __('Choose from the most used collection tags', 'enrove-folios'),
+      'not_found' => __('No collection tags found.', 'enrove-folios'),
+      'menu_name' => __('Collection Tags', 'enrove-folios'),
     );
 
-    register_taxonomy('groove_collection_tag', array('groove_folio'), array(
+    register_taxonomy('enrove_collection_tag', array('enrove_folio'), array(
       'labels' => $taxonomy_labels,
       'public' => false,
       'publicly_queryable' => false,
@@ -145,7 +145,7 @@ class Content extends BaseContent
           return call_user_func($sanitize, is_scalar($value) ? (string) $value : '');
         };
       }
-      register_post_meta('groove_folio', $meta_key, $args);
+      register_post_meta('enrove_folio', $meta_key, $args);
     }
   }
 

@@ -1,5 +1,5 @@
 <?php
-namespace Groove;
+namespace Enrove;
 
 if (!defined('ABSPATH')) {
 	exit;
@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 /**
  * Toast notifications.
  *
- * Groove admin screens report the outcome of an action as a transient pill at
+ * Enrove admin screens report the outcome of an action as a transient pill at
  * the bottom-right corner rather than a block of copy pushed into the page.
  * An inline notice reflows the layout it lands in and stays there long after
  * it has been read; a toast reports and gets out of the way, so the content
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
  *
  * Queue a message wherever the inline notice used to be rendered:
  *
- *     \Groove\Toast::success(__('Settings saved.', 'groove-folios'), ['message']);
+ *     \Enrove\Toast::success(__('Settings saved.', 'enrove-folios'), ['message']);
  *
  * The queue is flushed into the admin footer, so anything queued during page
  * render arrives in the same request. The second argument lists query args to
@@ -27,10 +27,10 @@ if (!defined('ABSPATH')) {
  * queues the same toast and, in addition, pins the reason and the next step to
  * the control that was pressed:
  *
- *     \Groove\Toast::failure(
- *         __('That base slug cannot be used in a URL.', 'groove-folios'),
- *         __('Use letters, numbers and hyphens — for example folio.', 'groove-folios'),
- *         '#groove-save-routing',
+ *     \Enrove\Toast::failure(
+ *         __('That base slug cannot be used in a URL.', 'enrove-folios'),
+ *         __('Use letters, numbers and hyphens — for example folio.', 'enrove-folios'),
+ *         '#enrove-save-routing',
  *         ['message']
  *     );
  *
@@ -170,7 +170,7 @@ class Toast
 	 *
 	 * Admin page callbacks run well before the footer, so a toast queued while
 	 * the screen renders still makes this pass. admin_footer, not
-	 * admin_print_footer_scripts: the queue rides on the groove-toast handle
+	 * admin_print_footer_scripts: the queue rides on the enrove-toast handle
 	 * as an inline script, and core prints footer scripts on the latter.
 	 */
 	private static function hook()
@@ -201,9 +201,9 @@ class Toast
 		self::$consumed_args = [];
 
 		wp_add_inline_script(
-			'groove-toast',
-			'(window.GROOVE_TOASTS = window.GROOVE_TOASTS || []).push(' . wp_json_encode($payload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ');'
-			. 'if (window.grooveDrainToasts) { window.grooveDrainToasts(); }'
+			'enrove-toast',
+			'(window.ENROVE_TOASTS = window.ENROVE_TOASTS || []).push(' . wp_json_encode($payload, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ');'
+			. 'if (window.enroveDrainToasts) { window.enroveDrainToasts(); }'
 		);
 	}
 }

@@ -15,9 +15,9 @@
         "height": 1253,
         "downloaded_at": "2026-09-02T23:01:50+00:00"
     },
-    "cover-groove-ebook": {
-        "slug": "cover-groove-ebook",
-        "file": "themes/groove-ebook/assets/images/theme-cover.jpg",
+    "cover-enrove-ebook": {
+        "slug": "cover-enrove-ebook",
+        "file": "themes/enrove-ebook/assets/images/theme-cover.jpg",
         "pexels_id": 15833106,
         "pexels_url": "https://www.pexels.com/photo/old-book-on-desk-15833106/",
         "photographer": "Arturo Añez.",
@@ -31,9 +31,9 @@
         "height": 1253,
         "downloaded_at": "2026-09-02T23:01:50+00:00"
     },
-    "cover-groove-magazine": {
-        "slug": "cover-groove-magazine",
-        "file": "themes/groove-magazine/assets/images/theme-cover.jpg",
+    "cover-enrove-magazine": {
+        "slug": "cover-enrove-magazine",
+        "file": "themes/enrove-magazine/assets/images/theme-cover.jpg",
         "pexels_id": 751088,
         "pexels_url": "https://www.pexels.com/photo/assorted-color-rolls-751088/",
         "photographer": "Zainab Aamir",
@@ -47,9 +47,9 @@
         "height": 1300,
         "downloaded_at": "2026-09-02T23:01:51+00:00"
     },
-    "cover-groove-newsletter": {
-        "slug": "cover-groove-newsletter",
-        "file": "themes/groove-newsletter/assets/images/theme-cover.jpg",
+    "cover-enrove-newsletter": {
+        "slug": "cover-enrove-newsletter",
+        "file": "themes/enrove-newsletter/assets/images/theme-cover.jpg",
         "pexels_id": 29623050,
         "pexels_url": "https://www.pexels.com/photo/sunlit-interior-with-curtain-filtered-window-29623050/",
         "photographer": "zheng liang",
@@ -63,9 +63,9 @@
         "height": 1296,
         "downloaded_at": "2026-09-02T23:01:51+00:00"
     },
-    "cover-groove-proposal": {
-        "slug": "cover-groove-proposal",
-        "file": "themes/groove-proposal/assets/images/theme-cover.jpg",
+    "cover-enrove-proposal": {
+        "slug": "cover-enrove-proposal",
+        "file": "themes/enrove-proposal/assets/images/theme-cover.jpg",
         "pexels_id": 303335,
         "pexels_url": "https://www.pexels.com/photo/city-building-303335/",
         "photographer": "Dom J",

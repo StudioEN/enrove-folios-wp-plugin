@@ -1,0 +1,3884 @@
+/* ── Colour tokens ────────────────────────────────────────────────────────
+   Every value below comes from the WordPress admin palette
+   (@wordpress/base-styles), so plugin chrome matches core admin screens.
+
+   The accent defers to WordPress' own --wp-admin-theme-color (see the body
+   rule below), so the plugin follows whichever admin colour scheme the user
+   has picked.
+
+   Declared on :root rather than body.enrove so the Tailwind build
+   (assets/css/tailwind.css) can map its colour scales onto the same tokens.
+   Custom properties paint nothing on their own — no core admin rule changes
+   until one of these is referenced.
+   ────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Gray */
+  --g-gray-0: #f6f7f7;
+  --g-gray-5: #f0f0f1;
+  --g-gray-10: #dcdcde;
+  --g-gray-20: #c3c4c7;
+  --g-gray-30: #a7aaad;
+  --g-gray-40: #8c8f94;
+  --g-gray-50: #787c82;
+  --g-gray-60: #646970;
+  --g-gray-70: #50575e;
+  --g-gray-80: #3c434a;
+  --g-gray-90: #2c3338;
+  --g-gray-100: #1d2327;
+
+  /* Blue — pale tints for informational surfaces, and text to sit on them.
+     Anything interactive uses --g-accent instead, so it follows the admin
+     colour scheme. Do not reintroduce a mid-blue here. */
+  --g-blue-0: #f0f6fc;
+  --g-blue-5: #c5d9ed;
+  --g-blue-70: #0a4b78;
+
+  /* Red */
+  --g-red-0: #fcf0f1;
+  --g-red-5: #facfd2;
+  --g-red-10: #ffabaf;
+  --g-red-40: #d63638;
+  --g-red-50: #b32d2e;
+  --g-red-60: #8a2424;
+  --g-red-70: #691c1c;
+
+  /* Green */
+  --g-green-0: #edfaef;
+  --g-green-40: #00a32a;
+  --g-green-70: #005c12;
+
+  /* Yellow */
+  --g-yellow-0: #fcf9e8;
+  --g-yellow-30: #dba617;
+  --g-yellow-70: #614200;
+
+  /* Semantic aliases */
+  --g-surface: #fff;
+  --g-surface-alt: var(--g-gray-0);
+  --g-border: var(--g-gray-10);
+  --g-border-strong: var(--g-gray-20);
+  --g-text: var(--g-gray-100);
+  --g-text-muted: var(--g-gray-60);
+}
+
+/* ── Accent — WordPress admin theme colour ────────────────────────────────
+   These have to be declared on <body>, not :root. WordPress publishes the
+   colour scheme's accent on the body (body.admin-color-modern and friends,
+   in base-styles/admin-schemes.css), while several block-package stylesheets
+   still leave a legacy :root{--wp-admin-theme-color:#007cba} behind them. A
+   var() is substituted where the custom property is *declared*, so an accent
+   declared on :root would freeze the stale html-level blue and inherit it
+   down, while core's own .button-primary — same var(), resolved on the button
+   — picks up the body-level scheme colour. That is how the pills and the
+   theme-card highlights drift a different blue from the Add New button.
+
+   Resolving here means Enrove always agrees with core admin chrome, whether
+   or not the scheme stylesheet is on the page. The fallbacks are core's own
+   fallbacks from wp-includes/css/buttons.css.
+   ────────────────────────────────────────────────────────────────────── */
+body {
+  --g-accent: var(--wp-admin-theme-color, #3858e9);
+  --g-accent-hover: var(--wp-admin-theme-color-darker-10, #2145e6);
+  --g-accent-active: var(--wp-admin-theme-color-darker-20, #183ad6);
+  --g-accent-rgb: var(--wp-admin-theme-color--rgb, 56, 88, 233);
+
+  /* Re-point the Tailwind scales at the body-level accent. The @theme block
+     in tailwind.css maps them on :root, where --g-accent is out of reach, so
+     without this the utilities would sit on the fallback hex forever. */
+  --color-indigo-500: var(--g-accent);
+  --color-indigo-600: var(--g-accent);
+  --color-indigo-700: var(--g-accent-hover);
+  --color-indigo-800: var(--g-accent-active);
+}
+
+
+
+@font-face {
+  font-family: gicons;
+  src: url(./icons.eot?5.21.0);
+  src: url(./icons.eot?5.21.0#iefix) format("embedded-opentype"), url(./icons.woff2?5.21.0) format("woff2"), url(./icons.woff?5.21.0) format("woff"), url(./icons.ttf?5.21.0) format("truetype"), url(./icons.svg?5.21.0#eicon) format("svg");
+  font-weight: 400;
+  font-style: normal
+}
+
+[class*=" gicon-"],
+[class^=gicon] {
+  display: inline-block;
+  font-family: gicons;
+  font-size: inherit;
+  font-weight: 400;
+  font-style: normal;
+  font-variant: normal;
+  line-height: 1;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale
+}
+
+.gicon-close:before {
+  content: "\e87f";
+}
+
+/* Prevent WP admin link states from overriding Tailwind text color utilities. */
+.g-tailwind-link-reset:link,
+.g-tailwind-link-reset:visited,
+.g-tailwind-link-reset:hover,
+.g-tailwind-link-reset:active {
+  color: currentColor;
+}
+
+.g-top-bar-post-nav {
+  position: relative;
+  z-index: 2;
+  background-color: var(--g-surface-alt);
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--g-border);
+}
+
+/* Fallback for classic editor */
+body:not(.block-editor-page) .g-top-bar-post-nav {
+  position: relative;
+  top: 0;
+  margin-bottom: 15px;
+}
+
+/* In Gutenberg, mount the breadcrumb inside the editor header stack and offset the canvas below it. */
+body.block-editor-page .g-top-bar-post-nav {
+  left: auto;
+  right: auto;
+  top: auto;
+  margin: 0;
+}
+
+body.block-editor-page .interface-interface-skeleton__header {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(60px + var(--g-editor-breadcrumb-height, 0px));
+  height: auto;
+}
+
+.g-top-bar-post-nav .g-top-bar-crumb {
+  color: var(--g-text);
+  padding: 0 5px;
+}
+
+.g-top-bar-post-nav .g-top-bar-crumb:link,
+.g-top-bar-post-nav .g-top-bar-crumb:visited {
+  color: var(--g-accent);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.g-folio__theme-2-page .attachment-post-thumbnail {
+  width: 100%;
+  height: auto;
+}
+
+.g-top-bar-root {
+  left: 160px;
+  font-family: var(--g-a-font-family);
+  background: var(--g-surface);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
+  position: fixed;
+  top: 32px;
+  width: calc(100% - 160px);
+  z-index: 100;
+}
+
+.g-top-bar-root .g-top-bar {
+  display: flex;
+  height: 50px;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.g-top-bar__left {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+body.enrove_folio-template-default {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body.enrove.toplevel_page_enrove-overview .g-top-bar-root,
+body.enrove.enrove-overview_page_enrove-overview .g-top-bar-root,
+body.enrove.enrove-overview_page_enrove-settings .g-top-bar-root,
+body.enrove.enrove-overview_page_enrove-themes .g-top-bar-root,
+body.enrove.enrove-overview_page_enrove-folio .g-top-bar-root,
+body.enrove.enrove-folios_page_enrove-overview .g-top-bar-root,
+body.enrove.enrove-folios_page_enrove-settings .g-top-bar-root,
+body.enrove.enrove-folios_page_enrove-themes .g-top-bar-root,
+body.enrove.enrove-folios_page_enrove-folio .g-top-bar-root {
+  height: 50px;
+}
+
+body.enrove.toplevel_page_enrove-overview #wpbody-content,
+body.enrove.enrove-overview_page_enrove-overview #wpbody-content,
+body.enrove.enrove-overview_page_enrove-settings #wpbody-content,
+body.enrove.enrove-overview_page_enrove-themes #wpbody-content,
+body.enrove.enrove-overview_page_enrove-folio #wpbody-content,
+body.enrove.enrove-folios_page_enrove-overview #wpbody-content,
+body.enrove.enrove-folios_page_enrove-settings #wpbody-content,
+body.enrove.enrove-folios_page_enrove-themes #wpbody-content,
+body.enrove.enrove-folios_page_enrove-folio #wpbody-content {
+  margin-top: 0 !important;
+}
+
+/* Remove WP admin default field margins that create extra spacing in settings rows. */
+body.enrove.enrove-overview_page_enrove-settings .g-settings-form input[type="text"],
+body.enrove.enrove-overview_page_enrove-settings .g-settings-form input[type="email"],
+body.enrove.enrove-overview_page_enrove-settings .g-settings-form input[type="password"],
+body.enrove.enrove-overview_page_enrove-settings .g-settings-form input[type="number"],
+body.enrove.enrove-overview_page_enrove-settings .g-settings-form select,
+body.enrove.enrove-overview_page_enrove-settings .g-settings-form textarea,
+body.enrove.enrove-folios_page_enrove-settings .g-settings-form input[type="text"],
+body.enrove.enrove-folios_page_enrove-settings .g-settings-form input[type="email"],
+body.enrove.enrove-folios_page_enrove-settings .g-settings-form input[type="password"],
+body.enrove.enrove-folios_page_enrove-settings .g-settings-form input[type="number"],
+body.enrove.enrove-folios_page_enrove-settings .g-settings-form select,
+body.enrove.enrove-folios_page_enrove-settings .g-settings-form textarea {
+  margin: 0;
+}
+
+body.enrove.enrove-overview_page_enrove-settings .g-settings-form select,
+body.enrove.enrove-folios_page_enrove-settings .g-settings-form select {
+  max-width: none;
+}
+
+/* Breathing room between a tab strip and the panel it switches.
+ *
+ * Every Enrove screen with tabs renders the same `.nav-tab-wrapper` from its
+ * own `display_tabs()` — Settings, Folio and Themes — so this is scoped to the
+ * plugin rather than to one page. It was keyed to the Settings page's two body
+ * classes, which is why the card on Themes sat flush under the tabs while the
+ * identical card on Settings did not: not a different card, just a rule that
+ * named one screen. A fourth tabbed screen should not have to find this. */
+body.enrove .nav-tab-wrapper {
+  margin-bottom: 16px;
+}
+
+/* Keep the WP list table contained on All Folios.
+ *
+ * Deliberately no overflow here. `overflow-x: auto` would make .wrap a block
+ * formatting context, and a BFC refuses to overlap a float -- so it would shrink
+ * away from the right-floated Screen Options tab and leave a tab-width strip of
+ * dead space down the full height of the page. Nothing needs to scroll anyway:
+ * the container queries further down drop a column before the remaining floors
+ * can outgrow the available width. */
+body.enrove.enrove-overview_page_enrove-all-folios #wpbody-content .wrap,
+body.enrove.enrove-folios_page_enrove-all-folios #wpbody-content .wrap {
+  max-width: 100%;
+}
+
+body.enrove.enrove-overview_page_enrove-folio #wpbody-content .wrap,
+body.enrove.enrove-folios_page_enrove-folio #wpbody-content .wrap {
+  max-width: 100%;
+}
+
+/* container-type: inline-size makes this a formatting context too, so it would
+ * shrink away from the Screen Options float the same way if it ever sat level
+ * with it. It starts below the float today; `clear` keeps that true. */
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter {
+  max-width: 100%;
+  clear: both;
+  container-type: inline-size;
+  container-name: g-folios;
+}
+
+body.enrove.enrove-overview_page_enrove-folio #pages-filter,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter {
+  max-width: 100%;
+  overflow-x: auto;
+  clear: both;
+}
+
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .wp-list-table,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .wp-list-table {
+  width: 100%;
+}
+
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .wp-list-table,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .wp-list-table {
+  width: 100%;
+  min-width: 780px;
+}
+
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .wp-list-table td.column-title .g-folio__title-wrap,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .wp-list-table td.column-title .g-folio__title-wrap {
+  display: block;
+  min-width: 0;
+}
+
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .wp-list-table .g-folio__truncate-text,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .wp-list-table .g-folio__truncate-text {
+  display: inline-block;
+  max-width: min(100%, 60ch);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+/* Normalize WP tablenav spacing/alignment on Enrove list screens. */
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .tablenav.top,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .tablenav.top,
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .tablenav.top,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .tablenav.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: auto;
+  min-height: 0;
+  margin: 10px 0;
+  padding: 0;
+}
+
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .tablenav.top .actions,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .tablenav.top .actions,
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .tablenav.top .actions,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .tablenav.top .actions,
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .tablenav.top .tablenav-pages,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .tablenav.top .tablenav-pages,
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .tablenav.top .tablenav-pages,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .tablenav.top .tablenav-pages {
+  float: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .tablenav.top .tablenav-pages,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .tablenav.top .tablenav-pages,
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .tablenav.top .tablenav-pages,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .tablenav.top .tablenav-pages {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .tablenav.top .displaying-num,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .tablenav.top .displaying-num,
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .tablenav.top .displaying-num,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .tablenav.top .displaying-num {
+  margin: 0;
+}
+
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .tablenav.top br.clear,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .tablenav.top br.clear,
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .tablenav.top br.clear,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .tablenav.top br.clear {
+  display: none;
+}
+
+/* Align only the header/footer "select all" checkbox column with header labels. */
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .wp-list-table.widefat thead th.check-column,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .wp-list-table.widefat thead th.check-column,
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .wp-list-table.widefat thead th.check-column,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .wp-list-table.widefat thead th.check-column,
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .wp-list-table.widefat tfoot th.check-column,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .wp-list-table.widefat tfoot th.check-column,
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .wp-list-table.widefat tfoot th.check-column,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .wp-list-table.widefat tfoot th.check-column {
+  padding: 8px 0;
+}
+
+body.enrove.enrove-overview_page_enrove-all-folios #posts-filter .wp-list-table.widefat tfoot td.check-column,
+body.enrove.enrove-folios_page_enrove-all-folios #posts-filter .wp-list-table.widefat tfoot td.check-column,
+body.enrove.enrove-overview_page_enrove-folio #pages-filter .wp-list-table.widefat tfoot td.check-column,
+body.enrove.enrove-folios_page_enrove-folio #pages-filter .wp-list-table.widefat tfoot td.check-column {
+  padding-top: 0;
+}
+
+.g-top-bar-tabs {
+  position: relative;
+}
+
+.g-top-bar-tabs .g-folio__nav-tab {
+  background: transparent;
+  border: none;
+  position: relative;
+  cursor: pointer;
+}
+
+.g-top-bar-tabs .g-folio__nav-tab.g-folio__nav-tab-active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--g-accent);
+}
+
+/* The header holds a 56px row while its title and actions fit side by side;
+   when they do not (a long title, a phone), the actions wrap under the title
+   instead of running over it. */
+body.enrove .g-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  min-height: 56px;
+  padding: 8px 0;
+  box-sizing: border-box;
+}
+
+body.enrove .g-page-header__left,
+body.enrove .g-page-header__right {
+  display: flex;
+  align-items: center;
+}
+
+body.enrove .g-page-header__right {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: 8px;
+  margin-inline-start: auto;
+}
+
+body.enrove .g-page-header__left {
+  min-width: 0;
+  gap: 12px;
+}
+
+body.enrove .g-page-header__title {
+  margin: 0;
+  padding: 0;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+body.enrove .g-page-header__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 8px;
+}
+
+body.enrove .g-page-header__buttons-group {
+  gap: 8px;
+}
+
+body.enrove .g-page-header__icon-button {
+  width: 32px;
+  min-width: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.enrove .g-page-header__icon-button .dashicons {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 16px;
+}
+
+/* The More actions menu button: only at phone width, see below. */
+body.enrove .g-page-header__more {
+  display: none;
+  position: relative;
+  margin-inline-start: 8px;
+}
+
+/* Where wp-admin goes mobile, the icon buttons match core's 40px touch-size
+   buttons. */
+@media screen and (max-width: 782px) {
+  body.enrove .g-page-header__icon-button {
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+}
+
+/* At phone width the items a page marks 'overflow' leave the bar for the
+   More actions menu, so the bar keeps only the actions that commit work. */
+@media screen and (max-width: 600px) {
+  body.enrove .g-page-header .g-page-header__overflow-item,
+  body.enrove .g-page-header__buttons:not(:has(> :not(.g-page-header__overflow-item))) {
+    display: none;
+  }
+
+  body.enrove .g-page-header__more {
+    display: block;
+  }
+}
+
+/* A menu of actions, anchored under its button's right edge. */
+body.enrove .g-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 180px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 4px;
+  border: 1px solid var(--g-border-strong);
+  border-radius: 8px;
+  background: var(--g-surface);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+}
+
+body.enrove .g-menu[hidden] {
+  display: none;
+}
+
+body.enrove .g-menu__item {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  box-shadow: none;
+  color: var(--g-text);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+body.enrove .g-menu__item:hover,
+body.enrove .g-menu__item:focus {
+  background: var(--g-surface-alt);
+  color: var(--g-text);
+  box-shadow: none;
+}
+
+body.enrove .g-menu__item:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: -2px;
+}
+
+body.enrove .g-menu__item[aria-disabled="true"] {
+  color: var(--g-text-muted);
+  background: none;
+  cursor: default;
+}
+
+body.enrove .g-tooltip-button {
+  position: relative;
+  overflow: visible;
+  --g-tooltip-offset: 4px;
+  --g-tooltip-arrow-size: 5px;
+  --g-tooltip-shift-x: 0px;
+  --g-tooltip-shift-y: 0px;
+}
+
+body.enrove .g-tooltip-button .g-tooltip-bubble {
+  position: absolute;
+  background: var(--g-gray-100);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 6px 8px;
+  max-width: min(240px, calc(100vw - 16px));
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100000;
+  transition: opacity 0.15s ease, transform 0.15s ease, display 0.15s allow-discrete;
+}
+
+/* Labels are short enough to stay on one line; a sentence of explanation is
+   not, so this variant lets the bubble wrap and sets it left-ranged. */
+body.enrove .g-tooltip-button--wrap .g-tooltip-bubble {
+  white-space: normal;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+  padding: 8px 10px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+}
+
+body.enrove .g-tooltip-button .g-tooltip-arrow {
+  content: "";
+  position: absolute;
+  border: var(--g-tooltip-arrow-size) solid transparent;
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100000;
+  transition: opacity 0.15s ease, transform 0.15s ease, display 0.15s allow-discrete;
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="top"] .g-tooltip-bubble {
+  left: 50%;
+  bottom: calc(100% + var(--g-tooltip-offset) + var(--g-tooltip-arrow-size));
+  transform: translate(calc(-50% + var(--g-tooltip-shift-x)), 2px);
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="top"] .g-tooltip-arrow {
+  left: 50%;
+  bottom: calc(100% + var(--g-tooltip-offset));
+  border-top-color: var(--g-gray-100);
+  transform: translate(calc(-50% + var(--g-tooltip-shift-x)), 2px);
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="bottom"] .g-tooltip-bubble {
+  left: 50%;
+  top: calc(100% + var(--g-tooltip-offset) + var(--g-tooltip-arrow-size));
+  transform: translate(calc(-50% + var(--g-tooltip-shift-x)), -2px);
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="bottom"] .g-tooltip-arrow {
+  left: 50%;
+  top: calc(100% + var(--g-tooltip-offset));
+  border-bottom-color: var(--g-gray-100);
+  transform: translate(calc(-50% + var(--g-tooltip-shift-x)), -2px);
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="left"] .g-tooltip-bubble {
+  right: calc(100% + var(--g-tooltip-offset) + var(--g-tooltip-arrow-size));
+  top: 50%;
+  transform: translate(2px, calc(-50% + var(--g-tooltip-shift-y)));
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="left"] .g-tooltip-arrow {
+  right: calc(100% + var(--g-tooltip-offset));
+  top: 50%;
+  border-left-color: var(--g-gray-100);
+  transform: translate(2px, calc(-50% + var(--g-tooltip-shift-y)));
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="right"] .g-tooltip-bubble {
+  left: calc(100% + var(--g-tooltip-offset) + var(--g-tooltip-arrow-size));
+  top: 50%;
+  transform: translate(-2px, calc(-50% + var(--g-tooltip-shift-y)));
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="right"] .g-tooltip-arrow {
+  left: calc(100% + var(--g-tooltip-offset));
+  top: 50%;
+  border-right-color: var(--g-gray-100);
+  transform: translate(-2px, calc(-50% + var(--g-tooltip-shift-y)));
+}
+
+/* A hidden bubble is display: none, not just invisible. An absolutely
+   positioned box still counts towards the page's scrollable area while it is
+   transparent or visibility: hidden, so a bubble on a button near the edge
+   widened the page until its first showing worked out where it fits. The fade
+   in comes from @starting-style, the fade out from allow-discrete. */
+body.enrove .g-tooltip-button:hover .g-tooltip-bubble,
+body.enrove .g-tooltip-button:focus .g-tooltip-bubble,
+body.enrove .g-tooltip-button.is-tooltip-visible .g-tooltip-bubble,
+body.enrove .g-tooltip-button:hover .g-tooltip-arrow,
+body.enrove .g-tooltip-button:focus .g-tooltip-arrow,
+body.enrove .g-tooltip-button.is-tooltip-visible .g-tooltip-arrow {
+  display: block;
+  opacity: 1;
+}
+
+@starting-style {
+  body.enrove .g-tooltip-button:hover .g-tooltip-bubble,
+  body.enrove .g-tooltip-button:focus .g-tooltip-bubble,
+  body.enrove .g-tooltip-button.is-tooltip-visible .g-tooltip-bubble,
+  body.enrove .g-tooltip-button:hover .g-tooltip-arrow,
+  body.enrove .g-tooltip-button:focus .g-tooltip-arrow,
+  body.enrove .g-tooltip-button.is-tooltip-visible .g-tooltip-arrow {
+    opacity: 0;
+  }
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="top"]:hover .g-tooltip-bubble,
+body.enrove .g-tooltip-button[data-tooltip-placement="top"]:focus .g-tooltip-bubble,
+body.enrove .g-tooltip-button[data-tooltip-placement="top"].is-tooltip-visible .g-tooltip-bubble {
+  transform: translate(calc(-50% + var(--g-tooltip-shift-x)), 0);
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="top"]:hover .g-tooltip-arrow,
+body.enrove .g-tooltip-button[data-tooltip-placement="top"]:focus .g-tooltip-arrow,
+body.enrove .g-tooltip-button[data-tooltip-placement="top"].is-tooltip-visible .g-tooltip-arrow {
+  transform: translate(calc(-50% + var(--g-tooltip-shift-x)), 0);
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="bottom"]:hover .g-tooltip-bubble,
+body.enrove .g-tooltip-button[data-tooltip-placement="bottom"]:focus .g-tooltip-bubble,
+body.enrove .g-tooltip-button[data-tooltip-placement="bottom"].is-tooltip-visible .g-tooltip-bubble {
+  transform: translate(calc(-50% + var(--g-tooltip-shift-x)), 0);
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="bottom"]:hover .g-tooltip-arrow,
+body.enrove .g-tooltip-button[data-tooltip-placement="bottom"]:focus .g-tooltip-arrow,
+body.enrove .g-tooltip-button[data-tooltip-placement="bottom"].is-tooltip-visible .g-tooltip-arrow {
+  transform: translate(calc(-50% + var(--g-tooltip-shift-x)), 0);
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="left"]:hover .g-tooltip-bubble,
+body.enrove .g-tooltip-button[data-tooltip-placement="left"]:focus .g-tooltip-bubble,
+body.enrove .g-tooltip-button[data-tooltip-placement="left"].is-tooltip-visible .g-tooltip-bubble {
+  transform: translate(0, calc(-50% + var(--g-tooltip-shift-y)));
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="left"]:hover .g-tooltip-arrow,
+body.enrove .g-tooltip-button[data-tooltip-placement="left"]:focus .g-tooltip-arrow,
+body.enrove .g-tooltip-button[data-tooltip-placement="left"].is-tooltip-visible .g-tooltip-arrow {
+  transform: translate(0, calc(-50% + var(--g-tooltip-shift-y)));
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="right"]:hover .g-tooltip-bubble,
+body.enrove .g-tooltip-button[data-tooltip-placement="right"]:focus .g-tooltip-bubble,
+body.enrove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible .g-tooltip-bubble {
+  transform: translate(0, calc(-50% + var(--g-tooltip-shift-y)));
+}
+
+body.enrove .g-tooltip-button[data-tooltip-placement="right"]:hover .g-tooltip-arrow,
+body.enrove .g-tooltip-button[data-tooltip-placement="right"]:focus .g-tooltip-arrow,
+body.enrove .g-tooltip-button[data-tooltip-placement="right"].is-tooltip-visible .g-tooltip-arrow {
+  transform: translate(0, calc(-50% + var(--g-tooltip-shift-y)));
+}
+
+.g-folio__fields {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  overflow: hidden;
+}
+
+.g-folio__media-preview-frame {
+  width: 160px;
+  height: 120px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+}
+
+/* No feature image and no theme cover (a WordPress.org install whose photos
+   are not downloaded): the frame shows the gradient a cover falls back to,
+   rather than a broken image. */
+.g-folio__media-preview-frame:has(> img[src=""]) {
+  background:
+    radial-gradient(90% 80% at 20% 20%, rgba(var(--g-accent-rgb), 0.28), transparent 70%),
+    radial-gradient(80% 90% at 85% 90%, rgba(var(--g-accent-rgb), 0.16), transparent 70%),
+    var(--g-surface-alt);
+}
+
+.g-folio__media-preview-image[src=""] {
+  display: none;
+}
+
+.g-folio__media-preview-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Feature image and logo side by side while each column has room for its
+   frame and buttons, stacked when not (a phone, or the two-card layout
+   squeezing the Essentials card). Inside a column the buttons drop below
+   the frame rather than running past the card. */
+.g-folio__media-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+}
+
+.g-folio__media-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 16px;
+}
+
+.g-folio__media-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.g-folio__media-col {
+  min-width: 0;
+}
+
+.g-folio__fields-section {
+  overflow: hidden;
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.g-folio__fields-left {
+  margin-right: 0;
+}
+
+.g-folio__fields-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+}
+
+.g-folio__fields-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.g-folio__postbox {
+  width: 100%;
+}
+
+.g-top-bar__right {
+  display: flex;
+  align-items: center;
+}
+
+.g-folio__buttons {
+  display: flex;
+  align-items: center;
+}
+
+.g-folio__button:link {
+  text-decoration: none;
+}
+
+.g-folio__button {
+  width: 100px;
+  min-width: 88px;
+  height: 32px;
+  border-radius: 2px;
+  font-size: 13px;
+  color: var(--g-accent);
+  border: 1px solid var(--g-accent);
+  background-color: var(--g-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+}
+
+.g-folio__button.g-folio__button-blank {
+  color: var(--g-accent);
+  border: 1px solid transparent;
+  background-color: var(--g-surface);
+}
+
+.g-folio__button.g-folio__button-secondary {
+  color: var(--g-accent);
+  border: 1px solid var(--g-blue-0);
+  background-color: var(--g-blue-0);
+}
+
+.g-folio__button.g-folio__button-primary {
+  background-color: var(--g-accent);
+  border-color: var(--g-accent);
+  color: #fff;
+}
+
+.g-folio__content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.g-folio__postbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 0 8px rgba(0, 0, 0, .1);
+}
+
+.g-folio__postbox-body {
+  padding: 15px;
+}
+
+.g-folio__postbox-title {
+  padding-left: 15px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.g-folio__postbox-close {
+  border-inline-start: 1px solid var(--g-gray-5);
+  font-size: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.g-folio__postbox-icon:link {
+  color: var(--g-text);
+}
+
+.g-folio__postbox-icon {
+  padding: 15px;
+  font-size: 16px;
+  text-decoration: none;
+}
+
+.g-folio__postbox-themes .postbox {
+  border: none;
+}
+
+.g-folio__themes {
+  margin-top: 16px;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px;
+  align-content: start;
+  max-height: 360px;
+  overflow-y: auto;
+  /* Extra padding gives room for the absolutely-positioned Selected badge
+     that sticks -8px above and to the right of the first-row cards */
+  padding-top: 10px;
+  padding-right: 12px;
+  scrollbar-gutter: stable;
+}
+
+.g-folio__themes-desc {
+  margin: 0;
+  color: var(--g-gray-90);
+}
+
+.g-folio__themes-selected {
+  margin: 8px 0 0;
+  color: var(--g-gray-70);
+}
+
+.g-folio__theme-option {
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 8px;
+  padding: 0;
+  text-align: left;
+  background: var(--g-surface);
+  color: inherit;
+  font: inherit;
+}
+
+/* The Add New card is the one theme card that cannot clip its children: the
+   Selected badge hangs off the top-right corner, so overflow:hidden — what the
+   Themes grid card uses — would cut it off. The folio editor's Change theme
+   dialog renders this same card (Add_New::display_theme_card()).
+   Each inner corner is therefore drawn to fit the border by hand. A box with an
+   8px outer radius and a 2px border curves its padding box at 6px, so a child
+   that keeps the card's own 8px bulges past that curve and leaves a white
+   crescent in every corner, loudest on the selected card where the border is
+   the accent colour. Both numbers live here so the inner radius is derived
+   rather than guessed, and stays right if either one moves. */
+.g-folio__theme-option--add-new {
+  --g-theme-card-radius: 8px;
+  --g-theme-card-border-width: 2px;
+  --g-theme-card-inner-radius: calc(var(--g-theme-card-radius) - var(--g-theme-card-border-width));
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  border-style: solid;
+  border-width: var(--g-theme-card-border-width);
+  border-radius: var(--g-theme-card-radius);
+}
+
+.g-folio__theme-option--add-new .g-folio__theme-option-thumb {
+  border-radius: var(--g-theme-card-inner-radius) var(--g-theme-card-inner-radius) 0 0;
+}
+
+.g-folio__theme-option--add-new .g-folio__theme-option-name {
+  border-radius: 0 0 var(--g-theme-card-inner-radius) var(--g-theme-card-inner-radius);
+}
+
+.g-folio__theme-option:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+}
+
+.g-folio__themes::-webkit-scrollbar {
+  width: 10px;
+}
+
+.g-folio__themes::-webkit-scrollbar-track {
+  background: var(--g-gray-5);
+  border-radius: 999px;
+}
+
+.g-folio__themes::-webkit-scrollbar-thumb {
+  background: var(--g-gray-20);
+  border-radius: 999px;
+  border: 2px solid var(--g-gray-5);
+}
+
+.g-folio__themes::-webkit-scrollbar-thumb:hover {
+  background: var(--g-gray-30);
+}
+
+.g-folio__themes {
+  scrollbar-width: thin;
+  scrollbar-color: var(--g-gray-20) var(--g-gray-5);
+}
+
+/* Add New footer: the sample-content toggle rides on the leading edge of the
+   action row, Continue keeps the trailing corner. margin-right on the toggle
+   rather than space-between on the row, so a theme that ships no sample
+   content — and so renders no toggle — does not leave Continue at the left. */
+.g-folio__theme-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  /* The sample-content block used to carry this gap above Continue; it now
+     sits in the row, so the row owns the separation from the theme grid. */
+  margin-top: 20px;
+}
+
+body.enrove .g-folio__sample-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  min-width: 0;
+}
+
+/* The label itself, defined once: the Add New picker and the Themes screen's
+   details dialog show the same control, so it reads the same on both. */
+body.enrove .g-folio__sample-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--g-gray-90);
+}
+
+body.enrove .g-folio__sample-label input[type="checkbox"] {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+/* Tailwind emits .hidden inside @layer utilities, and an unlayered rule beats a
+   layered one whatever the specificity — so the display:flex above would defeat
+   the bare .hidden the JS toggles, and every theme's row would show at once.
+   This rule is unlayered too, and more specific, so it takes hiding back. */
+body.enrove .g-folio__sample-toggle.hidden {
+  display: none;
+}
+
+body.enrove .g-folio__sample-info {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: var(--g-gray-30);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  transition: color 0.15s ease;
+}
+
+body.enrove .g-folio__sample-info:hover,
+body.enrove .g-folio__sample-info:focus-visible {
+  color: var(--g-gray-60);
+}
+
+body.enrove .g-folio__sample-info:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+}
+
+body.enrove .g-folio__sample-info .dashicons {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.g-folio__theme-thumb {
+  width: 100%;
+  height: 150px;
+}
+
+.g-folio__theme-thumb img {
+  width: 100%;
+}
+
+/* Uniform thumbnail height across all theme cards in the Add New modal */
+.g-folio__theme-option-thumb {
+  height: 120px !important;
+  overflow: hidden;
+  background: var(--g-gray-5);
+}
+
+.g-folio__theme-option-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.g-folio__footer-version {}
+
+.g-folio__blocks {
+  width: 650px;
+}
+
+
+/*  */
+
+@media screen and (max-width: 960px) {
+  .g-top-bar-root {
+    left: 36px;
+    width: calc(100% - 36px);
+  }
+}
+
+@media screen and (max-width: 782px) {
+  .g-top-bar-root {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .g-top-bar-root {
+    left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .g-top-bar-root {
+    display: inline-flex;
+    left: 0;
+    top: 46px;
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 768px) {
+  .g-top-bar-root .g-top-bar__secondary-area .g-top-bar__secondary-area-buttons {
+    display: flex;
+  }
+}
+
+
+/* ── Themes Admin Page ────────────────────────────────────────────────── */
+
+/* The card is the button that opens the details dialog. It carries a
+   thumbnail and a name only — everything else about a theme lives in the
+   dialog, so the grid reads as one even row rather than ragged columns of
+   description text. */
+.g-themes-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--g-surface);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.g-themes-card:hover {
+  border-color: var(--g-border-strong);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.g-themes-card:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+}
+
+.g-themes-card-thumb {
+  display: block;
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--g-gray-5);
+  border-bottom: 1px solid var(--g-gray-5);
+}
+
+.g-themes-card-thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.g-themes-card-body {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 11px;
+}
+
+.g-themes-card-name {
+  color: var(--g-text);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.35;
+  min-width: 0;
+}
+
+.g-themes-card-count {
+  color: var(--g-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.g-themes-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.g-themes-tag--builtin {
+  background: var(--g-gray-5);
+  color: var(--g-gray-70);
+}
+
+.g-themes-tag--default {
+  background: var(--g-surface);
+  color: var(--g-text-muted);
+  border: 1px solid var(--g-border-strong);
+}
+
+.g-themes-empty {
+  background: var(--g-surface-alt);
+  border: 1px dashed var(--g-border-strong);
+  border-radius: 8px;
+  padding: 18px;
+  color: var(--g-gray-70);
+}
+
+.g-themes-empty p {
+  margin: 0;
+}
+
+/* ── Theme Details Dialog ────────────────────────────────────────────── */
+
+/* Scroll lock lives on a class rather than an inline style: the live theme
+   preview overlay stacks above this dialog and clears its own inline lock on
+   close, which would otherwise unlock the page underneath a dialog that is
+   still open. */
+body.g-modal-open {
+  overflow: hidden;
+}
+
+.g-theme-details {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.g-theme-details[hidden] {
+  display: flex !important;
+  visibility: hidden;
+}
+
+.g-theme-details.is-open {
+  visibility: visible;
+}
+
+.g-theme-details__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.g-theme-details.is-open .g-theme-details__backdrop {
+  opacity: 1;
+}
+
+/* Same frame as the Add New pop-up — width, radius and shadow all match, so
+   the two read as one dialog that happens to be showing different things. */
+.g-theme-details__dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 700px;
+  max-width: 100%;
+  /* 48px clear above and below, the same for every Enrove dialog. */
+  max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--g-surface);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.g-theme-details.is-open .g-theme-details__dialog {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.g-theme-details__dialog:focus {
+  outline: none;
+}
+
+.g-theme-details__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px 14px 20px;
+  border-bottom: 1px solid var(--g-border);
+}
+
+.g-theme-details__ident {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.g-theme-details__title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+.g-theme-details__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--g-text-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.g-theme-details__close:hover {
+  background: var(--g-surface-alt);
+  color: var(--g-text);
+}
+
+.g-theme-details__close:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 1px;
+}
+
+.g-theme-details__body {
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* The thumbnail keeps roughly the size it had on the card and the facts read
+   beside it, so the dialog opens as one screenful instead of a column that
+   scrolls the actions out of sight. */
+.g-theme-details__top {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.g-theme-details__info {
+  min-width: 0;
+}
+
+/* The theme's cover photograph fills the frame and its thumbnail sits on it,
+   so one picture says both what a new folio starts with and what the layout
+   under that photograph looks like. The thumbnail is the image the card was
+   showing, which is what ties the dialog to the card that opened it. */
+.g-theme-details__media--cover {
+  background: var(--g-gray-20);
+}
+
+/* A wash at the foot of the photograph, so the inset has something to sit on
+   whatever the picture underneath it happens to be doing. It is generated
+   after the photograph and before the inset lifts itself out with z-index. */
+.g-theme-details__media--cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0) 60%);
+  pointer-events: none;
+}
+
+/* The ring is a shadow rather than a border: with aspect-ratio doing the
+   sizing, a border would be counted into the box and shave the picture. */
+.g-theme-details__inset {
+  position: absolute;
+  inset-inline-start: 12px;
+  bottom: 12px;
+  z-index: 1;
+  width: 46%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px var(--g-surface), 0 6px 16px rgba(0, 0, 0, 0.28);
+}
+
+/* 16/10 is both the grid card's frame and the thumbnail's own proportion, so
+   the image that was clicked opens uncropped rather than sliced to a band. */
+.g-theme-details__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  background: var(--g-gray-5);
+}
+
+.g-theme-details__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.g-theme-details__desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--g-text);
+}
+
+/* Two columns, not auto-fit: beside the thumbnail the stats are the column's
+   whole content, and a rule above them would divide a column rather than the
+   dialog. The description is the only thing they need separating from. */
+.g-theme-details__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.g-theme-details__desc + .g-theme-details__stats,
+.g-theme-details__features + .g-theme-details__stats {
+  margin-top: 16px;
+}
+
+/* Quieter than the header's badges on purpose: those say what the theme is,
+   which is identity, and these say what it does, which is a list. Outlined
+   rather than filled so a row of four does not read as four buttons. */
+.g-theme-details__features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.g-theme-details__features li {
+  margin: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--g-border);
+  border-radius: 999px;
+  background: var(--g-surface-alt);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+.g-theme-details__stat dt {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--g-text-muted);
+}
+
+.g-theme-details__stat dd {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--g-text);
+}
+
+.g-theme-details__stat dd code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--g-gray-5);
+  font-size: 11px;
+}
+
+.g-theme-details__muted {
+  color: var(--g-text-muted);
+}
+
+/* Layout comes from .g-folio__theme-button, the Add New picker's footer —
+   this only adds the rule that separates the row from the stats above it.
+
+   What the row holds is only what changes something: creating a folio and
+   the toggle that qualifies it. Preview sits under the
+   thumbnail it previews, where the picker has always kept it, which is one
+   fewer thing competing on this line. */
+.g-theme-details__actions {
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid var(--g-border);
+}
+
+@media (max-width: 600px) {
+  .g-theme-details__top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .g-theme-details__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-theme-details__backdrop,
+  .g-theme-details__dialog {
+    transition: none;
+  }
+
+  .g-theme-details__dialog {
+    transform: none;
+  }
+}
+
+/* ── First-run setup ─────────────────────────────────────────────────────
+   The fonts-and-photos dialog (\Enrove\Setup\First_Run) wears the theme
+   details frame, narrower, and the two ways back to it once it is closed:
+   the Overview panel and the header button. Everything that lands on a text
+   element is component CSS here rather than utilities, which core's p, h2
+   and legend rules would beat. */
+
+.g-setup__dialog {
+  width: 640px;
+}
+
+.g-setup__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Docked: the actions stay in view however far the body scrolls. */
+.g-theme-details__footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 14px 20px;
+  border-top: 1px solid var(--g-border);
+  background: var(--g-surface);
+}
+
+.g-theme-details__footer [hidden] {
+  display: none;
+}
+
+body.enrove .g-setup__intro,
+body.enrove .g-setup__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--g-text-muted);
+}
+
+body.enrove .g-setup__note {
+  font-size: 12px;
+}
+
+.g-setup__item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  background: var(--g-surface);
+  transition: border-color 0.2s ease;
+}
+
+.g-setup__item.is-error {
+  border-color: var(--g-red-40);
+}
+
+/* A legend sits on the fieldset's border by default; floated, it becomes an
+   ordinary first line of the card. */
+body.enrove .g-setup__item-title {
+  float: left;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+body.enrove .g-setup__item-title + * {
+  clear: both;
+}
+
+body.enrove .g-setup__item-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+.g-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.g-choices[hidden],
+.g-setup__progress[hidden],
+.g-setup__bar[hidden] {
+  display: none;
+}
+
+body.enrove .g-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--g-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.g-choice:hover {
+  background: var(--g-surface-alt);
+}
+
+.g-choice:has(input:checked) {
+  border-color: var(--g-accent);
+  background: rgba(var(--g-accent-rgb), 0.04);
+}
+
+.g-choice:has(input:disabled) {
+  cursor: default;
+  opacity: 0.6;
+}
+
+body.enrove .g-choice input[type="radio"] {
+  flex: 0 0 auto;
+  margin: 2px 0 0;
+}
+
+.g-choice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.g-choice__label {
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--g-text);
+}
+
+.g-choice__hint {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--g-text-muted);
+}
+
+.g-setup__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.g-setup__bar {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--g-surface-alt);
+}
+
+.g-setup__bar-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--g-accent);
+  transition: width 0.4s ease;
+}
+
+.g-setup__item[data-state="ready"] .g-setup__bar-fill {
+  background: var(--g-green-40);
+}
+
+body.enrove .g-setup__status {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--g-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.g-setup__item[data-state="ready"] .g-setup__status,
+.g-setup__item[data-state="declined"] .g-setup__status {
+  color: var(--g-text);
+}
+
+.g-setup__item[data-state="ready"] .g-setup__status::before {
+  content: "\f147";
+  font-family: dashicons;
+  font-size: 16px;
+  line-height: 1;
+  vertical-align: -3px;
+  margin-right: 4px;
+  color: var(--g-green-40);
+}
+
+.g-setup__item.is-error .g-setup__status {
+  color: var(--g-red-50);
+}
+
+/* Overview: the panel that stands in for the dialog once it is closed. */
+.g-setup-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(var(--g-accent-rgb), 0.07), transparent 60%),
+    var(--g-surface);
+}
+
+.g-setup-panel__text {
+  min-width: 0;
+}
+
+body.enrove .g-setup-panel__title {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+body.enrove .g-setup-panel__desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+.g-setup-panel .button {
+  flex: 0 0 auto;
+}
+
+/* Once setup is decided with a "no": the way back, without the accent wash. */
+.g-setup-panel--quiet {
+  background: var(--g-surface);
+}
+
+/* Every other screen: a quiet button in the header. */
+body.enrove .g-setup-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 8px;
+}
+
+.g-setup-entry__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--g-accent);
+}
+
+/* Folio editor: why the font pickers may not match what readers see. */
+body.enrove .g-font-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+body.enrove .g-font-hint .dashicons {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: var(--g-text-muted);
+}
+
+/* Settings: removing what was downloaded. Set apart from the actions above by
+   a rule, so undoing the download does not read as another way to do it. */
+.g-settings-remove {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--g-border);
+}
+
+body.enrove .g-settings-remove__button {
+  color: var(--g-red-50);
+  border-color: var(--g-red-40);
+}
+
+body.enrove .g-settings-remove__button:hover,
+body.enrove .g-settings-remove__button:focus {
+  color: var(--g-red-60);
+  border-color: var(--g-red-50);
+  background: var(--g-red-0);
+}
+
+body.enrove .g-settings-remove__note {
+  margin: 0;
+  max-width: 64ch;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+/* Reset (Settings → Reset). The dialog posts, so a form wraps the frame's
+   header, body and footer; display: contents keeps them the frame's own flex
+   children, so the body still scrolls between a docked header and footer. */
+.g-dialog-form {
+  display: contents;
+}
+
+.g-reset__dialog {
+  width: 600px;
+}
+
+/* The folio editor's Publish / Unpublish confirmation: a sentence and two
+   notes, so narrower than Reset. */
+.g-publish__dialog {
+  width: 520px;
+}
+
+body.enrove .g-reset-list {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+body.enrove .g-reset-list li {
+  margin: 0 0 2px;
+}
+
+.g-reset__content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+body.enrove .g-reset__legend {
+  float: left;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+body.enrove .g-reset__legend + * {
+  clear: both;
+}
+
+body.enrove .g-dialog-confirm .g-reset__desc {
+  color: var(--g-text-muted);
+}
+
+/* The answer that deletes reads as such once chosen. */
+.g-choice--danger:has(input:checked) {
+  border-color: var(--g-red-40);
+  background: var(--g-red-0);
+}
+
+/* Core draws the radio itself (appearance: none), so accent-color does
+   nothing; recolour core's own parts. Current core fills a checked radio with
+   the admin colour and puts a white dot on it, older core a coloured dot on
+   white. Filling it red with a white dot looks right under both. */
+body.enrove .g-choice--danger input[type="radio"]:checked {
+  background: var(--g-red-50);
+  border-color: var(--g-red-50);
+}
+
+body.enrove .g-choice--danger input[type="radio"]:checked::before {
+  background-color: #fff;
+}
+
+body.enrove .g-choice--danger input[type="radio"]:focus {
+  box-shadow: 0 0 0 2px var(--g-surface), 0 0 0 4px var(--g-red-50);
+}
+
+/* Settings: a row of forms whose buttons read as one group. */
+.g-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.g-settings-actions:empty {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .g-setup-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .g-choices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .g-theme-details__footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-setup__bar-fill,
+  .g-setup__item,
+  .g-choice {
+    transition: none;
+  }
+}
+
+/* ── Theme Selection in Folio Editor ─────────────────────────────────── */
+
+.g-theme-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.g-theme-selection-item {
+  position: relative;
+  border: 1px solid var(--g-border);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--g-surface);
+}
+
+.g-theme-selection-item:hover {
+  border-color: var(--g-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.g-theme-selection-item.is-active {
+  border-color: var(--g-accent);
+  box-shadow: 0 0 0 2px rgba(var(--g-accent-rgb), 0.2);
+}
+
+.g-theme-selection-thumb {
+  height: 85px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--g-surface-alt);
+  border-bottom: 1px solid var(--g-gray-5);
+}
+
+.g-theme-selection-name {
+  padding: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--g-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.g-theme-selection-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: var(--g-accent);
+  color: #fff;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+body.enrove .g-theme-picker-summary {
+  border: 1px solid var(--g-border);
+  border-radius: 10px;
+  background: var(--g-surface-alt);
+  padding: 14px;
+}
+
+body.enrove .g-theme-picker-summary__layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+body.enrove .g-theme-picker-summary__thumb {
+  width: 96px;
+  height: 80px;
+  flex: 0 0 96px;
+  overflow: hidden;
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  background: var(--g-surface);
+}
+
+body.enrove .g-theme-picker-summary__thumb-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Under the thumbnail when the card is too narrow for the text and the
+   Change theme button beside it. */
+body.enrove .g-theme-picker-summary__content {
+  min-width: 0;
+  flex: 1 1 160px;
+}
+
+body.enrove .g-theme-picker-summary__name {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+body.enrove .g-theme-picker-summary__description {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+body.enrove .g-theme-picker-modal__close,
+body.enrove .g-theme-picker-modal__done {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--g-border-strong);
+  border-radius: 6px;
+  background: var(--g-surface);
+  color: var(--g-gray-90);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+body.enrove .g-theme-picker-modal__close:hover,
+body.enrove .g-theme-picker-modal__done:hover {
+  background: var(--g-surface-alt);
+  border-color: var(--g-gray-40);
+}
+
+body.enrove .g-theme-picker-summary__button {
+  margin-top: 12px;
+}
+
+body.enrove .g-theme-picker-modal__close:focus,
+body.enrove .g-theme-picker-modal__done:focus {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+}
+
+body.enrove .g-theme-picker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+body.enrove .g-theme-picker-modal.hidden {
+  display: none;
+}
+
+body.enrove .g-theme-picker-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+body.enrove .g-theme-picker-modal__frame {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1120px;
+  /* 48px clear above and below, the same for every Enrove dialog. */
+  max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--g-surface);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+body.enrove .g-theme-picker-modal__header,
+body.enrove .g-theme-picker-modal__footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--g-border);
+}
+
+body.enrove .g-theme-picker-modal__footer {
+  justify-content: flex-end;
+  align-items: center;
+  border-top: 1px solid var(--g-border);
+  border-bottom: 0;
+}
+
+body.enrove .g-theme-picker-modal__heading {
+  min-width: 0;
+}
+
+body.enrove .g-theme-picker-modal__title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+body.enrove .g-theme-picker-modal__subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--g-text-muted);
+}
+
+body.enrove .g-theme-picker-modal__close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex: 0 0 36px;
+}
+
+body.enrove .g-theme-picker-modal__body {
+  overflow-y: auto;
+  padding: 20px;
+}
+
+body.enrove .g-theme-picker-modal__done {
+  padding: 9px 14px;
+}
+
+body.enrove .g-version-history-modal__frame {
+  max-width: 960px;
+}
+
+@media screen and (max-width: 782px) {
+  body.enrove .g-theme-picker-summary__layout {
+    flex-direction: column;
+  }
+
+  body.enrove .g-theme-picker-summary__thumb {
+    width: 100%;
+    max-width: 220px;
+    height: 120px;
+    flex-basis: auto;
+  }
+
+  body.enrove .g-theme-picker-modal {
+    padding: 12px;
+  }
+
+  body.enrove .g-theme-picker-modal__header,
+  body.enrove .g-theme-picker-modal__footer,
+  body.enrove .g-theme-picker-modal__body {
+    padding: 16px;
+  }
+}
+
+/* Proposal information modal (folio setup) */
+body.enrove .g-proposal-info-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+body.enrove .g-proposal-info-modal.hidden {
+  display: none;
+}
+
+body.enrove .g-proposal-info-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+body.enrove .g-proposal-info-modal__frame {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 960px;
+}
+
+body.enrove .g-proposal-info-modal__panel {
+  background: var(--g-surface);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+body.enrove .g-proposal-info-modal__body {
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+/* WordPress admin notices conflict with Tailwind's global `.inline` utility. */
+body.enrove .notice.inline:not(.hidden) {
+  display: block;
+}
+
+/* All Folios collection filter pills */
+body.enrove .g-all-folios__collection-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+}
+
+body.enrove .g-all-folios__filters-row {
+  clear: both;
+  margin: 4px 0 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--g-gray-30);
+}
+
+body.enrove .g-all-folios__collection-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--g-border-strong);
+  border-radius: 999px;
+  background: var(--g-surface);
+  color: var(--g-text);
+  text-decoration: none;
+  line-height: 1;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.enrove .g-all-folios__collection-pill[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--g-gray-100);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 9999;
+}
+
+body.enrove .g-all-folios__collection-pill[data-tooltip]:hover::after,
+body.enrove .g-all-folios__collection-pill[data-tooltip]:focus::after {
+  opacity: 1;
+}
+
+body.enrove .g-all-folios__collection-pill:hover,
+body.enrove .g-all-folios__collection-pill:focus {
+  border-color: var(--g-accent);
+  color: var(--g-accent-hover);
+  box-shadow: 0 0 0 1px rgba(var(--g-accent-rgb), 0.15);
+  outline: none;
+}
+
+body.enrove .g-all-folios__collection-pill.is-active {
+  border-color: var(--g-accent);
+  background: var(--g-accent);
+  color: #fff;
+  box-shadow: none;
+}
+
+body.enrove .g-all-folios__collection-pill.is-active:hover,
+body.enrove .g-all-folios__collection-pill.is-active:focus {
+  border-color: var(--g-accent-hover);
+  background: var(--g-accent-hover);
+  color: #fff;
+}
+
+/* All Folios table
+ *
+ * Widths are fixed rather than content-driven so filtering by collection never
+ * shifts the columns, but they are set as percentages so the table stays fluid
+ * and every column shares in the space a wide window offers — rather than one
+ * column soaking up all of it. (The widths have to be plain percentages: under
+ * table-layout: fixed a width mixing % and px is discarded and the column falls
+ * back to auto.)
+ *
+ * The percentages are proportional to each column's floor width, and always add
+ * up to 100%, so at --g-cols-min every column sits exactly on its floor and
+ * nothing is squeezed. The checkbox stays pinned in px.
+ */
+body.enrove .wp-list-table.table-view-list.posts {
+  table-layout: fixed;
+  --g-cols-min: 1133px;
+  --g-w-title: 31%;
+  --g-w-theme: 13.7%;
+  --g-w-tags: 16.4%;
+  --g-w-count: 10.5%;
+  --g-w-status: 11%;
+  --g-w-modified: 17.4%;
+  min-width: var(--g-cols-min);
+}
+
+body.enrove .wp-list-table.table-view-list.posts .column-cb {
+  width: 38px;
+}
+
+body.enrove .wp-list-table.table-view-list.posts .column-title {
+  width: var(--g-w-title);
+}
+
+body.enrove .wp-list-table.table-view-list.posts .column-theme_name {
+  width: var(--g-w-theme);
+}
+
+body.enrove .wp-list-table.table-view-list.posts .column-collection_tags {
+  width: var(--g-w-tags);
+}
+
+body.enrove .wp-list-table.table-view-list.posts .column-page_count {
+  width: var(--g-w-count);
+}
+
+body.enrove .wp-list-table.table-view-list.posts .column-publish_status {
+  width: var(--g-w-status);
+}
+
+body.enrove .wp-list-table.table-view-list.posts .column-modified {
+  width: var(--g-w-modified);
+}
+
+body.enrove .wp-list-table.table-view-list.posts thead th.column-theme_name,
+body.enrove .wp-list-table.table-view-list.posts thead th.column-collection_tags,
+body.enrove .wp-list-table.table-view-list.posts thead th.column-page_count,
+body.enrove .wp-list-table.table-view-list.posts thead th.column-publish_status,
+body.enrove .wp-list-table.table-view-list.posts thead th.column-modified {
+  white-space: nowrap;
+}
+
+/* Drop columns as the table's own container narrows, least useful first:
+   Publish Status and Collection Tags both restate a filter that sits directly
+   above the table, so they go before the columns that only live here. Each step
+   lowers the floor total and re-splits the percentages across the columns still
+   standing. Everything stays available from Screen Options, and below 782px
+   WordPress stacks the whole row behind its toggle — so this only applies
+   above that. */
+@media screen and (min-width: 783px) {
+  @container g-folios (max-width: 1132px) {
+    body.enrove .wp-list-table.table-view-list.posts {
+      --g-cols-min: 1013px;
+      --g-w-title: 34.9%;
+      --g-w-theme: 15.4%;
+      --g-w-tags: 18.4%;
+      --g-w-count: 11.8%;
+      --g-w-modified: 19.5%;
+    }
+
+    body.enrove .wp-list-table.table-view-list.posts .column-publish_status {
+      display: none;
+    }
+  }
+
+  @container g-folios (max-width: 1012px) {
+    body.enrove .wp-list-table.table-view-list.posts {
+      --g-cols-min: 898px;
+      --g-w-title: 39.5%;
+      --g-w-theme: 17.5%;
+      --g-w-tags: 20.9%;
+      --g-w-modified: 22.1%;
+    }
+
+    body.enrove .wp-list-table.table-view-list.posts .column-page_count {
+      display: none;
+    }
+  }
+
+  @container g-folios (max-width: 897px) {
+    body.enrove .wp-list-table.table-view-list.posts {
+      --g-cols-min: 718px;
+      --g-w-title: 50%;
+      --g-w-theme: 22.1%;
+      --g-w-modified: 27.9%;
+    }
+
+    body.enrove .wp-list-table.table-view-list.posts .column-collection_tags {
+      display: none;
+    }
+  }
+
+  @container g-folios (max-width: 717px) {
+    body.enrove .wp-list-table.table-view-list.posts {
+      --g-cols-min: 528px;
+      --g-w-title: 69.4%;
+      --g-w-theme: 30.6%;
+    }
+
+    body.enrove .wp-list-table.table-view-list.posts .column-modified {
+      display: none;
+    }
+  }
+}
+
+@media screen and (max-width: 782px) {
+  body.enrove .wp-list-table.table-view-list.posts {
+    --g-cols-min: 0px;
+  }
+
+  /* The stacked view labels each cell with its data-colname, and that rule
+     catches the primary cell too — where the label lands on top of the folio
+     title instead of beside it. The title needs no label. */
+  body.enrove .wp-list-table.table-view-list.posts tr:not(.inline-edit-row):not(.no-items) td.column-primary::before {
+    content: none;
+  }
+}
+
+/* Collection tags combobox dropdown */
+body.enrove .g-tag-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-border-strong);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  padding: 4px 0;
+  margin-left: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 9999;
+}
+
+body.enrove .g-tag-dropdown.is-open {
+  display: block;
+}
+
+body.enrove .g-tag-dropdown li {
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--g-gray-80);
+  margin: 0;
+}
+
+body.enrove .g-tag-dropdown li:hover,
+body.enrove .g-tag-dropdown li.is-active {
+  background: var(--g-blue-0);
+  color: var(--g-blue-70);
+}
+
+body.enrove .g-tag-dropdown li.g-tag-dropdown__create {
+  color: var(--g-text-muted);
+  font-style: italic;
+}
+
+body.enrove .g-tag-dropdown li.g-tag-dropdown__create:hover,
+body.enrove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
+  background: var(--g-blue-0);
+  color: var(--g-blue-70);
+}
+
+/* ── Add New Folio modal ────────────────────────────────────────────────── */
+/* Also the shell of the folio editor's Change theme dialog, so choosing a
+   theme and changing one happen in the same frame. */
+
+.g-add-new-modal {
+  position: fixed;
+  inset: 0;
+  /* The folio editor renders this inside a Tailwind space-y-* column, whose
+     margin would lift the bottom edge of a fixed, inset:0 box off the viewport. */
+  margin: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.g-add-new-modal[hidden] {
+  display: flex !important;
+  visibility: hidden;
+}
+
+.g-add-new-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.g-add-new-modal.is-open {
+  visibility: visible;
+}
+
+.g-add-new-modal.is-open .g-add-new-modal__backdrop {
+  opacity: 1;
+}
+
+.g-add-new-modal__dialog {
+  position: relative;
+  background: var(--g-surface);
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  width: 700px;
+  max-width: calc(100vw - 40px);
+  /* 48px clear above and below, the same for every Enrove dialog. */
+  max-height: calc(100vh - 96px);
+  max-height: calc(100dvh - 96px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.g-add-new-modal.is-open .g-add-new-modal__dialog {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.g-add-new-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--g-border);
+  flex-shrink: 0;
+}
+
+.g-add-new-modal__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--g-text);
+}
+
+.g-add-new-modal__close {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 6px;
+  margin: 0;
+  cursor: pointer;
+  color: var(--g-gray-30);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.g-add-new-modal__close:hover,
+.g-add-new-modal__close:focus-visible {
+  color: var(--g-gray-80);
+  background: var(--g-gray-5);
+  outline: none;
+}
+
+.g-add-new-modal__body {
+  overflow-y: auto;
+  padding: 20px;
+  flex: 1 1 auto;
+}
+
+/* Remove the existing postbox chrome when rendered inside the modal */
+.g-add-new-modal__body .g-folio__content,
+.g-add-new-modal__body .g-folio__postbox-themes {
+  display: block !important;
+}
+
+.g-add-new-modal__body .g-folio__postbox,
+.g-add-new-modal__body .postbox-container,
+.g-add-new-modal__body .postbox {
+  width: auto !important;
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+}
+
+.g-add-new-modal__body .g-folio__postbox-header,
+.g-add-new-modal__body .g-folio__postbox-close {
+  display: none !important;
+}
+
+.g-add-new-modal__body .g-folio__postbox-body {
+  padding: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-add-new-modal__backdrop {
+    transition: none;
+  }
+  .g-add-new-modal__dialog {
+    transition: none;
+  }
+}
+
+/* ── Dialog screens: confirm on a second screen in the same frame ────────
+   A dialog that has to ask before something disruptive — Change theme on a
+   folio, Remove theme on the Themes screen — does not stack a second dialog
+   or grow a box under its buttons. The screen it was on steps aside and the
+   question stands in its place, at that screen's height (the JS sets it), so
+   the frame neither jumps nor grows to ask. The dialog's title becomes the
+   question, and the answers sit on the bottom row the first screen's own
+   buttons did.
+
+   The notice is yellow when nothing is lost for good (a theme switch hides
+   content; switching back shows it again) and red, --danger, when the answer
+   deletes something. */
+
+body.enrove .g-dialog-screen[hidden] {
+  display: none;
+}
+
+body.enrove .g-dialog-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* The question comes in from the right and the first screen goes back from
+   the left, so the two read as a step forward and a step back. */
+body.enrove .g-dialog-screen.is-entering-forward {
+  animation: g-dialog-screen-forward 0.18s ease;
+}
+
+body.enrove .g-dialog-screen.is-entering-back {
+  animation: g-dialog-screen-back 0.18s ease;
+}
+
+@keyframes g-dialog-screen-forward {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes g-dialog-screen-back {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* What the question is about — one theme, or from → to — at a size that
+   names it without competing with the words below. */
+body.enrove .g-dialog-confirm__subject {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+body.enrove .g-dialog-confirm__figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  width: 150px;
+}
+
+body.enrove .g-dialog-confirm__thumb {
+  display: block;
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border: 1px solid var(--g-border);
+  border-radius: 6px;
+  background: var(--g-gray-5);
+}
+
+body.enrove .g-dialog-confirm__figure figcaption {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--g-text);
+}
+
+body.enrove .g-dialog-confirm__arrow {
+  /* Centred on the thumbnails, not on thumbnail + caption: twice the
+     caption line and its gap, since a bottom margin moves the centre by half. */
+  margin-bottom: 26px;
+  color: var(--g-gray-30);
+}
+
+body.enrove .g-dialog-confirm__notice {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--g-yellow-30);
+  border-radius: 8px;
+  background: var(--g-yellow-0);
+  color: var(--g-yellow-70);
+}
+
+body.enrove .g-dialog-confirm__notice--danger {
+  border-color: var(--g-red-5);
+  background: var(--g-red-0);
+  color: var(--g-red-70);
+}
+
+/* Core's p and li margins are unlayered and would win over any utility;
+   the column's gap does the spacing instead. */
+body.enrove .g-dialog-confirm p,
+body.enrove .g-dialog-confirm ul,
+body.enrove .g-dialog-confirm li {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+body.enrove .g-dialog-confirm__lead {
+  font-weight: 600;
+}
+
+body.enrove .g-dialog-confirm__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+body.enrove .g-dialog-confirm__notice a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Pinned to the bottom of the borrowed height, where the first screen's
+   buttons were. */
+body.enrove .g-dialog-confirm__actions {
+  margin-top: auto;
+}
+
+/* An answer that posts is its own form, so the form is the flex child. */
+body.enrove .g-dialog-confirm__actions form {
+  margin: 0;
+}
+
+/* The answer that deletes: filled red, so it cannot be mistaken for the
+   primary action of the screen before it. wp-admin has no destructive
+   button, so this is built on .button and overrides only colour. */
+body.enrove .button.g-dialog-confirm__destroy {
+  border-color: var(--g-red-50);
+  background: var(--g-red-50);
+  color: #fff;
+}
+
+body.enrove .button.g-dialog-confirm__destroy:hover {
+  border-color: var(--g-red-60);
+  background: var(--g-red-60);
+  color: #fff;
+}
+
+body.enrove .button.g-dialog-confirm__destroy:focus {
+  border-color: var(--g-red-60);
+  background: var(--g-red-60);
+  color: #fff;
+  box-shadow: 0 0 0 1px var(--g-surface), 0 0 0 3px var(--g-red-50);
+  outline: 2px solid transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.enrove .g-dialog-screen.is-entering-forward,
+  body.enrove .g-dialog-screen.is-entering-back {
+    animation: none;
+  }
+}
+
+@media (max-width: 600px) {
+  body.enrove .g-dialog-confirm__subject {
+    gap: 10px;
+  }
+
+  body.enrove .g-dialog-confirm__figure {
+    width: 110px;
+  }
+
+  body.enrove .g-dialog-confirm__thumb {
+    height: 66px;
+  }
+
+  /* Where the row stacks (.g-theme-details__actions does), a button inside
+     its own form does not stretch with the form. */
+  body.enrove .g-theme-details__actions.g-dialog-confirm__actions .button {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ── Theme card wrap + preview button ───────────────────────────────────── */
+
+.g-folio__theme-card-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.g-theme-preview-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 11px;
+  color: var(--g-text-muted);
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.g-theme-preview-btn:hover,
+.g-theme-preview-btn:focus-visible {
+  color: var(--g-gray-80);
+  text-decoration-color: currentColor;
+  outline: none;
+}
+
+/* ── Theme Picker Preview overlay ───────────────────────────────────────── */
+
+.g-tpp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  background: var(--g-gray-100);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  /* pointer-events blocked while hidden so clicks pass through */
+  pointer-events: none;
+}
+
+.g-tpp-overlay[hidden] {
+  /* hidden attr hides, but we keep it in the DOM for transitions */
+  display: flex !important;
+  visibility: hidden;
+}
+
+.g-tpp-overlay.is-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+/* Header */
+.g-tpp-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 44px;
+  background: var(--g-gray-90);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0 12px 0 16px;
+}
+
+/* Tab bar */
+.g-tpp-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  flex: 1 1 auto;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.g-tpp-tab {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0 14px;
+  margin: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  position: relative;
+  height: 100%;
+  transition: color 0.15s;
+}
+
+.g-tpp-tab:hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.g-tpp-tab.is-active {
+  color: #fff;
+}
+
+/* Tab active indicator — view-transition animates this */
+.g-tpp-tab.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: rgba(255, 255, 255, 0.7);
+  view-transition-name: gfp-tab-active;
+}
+
+/* Close button */
+.g-tpp-close {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 6px;
+  margin: 0 0 0 8px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.45);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.g-tpp-close:hover,
+.g-tpp-close:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+/* Iframe container */
+.g-tpp-iframe-wrap {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+  background: var(--g-gray-100);
+}
+
+.g-tpp-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  transition: opacity 0.18s;
+}
+
+/* Loading state */
+.g-tpp-iframe-wrap.is-loading .g-tpp-iframe {
+  opacity: 0;
+}
+
+.g-tpp-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+
+.g-tpp-iframe-wrap.is-loading .g-tpp-loader {
+  opacity: 1;
+}
+
+/* Spinner ring */
+.g-tpp-loader::after {
+  content: '';
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.5);
+  animation: g-tpp-spin 0.7s linear infinite;
+}
+
+@keyframes g-tpp-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── View Transition — tab indicator slide ──────────────────────────────── */
+
+::view-transition-old(gfp-tab-active),
+::view-transition-new(gfp-tab-active) {
+  animation-duration: 0.2s;
+  animation-timing-function: ease;
+  mix-blend-mode: normal;
+}
+
+/* ── Toasts ─────────────────────────────────────────────────────────────────
+   Outcome messages surface here instead of as an inline notice, so reporting
+   what happened never reflows the screen the operator is reading. Same pill
+   geometry as the collection filters, so the chrome reads as one family.
+
+   Not scoped to body.enrove: the container is appended to <body> and toasts
+   are queued from admin-post redirects that can land on any admin screen.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.g-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  left: auto;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  /* Parked in the corner rather than centred: an outcome that lands where the
+     operator is working reads as an interruption. Every Enrove notification
+     not pinned to a control uses this stack, the folio editor's save status
+     included (enroveStatusToast). Never reach past the admin menu on a narrow
+     screen. */
+  max-width: calc(100vw - 48px);
+  /* Only the pills themselves take the pointer. */
+  pointer-events: none;
+}
+
+.g-toast {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  /* A stadium shape stops reading as a pill once it runs long, so the message
+     wraps to a second line instead of stretching across the screen. */
+  max-width: min(520px, 100%);
+  min-height: 32px;
+  padding: 7px 8px 7px 14px;
+  border: 1px solid var(--g-border-strong);
+  border-radius: 999px;
+  background: var(--g-surface);
+  color: var(--g-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.g-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.g-toast.is-leaving {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.g-toast--success {
+  background: var(--g-green-0);
+  border-color: var(--g-green-40);
+  color: var(--g-green-70);
+}
+
+.g-toast--error {
+  background: var(--g-red-0);
+  border-color: var(--g-red-40);
+  color: var(--g-red-70);
+}
+
+.g-toast--warning {
+  background: var(--g-yellow-0);
+  border-color: var(--g-yellow-30);
+  color: var(--g-yellow-70);
+}
+
+.g-toast--info {
+  background: var(--g-blue-0);
+  border-color: var(--g-blue-5);
+  color: var(--g-blue-70);
+}
+
+.g-toast__content {
+  min-width: 0;
+}
+
+.g-toast__close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: currentColor;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.g-toast__close:hover,
+.g-toast__close:focus-visible {
+  opacity: 1;
+}
+
+.g-toast__close:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+
+/* ── Toggletips ─────────────────────────────────────────────────────────────
+   Where a toast reports that something failed, a toggletip says why, at the
+   button that failed, and holds still until it is dismissed. Anchored to <body>
+   and positioned from script: these hang off real <button>s inside cards that
+   would otherwise clip them, so they cannot nest inside their anchor the way
+   .g-tooltip-button does.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.g-toggletip {
+  --g-toggletip-bg: var(--g-surface);
+  --g-toggletip-border: var(--g-border-strong);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100001;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 10px 8px 10px 12px;
+  border: 1px solid var(--g-toggletip-border);
+  border-radius: 8px;
+  background: var(--g-toggletip-bg);
+  color: var(--g-text);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.g-toggletip[data-placement="top"] {
+  transform: translateY(4px);
+}
+
+.g-toggletip.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.g-toggletip--error {
+  --g-toggletip-bg: var(--g-red-0);
+  --g-toggletip-border: var(--g-red-5);
+  color: var(--g-red-70);
+}
+
+.g-toggletip--warning {
+  --g-toggletip-bg: var(--g-yellow-0);
+  --g-toggletip-border: var(--g-yellow-30);
+  color: var(--g-yellow-70);
+}
+
+.g-toggletip--info {
+  --g-toggletip-bg: var(--g-blue-0);
+  --g-toggletip-border: var(--g-blue-5);
+  color: var(--g-blue-70);
+}
+
+.g-toggletip__body {
+  min-width: 0;
+}
+
+.g-toggletip__message {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* The next step reads as the quieter half of the pair — present, but not
+   competing with the sentence that says what happened. */
+.g-toggletip__hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  opacity: 0.85;
+}
+
+.g-toggletip__close {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-top: -1px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: currentColor;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.g-toggletip__close:hover,
+.g-toggletip__close:focus-visible {
+  opacity: 1;
+}
+
+.g-toggletip__close:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+
+/* A rotated square with two of its borders dropped, so the arrow carries the
+   bubble's own border and fill rather than floating free of them. Script sets
+   --g-toggletip-arrow-x to keep it over the anchor when the bubble has been
+   shifted back inside the viewport. */
+.g-toggletip__arrow {
+  position: absolute;
+  left: var(--g-toggletip-arrow-x, 20px);
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background: var(--g-toggletip-bg);
+  border: 1px solid var(--g-toggletip-border);
+  transform: rotate(45deg);
+}
+
+.g-toggletip[data-placement="bottom"] .g-toggletip__arrow {
+  top: -6px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.g-toggletip[data-placement="top"] .g-toggletip__arrow {
+  bottom: -6px;
+  border-left: 0;
+  border-top: 0;
+}
+
+/* A save button with nothing to save is held with aria-disabled rather than the
+   disabled attribute, so it keeps its place in the tab order and can still say
+   why it is doing nothing. Core's .disabled carries the paint; this carries the
+   cursor for anything core hangs off :disabled alone. */
+
+body.enrove .button[aria-disabled="true"] {
+  cursor: default;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .g-toast,
+  .g-toggletip {
+    /* Still fades, but does not travel. */
+    transition: opacity 0.2s ease;
+    transform: none;
+  }
+  .g-toast.is-visible,
+  .g-toast.is-leaving,
+  .g-toggletip.is-visible,
+  .g-toggletip[data-placement="top"] {
+    transform: none;
+  }
+  .g-tpp-overlay {
+    transition: none;
+  }
+  .g-tpp-iframe {
+    transition: none;
+  }
+  .g-tpp-loader {
+    transition: none;
+  }
+  .g-tpp-loader::after {
+    animation: none;
+    border-top-color: rgba(255, 255, 255, 0.5);
+  }
+  ::view-transition-old(gfp-tab-active),
+  ::view-transition-new(gfp-tab-active) {
+    animation: none;
+  }
+}
+/* ── Theme documentation ─────────────────────────────────────────────────
+   The Spec and Playbook tabs on Enrove → Themes render `themes/README.md`
+   and `themes/BUILDING-A-THEME.md` through `Enrove\Utils\Markdown`.
+
+   All of it is component CSS rather than Tailwind utilities, and not by
+   preference: every element here — p, li, h2..h6, table, td — is one core
+   admin already styles in `wp-admin/css/common.css`, and an unlayered core
+   rule beats a Tailwind utility whatever its specificity, because Tailwind 4
+   compiles utilities into `@layer utilities`. `text-sm` on a paragraph in
+   this panel would do nothing at all.
+   ────────────────────────────────────────────────────────────────────── */
+body.enrove .g-docs {
+  max-width: 76rem;
+  padding: 30px 36px;
+  background: var(--g-surface);
+  border: 1px solid var(--g-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  color: var(--g-text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* The reading measure. Tables and code deliberately sit outside it — a
+   five-column table of CSS selectors is unreadable at 44rem, and wrapping a
+   shell command changes what it says. */
+body.enrove .g-docs p,
+body.enrove .g-docs ul,
+body.enrove .g-docs ol,
+body.enrove .g-docs blockquote {
+  max-width: 44rem;
+}
+
+body.enrove .g-docs__source {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 22px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--g-border);
+  color: var(--g-text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* A <p>, so core's p rule (13px, 1em margins) has to be answered here. */
+body.enrove .g-docs__source-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* The end of the row, past the text's reading measure. Square at 32px: the
+   40px the shared button style sets is sized for header rows, and on this
+   12px caption line it stands as a slab. */
+body.enrove .g-docs__download {
+  flex: none;
+  margin-inline-start: auto;
+  height: 32px;
+  min-height: 32px;
+  line-height: 30px;
+}
+
+body.enrove .g-docs__p {
+  margin: 0 0 14px;
+}
+
+/* ── Contents rail ────────────────────────────────────────────────────── */
+
+/* Stacked by default and a side rail once there is room for one, measured
+ * with a container query rather than a media query: the admin menu is 160px
+ * wide, or 36px folded, so the viewport is wrong about this screen's width by
+ * the whole menu. The same reasoning as the All Folios table above.
+ *
+ * `align-items: start` is what makes the rail sticky-able — a stretched grid
+ * item is already as tall as the document and has nowhere to stick to. */
+body.enrove .g-docs {
+  container-type: inline-size;
+  container-name: g-docs;
+}
+
+body.enrove .g-docs__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+body.enrove .g-docs__toc {
+  max-height: 40vh;
+  padding: 14px 16px;
+  background: var(--g-surface-alt);
+  border: 1px solid var(--g-border);
+  border-radius: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body.enrove .g-docs__toc-title {
+  margin: 0 0 8px;
+  color: var(--g-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Flex gap rather than a margin on the item: core admin CSS gives every `li`
+   a bottom margin, so the item needs `margin: 0` to sit still, and that reset
+   would then outrank any spacing rule written on the item itself. */
+body.enrove .g-docs__toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+body.enrove .g-docs__toc-item {
+  margin: 0;
+}
+
+body.enrove .g-docs__toc-link {
+  display: block;
+  padding: 3px 0 3px 10px;
+  border-left: 2px solid transparent;
+  color: var(--g-gray-70);
+  font-size: 12.5px;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+body.enrove .g-docs__toc-link:hover,
+body.enrove .g-docs__toc-link:focus {
+  color: var(--g-accent);
+  border-left-color: var(--g-border-strong);
+}
+
+/* Where you are. The rule carries it as much as the colour does, so the
+ * marked entry is still findable for a reader who cannot tell the two
+ * greys apart. */
+body.enrove .g-docs__toc-link.is-current {
+  color: var(--g-accent);
+  border-left-color: var(--g-accent);
+  font-weight: 600;
+}
+
+body.enrove .g-docs__toc-link:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+/* The query reads the card's *content* box, so this is the width left after
+   36px of padding each side — roughly a 1100px window once the admin menu has
+   taken its 160px. Below it the rail stacks, which is the right answer rather
+   than a fallback: 14rem of rail plus a gap leaves too little for a table. */
+@container g-docs (min-width: 52rem) {
+  body.enrove .g-docs__layout {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  body.enrove .g-docs__toc {
+    position: sticky;
+    /* Clears the admin bar, and matches the heading scroll-margin so a jumped-to
+       heading and the rail settle on the same line. */
+    top: 48px;
+    max-height: calc(100vh - 96px);
+    padding: 0 0 0 2px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  body.enrove .g-docs__toc-title {
+    margin-bottom: 10px;
+  }
+}
+
+/* ── Headings ─────────────────────────────────────────────────────────── */
+
+body.enrove .g-docs__h {
+  position: relative;
+  color: var(--g-text);
+  font-weight: 600;
+  /* Clears the fixed admin bar when an anchor is jumped to. */
+  scroll-margin-top: 48px;
+}
+
+body.enrove .g-docs__h--2 {
+  margin: 0 0 6px;
+  font-size: 23px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+body.enrove .g-docs__h--3 {
+  margin: 34px 0 10px;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+body.enrove .g-docs__h--4 {
+  margin: 26px 0 8px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+/* Sentence case, not uppercase: these are real subsection titles rather than
+   labels, several carry a code span, and shouting a heading that reads
+   "Drawers: one attribute, not a script" loses the sentence it is. The step
+   down from h4 is carried by size and colour instead. */
+body.enrove .g-docs__h--5,
+body.enrove .g-docs__h--6 {
+  margin: 24px 0 8px;
+  color: var(--g-gray-80);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+/* A heading's own link, so a section can be sent to someone. Hidden until the
+   heading is hovered or the link itself is focused — it must stay reachable
+   from the keyboard, which is why this is opacity rather than display. */
+body.enrove .g-docs__anchor {
+  position: absolute;
+  left: -0.95em;
+  color: var(--g-gray-30);
+  font-weight: 400;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+body.enrove .g-docs__h:hover .g-docs__anchor,
+body.enrove .g-docs__anchor:focus-visible {
+  opacity: 1;
+}
+
+body.enrove .g-docs__anchor:hover {
+  color: var(--g-accent);
+}
+
+/* ── Lists ────────────────────────────────────────────────────────────── */
+
+body.enrove .g-docs__list {
+  margin: 0 0 14px;
+  padding-left: 1.4em;
+  list-style: disc;
+}
+
+body.enrove .g-docs ol.g-docs__list {
+  list-style: decimal;
+}
+
+body.enrove .g-docs__item {
+  margin: 0 0 6px;
+}
+
+body.enrove .g-docs__item > .g-docs__list {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+body.enrove .g-docs__item > .g-docs__p:last-child {
+  margin-bottom: 0;
+}
+
+body.enrove .g-docs__item--task {
+  list-style: none;
+}
+
+body.enrove .g-docs__checkbox {
+  margin: 0 6px 0 0;
+  vertical-align: -2px;
+}
+
+/* ── Rules and quotes ─────────────────────────────────────────────────── */
+
+body.enrove .g-docs__rule {
+  margin: 32px 0;
+  border: 0;
+  border-top: 1px solid var(--g-border);
+}
+
+body.enrove .g-docs__quote {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  background: var(--g-surface-alt);
+  border-left: 3px solid var(--g-border-strong);
+  border-radius: 0 6px 6px 0;
+}
+
+body.enrove .g-docs__quote > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Code ─────────────────────────────────────────────────────────────── */
+
+/* Tight horizontal padding on purpose: these documents write `require`d and
+   `--folio-*`s, and a roomy chip splits the word it is part of. */
+body.enrove .g-docs__code {
+  padding: 1px 3px;
+  background: var(--g-gray-5);
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+}
+
+/* A path to a file in the repository, not a link — there is nothing in
+   wp-admin to open. Set without the chip so a page dense with them does not
+   read as a wall of buttons, and muted so it does not invite a click. */
+body.enrove .g-docs__code--path {
+  padding: 0;
+  background: none;
+  color: var(--g-text-muted);
+}
+
+body.enrove .g-docs__pre {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  background: var(--g-gray-100);
+  color: var(--g-gray-5);
+  border-radius: 6px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+body.enrove .g-docs__pre code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* ── Tables ───────────────────────────────────────────────────────────── */
+
+/* The wrapper scrolls, never the page — these tables run to five columns. */
+body.enrove .g-docs__table-wrap {
+  margin: 0 0 18px;
+  overflow-x: auto;
+}
+
+body.enrove .g-docs__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+body.enrove .g-docs__table th {
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--g-border-strong);
+  color: var(--g-text);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+body.enrove .g-docs__table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--g-border);
+  vertical-align: top;
+}
+
+body.enrove .g-docs__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+body.enrove .g-docs__cell--center {
+  text-align: center;
+}
+
+body.enrove .g-docs__cell--right {
+  text-align: right;
+}
+
+/* ── Links ────────────────────────────────────────────────────────────── */
+
+/* Hover and focus add affordance rather than removing it, which is the rule
+   these documents spend a section on. */
+body.enrove .g-docs__link {
+  color: var(--g-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+body.enrove .g-docs__link:hover,
+body.enrove .g-docs__link:focus {
+  color: var(--g-accent-hover);
+  text-decoration-thickness: 2px;
+}
+
+body.enrove .g-docs__link--external::after {
+  content: "\2197";
+  margin-left: 0.15em;
+  font-size: 0.85em;
+}
+
+body.enrove .g-docs a:focus-visible {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────── */
+
+body.enrove .g-docs__missing {
+  margin: 0;
+  color: var(--g-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ── Narrow ───────────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 782px) {
+  body.enrove .g-docs {
+    padding: 20px;
+  }
+
+  /* The measure is already the column width here, and a heading anchor hung
+     in the left margin would sit outside the card. */
+  body.enrove .g-docs p,
+  body.enrove .g-docs ul,
+  body.enrove .g-docs ol,
+  body.enrove .g-docs blockquote {
+    max-width: none;
+  }
+
+  body.enrove .g-docs__anchor {
+    display: none;
+  }
+
+  /* A floor rather than a fixed width: without it a three-column table of
+     prose collapses to five-character columns instead of scrolling, and the
+     wrapper's overflow never engages because the table is still "fitting". */
+  body.enrove .g-docs__table {
+    min-width: 26rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.enrove .g-docs__anchor {
+    transition: none;
+  }
+}

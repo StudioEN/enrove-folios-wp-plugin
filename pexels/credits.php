@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Pexels;
+namespace Enrove\Pexels;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -47,7 +47,7 @@ class Credits
    */
   public static function path(): string
   {
-    $root = defined('GROOVE_PATH') ? trailingslashit(GROOVE_PATH) : dirname(__DIR__) . DIRECTORY_SEPARATOR;
+    $root = defined('ENROVE_PATH') ? trailingslashit(ENROVE_PATH) : dirname(__DIR__) . DIRECTORY_SEPARATOR;
 
     return $root . self::RELATIVE_PATH;
   }
@@ -86,7 +86,7 @@ class Credits
   /**
    * One credit record.
    *
-   * @param string $slug Slot slug, e.g. 'cover-groove-proposal'.
+   * @param string $slug Slot slug, e.g. 'cover-enrove-proposal'.
    *
    * @return array|null Null when the slug has no record.
    */
@@ -141,20 +141,20 @@ class Credits
     $pexels_link = sprintf(
       '<a href="%1$s" rel="nofollow noopener" target="_blank">%2$s</a>',
       esc_url($photo_url),
-      esc_html__('Pexels', 'groove-folios')
+      esc_html__('Pexels', 'enrove-folios')
     );
 
     $text = sprintf(
       /* translators: 1: photographer name (linked), 2: the word "Pexels" (linked). */
-      esc_html__('Photo by %1$s on %2$s', 'groove-folios'),
+      esc_html__('Photo by %1$s on %2$s', 'enrove-folios'),
       $photographer_link,
       $pexels_link
     );
 
     $tag = 'caption' === $context ? 'figcaption' : 'span';
     $class = 'caption' === $context
-      ? 'groove-pexels-credit groove-pexels-credit--caption'
-      : 'groove-pexels-credit';
+      ? 'enrove-pexels-credit enrove-pexels-credit--caption'
+      : 'enrove-pexels-credit';
 
     return sprintf('<%1$s class="%2$s">%3$s</%1$s>', $tag, esc_attr($class), $text);
   }
@@ -170,9 +170,9 @@ class Credits
   public static function pexels_link(): string
   {
     return sprintf(
-      '<a class="groove-pexels-link" href="%1$s" rel="nofollow noopener" target="_blank">%2$s</a>',
+      '<a class="enrove-pexels-link" href="%1$s" rel="nofollow noopener" target="_blank">%2$s</a>',
       esc_url(self::PEXELS_URL),
-      esc_html__('Photos provided by Pexels', 'groove-folios')
+      esc_html__('Photos provided by Pexels', 'enrove-folios')
     );
   }
 }

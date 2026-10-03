@@ -1,7 +1,7 @@
 <?php
-namespace Groove\Themes;
+namespace Enrove\Themes;
 
-use Groove\Modules\Assets;
+use Enrove\Modules\Assets;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
  * Central registry for the folio themes the plugin ships in themes/.
  *
  * Themes are built-in only. Installing a theme from an uploaded .zip was
- * removed in 0.5.1: it copied the package's PHP into wp-content/groove-themes/,
+ * removed in 0.5.1: it copied the package's PHP into wp-content/enrove-themes/,
  * and WordPress.org does not allow a plugin to write executable code there.
  * Third-party themes will come back through a route that does not write files.
  *
@@ -40,7 +40,7 @@ class Themes_Manager extends Assets
      *
      * Records are data, never prose. register_defaults() runs from
      * Plugin::__construct(), which is called at file scope and therefore before
-     * plugins_loaded — so the 'groove' text domain is not loaded yet, and __()
+     * plugins_loaded — so the 'enrove' text domain is not loaded yet, and __()
      * here would return English and trip _load_textdomain_just_in_time on
      * WordPress 6.7+, on every request. describe_skipped_theme() builds the
      * sentences instead, and only admin code calls it.
@@ -182,52 +182,52 @@ class Themes_Manager extends Assets
         switch ($reason) {
             case 'no_setup':
                 return new \WP_Error($reason,
-                    __('No setup.php in this folder.', 'groove-folios'),
-                    __('A theme needs setup.php, cover.php and page.php side by side. The full spec ships at themes/README.md.', 'groove-folios'));
+                    __('No setup.php in this folder.', 'enrove-folios'),
+                    __('A theme needs setup.php, cover.php and page.php side by side. The full spec ships at themes/README.md.', 'enrove-folios'));
 
             case 'unreadable_file':
                 return new \WP_Error($reason,
-                    sprintf(/* translators: %s: a theme file name */ __('%s is missing, or cannot be read.', 'groove-folios'), $file),
-                    __('Restore the file, or check the web server is allowed to read it.', 'groove-folios'));
+                    sprintf(/* translators: %s: a theme file name */ __('%s is missing, or cannot be read.', 'enrove-folios'), $file),
+                    __('Restore the file, or check the web server is allowed to read it.', 'enrove-folios'));
 
             case 'setup_not_array':
                 return new \WP_Error($reason,
-                    __('setup.php does not return an array.', 'groove-folios'),
-                    __('It must be a literal return array( … ); with no side effects — it is included more than once per request.', 'groove-folios'));
+                    __('setup.php does not return an array.', 'enrove-folios'),
+                    __('It must be a literal return array( … ); with no side effects — it is included more than once per request.', 'enrove-folios'));
 
             case 'no_class_names':
                 return new \WP_Error($reason,
-                    __('setup.php declares no cover_class and page_class.', 'groove-folios'),
-                    __('Each is a fully-qualified class name, namespace included, declared in cover.php and page.php respectively.', 'groove-folios'));
+                    __('setup.php declares no cover_class and page_class.', 'enrove-folios'),
+                    __('Each is a fully-qualified class name, namespace included, declared in cover.php and page.php respectively.', 'enrove-folios'));
 
             case 'missing_dependency':
                 return new \WP_Error($reason,
-                    sprintf(/* translators: %s: the dependency path declared in setup.php */ __('setup.php lists the dependency "%s", which is not there.', 'groove-folios'), $dep),
-                    __('Every dependency a theme declares has to ship inside it. The theme is skipped rather than registered, because a dependency that is missing is a fatal on the first folio anyone opens.', 'groove-folios'));
+                    sprintf(/* translators: %s: the dependency path declared in setup.php */ __('setup.php lists the dependency "%s", which is not there.', 'enrove-folios'), $dep),
+                    __('Every dependency a theme declares has to ship inside it. The theme is skipped rather than registered, because a dependency that is missing is a fatal on the first folio anyone opens.', 'enrove-folios'));
 
             case 'class_missing':
                 return new \WP_Error($reason,
-                    sprintf(/* translators: 1: a theme file name, 2: the class setup.php names */ __('%1$s declares no class %2$s.', 'groove-folios'), $file, $class),
-                    __('Check the name in setup.php against the class in that file, including the namespace.', 'groove-folios'));
+                    sprintf(/* translators: 1: a theme file name, 2: the class setup.php names */ __('%1$s declares no class %2$s.', 'enrove-folios'), $file, $class),
+                    __('Check the name in setup.php against the class in that file, including the namespace.', 'enrove-folios'));
 
             case 'not_base_theme':
                 return new \WP_Error($reason,
-                    sprintf(/* translators: 1: setup.php key, 2: the class name */ __('%1$s names %2$s, which does not extend Base_Theme.', 'groove-folios'), $key, $class),
-                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'groove-folios'));
+                    sprintf(/* translators: 1: setup.php key, 2: the class name */ __('%1$s names %2$s, which does not extend Base_Theme.', 'enrove-folios'), $key, $class),
+                    __('Both view classes must extend Base_Theme, or the theme cannot register.', 'enrove-folios'));
 
             case 'shadowed':
                 return new \WP_Error($reason,
-                    __('Another theme folder uses this ID and has taken it over.', 'groove-folios'),
-                    __('Rename one of the two in its setup.php — the ID is derived from the name.', 'groove-folios'));
+                    __('Another theme folder uses this ID and has taken it over.', 'enrove-folios'),
+                    __('Rename one of the two in its setup.php — the ID is derived from the name.', 'enrove-folios'));
         }
 
-        return new \WP_Error('unknown', __('This folder did not register.', 'groove-folios'), '');
+        return new \WP_Error('unknown', __('This folder did not register.', 'enrove-folios'), '');
     }
 
     /**
      * Does this folder claim to be a theme at all?
      *
-     * Same four markers, and the same reasoning, as groove_check_theme_dir() in
+     * Same four markers, and the same reasoning, as enrove_check_theme_dir() in
      * bin/check-theme-contract.php: "does it have a setup.php" cannot be the
      * test, because a folder missing one is exactly the failure worth naming.
      * Anything carrying one of the four is making a claim; anything else under
@@ -406,7 +406,7 @@ class Themes_Manager extends Assets
 
         $label = isset($definition['label']) ? trim((string) $definition['label']) : '';
         if ($label === '') {
-            $label = __('Create with sample content', 'groove-folios');
+            $label = __('Create with sample content', 'enrove-folios');
         }
 
         $cache[$theme_id] = [
@@ -443,7 +443,7 @@ class Themes_Manager extends Assets
      */
     public static function get_default_folio_title(string $theme_id): string
     {
-        $fallback = __('A New Folio', 'groove-folios');
+        $fallback = __('A New Folio', 'enrove-folios');
 
         if ($theme_id === '' || !isset(self::$registry[$theme_id]['cover_class'])) {
             return $fallback;
@@ -491,7 +491,7 @@ class Themes_Manager extends Assets
         static $sets = null;
 
         if ($sets === null) {
-            $file = GROOVE_PATH . 'pexels/sets.php';
+            $file = ENROVE_PATH . 'pexels/sets.php';
             $sets = is_readable($file) ? (array) require $file : [];
         }
 
@@ -609,10 +609,10 @@ class Themes_Manager extends Assets
     public static function feature_label(string $key): string
     {
         $labels = array(
-            'blocks' => __('Content blocks', 'groove-folios'),
-            'dynamic-color' => __('Dynamic color', 'groove-folios'),
-            'light-dark' => __('Light and dark', 'groove-folios'),
-            'page-transitions' => __('Page transitions', 'groove-folios'),
+            'blocks' => __('Content blocks', 'enrove-folios'),
+            'dynamic-color' => __('Dynamic color', 'enrove-folios'),
+            'light-dark' => __('Light and dark', 'enrove-folios'),
+            'page-transitions' => __('Page transitions', 'enrove-folios'),
         );
 
         if (isset($labels[$key])) {
@@ -629,14 +629,14 @@ class Themes_Manager extends Assets
      *
      * The photo is either bundled (a development checkout) or downloaded into
      * uploads from Settings → Imagery (a WordPress.org install, which may not
-     * carry Pexels photos). \Groove\Pexels\Library knows both places.
+     * carry Pexels photos). \Enrove\Pexels\Library knows both places.
      *
      * @param string $slug
      * @return string  Empty when the slug is unusable or the photo is on neither.
      */
     public static function sample_image_path(string $slug): string
     {
-        return \Groove\Pexels\Library::path($slug);
+        return \Enrove\Pexels\Library::path($slug);
     }
 
     /**
@@ -652,7 +652,7 @@ class Themes_Manager extends Assets
      */
     public static function sample_image_url(string $slug): string
     {
-        return esc_url_raw(\Groove\Pexels\Library::url($slug));
+        return esc_url_raw(\Enrove\Pexels\Library::url($slug));
     }
 
     /**
@@ -669,11 +669,11 @@ class Themes_Manager extends Assets
     public static function sample_image_credit(string $slug): string
     {
         $slug = sanitize_key($slug);
-        if ($slug === '' || !class_exists('\Groove\Pexels\Credits')) {
+        if ($slug === '' || !class_exists('\Enrove\Pexels\Credits')) {
             return '';
         }
 
-        $credit = trim((string) \Groove\Pexels\Credits::render($slug, 'caption'));
+        $credit = trim((string) \Enrove\Pexels\Credits::render($slug, 'caption'));
 
         // The credit is stored in post_content, so run it through the same
         // filter WordPress applies to post bodies.
@@ -727,11 +727,11 @@ class Themes_Manager extends Assets
     public static function sample_image_credit_line(string $slug): string
     {
         $slug = sanitize_key($slug);
-        if ($slug === '' || !class_exists('\Groove\Pexels\Credits')) {
+        if ($slug === '' || !class_exists('\Enrove\Pexels\Credits')) {
             return '';
         }
 
-        $credit = trim((string) \Groove\Pexels\Credits::render($slug, 'inline'));
+        $credit = trim((string) \Enrove\Pexels\Credits::render($slug, 'inline'));
         if ($credit === '') {
             return '';
         }
@@ -794,7 +794,7 @@ class Themes_Manager extends Assets
             return static::has($theme_id) ? $theme_id : null;
         }
 
-        $default_id = (string) get_option('groove_default_theme_id', '');
+        $default_id = (string) get_option('enrove_default_theme_id', '');
         if ($default_id !== '' && static::has($default_id)) {
             return $default_id;
         }
@@ -830,8 +830,8 @@ class Themes_Manager extends Assets
      */
     public static function create_theme_for_current_request()
     {
-        $id = \Groove\Utils\Utils::get_groove_post_id();
-        $post_type = \Groove\Utils\Utils::get_groove_post_type();
+        $id = \Enrove\Utils\Utils::get_enrove_post_id();
+        $post_type = \Enrove\Utils\Utils::get_enrove_post_type();
 
         // No folio context (e.g. admin pages not related to a folio).
         if (!$id) {
@@ -841,24 +841,24 @@ class Themes_Manager extends Assets
         $requested_post = get_post($id);
         if (
             !$requested_post ||
-            !\Groove\Utils\Utils::is_groove_post($requested_post) ||
-            !\Groove\Utils\Utils::can_current_request_view_post($requested_post)
+            !\Enrove\Utils\Utils::is_enrove_post($requested_post) ||
+            !\Enrove\Utils\Utils::can_current_request_view_post($requested_post)
         ) {
             return null;
         }
 
-        if ($post_type === 'groove_folio_page') {
+        if ($post_type === 'enrove_folio_page') {
             $folio_id = null;
 
             // Prefer URL-based resolution: the folio slug in the path is
             // always correct, even when the page's folio_id meta is stale
             // (e.g. after duplication + deletion of the source folio).
-            $current_path = \Groove\Utils\Utils::get_current_path();
-            $base_slug = \Groove\Utils\Utils::get_folio_base_slug();
+            $current_path = \Enrove\Utils\Utils::get_current_path();
+            $base_slug = \Enrove\Utils\Utils::get_folio_base_slug();
             $pattern = '#^/' . preg_quote($base_slug, '#') . '/([^/]+)/page/#';
             if (preg_match($pattern, $current_path, $matches)) {
                 $folio_slug = rtrim($matches[1], '/');
-                $folio_post = \Groove\Utils\Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+                $folio_post = \Enrove\Utils\Utils::get_enrove_post_by_post_type_and_post_name('enrove_folio', $folio_slug);
                 if ($folio_post) {
                     $folio_id = $folio_post->ID;
                 }
@@ -880,8 +880,8 @@ class Themes_Manager extends Assets
         $folio_post = get_post($folio_id);
         if (
             !$folio_post ||
-            $folio_post->post_type !== 'groove_folio' ||
-            !\Groove\Utils\Utils::can_current_request_view_post($folio_post)
+            $folio_post->post_type !== 'enrove_folio' ||
+            !\Enrove\Utils\Utils::can_current_request_view_post($folio_post)
         ) {
             return null;
         }
@@ -889,12 +889,12 @@ class Themes_Manager extends Assets
         $meta = get_post_meta($folio_id);
         $theme_id = $meta['theme_id'][0] ?? '';
 
-        if ($post_type === 'groove_folio') {
-            $is_cover_enabled = \Groove\Utils\Utils::is_folio_cover_enabled($folio_id);
+        if ($post_type === 'enrove_folio') {
+            $is_cover_enabled = \Enrove\Utils\Utils::is_folio_cover_enabled($folio_id);
             if (!$is_cover_enabled) {
-                $first_page_id = \Groove\Utils\Utils::get_first_folio_page_id($folio_id);
+                $first_page_id = \Enrove\Utils\Utils::get_first_folio_page_id($folio_id);
                 if ($first_page_id > 0) {
-                    $first_page_url = \Groove\Utils\Utils::get_folio_permalink_by_id($first_page_id);
+                    $first_page_url = \Enrove\Utils\Utils::get_folio_permalink_by_id($first_page_id);
                     if (!empty($first_page_url)) {
                         wp_safe_redirect($first_page_url, 302);
                         exit;
@@ -904,7 +904,7 @@ class Themes_Manager extends Assets
             return static::create_cover_theme($theme_id);
         }
 
-        if ($post_type === 'groove_folio_page') {
+        if ($post_type === 'enrove_folio_page') {
             // Guard: if no folio_id was found (orphaned page), do not redirect.
             if (empty($folio_id)) {
                 return null;
@@ -923,19 +923,19 @@ class Themes_Manager extends Assets
      */
     public static function get_password_protected_post_for_current_request()
     {
-        $id = \Groove\Utils\Utils::get_groove_post_id();
+        $id = \Enrove\Utils\Utils::get_enrove_post_id();
         if (!$id) {
             return null;
         }
 
         $post = get_post($id);
-        if (!$post || !\Groove\Utils\Utils::is_groove_post($post)) {
+        if (!$post || !\Enrove\Utils\Utils::is_enrove_post($post)) {
             return null;
         }
 
         // Resolve to the parent folio if the request targets a folio page.
         $folio_post = $post;
-        if ($post->post_type === 'groove_folio_page') {
+        if ($post->post_type === 'enrove_folio_page') {
             $folio_id = (int) get_post_meta($id, 'folio_id', true);
             $folio_post = $folio_id ? get_post($folio_id) : null;
         }
@@ -953,7 +953,7 @@ class Themes_Manager extends Assets
      */
     public static function load_builtin_themes(): void
     {
-        $themes_path = trailingslashit(GROOVE_PATH . 'themes');
+        $themes_path = trailingslashit(ENROVE_PATH . 'themes');
         if (!is_dir($themes_path)) {
             return;
         }
@@ -1063,7 +1063,7 @@ class Themes_Manager extends Assets
      */
     public static function run_migrations()
     {
-        if (get_option('groove_theme_migration_v1')) {
+        if (get_option('enrove_theme_migration_v1')) {
             return;
         }
 
@@ -1073,7 +1073,7 @@ class Themes_Manager extends Assets
         // slug-based IDs that might have been stored before the renaming.
         $mapping = [
             'theme-1' => 'folio-starter',
-            'theme-2' => 'groove-ebook',
+            'theme-2' => 'enrove-ebook',
         ];
 
         // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- One-time bulk rewrite of legacy theme_id meta values across all posts, guarded by the option above; core has no API for it and there is nothing to cache.
@@ -1089,6 +1089,6 @@ class Themes_Manager extends Assets
         }
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 
-        update_option('groove_theme_migration_v1', time());
+        update_option('enrove_theme_migration_v1', time());
     }
 }

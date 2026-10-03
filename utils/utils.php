@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Utils;
+namespace Enrove\Utils;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -12,7 +12,7 @@ class Utils
    * folio by ID for drafts and previews, and the theme picker's preview.
    * WordPress parses them, so routing reads get_query_var(), never $_GET.
    */
-  const ROUTE_QUERY_VARS = array('folio_id', 'groove_preview', 'groove_theme_preview', 'groove_preview_view', 'groove_preview_page');
+  const ROUTE_QUERY_VARS = array('folio_id', 'enrove_preview', 'enrove_theme_preview', 'enrove_preview_view', 'enrove_preview_page');
 
   static function can_preview_unpublished_posts()
   {
@@ -20,8 +20,8 @@ class Utils
       return true;
     }
 
-    // Guard against infinite recursion: get_groove_post_id() may call
-    // get_groove_post_by_post_type_and_post_name() which calls
+    // Guard against infinite recursion: get_enrove_post_id() may call
+    // get_enrove_post_by_post_type_and_post_name() which calls
     // get_viewable_post_statuses() which calls this method again.
     static $checking = false;
     if ($checking) {
@@ -33,12 +33,12 @@ class Utils
     // correctly entered (cookie set). Resolve the folio post from the
     // current request — if it's a folio page, check the parent folio.
     $result = false;
-    $id = self::get_groove_post_id();
+    $id = self::get_enrove_post_id();
     if ($id) {
       $post = get_post($id);
       if ($post) {
         $folio_post = $post;
-        if ($post->post_type === 'groove_folio_page') {
+        if ($post->post_type === 'enrove_folio_page') {
           $folio_id = (int) get_post_meta($id, 'folio_id', true);
           $folio_post = $folio_id ? get_post($folio_id) : null;
         }
@@ -74,7 +74,7 @@ class Utils
    */
   static function get_listed_page_statuses($folio_id)
   {
-    if (!\Groove\Contents\FolioPage\Publishing::is_folio_live($folio_id)) {
+    if (!\Enrove\Contents\FolioPage\Publishing::is_folio_live($folio_id)) {
       return Utils::get_viewable_post_statuses();
     }
 
@@ -96,9 +96,9 @@ class Utils
     // private, password-locked or unpublished folio is not, by its own
     // address. Theme resolution refuses those folios too, but then the
     // visitor was told the theme was missing.
-    if ($post->post_type === 'groove_folio_page') {
+    if ($post->post_type === 'enrove_folio_page') {
       $folio = get_post((int) get_post_meta($post->ID, 'folio_id', true));
-      if ($folio instanceof \WP_Post && $folio->post_type === 'groove_folio' && !static::can_current_request_view_post($folio)) {
+      if ($folio instanceof \WP_Post && $folio->post_type === 'enrove_folio' && !static::can_current_request_view_post($folio)) {
         return false;
       }
     }
@@ -116,7 +116,7 @@ class Utils
 
     // Folio pages inherit password protection from the parent folio.
     // If the parent folio's password has been entered, allow the page.
-    if ($post->post_type === 'groove_folio_page') {
+    if ($post->post_type === 'enrove_folio_page') {
       $folio_id = (int) get_post_meta($post->ID, 'folio_id', true);
       if ($folio_id) {
         $folio_post = get_post($folio_id);
@@ -139,7 +139,7 @@ class Utils
 
   static function get_folio_base_slug()
   {
-    $slug = get_option('groove_folio_base_slug', 'folio');
+    $slug = get_option('enrove_folio_base_slug', 'folio');
     $slug = sanitize_title($slug);
 
     return $slug !== '' ? $slug : 'folio';
@@ -150,7 +150,7 @@ class Utils
    *
    * `google_family` is a `family=` fragment for the css2 API; themes declare
    * their own defaults in the same shape. Everything is requested and injected
-   * by Groove\Themes\Font_Loader — never build a font URL anywhere else.
+   * by Enrove\Themes\Font_Loader — never build a font URL anywhere else.
    *
    * @return array
    */
@@ -271,7 +271,7 @@ class Utils
 
   static function get_default_on_this_page_label()
   {
-    return __('On this page', 'groove-folios');
+    return __('On this page', 'enrove-folios');
   }
 
   static function get_folio_on_this_page_label($folio_id)
@@ -291,23 +291,23 @@ class Utils
   {
     return array(
       'coastal-slate' => array(
-        'label' => __('Coastal Slate', 'groove-folios'),
+        'label' => __('Coastal Slate', 'enrove-folios'),
         'seed' => '#2E5F7B',
       ),
       'evergreen-ink' => array(
-        'label' => __('Evergreen Ink', 'groove-folios'),
+        'label' => __('Evergreen Ink', 'enrove-folios'),
         'seed' => '#2C6650',
       ),
       'clay-signal' => array(
-        'label' => __('Clay Signal', 'groove-folios'),
+        'label' => __('Clay Signal', 'enrove-folios'),
         'seed' => '#A3553D',
       ),
       'berry-graphite' => array(
-        'label' => __('Berry Graphite', 'groove-folios'),
+        'label' => __('Berry Graphite', 'enrove-folios'),
         'seed' => '#6E4969',
       ),
       'deep-ultramarine' => array(
-        'label' => __('Deep Ultramarine', 'groove-folios'),
+        'label' => __('Deep Ultramarine', 'enrove-folios'),
         'seed' => '#355E9D',
       ),
     );
@@ -346,12 +346,12 @@ class Utils
 
   static function get_folio_id()
   {
-    return Utils::get_groove_post_id();
+    return Utils::get_enrove_post_id();
   }
 
   static function get_folios_page_id()
   {
-    return Utils::get_groove_post_id();
+    return Utils::get_enrove_post_id();
   }
 
   static function is_folio_cover_enabled($folio_id)
@@ -362,7 +362,7 @@ class Utils
     }
 
     $folio = get_post($folio_id);
-    if (!$folio || !Utils::is_groove_folio_post($folio)) {
+    if (!$folio || !Utils::is_enrove_folio_post($folio)) {
       return true;
     }
 
@@ -383,7 +383,7 @@ class Utils
     }
 
     $query = new \WP_Query(array(
-      'post_type' => 'groove_folio_page',
+      'post_type' => 'enrove_folio_page',
       'posts_per_page' => 1,
       'post_status' => Utils::get_listed_page_statuses($folio_id),
       'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the page-to-folio link; the query is limited to one folio's pages.
@@ -409,19 +409,19 @@ class Utils
     return 0;
   }
 
-  static function is_groove_folio_post($post)
+  static function is_enrove_folio_post($post)
   {
-    return isset($post->post_type) && $post->post_type == 'groove_folio';
+    return isset($post->post_type) && $post->post_type == 'enrove_folio';
   }
 
-  static function is_groove_folio_page_post($post)
+  static function is_enrove_folio_page_post($post)
   {
-    return isset($post->post_type) && $post->post_type == 'groove_folio_page';
+    return isset($post->post_type) && $post->post_type == 'enrove_folio_page';
   }
 
-  static function is_groove_post($post)
+  static function is_enrove_post($post)
   {
-    return Utils::is_groove_folio_post($post) || Utils::is_groove_folio_page_post($post);
+    return Utils::is_enrove_folio_post($post) || Utils::is_enrove_folio_page_post($post);
   }
 
   /**
@@ -448,7 +448,7 @@ class Utils
 
     // Resolve the parent folio for folio pages.
     $folio_post = $post;
-    if ($post->post_type === 'groove_folio_page') {
+    if ($post->post_type === 'enrove_folio_page') {
       $folio_id = get_post_meta($post_id, 'folio_id');
       $folio_post = !empty($folio_id) ? get_post($folio_id[0]) : null;
     }
@@ -460,7 +460,7 @@ class Utils
     }
 
     $prefix = '';
-    if ($post->post_type === 'groove_folio_page' && $folio_post) {
+    if ($post->post_type === 'enrove_folio_page' && $folio_post) {
       $prefix = Utils::get_post_slug($folio_post);
     }
 
@@ -470,19 +470,19 @@ class Utils
   static function get_folio_preview_query_url_by_id($post_id)
   {
     $post = get_post($post_id);
-    if (!$post || !Utils::is_groove_post($post)) {
+    if (!$post || !Utils::is_enrove_post($post)) {
       return '';
     }
 
     $query_args = array(
-      'groove_preview' => 1,
+      'enrove_preview' => 1,
     );
 
-    if (Utils::is_groove_folio_post($post)) {
+    if (Utils::is_enrove_folio_post($post)) {
       $query_args['folio_id'] = $post->ID;
     } else {
       $query_args['p'] = $post->ID;
-      $query_args['post_type'] = 'groove_folio_page';
+      $query_args['post_type'] = 'enrove_folio_page';
     }
 
     return add_query_arg($query_args, home_url('/'));
@@ -499,31 +499,31 @@ class Utils
 
   static function get_folio_permalink($post, $prefix)
   {
-    if (Utils::is_groove_post($post)) {
+    if (Utils::is_enrove_post($post)) {
       $title = Utils::get_post_slug($post);
       $base_slug = Utils::get_folio_base_slug();
       $pretty_permalinks_enabled = (bool) get_option('permalink_structure');
 
       if (!$pretty_permalinks_enabled) {
         $query_args = array(
-          'groove_preview' => 1,
+          'enrove_preview' => 1,
         );
 
-        if (Utils::is_groove_folio_post($post)) {
+        if (Utils::is_enrove_folio_post($post)) {
           $query_args['folio_id'] = $post->ID;
         } else {
           $query_args['p'] = $post->ID;
-          $query_args['post_type'] = 'groove_folio_page';
+          $query_args['post_type'] = 'enrove_folio_page';
         }
 
         return add_query_arg($query_args, home_url('/'));
       }
 
-      if (Utils::is_groove_folio_post($post)) {
+      if (Utils::is_enrove_folio_post($post)) {
         return home_url($base_slug . '/' . ($prefix ? $prefix . '/' : '') . $title);
       }
 
-      return home_url($base_slug . '/' . ($prefix ? $prefix . '/' : '') . (Utils::is_groove_folio_page_post($post) ? 'page/' : '') . $title);
+      return home_url($base_slug . '/' . ($prefix ? $prefix . '/' : '') . (Utils::is_enrove_folio_page_post($post) ? 'page/' : '') . $title);
     }
 
     return null;
@@ -567,11 +567,11 @@ class Utils
       return 0;
     }
 
-    $folio_post = Utils::get_groove_post_by_post_type_and_post_name('groove_folio', $folio_slug);
+    $folio_post = Utils::get_enrove_post_by_post_type_and_post_name('enrove_folio', $folio_slug);
     return $folio_post ? (int) $folio_post->ID : 0;
   }
 
-  static function is_groove_post_name_url()
+  static function is_enrove_post_name_url()
   {
     $current_path = Utils::get_current_path();
     $base_slug = Utils::get_folio_base_slug();
@@ -580,30 +580,30 @@ class Utils
     return $result;
   }
 
-  static function get_groove_post_type()
+  static function get_enrove_post_type()
   {
     $current_path = Utils::get_current_path();
     $base_slug = Utils::get_folio_base_slug();
     $pattern = '#^/' . preg_quote($base_slug, '#') . '/.+/page/#';
 
 
-    if (Utils::is_groove_post_name_url()) {
+    if (Utils::is_enrove_post_name_url()) {
       $result = preg_match($pattern, $current_path);
 
       if ($result) {
-        return 'groove_folio_page';
+        return 'enrove_folio_page';
       }
       else {
-        return 'groove_folio';
+        return 'enrove_folio';
       }
     }
     else {
       $post_type = get_query_var('post_type');
-      return is_string($post_type) && $post_type !== '' ? sanitize_key($post_type) : 'groove_folio';
+      return is_string($post_type) && $post_type !== '' ? sanitize_key($post_type) : 'enrove_folio';
     }
   }
 
-  static function get_groove_post_id()
+  static function get_enrove_post_id()
   {
     // Prefer explicit ID params over slug-based lookup so ?folio_id=N URLs
     // work reliably for drafts (which have no post_name in the DB).
@@ -617,29 +617,29 @@ class Utils
       return $query_post_id;
     }
 
-    if (Utils::is_groove_post_name_url()) {
-      $post = Utils::get_groove_post_by_post_type_and_post_name();
+    if (Utils::is_enrove_post_name_url()) {
+      $post = Utils::get_enrove_post_by_post_type_and_post_name();
       return $post ? $post->ID : null;
     }
 
     return null;
   }
 
-  static function get_groove_post_name()
+  static function get_enrove_post_name()
   {
     $current_path = Utils::get_current_path();
-    $post_type = Utils::get_groove_post_type();
+    $post_type = Utils::get_enrove_post_type();
     $base_slug = Utils::get_folio_base_slug();
     $base_prefix = '/' . $base_slug . '/';
 
-    if ($post_type == 'groove_folio') {
-      $post_type = 'groove_folio';
+    if ($post_type == 'enrove_folio') {
+      $post_type = 'enrove_folio';
       $substring = strstr($current_path, $base_prefix);
       $post_name = substr($substring, strlen($base_prefix));
       return rtrim($post_name, '/');
     }
     else {
-      $post_type = 'groove_folio_page';
+      $post_type = 'enrove_folio_page';
       $substring = strstr($current_path, '/page/');
       $post_name = substr($substring, strlen('/page/'));
 
@@ -647,14 +647,14 @@ class Utils
     }
   }
 
-  static function get_groove_post_by_post_type_and_post_name($post_type = null, $post_name = null)
+  static function get_enrove_post_by_post_type_and_post_name($post_type = null, $post_name = null)
   {
     if (empty($post_type)) {
-      $post_type = Utils::get_groove_post_type();
+      $post_type = Utils::get_enrove_post_type();
     }
 
     if (empty($post_name)) {
-      $post_name = Utils::get_groove_post_name();
+      $post_name = Utils::get_enrove_post_name();
     }
     $query_args = array(
       'post_type' => $post_type,
@@ -664,7 +664,7 @@ class Utils
     );
 
     $scoped_folio_id = 0;
-    if ($post_type === 'groove_folio_page') {
+    if ($post_type === 'enrove_folio_page') {
       $scoped_folio_id = Utils::get_folio_id_from_current_path();
       if ($scoped_folio_id > 0) {
         $query_args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- folio_id meta is the page-to-folio link; the query is limited to one folio's pages.

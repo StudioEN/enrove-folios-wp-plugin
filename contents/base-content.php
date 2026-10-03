@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Contents;
+namespace Enrove\Contents;
 
 if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
@@ -50,7 +50,7 @@ abstract class BaseContent
 		_doing_it_wrong(
 			__FUNCTION__,
 			sprintf('Cloning instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
-			esc_html(GROOVE_VERSION)
+			esc_html(ENROVE_VERSION)
 		);
 	}
 
@@ -60,7 +60,7 @@ abstract class BaseContent
 		_doing_it_wrong(
 			__FUNCTION__,
 			sprintf('Unserializing instances of the singleton "%s" class is forbidden.', esc_html(get_class($this))),
-			esc_html(GROOVE_VERSION)
+			esc_html(ENROVE_VERSION)
 		);
 	}
 
@@ -132,7 +132,7 @@ abstract class BaseContent
 
 	protected function get_assets_base_url()
 	{
-		return GROOVE_URL;
+		return ENROVE_URL;
 	}
 
 

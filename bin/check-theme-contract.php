@@ -1,6 +1,6 @@
 <?php
 /**
- * Groove Folios — folio theme contract conformance check.
+ * Enrove Folios — folio theme contract conformance check.
  *
  * Reports how each theme fills the --folio-* slots declared in
  * assets/css/folio-contract.css, and flags the mistakes that fail silently — in
@@ -74,15 +74,15 @@ if (!function_exists('str_contains')) {
 }
 
 /** Strip comments so a slot named only in prose is never counted as declared. */
-function groove_strip_comments(string $css): string
+function enrove_strip_comments(string $css): string
 {
     return preg_replace('#/\*.*?\*/#s', '', $css);
 }
 
 /** Every --folio-* name the contract declares, in declaration order. */
-function groove_contract_slots(string $css): array
+function enrove_contract_slots(string $css): array
 {
-    preg_match_all('/^\s*(--folio-[a-z0-9-]+)\s*:/m', groove_strip_comments($css), $m);
+    preg_match_all('/^\s*(--folio-[a-z0-9-]+)\s*:/m', enrove_strip_comments($css), $m);
     return array_values(array_unique($m[1]));
 }
 
@@ -113,7 +113,7 @@ function groove_contract_slots(string $css): array
  * them into a separator (Designer's → designers, not designer-s), and keeps the
  * underscore.
  */
-function groove_sanitize_title(string $title): string
+function enrove_sanitize_title(string $title): string
 {
     $slug = $title;
 
@@ -141,7 +141,7 @@ function groove_sanitize_title(string $title): string
  * decoy with a correct-looking display_theme() silently satisfies checks the
  * real class fails.
  */
-function groove_class_token_range(array $tokens, string $class): ?array
+function enrove_class_token_range(array $tokens, string $class): ?array
 {
     $count = count($tokens);
 
@@ -182,14 +182,14 @@ function groove_class_token_range(array $tokens, string $class): ?array
  * Pass $class to scope the search to that class's body — always do, where the
  * class is known, or a decoy declared earlier in the file answers for it.
  */
-function groove_method_source(string $src, string $method, ?string $class = null): ?string
+function enrove_method_source(string $src, string $method, ?string $class = null): ?string
 {
     $tokens = token_get_all($src);
     $count  = count($tokens);
     $from   = 0;
 
     if ($class !== null) {
-        $range = groove_class_token_range($tokens, $class);
+        $range = enrove_class_token_range($tokens, $class);
         if ($range === null) {
             return null;
         }
@@ -248,11 +248,11 @@ function groove_method_source(string $src, string $method, ?string $class = null
 }
 
 /** Class name => parent name, for every class declared in the source. */
-function groove_declared_classes(string $src): array
+function enrove_declared_classes(string $src): array
 {
     preg_match_all(
         '/^\s*(?:final\s+|abstract\s+|readonly\s+)*class\s+(\w+)(?:\s+extends\s+([\\\\\w]+))?/mi',
-        groove_strip_php_comments($src),
+        enrove_strip_php_comments($src),
         $m,
         PREG_SET_ORDER
     );
@@ -266,7 +266,7 @@ function groove_declared_classes(string $src): array
 }
 
 /** Source with PHP comments and HTML comments removed. */
-function groove_strip_php_comments(string $src): string
+function enrove_strip_php_comments(string $src): string
 {
     $out = '';
     foreach (token_get_all($src) as $token) {
@@ -295,9 +295,9 @@ function groove_strip_php_comments(string $src): string
  * final text is not knowable here and guessing produces a false positive on a
  * root that is perfectly correct at runtime.
  */
-function groove_class_attributes(string $src): array
+function enrove_class_attributes(string $src): array
 {
-    $src = groove_strip_php_comments($src);
+    $src = enrove_strip_php_comments($src);
 
     // An attribute written inside an echoed PHP string arrives escaped.
     $src = str_replace('\\"', '"', $src);
@@ -316,7 +316,7 @@ function groove_class_attributes(string $src): array
 }
 
 /** True when a class attribute's final text cannot be known without running PHP. */
-function groove_attribute_is_dynamic(string $value): bool
+function enrove_attribute_is_dynamic(string $value): bool
 {
     return str_contains($value, '<?') || str_contains($value, '$');
 }
@@ -327,7 +327,7 @@ function groove_attribute_is_dynamic(string $value): bool
  * which can neither supply nor remove the tokens the root rules look for. Left
  * in, the echo made every theme using it "dynamic", and its root went unchecked.
  */
-function groove_without_known_class_helpers(string $value): string
+function enrove_without_known_class_helpers(string $value): string
 {
     return (string) preg_replace(
         '/<\?php\s+echo\s+(?:esc_attr\s*\(\s*)?\$this->get_cover_fallback_class\s*\(\s*\)\s*\)?\s*;?\s*\?>/',
@@ -341,18 +341,18 @@ function groove_without_known_class_helpers(string $value): string
  * one inside display_theme().
  *
  * Scanning the whole file instead is what made this check useless — in
- * groove-newsletter a nav button 178 lines from the root carries
+ * enrove-newsletter a nav button 178 lines from the root carries
  * "g-folio__theme-page-nav-button gn-nav-trigger gn-nav-trigger--page", which
  * satisfies the selector while saying nothing about the root.
  */
-function groove_root_class_attribute(string $src, ?string $class = null): ?string
+function enrove_root_class_attribute(string $src, ?string $class = null): ?string
 {
-    $display = groove_method_source($src, 'display_theme', $class);
+    $display = enrove_method_source($src, 'display_theme', $class);
     if ($display === null) {
         return null;
     }
 
-    $attributes = groove_class_attributes($display);
+    $attributes = enrove_class_attributes($display);
 
     return $attributes[0] ?? null;
 }
@@ -365,7 +365,7 @@ function groove_root_class_attribute(string $src, ?string $class = null): ?strin
  * `dependencies` — which is what dependencies are for. A one-level substring
  * test would fail that theme and pass `extends Definitely_Not_Base_Theme`.
  */
-function groove_reaches_base_theme(string $class, string $dir, array $dependencies = []): bool
+function enrove_reaches_base_theme(string $class, string $dir, array $dependencies = []): bool
 {
     $files = glob($dir . '/*.php') ?: [];
 
@@ -384,13 +384,13 @@ function groove_reaches_base_theme(string $class, string $dir, array $dependenci
     foreach (array_unique($files) as $file) {
         $src = file_get_contents($file);
 
-        foreach (groove_declared_classes($src) as $name => $parent) {
+        foreach (enrove_declared_classes($src) as $name => $parent) {
             $map[$name] = $parent;
         }
 
-        // `use Groove\Themes\Base_Theme as BT;` makes BT a legitimate parent
+        // `use Enrove\Themes\Base_Theme as BT;` makes BT a legitimate parent
         // name; without this the chain stops at an alias it cannot resolve.
-        if (preg_match_all('/^\s*use\s+([\\\\\w]+)(?:\s+as\s+(\w+))?\s*;/mi', groove_strip_php_comments($src), $m, PREG_SET_ORDER)) {
+        if (preg_match_all('/^\s*use\s+([\\\\\w]+)(?:\s+as\s+(\w+))?\s*;/mi', enrove_strip_php_comments($src), $m, PREG_SET_ORDER)) {
             foreach ($m as $u) {
                 $target = substr(strrchr('\\' . $u[1], '\\'), 1);
                 $aliases[$u[2] ?? $target] = $target;
@@ -429,7 +429,7 @@ function groove_reaches_base_theme(string $class, string $dir, array $dependenci
  * a theme that will not register at all comes before one that renders with the
  * wrong typeface.
  */
-function groove_php_warnings(string $dir, string $root): array
+function enrove_php_warnings(string $dir, string $root): array
 {
     $id    = basename($dir);
     $warn  = [];
@@ -489,7 +489,7 @@ function groove_php_warnings(string $dir, string $root): array
 
     if (!empty($setup['name'])) {
         $name    = (string) $setup['name'];
-        $derived = groove_sanitize_title($name);
+        $derived = enrove_sanitize_title($name);
 
         // Outside plain Latin text this cannot reliably reproduce WordPress —
         // remove_accents has a table we do not, iconv is locale-sensitive, and
@@ -544,24 +544,24 @@ function groove_php_warnings(string $dir, string $root): array
         $view_class = $view_class === '' ? null : substr(strrchr('\\' . $view_class, '\\'), 1);
         $classes_of[$role] = $view_class;
 
-        if (!preg_match('/defined\(\s*[\'"]ABSPATH[\'"]\s*\)/', groove_strip_php_comments($src))) {
+        if (!preg_match('/defined\(\s*[\'"]ABSPATH[\'"]\s*\)/', enrove_strip_php_comments($src))) {
             $warn[] = "{$role}.php has no ABSPATH guard — the file is reachable directly over HTTP";
         }
 
-        $classes = groove_declared_classes($src);
+        $classes = enrove_declared_classes($src);
         $wanted  = (string) ($setup[$view['class_key']] ?? '');
         $short   = $wanted === '' ? '' : substr(strrchr('\\' . $wanted, '\\'), 1);
 
         if ($short !== '' && !isset($classes[$short])) {
             $warn[] = "setup.php names {$view['class_key']} {$wanted} but {$role}.php declares no class {$short} "
                 . '— registration fails the class_exists check and the folder is skipped silently';
-        } elseif ($short !== '' && !groove_reaches_base_theme($short, $dir, (array) ($setup['dependencies'] ?? []))) {
+        } elseif ($short !== '' && !enrove_reaches_base_theme($short, $dir, (array) ($setup['dependencies'] ?? []))) {
             $warn[] = "{$role}.php class {$short} does not reach Base_Theme through its parents — registration "
                 . 'fails the is_subclass_of check and the folder is skipped silently';
         }
 
         if (!empty($setup['namespace'])) {
-            $declared = preg_match('/^\s*namespace\s+([^;]+);/m', groove_strip_php_comments($src), $nm)
+            $declared = preg_match('/^\s*namespace\s+([^;]+);/m', enrove_strip_php_comments($src), $nm)
                 ? trim($nm[1])
                 : '';
 
@@ -575,7 +575,7 @@ function groove_php_warnings(string $dir, string $root): array
         }
 
         // display_theme() must load the data before it draws anything.
-        $display = groove_method_source($src, 'display_theme', $view_class);
+        $display = enrove_method_source($src, 'display_theme', $view_class);
         if ($display === null) {
             $warn[] = "{$role}.php has no display_theme() — nothing renders";
         } elseif (!preg_match('/parent::display_theme\s*\(/', $display)) {
@@ -584,7 +584,7 @@ function groove_php_warnings(string $dir, string $root): array
         }
 
         // The preview injects fabricated posts and then get_data() wipes them.
-        $get_data = groove_method_source($src, 'get_data', $view_class);
+        $get_data = enrove_method_source($src, 'get_data', $view_class);
         if ($get_data !== null && !preg_match('/if\s*\(\s*\$this->is_preview_mode\s*\)/', $get_data)) {
             $warn[] = preg_match('/is_preview_mode/', $get_data)
                 ? "{$role}.php get_data() names is_preview_mode but not as a plain "
@@ -596,7 +596,7 @@ function groove_php_warnings(string $dir, string $root): array
 
         // Overriding ensure_script() in one view and not the other is the single
         // most common bug in these themes: the cover loads the JS, the page does not.
-        $ensure = groove_method_source($src, 'ensure_script', $view_class);
+        $ensure = enrove_method_source($src, 'ensure_script', $view_class);
         if ($ensure !== null && !preg_match('/parent::ensure_script\s*\(/', $ensure)) {
             $warn[] = "{$role}.php ensure_script() never calls parent::ensure_script() — the theme drops the "
                 . 'shared CSS, the token contract and its own fonts';
@@ -605,8 +605,8 @@ function groove_php_warnings(string $dir, string $root): array
     }
 
     if (isset($sources['cover'], $sources['page'])) {
-        $cover_has = groove_method_source($sources['cover'], 'ensure_script', $classes_of['cover'] ?? null) !== null;
-        $page_has  = groove_method_source($sources['page'], 'ensure_script', $classes_of['page'] ?? null) !== null;
+        $cover_has = enrove_method_source($sources['cover'], 'ensure_script', $classes_of['cover'] ?? null) !== null;
+        $page_has  = enrove_method_source($sources['page'], 'ensure_script', $classes_of['page'] ?? null) !== null;
         if ($cover_has !== $page_has) {
             $only = $cover_has ? 'cover.php' : 'page.php';
             $missing = $cover_has ? 'page.php' : 'cover.php';
@@ -620,10 +620,10 @@ function groove_php_warnings(string $dir, string $root): array
     //     display_theme() emits, not off whichever element in the file happens
     //     to satisfy it.
     if (isset($sources['cover'])) {
-        $root_class = groove_root_class_attribute($sources['cover'], $classes_of['cover'] ?? null);
-        $root_known = $root_class === null ? null : groove_without_known_class_helpers($root_class);
+        $root_class = enrove_root_class_attribute($sources['cover'], $classes_of['cover'] ?? null);
+        $root_known = $root_class === null ? null : enrove_without_known_class_helpers($root_class);
 
-        if ($root_known !== null && !groove_attribute_is_dynamic($root_known)
+        if ($root_known !== null && !enrove_attribute_is_dynamic($root_known)
             && !str_contains($root_known, 'g-folio__theme-cover')) {
             $warn[] = "cover.php roots itself in class=\"{$root_class}\", which does not carry "
                 . 'g-folio__theme-cover — Font_Loader injects the folio\'s fonts into that selector, so the '
@@ -636,23 +636,23 @@ function groove_php_warnings(string $dir, string $root): array
         // an attribute-suffix match on the whole string, so the LAST class
         // listed has to end in -page. No rtrim here — a trailing space in the
         // attribute breaks $= for real, and reporting it is the point.
-        $root_class = groove_root_class_attribute($sources['page'], $classes_of['page'] ?? null);
-        $root_known = $root_class === null ? null : groove_without_known_class_helpers($root_class);
+        $root_class = enrove_root_class_attribute($sources['page'], $classes_of['page'] ?? null);
+        $root_known = $root_class === null ? null : enrove_without_known_class_helpers($root_class);
 
-        if ($root_known !== null && !groove_attribute_is_dynamic($root_known)
+        if ($root_known !== null && !enrove_attribute_is_dynamic($root_known)
             && !(str_contains($root_known, 'g-folio__theme-') && str_ends_with($root_known, '-page'))) {
             $warn[] = "page.php roots itself in class=\"{$root_class}\", which must both contain "
                 . 'g-folio__theme- and END in -page — that is Font_Loader\'s selector, so the page silently '
                 . 'ignores the font pickers';
         }
 
-        $get_content = groove_method_source($sources['page'], 'get_content', $classes_of['page'] ?? null);
+        $get_content = enrove_method_source($sources['page'], 'get_content', $classes_of['page'] ?? null);
         if ($get_content !== null && !preg_match('/apply_embed_processing\s*\(/', $get_content)) {
             $warn[] = 'page.php get_content() does not run its HTML through apply_embed_processing() — themes '
                 . 'bypass the_content, so a bare Spotify or YouTube URL stays inert text';
         }
 
-        $ctor = groove_method_source($sources['page'], '__construct', $classes_of['page'] ?? null);
+        $ctor = enrove_method_source($sources['page'], '__construct', $classes_of['page'] ?? null);
         if ($ctor !== null && preg_match('/folio_id/', $ctor) && !preg_match('/resolve_page_folio_id\s*\(/', $ctor)) {
             $warn[] = 'page.php __construct() resolves folio_id without resolve_page_folio_id() — the canonical '
                 . 'order is URL path, then meta, then request param, and a private copy drifts from it';
@@ -663,9 +663,9 @@ function groove_php_warnings(string $dir, string $root): array
 
     // A font CDN anywhere in the theme's PHP, not just in the two view files —
     // blocks.php is where a theme most plausibly enqueues one, and is one of the
-    // three files Groove Proposal used to load Fraunces from.
+    // three files Enrove Proposal used to load Fraunces from.
     foreach ((glob($dir . '/*.php') ?: []) as $file) {
-        if (preg_match('#fonts\.(googleapis|gstatic)\.com#', groove_strip_php_comments(file_get_contents($file)))) {
+        if (preg_match('#fonts\.(googleapis|gstatic)\.com#', enrove_strip_php_comments(file_get_contents($file)))) {
             $warn[] = basename($file) . ' names a font CDN — a theme declares fonts in setup.php and lets '
                 . 'Font_Loader fetch them; it never loads one itself';
         }
@@ -677,7 +677,7 @@ function groove_php_warnings(string $dir, string $root): array
     foreach ($sources as $role => $src) {
         $reimplemented = [];
         foreach ($inherited as $method) {
-            if (groove_method_source($src, $method, $classes_of[$role] ?? null) !== null) {
+            if (enrove_method_source($src, $method, $classes_of[$role] ?? null) !== null) {
                 $reimplemented[] = $method . '()';
             }
         }
@@ -691,7 +691,7 @@ function groove_php_warnings(string $dir, string $root): array
     //
     // The first rule in this file that reads assets/js at all. README §7 spends
     // forty-odd lines on this contract and nothing verified it, which is how
-    // groove-newsletter came to set --gn-focus at runtime while --gn-focus is
+    // enrove-newsletter came to set --gn-focus at runtime while --gn-focus is
     // declared as var(--folio-focus): the ring rendered in the live palette and
     // --folio-focus stayed on its stylesheet literal, so anything reading the
     // contract got a colour the page was not showing.
@@ -705,7 +705,7 @@ function groove_php_warnings(string $dir, string $root): array
 
     if ($js_files && is_readable($theme_css)) {
         // Comments stripped, so an alias shown in prose is never read as one.
-        $css_src = groove_strip_comments((string) file_get_contents($theme_css));
+        $css_src = enrove_strip_comments((string) file_get_contents($theme_css));
         $aliases = [];
         if (preg_match_all('/(--[a-z0-9-]+)\s*:\s*var\(\s*(--folio-[a-z0-9-]+)/i', $css_src, $am, PREG_SET_ORDER)) {
             foreach ($am as $a) {
@@ -762,7 +762,7 @@ function groove_php_warnings(string $dir, string $root): array
  * The slots a theme may ignore and still conform: the space and type ramps are
  * opt-in, so a theme that leaves them alone is conforming, not lacking.
  */
-function groove_contract_optional_slots(array $slots): array
+function enrove_contract_optional_slots(array $slots): array
 {
     return array_values(array_filter($slots, static function ($s) {
         return str_starts_with($s, '--folio-space-')
@@ -778,9 +778,9 @@ function groove_contract_optional_slots(array $slots): array
  * Themes_Manager::check_theme_contract() both need this split, and a second
  * copy of the rule is a second thing to keep in step.
  */
-function groove_contract_core_slots(array $slots): array
+function enrove_contract_core_slots(array $slots): array
 {
-    return array_values(array_diff($slots, groove_contract_optional_slots($slots)));
+    return array_values(array_diff($slots, enrove_contract_optional_slots($slots)));
 }
 
 // ── CLI entry point ──────────────────────────────────────────────────────────
@@ -789,7 +789,7 @@ function groove_contract_core_slots(array $slots): array
 // check a theme it has just unpacked (the installer did, until 0.5.1) must not
 // inherit getopt(), the help text, or any of the exits below — so it defines
 // this constant first.
-if (defined('GROOVE_THEME_CONTRACT_LIB')) {
+if (defined('ENROVE_THEME_CONTRACT_LIB')) {
     return;
 }
 
@@ -813,10 +813,10 @@ if (!is_readable($contract_path)) {
 }
 
 $contract = file_get_contents($contract_path);
-$slots = groove_contract_slots($contract);
+$slots = enrove_contract_slots($contract);
 
-$optional = groove_contract_optional_slots($slots);
-$core = groove_contract_core_slots($slots);
+$optional = enrove_contract_optional_slots($slots);
+$core = enrove_contract_core_slots($slots);
 
 // --dir points the checker at a theme that is not in this plugin's themes/
 // folder — which is every third-party theme. Without it the only tool that
@@ -860,7 +860,7 @@ if (isset($opts['theme'])) {
 $had_warning = false;
 $rows = [];
 
-// groove_check_theme_dir() is library code that also runs on WordPress requests.
+// enrove_check_theme_dir() is library code that also runs on WordPress requests.
 // phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound, WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
 
 /**
@@ -872,11 +872,11 @@ $rows = [];
  *
  * @param string $dir  Absolute path to the theme folder.
  * @param string $root Plugin root; what the cross-file checks resolve against.
- * @param array  $core Core slot names, from groove_contract_slots().
+ * @param array  $core Core slot names, from enrove_contract_slots().
  * @return array|null  Row of id/filled/total/missing/warn, or null when the
  *                     folder carries none of a theme's four marker files.
  */
-function groove_check_theme_dir(string $dir, string $root, array $core): ?array
+function enrove_check_theme_dir(string $dir, string $root, array $core): ?array
 {
     $id = basename($dir);
 
@@ -896,7 +896,7 @@ function groove_check_theme_dir(string $dir, string $root, array $core): ?array
         return null;
     }
 
-    $warn = groove_php_warnings($dir, $root);
+    $warn = enrove_php_warnings($dir, $root);
 
     $css = $dir . '/assets/css/theme.css';
     if (!is_readable($css)) {
@@ -905,7 +905,7 @@ function groove_check_theme_dir(string $dir, string $root, array $core): ?array
         return ['id' => $id, 'filled' => 0, 'total' => count($core), 'missing' => [], 'warn' => $warn];
     }
 
-    $src = groove_strip_comments(file_get_contents($css));
+    $src = enrove_strip_comments(file_get_contents($css));
 
     if (preg_match('/@import/i', $src)) {
         $warn[] = 'theme.css has an @import — fonts are declared in setup.php and fetched by Font_Loader, '
@@ -1024,7 +1024,7 @@ function groove_check_theme_dir(string $dir, string $root, array $core): ?array
         $warn[] = 'suppresses outline with no :focus-visible ring to replace it';
     }
 
-    // Declaring on :root leaks into the admin, which also carries body.groove.
+    // Declaring on :root leaks into the admin, which also carries body.enrove.
     // Legitimate only when a light/dark class on :root drives the tokens.
     $on_root = (bool) preg_match('/^\s*:root[^{]*\{[^}]*--folio-/m', $src);
     $has_scheme = (bool) preg_match('/(folio-scheme|theme-(light|dark))/i', $src);
@@ -1044,7 +1044,7 @@ function groove_check_theme_dir(string $dir, string $root, array $core): ?array
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound, WordPress.Security.EscapeOutput.OutputNotEscaped, WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- CLI-only code (a WordPress include returns above): shell-script globals, plain-text terminal output and STDERR messages, with no WordPress loaded to escape or write through.
 
 foreach ($theme_dirs as $dir) {
-    $row = groove_check_theme_dir($dir, $root, $core);
+    $row = enrove_check_theme_dir($dir, $root, $core);
     if ($row === null) {
         continue;
     }

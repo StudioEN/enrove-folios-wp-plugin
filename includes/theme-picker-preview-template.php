@@ -3,11 +3,11 @@
  * Theme Picker Preview Template
  *
  * Renders a live theme preview with dummy content, no real folio post required.
- * Triggered by ?groove_theme_preview=<theme-id> in plugin.php's template_redirect hook,
+ * Triggered by ?enrove_theme_preview=<theme-id> in plugin.php's template_redirect hook,
  * which checks the request (edit_posts + the picker's nonce) and sets the variables below.
  */
 
-use Groove\Themes\Themes_Manager;
+use Enrove\Themes\Themes_Manager;
 
 if (!defined('ABSPATH')) {
   exit;
@@ -30,9 +30,9 @@ $dummy_folio->post_author = 0;
 
 $page0_content = implode("\n", [
   '<!-- wp:heading {"level":2} --><h2>Overview</h2><!-- /wp:heading -->',
-  '<!-- wp:paragraph --><p>This is where your content lives. Each page in a Groove Folio can contain rich text, images, and structured sections that keep readers engaged.</p><!-- /wp:paragraph -->',
+  '<!-- wp:paragraph --><p>This is where your content lives. Each page in an Enrove Folio can contain rich text, images, and structured sections that keep readers engaged.</p><!-- /wp:paragraph -->',
   '<!-- wp:heading {"level":2} --><h2>Key Points</h2><!-- /wp:heading -->',
-  '<!-- wp:paragraph --><p>Groove Folios gives you a clean, professional canvas to present your work, proposals, reports, and ideas to clients and collaborators anywhere.</p><!-- /wp:paragraph -->',
+  '<!-- wp:paragraph --><p>Enrove Folios gives you a clean, professional canvas to present your work, proposals, reports, and ideas to clients and collaborators anywhere.</p><!-- /wp:paragraph -->',
   '<!-- wp:list --><ul><li>Clear, distraction-free layout</li><li>Optimised for reading on any device</li><li>Easy to update and share</li></ul><!-- /wp:list -->',
 ]);
 
@@ -132,11 +132,11 @@ if (property_exists($theme, 'show_in_page_nav')) {
 // Disable all internal navigation links — this is a read-only preview. After
 // the theme's stylesheet, which it depends on, so it wins a tie.
 add_action('wp_enqueue_scripts', function () use ($theme) {
-  $theme_handle = 'groove-theme-' . $theme::get_id();
-  wp_register_style('groove-theme-picker-preview', false, wp_style_is($theme_handle, 'registered') ? [$theme_handle] : [], GROOVE_VERSION);
-  wp_enqueue_style('groove-theme-picker-preview');
+  $theme_handle = 'enrove-theme-' . $theme::get_id();
+  wp_register_style('enrove-theme-picker-preview', false, wp_style_is($theme_handle, 'registered') ? [$theme_handle] : [], ENROVE_VERSION);
+  wp_enqueue_style('enrove-theme-picker-preview');
   wp_add_inline_style(
-    'groove-theme-picker-preview',
+    'enrove-theme-picker-preview',
     '.g-folio__theme-fields-submit, .g-folio__theme-page-nav-item-link, .g-folio__theme-nav-item-link, .g-folio__theme-page-prev a, .g-folio__theme-page-next a { pointer-events: none; cursor: default; }'
   );
 }, 20);
@@ -148,7 +148,7 @@ add_action('wp_enqueue_scripts', function () use ($theme) {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <?php wp_head(); ?>
 </head>
-<body <?php body_class('groove'); ?>>
+<body <?php body_class('enrove'); ?>>
   <?php $theme->display_theme(); ?>
   <?php wp_footer(); ?>
 </body>

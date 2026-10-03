@@ -1,8 +1,8 @@
 <?php
-namespace Groove\Menu;
+namespace Enrove\Menu;
 
-use Groove\Pages\Overview;
-use Groove\Menu\Menu_Item_Page;
+use Enrove\Pages\Overview;
+use Enrove\Menu\Menu_Item_Page;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -23,12 +23,12 @@ class Overview_Menu_Item extends Menu_Item_Page
 
     public function get_label()
     {
-        return esc_html__('Overview', 'groove-folios');
+        return esc_html__('Overview', 'enrove-folios');
     }
 
     public function get_page_title()
     {
-        return esc_html__('Groove Folios — Overview', 'groove-folios');
+        return esc_html__('Enrove Folios — Overview', 'enrove-folios');
     }
 
     public function get_capability()

@@ -1,5 +1,5 @@
 <?php
-namespace Groove\Themes;
+namespace Enrove\Themes;
 
 if (!defined('ABSPATH')) {
   exit;

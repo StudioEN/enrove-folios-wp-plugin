@@ -1,6 +1,6 @@
 <?php
 
-namespace Groove\Utils;
+namespace Enrove\Utils;
 
 if (!defined('ABSPATH')) {
 	exit; // Exit if accessed directly.
@@ -294,7 +294,7 @@ class Markdown
 				. '<a class="g-docs__anchor" href="#%2$s" aria-label="%3$s">#</a>%4$s</h%1$d>',
 			$level,
 			esc_attr($anchor),
-			esc_attr__('Link to this section', 'groove-folios'),
+			esc_attr__('Link to this section', 'enrove-folios'),
 			$this->inline($text)
 		);
 	}
@@ -571,7 +571,7 @@ class Markdown
 		if (preg_match('#^https?://#i', $href)) {
 			return '<a class="g-docs__link g-docs__link--external" href="' . esc_url($href) . '"'
 				. ' target="_blank" rel="noopener noreferrer">' . $text
-				. '<span class="screen-reader-text"> ' . esc_html__('(opens in a new tab)', 'groove-folios') . '</span></a>';
+				. '<span class="screen-reader-text"> ' . esc_html__('(opens in a new tab)', 'enrove-folios') . '</span></a>';
 		}
 
 		$resolved = $this->resolve_doc_link($href);

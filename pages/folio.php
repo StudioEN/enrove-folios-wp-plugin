@@ -1,17 +1,17 @@
 <?php
-namespace Groove\Pages;
-use Groove\Fields\FolioFields;
-use Groove\Pages\Page;
-use Groove\Pages\Overview;
-use Groove\Menu\Menu_Manager;
-use Groove\Menu\Folio_Menu_Item;
-use Groove\List\Folio_Page_List_Table;
-use Groove\List\Folio_List_Table;
-use Groove\Themes\Default_Themes;
-use Groove\Contents\FolioPage\Content as Folio_Page_Content;
-use Groove\Contents\FolioPage\Publishing as Folio_Page_Publishing;
-use Groove\Utils\Request;
-use Groove\Utils\Utils;
+namespace Enrove\Pages;
+use Enrove\Fields\FolioFields;
+use Enrove\Pages\Page;
+use Enrove\Pages\Overview;
+use Enrove\Menu\Menu_Manager;
+use Enrove\Menu\Folio_Menu_Item;
+use Enrove\List\Folio_Page_List_Table;
+use Enrove\List\Folio_List_Table;
+use Enrove\Themes\Default_Themes;
+use Enrove\Contents\FolioPage\Content as Folio_Page_Content;
+use Enrove\Contents\FolioPage\Publishing as Folio_Page_Publishing;
+use Enrove\Utils\Request;
+use Enrove\Utils\Utils;
 
 
 
@@ -21,8 +21,8 @@ if (!defined('ABSPATH')) {
 
 class Folio extends Page
 {
-  const PAGE_ID = 'groove-folio';
-  const POST_TYPE = 'groove_folio_page';
+  const PAGE_ID = 'enrove-folio';
+  const POST_TYPE = 'enrove_folio_page';
   /** save_folio() status for Save and autosave: whatever the folio has now. */
   const KEEP_STATUS = '__keep__';
 
@@ -33,15 +33,15 @@ class Folio extends Page
 
   public function __construct()
   {
-    $this->add_post_action('save_groove_folio_draft', 'save_folio_draft');
-    $this->add_post_action('save_groove_folio', 'save_folio_publish');
-    $this->add_post_action('save_groove_folio_manual', 'save_folio_manual');
-    $this->add_post_action('save_groove_folio_unpublish', 'save_folio_unpublish');
-    $this->add_post_action('auto_save_groove_folio', 'auto_save_folio');
+    $this->add_post_action('save_enrove_folio_draft', 'save_folio_draft');
+    $this->add_post_action('save_enrove_folio', 'save_folio_publish');
+    $this->add_post_action('save_enrove_folio_manual', 'save_folio_manual');
+    $this->add_post_action('save_enrove_folio_unpublish', 'save_folio_unpublish');
+    $this->add_post_action('auto_save_enrove_folio', 'auto_save_folio');
 
-    add_action('wp_ajax_groove_folio_inline_save', [$this, 'inline_save']);
+    add_action('wp_ajax_enrove_folio_inline_save', [$this, 'inline_save']);
 
-    add_action('groove/menu/register', function (Menu_Manager $menu) {
+    add_action('enrove/menu/register', function (Menu_Manager $menu) {
       $menu->register(static::PAGE_ID, new Folio_Menu_Item($this));
     }, Overview::MENU_PRIORITY + 20);
 
@@ -98,7 +98,7 @@ class Folio extends Page
     $is_published = false;
     if ($folio_id > 0) {
       $folio_post = get_post($folio_id);
-      if ($folio_post && $folio_post->post_type === 'groove_folio' && $folio_post->post_status === 'publish') {
+      if ($folio_post && $folio_post->post_type === 'enrove_folio' && $folio_post->post_status === 'publish') {
         $is_published = true;
       }
 
@@ -112,31 +112,31 @@ class Folio extends Page
     }
 
     $copy_link_label = $is_published
-      ? __('Copy public link', 'groove-folios')
-      : __('Copy preview link (editors only)', 'groove-folios');
+      ? __('Copy public link', 'enrove-folios')
+      : __('Copy preview link (editors only)', 'enrove-folios');
     $copied_link_label = $is_published
-      ? __('Link copied', 'groove-folios')
-      : __('Preview link copied', 'groove-folios');
+      ? __('Link copied', 'enrove-folios')
+      : __('Preview link copied', 'enrove-folios');
 
-    $preview_text = $is_published ? __('View', 'groove-folios') : __('Preview', 'groove-folios');
-    $preview_tooltip_text = $is_published ? __('View Folio', 'groove-folios') : __('Preview Folio', 'groove-folios');
+    $preview_text = $is_published ? __('View', 'enrove-folios') : __('Preview', 'enrove-folios');
+    $preview_tooltip_text = $is_published ? __('View Folio', 'enrove-folios') : __('Preview Folio', 'enrove-folios');
     $preview_link = $is_published
       ? $folio_copy_link
       : Utils::get_folio_permalink_by_id($folio_id);
     $publish_button_type = $is_published ? 'secondary' : 'primary';
-    $publish_button_action = $is_published ? 'save_groove_folio_unpublish' : 'save_groove_folio';
+    $publish_button_action = $is_published ? 'save_enrove_folio_unpublish' : 'save_enrove_folio';
     if ($is_published) {
-      $publish_button_text = __('Unpublish', 'groove-folios');
-      $publish_button_labels = array(__('Unpublishing...', 'groove-folios'), __('Unpublished', 'groove-folios'), __('Unpublish failed', 'groove-folios'));
+      $publish_button_text = __('Unpublish', 'enrove-folios');
+      $publish_button_labels = array(__('Unpublishing...', 'enrove-folios'), __('Unpublished', 'enrove-folios'), __('Unpublish failed', 'enrove-folios'));
     } elseif (self::can_publish_folios()) {
-      $publish_button_text = __('Publish', 'groove-folios');
-      $publish_button_labels = array(__('Publishing...', 'groove-folios'), __('Published', 'groove-folios'), __('Publish failed', 'groove-folios'));
+      $publish_button_text = __('Publish', 'enrove-folios');
+      $publish_button_labels = array(__('Publishing...', 'enrove-folios'), __('Published', 'enrove-folios'), __('Publish failed', 'enrove-folios'));
     } else {
       // save_folio() turns their Publish into Pending, so the button says so.
-      $publish_button_text = __('Submit for Review', 'groove-folios');
-      $publish_button_labels = array(__('Submitting...', 'groove-folios'), __('Submitted', 'groove-folios'), __('Submit failed', 'groove-folios'));
+      $publish_button_text = __('Submit for Review', 'enrove-folios');
+      $publish_button_labels = array(__('Submitting...', 'enrove-folios'), __('Submitted', 'enrove-folios'), __('Submit failed', 'enrove-folios'));
     }
-    // What the button says while it works and after; read by groove-main.js.
+    // What the button says while it works and after; read by enrove-main.js.
     $publish_button_attrs = array(
       'form' => 'g-folio-form',
       'data-saving-text' => $publish_button_labels[0],
@@ -155,13 +155,13 @@ class Folio extends Page
         'kind' => $is_published ? 'unpublish' : 'publish',
         'count' => $page_count,
       );
-      $publish_button_attrs['data-groove-publish-confirm'] = '';
+      $publish_button_attrs['data-enrove-publish-confirm'] = '';
       $publish_button_attrs['aria-haspopup'] = 'dialog';
     }
 
     $this->left_button_items = [
       array(
-        'text' => __('Add Page', 'groove-folios'),
+        'text' => __('Add Page', 'enrove-folios'),
         'type' => '',
         // Carries the nonce that Folio_Page_Content::verify_add_page_link()
         // checks before the new page is linked to this folio.
@@ -188,14 +188,14 @@ class Folio extends Page
         ),
       ),
       array(
-        'text' => __('Save', 'groove-folios'),
+        'text' => __('Save', 'enrove-folios'),
         'type' => 'secondary',
         'ui' => 'wp',
-        'action' => 'save_groove_folio_manual',
+        'action' => 'save_enrove_folio_manual',
         'attrs' => array(
           'id' => 'g-folio-save',
           'form' => 'g-folio-form',
-          'data-groove-save-idle' => __('Nothing to save — every change is already saved.', 'groove-folios'),
+          'data-enrove-save-idle' => __('Nothing to save — every change is already saved.', 'enrove-folios'),
         ),
       ),
       array(
@@ -206,10 +206,10 @@ class Folio extends Page
         'attrs' => $publish_button_attrs,
       ),
       array(
-        'text' => __('Copy link', 'groove-folios'),
+        'text' => __('Copy link', 'enrove-folios'),
         'type' => 'secondary',
         'ui' => 'wp',
-        'action' => 'copy_groove_folio_link',
+        'action' => 'copy_enrove_folio_link',
         'button_type' => 'button',
         'icon' => 'dashicons-admin-links',
         'overflow' => true,
@@ -244,25 +244,25 @@ class Folio extends Page
     $post_type = isset($_POST['post_type']) ? sanitize_key(wp_unslash($_POST['post_type'])) : '';
     if ('page' === $post_type) {
       if (!current_user_can('edit_page', $post_id)) {
-        wp_die(esc_html__('Sorry, you are not allowed to edit this page.', 'groove-folios'));
+        wp_die(esc_html__('Sorry, you are not allowed to edit this page.', 'enrove-folios'));
       }
     } else {
       if (!current_user_can('edit_post', $post_id)) {
-        wp_die(esc_html__('Sorry, you are not allowed to edit this post.', 'groove-folios'));
+        wp_die(esc_html__('Sorry, you are not allowed to edit this post.', 'enrove-folios'));
       }
     }
 
     $last = wp_check_post_lock($post_id);
     if ($last) {
       $last_user = get_userdata($last);
-      $last_user_name = $last_user ? $last_user->display_name : __('Someone', 'groove-folios');
+      $last_user_name = $last_user ? $last_user->display_name : __('Someone', 'enrove-folios');
 
       /* translators: %s: User's display name. */
-      $msg_template = __('Saving is disabled: %s is currently editing this post.', 'groove-folios');
+      $msg_template = __('Saving is disabled: %s is currently editing this post.', 'enrove-folios');
 
       if ('page' === $post_type) {
         /* translators: %s: User's display name. */
-        $msg_template = __('Saving is disabled: %s is currently editing this page.', 'groove-folios');
+        $msg_template = __('Saving is disabled: %s is currently editing this page.', 'enrove-folios');
       }
 
       printf(esc_html($msg_template), esc_html($last_user_name));
@@ -338,11 +338,11 @@ class Folio extends Page
     // would save this as a draft; the row says why instead.
     $requested_status = isset($data['post_status']) ? $data['post_status'] : '';
     if (
-      $post['post_type'] === 'groove_folio_page'
+      $post['post_type'] === 'enrove_folio_page'
       && in_array($requested_status, Folio_Page_Publishing::LIVE_PAGE_STATUSES, true)
       && !Folio_Page_Publishing::is_folio_live((int) get_post_meta($post_id, 'folio_id', true))
     ) {
-      esc_html_e('Publish the folio first. Its pages go live with it.', 'groove-folios');
+      esc_html_e('Publish the folio first. Its pages go live with it.', 'enrove-folios');
       wp_die();
     }
 
@@ -378,8 +378,8 @@ class Folio extends Page
     $saved_post = get_post($post_id);
     $saved_post_type = $saved_post ? $saved_post->post_type : static::POST_TYPE;
 
-    if ($saved_post_type === 'groove_folio') {
-      $table = new Folio_List_Table($this, 'groove_folio');
+    if ($saved_post_type === 'enrove_folio') {
+      $table = new Folio_List_Table($this, 'enrove_folio');
     } else {
       $table = new Folio_Page_List_Table($this, static::POST_TYPE);
     }
@@ -419,7 +419,7 @@ class Folio extends Page
       // core, they may open only folios they can edit, not others' drafts.
       if (
         $post instanceof \WP_Post
-        && $post->post_type === 'groove_folio'
+        && $post->post_type === 'enrove_folio'
         && in_array($post->post_status, array('draft', 'publish', 'pending', 'private'), true)
         && current_user_can('edit_post', $post->ID)
       ) {
@@ -458,7 +458,7 @@ class Folio extends Page
    */
   public function redirect_to_all_folios($notice = '')
   {
-    wp_safe_redirect(Request::admin_url(All_Folios::PAGE_ID, array('groove_notice' => $notice)));
+    wp_safe_redirect(Request::admin_url(All_Folios::PAGE_ID, array('enrove_notice' => $notice)));
     exit;
   }
 
@@ -494,7 +494,7 @@ class Folio extends Page
     }
 
     $post = get_post($id);
-    if (!$post || $post->post_type !== 'groove_folio') {
+    if (!$post || $post->post_type !== 'enrove_folio') {
       return $fallback_status;
     }
 
@@ -513,23 +513,23 @@ class Folio extends Page
     }
 
     // Nonce check must come before reading any POST data.
-    check_admin_referer('groove_save_folio', 'groove_nonce');
+    check_admin_referer('enrove_save_folio', 'enrove_nonce');
 
     if (empty($_POST['folio_id'])) {
-      wp_send_json(array('code' => 400, 'message' => __('Missing folio ID.', 'groove-folios')));
+      wp_send_json(array('code' => 400, 'message' => __('Missing folio ID.', 'enrove-folios')));
       return;
     }
 
     $id = intval(wp_unslash($_POST['folio_id']));
 
     if (!current_user_can('edit_post', $id)) {
-      wp_send_json(array('code' => 403, 'message' => __('Sorry, you are not allowed to edit this folio.', 'groove-folios')));
+      wp_send_json(array('code' => 403, 'message' => __('Sorry, you are not allowed to edit this folio.', 'enrove-folios')));
       return;
     }
 
     $folio_post = get_post($id);
-    if (!$folio_post || $folio_post->post_type !== 'groove_folio') {
-      wp_send_json(array('code' => 404, 'message' => __('Folio not found.', 'groove-folios')));
+    if (!$folio_post || $folio_post->post_type !== 'enrove_folio') {
+      wp_send_json(array('code' => 404, 'message' => __('Folio not found.', 'enrove-folios')));
       return;
     }
 
@@ -575,7 +575,7 @@ class Folio extends Page
     $proposal_version = isset($_POST['proposal_version']) ? sanitize_text_field(wp_unslash($_POST['proposal_version'])) : (string) ($fields->proposal_version ?? '');
 
     // Auto-increment version on explicit publish if the user didn't manually change it.
-    $is_explicit_publish = isset($_POST['action']) && sanitize_key(wp_unslash($_POST['action'])) === 'save_groove_folio';
+    $is_explicit_publish = isset($_POST['action']) && sanitize_key(wp_unslash($_POST['action'])) === 'save_enrove_folio';
     $stored_version = (string) ($fields->proposal_version ?? '');
     if ($is_explicit_publish && $proposal_version === $stored_version && preg_match('/^(v?)(\d+)\.(\d+)$/', $proposal_version, $m)) {
       $proposal_version = $m[1] . $m[2] . '.' . ((int) $m[3] + 1);
@@ -620,7 +620,7 @@ class Folio extends Page
       $desired_slug,
       $id,
       $post_status,
-      'groove_folio',
+      'enrove_folio',
       0
     );
 
@@ -668,7 +668,7 @@ class Folio extends Page
     $folio_result = wp_update_post($update_args);
 
     if (!is_wp_error($folio_result) && $collection_tag_names !== null) {
-      wp_set_object_terms($id, $collection_tag_names, 'groove_collection_tag', false);
+      wp_set_object_terms($id, $collection_tag_names, 'enrove_collection_tag', false);
     }
 
     // Record a revision log entry on explicit publish.
@@ -743,7 +743,7 @@ class Folio extends Page
       return $fields->title;
     }
 
-    return esc_html__('Folio', 'groove-folios');
+    return esc_html__('Folio', 'enrove-folios');
   }
 
   protected function shows_setup_entry()
@@ -757,8 +757,8 @@ class Folio extends Page
    */
   private function display_font_availability_hint()
   {
-    $system = \Groove\Themes\Font_Library::source() === \Groove\Themes\Font_Library::SOURCE_SYSTEM;
-    $missing = !$system && !empty(\Groove\Themes\Font_Library::status()['missing']);
+    $system = \Enrove\Themes\Font_Library::source() === \Enrove\Themes\Font_Library::SOURCE_SYSTEM;
+    $missing = !$system && !empty(\Enrove\Themes\Font_Library::status()['missing']);
 
     if (!$system && !$missing) {
       return;
@@ -768,25 +768,25 @@ class Folio extends Page
     $fonts_url = Request::admin_url(Settings::PAGE_ID, array('tab_key' => 'fonts'));
     // The setup dialog is on this screen while fonts are unsettled; the link
     // opens it there and falls back to the Fonts tab without script.
-    $opens_setup = $missing && \Groove\Setup\First_Run::should_offer();
+    $opens_setup = $missing && \Enrove\Setup\First_Run::should_offer();
     ?>
-    <p class="g-font-hint"<?php echo $opens_setup ? ' data-groove-setup-entry' : ''; ?>>
+    <p class="g-font-hint"<?php echo $opens_setup ? ' data-enrove-setup-entry' : ''; ?>>
       <span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
       <span>
         <?php
         if ($system) {
-          esc_html_e('This site uses system fonts, so folios show the fonts the WordPress dashboard uses rather than these.', 'groove-folios');
+          esc_html_e('This site uses system fonts, so folios show the fonts the WordPress dashboard uses rather than these.', 'enrove-folios');
         } else {
-          esc_html_e('These fonts are not on this site yet, so folios show system fonts for now.', 'groove-folios');
+          esc_html_e('These fonts are not on this site yet, so folios show system fonts for now.', 'enrove-folios');
         }
         ?>
         <?php if ($can_manage): ?>
-        <a href="<?php echo esc_url($fonts_url); ?>"<?php echo $opens_setup ? ' data-groove-setup-open' : ''; ?>>
+        <a href="<?php echo esc_url($fonts_url); ?>"<?php echo $opens_setup ? ' data-enrove-setup-open' : ''; ?>>
           <?php
           if ($system) {
-            esc_html_e('Change in Settings', 'groove-folios');
+            esc_html_e('Change in Settings', 'enrove-folios');
           } else {
-            esc_html_e('Download fonts', 'groove-folios');
+            esc_html_e('Download fonts', 'enrove-folios');
           }
           ?>
         </a>
@@ -798,7 +798,7 @@ class Folio extends Page
 
   private function get_collection_tag_names($folio_id)
   {
-    $terms = get_the_terms((int) $folio_id, 'groove_collection_tag');
+    $terms = get_the_terms((int) $folio_id, 'enrove_collection_tag');
     if (is_wp_error($terms) || empty($terms)) {
       return array();
     }
@@ -811,21 +811,21 @@ class Folio extends Page
   public function create_tabs()
   {
     $fields = $this->get_fields();
-    $is_proposal_theme = (string) ($fields->theme_id ?? '') === 'groove-proposal';
+    $is_proposal_theme = (string) ($fields->theme_id ?? '') === 'enrove-proposal';
 
     $tabs = [
       'setup' => [
-        'label' => esc_html__('Setup', 'groove-folios'),
+        'label' => esc_html__('Setup', 'enrove-folios'),
       ],
       'pages' => [
-        'label' => esc_html__('Pages', 'groove-folios'),
+        'label' => esc_html__('Pages', 'enrove-folios'),
       ]
     ];
 
     if ($is_proposal_theme) {
       $tabs['proposal'] = [
-        'label' => esc_html__('Proposal', 'groove-folios'),
-        'attrs' => ['data-theme-target' => 'groove-proposal'],
+        'label' => esc_html__('Proposal', 'enrove-folios'),
+        'attrs' => ['data-theme-target' => 'enrove-proposal'],
       ];
     }
 
@@ -907,60 +907,60 @@ class Folio extends Page
 
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Document', 'groove-folios'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Document', 'enrove-folios'); ?></h3>
           </div>
           <div class="p-4 space-y-4">
             <div>
-              <label for="proposal_version" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Version', 'groove-folios'); ?></label>
+              <label for="proposal_version" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Version', 'enrove-folios'); ?></label>
               <input type="text" id="proposal_version" name="proposal_version"
                 value="<?php echo esc_attr($proposal_version); ?>"
                 placeholder="v1.0"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Auto-increments on publish. Edit to override.', 'groove-folios'); ?></p>
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Auto-increments on publish. Edit to override.', 'enrove-folios'); ?></p>
               <button
                 type="button"
                 class="button-link mt-2"
                 data-version-history-open>
-                <?php esc_html_e('View version history', 'groove-folios'); ?>
+                <?php esc_html_e('View version history', 'enrove-folios'); ?>
               </button>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Status', 'groove-folios'); ?></label>
+              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Status', 'enrove-folios'); ?></label>
               <div class="flex items-center gap-2">
-                <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-sm font-medium text-gray-700"><?php echo esc_html($proposal_status ?: __('Draft', 'groove-folios')); ?></span>
+                <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-sm font-medium text-gray-700"><?php echo esc_html($proposal_status ?: __('Draft', 'enrove-folios')); ?></span>
               </div>
-              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Read-only. Mirrors the folio publish status.', 'groove-folios'); ?></p>
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Read-only. Mirrors the folio publish status.', 'enrove-folios'); ?></p>
             </div>
             <div>
-              <label for="proposal_date" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Date', 'groove-folios'); ?></label>
+              <label for="proposal_date" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Date', 'enrove-folios'); ?></label>
               <input type="date" id="proposal_date" name="proposal_date"
                 value="<?php echo esc_attr($proposal_date); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label for="proposal_revision_note" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Revision Note', 'groove-folios'); ?></label>
+              <label for="proposal_revision_note" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Revision Note', 'enrove-folios'); ?></label>
               <input type="text" id="proposal_revision_note" name="proposal_revision_note"
                 value=""
-                placeholder="<?php esc_attr_e('Optional note for this version', 'groove-folios'); ?>"
+                placeholder="<?php esc_attr_e('Optional note for this version', 'enrove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Included in version history when you publish. Not saved between sessions.', 'groove-folios'); ?></p>
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Included in version history when you publish. Not saved between sessions.', 'enrove-folios'); ?></p>
             </div>
           </div>
         </div>
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Client', 'groove-folios'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Client', 'enrove-folios'); ?></h3>
           </div>
           <div class="p-4 space-y-4">
             <div>
-              <label for="proposal_client_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Name', 'groove-folios'); ?></label>
+              <label for="proposal_client_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Name', 'enrove-folios'); ?></label>
               <input type="text" id="proposal_client_name" name="proposal_client_name"
                 value="<?php echo esc_attr($proposal_client_name); ?>"
-                placeholder="<?php esc_attr_e('Client Name', 'groove-folios'); ?>"
+                placeholder="<?php esc_attr_e('Client Name', 'enrove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Logo', 'groove-folios'); ?></label>
+              <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Client Logo', 'enrove-folios'); ?></label>
               <?php
                 $client_logo_preview = $proposal_client_logo_url !== '' ? esc_url_raw($proposal_client_logo_url) : '';
               ?>
@@ -973,22 +973,22 @@ class Folio extends Page
                     src="<?php echo esc_url($client_logo_preview); ?>" />
                 </div>
                 <div class="g-folio__media-actions">
-                  <button type="button" id="g-client-logo-select" class="button button-secondary"><?php echo $client_logo_preview !== '' ? esc_html__('Replace logo', 'groove-folios') : esc_html__('Select logo', 'groove-folios'); ?></button>
+                  <button type="button" id="g-client-logo-select" class="button button-secondary"><?php echo $client_logo_preview !== '' ? esc_html__('Replace logo', 'enrove-folios') : esc_html__('Select logo', 'enrove-folios'); ?></button>
                   <button type="button" id="g-client-logo-remove"
-                    class="button-link text-red-600 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Remove', 'groove-folios'); ?></button>
+                    class="button-link text-red-600 <?php echo $client_logo_preview === '' ? 'hidden' : ''; ?>"><?php esc_html_e('Remove', 'enrove-folios'); ?></button>
                 </div>
               </div>
             </div>
             <div>
               <label for="proposal_prepared_for" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                <?php esc_html_e('Prepared For', 'groove-folios'); ?>
-                <span class="font-normal text-gray-400 normal-case tracking-normal ml-1">(<?php esc_html_e('legacy', 'groove-folios'); ?>)</span>
+                <?php esc_html_e('Prepared For', 'enrove-folios'); ?>
+                <span class="font-normal text-gray-400 normal-case tracking-normal ml-1">(<?php esc_html_e('legacy', 'enrove-folios'); ?>)</span>
               </label>
               <input type="text" id="proposal_prepared_for" name="proposal_prepared_for"
                 value="<?php echo esc_attr($proposal_prepared_for); ?>"
-                placeholder="<?php esc_attr_e('Client Name', 'groove-folios'); ?>"
+                placeholder="<?php esc_attr_e('Client Name', 'enrove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Superseded by Client Name above when set.', 'groove-folios'); ?></p>
+              <p class="mt-1 mb-0 text-xs text-gray-400"><?php esc_html_e('Superseded by Client Name above when set.', 'enrove-folios'); ?></p>
             </div>
           </div>
         </div>
@@ -1000,32 +1000,32 @@ class Folio extends Page
 
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Primary Contact', 'groove-folios'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Primary Contact', 'enrove-folios'); ?></h3>
           </div>
           <div class="p-4 space-y-4">
             <div>
-              <label for="proposal_contact_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Name', 'groove-folios'); ?></label>
+              <label for="proposal_contact_name" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Name', 'enrove-folios'); ?></label>
               <input type="text" id="proposal_contact_name" name="proposal_contact_name"
                 value="<?php echo esc_attr($proposal_contact_name); ?>"
-                placeholder="<?php echo esc_attr_x('Alex Morgan', 'example contact name', 'groove-folios'); ?>"
+                placeholder="<?php echo esc_attr_x('Alex Morgan', 'example contact name', 'enrove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label for="proposal_contact_role" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Role', 'groove-folios'); ?></label>
+              <label for="proposal_contact_role" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Role', 'enrove-folios'); ?></label>
               <input type="text" id="proposal_contact_role" name="proposal_contact_role"
                 value="<?php echo esc_attr($proposal_contact_role); ?>"
-                placeholder="<?php echo esc_attr_x('Engagement Lead', 'example contact role', 'groove-folios'); ?>"
+                placeholder="<?php echo esc_attr_x('Engagement Lead', 'example contact role', 'enrove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label for="proposal_contact_email" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Email', 'groove-folios'); ?></label>
+              <label for="proposal_contact_email" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Email', 'enrove-folios'); ?></label>
               <input type="email" id="proposal_contact_email" name="proposal_contact_email"
                 value="<?php echo esc_attr($proposal_contact_email); ?>"
                 placeholder="hello@example.com"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
-              <label for="proposal_contact_phone" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Phone', 'groove-folios'); ?></label>
+              <label for="proposal_contact_phone" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Phone', 'enrove-folios'); ?></label>
               <input type="text" id="proposal_contact_phone" name="proposal_contact_phone"
                 value="<?php echo esc_attr($proposal_contact_phone); ?>"
                 placeholder="+1 (555) 123-4567"
@@ -1036,51 +1036,51 @@ class Folio extends Page
 
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Additional Contacts', 'groove-folios'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Additional Contacts', 'enrove-folios'); ?></h3>
           </div>
           <div class="p-4">
             <textarea id="proposal_contacts" name="proposal_contacts" rows="5"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="<?php echo esc_attr__('Name | Role | email@example.com | +1 555-555-5555 | https://linkedin.com/in/username', 'groove-folios') . '&#10;' . esc_attr__('Name | Role | email@example.com', 'groove-folios'); ?>"><?php echo esc_textarea($proposal_contacts); ?></textarea>
+              placeholder="<?php echo esc_attr__('Name | Role | email@example.com | +1 555-555-5555 | https://linkedin.com/in/username', 'enrove-folios') . '&#10;' . esc_attr__('Name | Role | email@example.com', 'enrove-folios'); ?>"><?php echo esc_textarea($proposal_contacts); ?></textarea>
             <p class="mt-2 mb-0 text-xs text-gray-500">
-              <?php esc_html_e('Optional. One contact per line using pipes: Name | Role | Email | Phone | LinkedIn URL. When set, replaces the primary contact above.', 'groove-folios'); ?>
+              <?php esc_html_e('Optional. One contact per line using pipes: Name | Role | Email | Phone | LinkedIn URL. When set, replaces the primary contact above.', 'enrove-folios'); ?>
             </p>
           </div>
         </div>
 
         <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Behaviour', 'groove-folios'); ?></h3>
+            <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Behaviour', 'enrove-folios'); ?></h3>
           </div>
           <div class="p-4 space-y-4">
             <div>
               <label for="proposal_open_text" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                <?php esc_html_e('Cover CTA Text', 'groove-folios'); ?>
+                <?php esc_html_e('Cover CTA Text', 'enrove-folios'); ?>
               </label>
               <input type="text" id="proposal_open_text" name="proposal_open_text"
                 value="<?php echo esc_attr($proposal_open_text); ?>"
-                placeholder="<?php esc_attr_e('Open proposal', 'groove-folios'); ?>"
+                placeholder="<?php esc_attr_e('Open proposal', 'enrove-folios'); ?>"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
               <p class="mt-2 mb-0 text-xs text-gray-500">
-                <?php esc_html_e('Optional. Defaults to “Open proposal” on the cover CTA.', 'groove-folios'); ?>
+                <?php esc_html_e('Optional. Defaults to “Open proposal” on the cover CTA.', 'enrove-folios'); ?>
               </p>
             </div>
             <div>
               <label for="proposal_color_scheme" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                <?php esc_html_e('Color Scheme', 'groove-folios'); ?>
+                <?php esc_html_e('Color Scheme', 'enrove-folios'); ?>
               </label>
               <select id="proposal_color_scheme" name="proposal_color_scheme"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                <option value="default" <?php selected($proposal_color_scheme, 'default'); ?>><?php esc_html_e('Default', 'groove-folios'); ?></option>
-                <option value="dynamic" <?php selected($proposal_color_scheme, 'dynamic'); ?>><?php esc_html_e('Dynamic (from feature image)', 'groove-folios'); ?></option>
+                <option value="default" <?php selected($proposal_color_scheme, 'default'); ?>><?php esc_html_e('Default', 'enrove-folios'); ?></option>
+                <option value="dynamic" <?php selected($proposal_color_scheme, 'dynamic'); ?>><?php esc_html_e('Dynamic (from feature image)', 'enrove-folios'); ?></option>
               </select>
               <p class="mt-2 mb-0 text-xs text-gray-500">
-                <?php esc_html_e('Dynamic mode extracts accent colors from the folio feature image and applies them across cover and pages.', 'groove-folios'); ?>
+                <?php esc_html_e('Dynamic mode extracts accent colors from the folio feature image and applies them across cover and pages.', 'enrove-folios'); ?>
               </p>
             </div>
             <div>
               <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                <?php esc_html_e('In-Page Navigation', 'groove-folios'); ?>
+                <?php esc_html_e('In-Page Navigation', 'enrove-folios'); ?>
               </label>
               <div class="flex items-center gap-2">
                 <input type="hidden" name="proposal_show_in_page_nav" value="0" />
@@ -1088,10 +1088,10 @@ class Folio extends Page
                   class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   <?php echo checked($proposal_show_in_page_nav, true, false); ?> />
                 <label for="g-proposal-show-in-page-nav" class="text-sm text-gray-700">
-                  <?php esc_html_e('Show in-page section navigation', 'groove-folios'); ?>
+                  <?php esc_html_e('Show in-page section navigation', 'enrove-folios'); ?>
                 </label>
               </div>
-              <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('When enabled, an "On this page" sidebar shows links to sections within each page.', 'groove-folios'); ?></p>
+              <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('When enabled, an "On this page" sidebar shows links to sections within each page.', 'enrove-folios'); ?></p>
             </div>
           </div>
         </div>
@@ -1123,29 +1123,29 @@ class Folio extends Page
       <div class="g-theme-picker-modal__frame g-version-history-modal__frame">
         <div class="g-theme-picker-modal__header">
           <div class="g-theme-picker-modal__heading">
-            <h3 class="g-theme-picker-modal__title"><?php esc_html_e('Version History', 'groove-folios'); ?></h3>
-            <p class="g-theme-picker-modal__subtitle"><?php esc_html_e('History is recorded each time you publish the proposal.', 'groove-folios'); ?></p>
+            <h3 class="g-theme-picker-modal__title"><?php esc_html_e('Version History', 'enrove-folios'); ?></h3>
+            <p class="g-theme-picker-modal__subtitle"><?php esc_html_e('History is recorded each time you publish the proposal.', 'enrove-folios'); ?></p>
           </div>
           <button
             type="button"
             class="g-theme-picker-modal__close"
             data-version-history-close
-            aria-label="<?php esc_attr_e('Close version history', 'groove-folios'); ?>">
+            aria-label="<?php esc_attr_e('Close version history', 'enrove-folios'); ?>">
             <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
           </button>
         </div>
         <div class="g-theme-picker-modal__body">
         <?php if ($total === 0) : ?>
-          <p class="text-sm text-gray-400 m-0"><?php esc_html_e('No version history yet. History is recorded when you publish.', 'groove-folios'); ?></p>
+          <p class="text-sm text-gray-400 m-0"><?php esc_html_e('No version history yet. History is recorded when you publish.', 'enrove-folios'); ?></p>
         <?php else : ?>
           <table class="w-full text-sm text-left">
             <thead>
               <tr class="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                <th class="pb-2 pr-3"><?php esc_html_e('Version', 'groove-folios'); ?></th>
-                <th class="pb-2 pr-3"><?php esc_html_e('Status', 'groove-folios'); ?></th>
-                <th class="pb-2 pr-3"><?php esc_html_e('Date', 'groove-folios'); ?></th>
-                <th class="pb-2 pr-3"><?php esc_html_e('By', 'groove-folios'); ?></th>
-                <th class="pb-2"><?php esc_html_e('Note', 'groove-folios'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('Version', 'enrove-folios'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('Status', 'enrove-folios'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('Date', 'enrove-folios'); ?></th>
+                <th class="pb-2 pr-3"><?php esc_html_e('By', 'enrove-folios'); ?></th>
+                <th class="pb-2"><?php esc_html_e('Note', 'enrove-folios'); ?></th>
               </tr>
             </thead>
             <tbody>
@@ -1171,11 +1171,11 @@ class Folio extends Page
           <?php if ($total > $visible_limit) : ?>
             <button type="button"
               class="mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer bg-transparent border-0 p-0"
-              data-groove-revisions-toggle
+              data-enrove-revisions-toggle
               aria-expanded="false"
-              data-show-all="<?php esc_attr_e('Show all', 'groove-folios'); ?>"
-              data-show-less="<?php esc_attr_e('Show less', 'groove-folios'); ?>">
-              <?php esc_html_e('Show all', 'groove-folios'); ?>
+              data-show-all="<?php esc_attr_e('Show all', 'enrove-folios'); ?>"
+              data-show-less="<?php esc_attr_e('Show less', 'enrove-folios'); ?>">
+              <?php esc_html_e('Show all', 'enrove-folios'); ?>
             </button>
           <?php endif; ?>
         <?php endif; ?>
@@ -1185,7 +1185,7 @@ class Folio extends Page
             type="button"
             class="g-theme-picker-modal__done"
             data-version-history-close>
-            <?php esc_html_e('Done', 'groove-folios'); ?>
+            <?php esc_html_e('Done', 'enrove-folios'); ?>
           </button>
         </div>
       </div>
@@ -1201,7 +1201,7 @@ class Folio extends Page
     $available_fonts = Utils::get_supported_primary_fonts();
     $on_this_page_label = isset($fields->on_this_page_label) ? (string) $fields->on_this_page_label : '';
     $on_this_page_placeholder = Utils::get_default_on_this_page_label();
-    $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
+    $all_themes = \Enrove\Themes\Themes_Manager::get_all_themes();
     $current_id = (string) ($fields->theme_id ?? '');
     if ($current_id === '' || !isset($all_themes[$current_id])) {
       $current_id = !empty($all_themes) ? (string) array_key_first($all_themes) : '';
@@ -1210,28 +1210,28 @@ class Folio extends Page
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-        <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Customization', 'groove-folios'); ?></h3>
+        <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Customization', 'enrove-folios'); ?></h3>
       </div>
       <div class="p-4 space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Theme', 'groove-folios'); ?></label>
+          <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Theme', 'enrove-folios'); ?></label>
           <div class="g-theme-picker-summary">
             <div class="g-theme-picker-summary__layout">
               <div class="g-theme-picker-summary__thumb">
                 <img
                   src="<?php echo esc_url($current_theme['thumbnail_url'] ?? ''); ?>"
-                  alt="<?php echo esc_attr($current_theme['name'] ?? __('Selected theme', 'groove-folios')); ?>"
+                  alt="<?php echo esc_attr($current_theme['name'] ?? __('Selected theme', 'enrove-folios')); ?>"
                   class="g-theme-picker-summary__thumb-image"
                   data-theme-summary-thumbnail />
               </div>
               <div class="g-theme-picker-summary__content">
-                <p class="g-theme-picker-summary__name" data-theme-summary-name><?php echo esc_html($current_theme['name'] ?? __('No theme selected', 'groove-folios')); ?></p>
+                <p class="g-theme-picker-summary__name" data-theme-summary-name><?php echo esc_html($current_theme['name'] ?? __('No theme selected', 'enrove-folios')); ?></p>
                 <p class="g-theme-picker-summary__description" data-theme-summary-description><?php echo esc_html($current_theme['description'] ?? ''); ?></p>
                 <button
                   type="button"
                   class="button button-secondary g-theme-picker-summary__button"
                   data-theme-picker-open>
-                  <?php esc_html_e('Change theme', 'groove-folios'); ?>
+                  <?php esc_html_e('Change theme', 'enrove-folios'); ?>
                 </button>
               </div>
             </div>
@@ -1240,11 +1240,11 @@ class Folio extends Page
         </div>
         <div class="space-y-4">
           <div>
-            <label for="g-header-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Primary font', 'groove-folios'); ?></label>
+            <label for="g-header-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Primary font', 'enrove-folios'); ?></label>
             <div class="flex items-center gap-2">
               <select id="g-header-font" name="header_font"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                <option value=""><?php esc_html_e('Theme default', 'groove-folios'); ?></option>
+                <option value=""><?php esc_html_e('Theme default', 'enrove-folios'); ?></option>
                 <?php foreach ($available_fonts as $font_key => $font): ?>
                   <option value="<?php echo esc_attr($font_key); ?>" <?php selected($header_font, $font_key); ?>>
                     <?php echo esc_html($font['label']); ?>
@@ -1253,18 +1253,18 @@ class Folio extends Page
               </select>
               <button type="button" id="g-reset-header-font"
                 class="g-tooltip-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                aria-label="<?php esc_attr_e('Reset font', 'groove-folios'); ?>"
-                data-tooltip-text="<?php esc_attr_e('Reset font', 'groove-folios'); ?>">
+                aria-label="<?php esc_attr_e('Reset font', 'enrove-folios'); ?>"
+                data-tooltip-text="<?php esc_attr_e('Reset font', 'enrove-folios'); ?>">
                 <span class="dashicons dashicons-undo" aria-hidden="true"></span>
               </button>
             </div>
           </div>
           <div>
-            <label for="g-body-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Secondary font', 'groove-folios'); ?></label>
+            <label for="g-body-font" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Secondary font', 'enrove-folios'); ?></label>
             <div class="flex items-center gap-2">
               <select id="g-body-font" name="body_font"
                 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                <option value=""><?php esc_html_e('Theme default', 'groove-folios'); ?></option>
+                <option value=""><?php esc_html_e('Theme default', 'enrove-folios'); ?></option>
                 <?php foreach ($available_fonts as $font_key => $font): ?>
                   <option value="<?php echo esc_attr($font_key); ?>" <?php selected($body_font, $font_key); ?>>
                     <?php echo esc_html($font['label']); ?>
@@ -1273,18 +1273,18 @@ class Folio extends Page
               </select>
               <button type="button" id="g-reset-body-font"
                 class="g-tooltip-button inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                aria-label="<?php esc_attr_e('Reset font', 'groove-folios'); ?>"
-                data-tooltip-text="<?php esc_attr_e('Reset font', 'groove-folios'); ?>">
+                aria-label="<?php esc_attr_e('Reset font', 'enrove-folios'); ?>"
+                data-tooltip-text="<?php esc_attr_e('Reset font', 'enrove-folios'); ?>">
                 <span class="dashicons dashicons-undo" aria-hidden="true"></span>
               </button>
             </div>
           </div>
-          <p class="m-0 text-xs text-gray-500"><?php esc_html_e('Primary font styles titles and headings. Secondary font styles the body text.', 'groove-folios'); ?></p>
+          <p class="m-0 text-xs text-gray-500"><?php esc_html_e('Primary font styles titles and headings. Secondary font styles the body text.', 'enrove-folios'); ?></p>
           <?php $this->display_font_availability_hint(); ?>
         </div>
         <div>
           <label for="g-on-this-page-label"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('“On this page” label', 'groove-folios'); ?></label>
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('“On this page” label', 'enrove-folios'); ?></label>
           <input type="text" id="g-on-this-page-label" name="on_this_page_label"
             value="<?php echo esc_attr($on_this_page_label); ?>"
             placeholder="<?php echo esc_attr($on_this_page_placeholder); ?>"
@@ -1304,21 +1304,21 @@ class Folio extends Page
     $is_using_folio = $fields->use_folio !== '0';
 
     $permalink = isset($fields->permalink) ? $fields->permalink : '';
-    $base_slug = \Groove\Utils\Utils::get_folio_base_slug();
+    $base_slug = \Enrove\Utils\Utils::get_folio_base_slug();
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-        <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Publishing', 'groove-folios'); ?></h3>
+        <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Publishing', 'enrove-folios'); ?></h3>
       </div>
       <div class="p-4 space-y-4">
         <div class="flex items-center">
           <input type="hidden" name="use_folio" value="0" />
           <input type="checkbox" id="use_folio" name="use_folio" value="1"
             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($is_using_folio, true, false) ?> />
-          <label for="use_folio" class="ml-2 block text-sm text-gray-900"><?php esc_html_e('Use folio cover', 'groove-folios'); ?></label>
+          <label for="use_folio" class="ml-2 block text-sm text-gray-900"><?php esc_html_e('Use folio cover', 'enrove-folios'); ?></label>
         </div>
         <div>
-          <label for="permalink" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Permalink (read-only)', 'groove-folios'); ?></label>
+          <label for="permalink" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Permalink (read-only)', 'enrove-folios'); ?></label>
           <div class="mt-1 flex rounded-md shadow-sm">
             <span
               class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-gray-500 sm:text-sm">/<?php echo esc_html($base_slug); ?>/</span>
@@ -1342,14 +1342,14 @@ class Folio extends Page
     $subtitle = isset($fields->subtitle) ? $fields->subtitle : '';
     $copyright = isset($fields->copyright) ? $fields->copyright : '';
     $collection_tags = implode(', ', $this->get_collection_tag_names((int) $fields->ID));
-    $all_collection_tags_terms = get_terms(array('taxonomy' => 'groove_collection_tag', 'hide_empty' => false));
+    $all_collection_tags_terms = get_terms(array('taxonomy' => 'enrove_collection_tag', 'hide_empty' => false));
     $all_collection_tag_names_list = is_wp_error($all_collection_tags_terms) ? [] : array_map(function ($t) {
       return $t->name;
     }, $all_collection_tags_terms);
     $collection_tags_settings_url = Request::admin_url(Settings::PAGE_ID, array('tab_key' => 'collections'));
 
     // Get current theme info for default image fallback
-    $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
+    $all_themes = \Enrove\Themes\Themes_Manager::get_all_themes();
     $current_theme = $all_themes[$fields->theme_id] ?? reset($all_themes);
     $theme_cover_url = $current_theme["cover_url"] ?? '';
     $feature_image_src = ($feature_image instanceof \WP_Post && !empty($feature_image->guid)) ? $feature_image->guid : $theme_cover_url;
@@ -1360,39 +1360,39 @@ class Folio extends Page
     ?>
     <div class="bg-white border mb-5 border-gray-200 rounded-lg shadow-sm">
       <div class="px-4 py-3 border-b border-gray-200 bg-gray-50/50 rounded-t-lg">
-        <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Essentials', 'groove-folios'); ?></h3>
+        <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Essentials', 'enrove-folios'); ?></h3>
       </div>
       <div class="p-4 space-y-4">
-        <?php wp_nonce_field('groove_save_folio', 'groove_nonce'); ?>
+        <?php wp_nonce_field('enrove_save_folio', 'enrove_nonce'); ?>
         <div>
-          <label for="title" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Title', 'groove-folios'); ?></label>
+          <label for="title" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Title', 'enrove-folios'); ?></label>
           <input type="text" id="title" name="title" value="<?php echo esc_attr($fields->title) ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
         <div>
           <label for="subtitle"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Subtitle', 'groove-folios'); ?></label>
-          <input placeholder="<?php esc_attr_e('Optional', 'groove-folios'); ?>" type="text" id="subtitle" name="subtitle" value="<?php echo esc_attr($subtitle) ?>"
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Subtitle', 'enrove-folios'); ?></label>
+          <input placeholder="<?php esc_attr_e('Optional', 'enrove-folios'); ?>" type="text" id="subtitle" name="subtitle" value="<?php echo esc_attr($subtitle) ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
         <div>
           <label for="collection_tags"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Collection Tags', 'groove-folios'); ?></label>
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Collection Tags', 'enrove-folios'); ?></label>
           <input type="text" id="collection_tags" name="collection_tags" value="<?php echo esc_attr($collection_tags) ?>"
-            placeholder="<?php esc_attr_e('Magazine, 2026, Weekly', 'groove-folios'); ?>"
+            placeholder="<?php esc_attr_e('Magazine, 2026, Weekly', 'enrove-folios'); ?>"
             autocomplete="off"
             data-tags="<?php echo esc_attr(wp_json_encode($all_collection_tag_names_list)); ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
           <p class="mt-1 mb-0 text-xs text-gray-400">
-            <?php esc_html_e('Comma-separated tags. Manage available tags from Settings.', 'groove-folios'); ?>
+            <?php esc_html_e('Comma-separated tags. Manage available tags from Settings.', 'enrove-folios'); ?>
             <?php if (current_user_can('manage_options')): ?>
-              <a href="<?php echo esc_url($collection_tags_settings_url); ?>"><?php esc_html_e('Open Collections settings', 'groove-folios'); ?></a>
+              <a href="<?php echo esc_url($collection_tags_settings_url); ?>"><?php esc_html_e('Open Collections settings', 'enrove-folios'); ?></a>
             <?php endif; ?>
           </p>
         </div>
         <div class="g-folio__media-row">
           <div class="g-folio__media-col">
-            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Feature image', 'groove-folios'); ?></label>
+            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Feature image', 'enrove-folios'); ?></label>
             <input value="<?php echo $feature_image instanceof \WP_Post ? (int) $feature_image->ID : ''; ?>" type="hidden"
               name="feature_image_id" id="feature-media-id">
             <div class="g-folio__media-field">
@@ -1401,14 +1401,14 @@ class Folio extends Page
                 <img id="feature-preview" class="g-folio__media-preview-image" src="<?php echo esc_url($feature_image_src); ?>" />
               </div>
               <div class="g-folio__media-actions">
-                <button type="button" id="feature-image" class="button button-secondary"><?php esc_html_e('Replace image', 'groove-folios'); ?></button>
+                <button type="button" id="feature-image" class="button button-secondary"><?php esc_html_e('Replace image', 'enrove-folios'); ?></button>
                 <button type="button" data-default-url="<?php echo esc_url($theme_cover_url); ?>" id="use-default-image"
-                  class="button-link"><?php esc_html_e('Use default', 'groove-folios'); ?></button>
+                  class="button-link"><?php esc_html_e('Use default', 'enrove-folios'); ?></button>
               </div>
             </div>
           </div>
           <div class="g-folio__media-col">
-            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Logo', 'groove-folios'); ?></label>
+            <label class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Logo', 'enrove-folios'); ?></label>
             <input value="<?php echo $logo instanceof \WP_Post ? (int) $logo->ID : ''; ?>" type="hidden" name="logo_id"
               id="logo-media-id">
             <div class="g-folio__media-field">
@@ -1417,16 +1417,16 @@ class Folio extends Page
                 <img id="logo-preview" class="g-folio__media-preview-image" src="<?php echo esc_url($logo_image_src); ?>" />
               </div>
               <div class="g-folio__media-actions">
-                <button type="button" id="logo-image" class="button button-secondary"><?php esc_html_e('Replace image', 'groove-folios'); ?></button>
+                <button type="button" id="logo-image" class="button button-secondary"><?php esc_html_e('Replace image', 'enrove-folios'); ?></button>
                 <button type="button" data-default-url="" id="use-default-logo"
-                  class="button-link"><?php esc_html_e('Remove', 'groove-folios'); ?></button>
+                  class="button-link"><?php esc_html_e('Remove', 'enrove-folios'); ?></button>
               </div>
             </div>
             <div class="mt-3 flex items-center">
               <input type="hidden" name="show_logo" value="0" />
               <input type="checkbox" id="show_logo" name="show_logo" value="1"
                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($show_logo, true, false); ?> />
-              <label for="show_logo" class="ml-2 block text-sm text-gray-900"><?php esc_html_e('Include logo', 'groove-folios'); ?></label>
+              <label for="show_logo" class="ml-2 block text-sm text-gray-900"><?php esc_html_e('Include logo', 'enrove-folios'); ?></label>
             </div>
           </div>
         </div>
@@ -1439,22 +1439,22 @@ class Folio extends Page
         }
         ?>
         <div>
-          <label for="byline" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Byline', 'groove-folios'); ?></label>
+          <label for="byline" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Byline', 'enrove-folios'); ?></label>
           <?php
           wp_dropdown_users(array(
             'name' => 'byline',
             'id' => 'byline',
             'selected' => $selected_byline,
             'class' => 'block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
-            'show_option_none' => __('Hide byline', 'groove-folios'),
+            'show_option_none' => __('Hide byline', 'enrove-folios'),
             'option_none_value' => '0',
           ));
           ?>
         </div>
         <div>
           <label for="copyright"
-            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Copyright', 'groove-folios'); ?></label>
-          <input placeholder="<?php esc_attr_e('Optional', 'groove-folios'); ?>" type="text" id="copyright" name="copyright" value="<?php echo esc_attr($copyright) ?>"
+            class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Copyright', 'enrove-folios'); ?></label>
+          <input placeholder="<?php esc_attr_e('Optional', 'enrove-folios'); ?>" type="text" id="copyright" name="copyright" value="<?php echo esc_attr($copyright) ?>"
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
         </div>
       </div>
@@ -1468,7 +1468,7 @@ class Folio extends Page
    * Switching theme deletes nothing: page content is untouched and theme meta
    * survives every save. What a switch does lose is what readers see, and that
    * is what the Change theme dialog confirms. Keyed by the theme being left,
-   * each entry is a list of finished sentences, since groove-main.js has no
+   * each entry is a list of finished sentences, since enrove-main.js has no
    * translation functions of its own:
    *
    * Blocks that theme registered (`<theme-id>/…`): every theme's blocks are
@@ -1486,11 +1486,11 @@ class Folio extends Page
       return array();
     }
 
-    $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
+    $all_themes = \Enrove\Themes\Themes_Manager::get_all_themes();
     $theme_ids = array_map('strval', array_keys($all_themes));
 
     $page_ids = get_posts(array(
-      'post_type' => 'groove_folio_page',
+      'post_type' => 'enrove_folio_page',
       'post_status' => array('publish', 'draft', 'pending', 'private', 'future'),
       'posts_per_page' => -1,
       'fields' => 'ids',
@@ -1521,7 +1521,7 @@ class Folio extends Page
         // entities would show literally, and a "Private:" prefix is noise here.
         $title = trim((string) get_post_field('post_title', $page_id, 'raw'));
         $blocks[$theme_id]['count'] = ($blocks[$theme_id]['count'] ?? 0) + $count;
-        $blocks[$theme_id]['pages'][] = $title !== '' ? $title : __('(no title)', 'groove-folios');
+        $blocks[$theme_id]['pages'][] = $title !== '' ? $title : __('(no title)', 'enrove-folios');
       }
     }
 
@@ -1532,7 +1532,7 @@ class Folio extends Page
       $page_list = implode(', ', $titles);
       if ($more > 0) {
         /* translators: 1: comma-separated page titles, 2: number of further pages */
-        $page_list = sprintf(__('%1$s and %2$s more', 'groove-folios'), $page_list, number_format_i18n($more));
+        $page_list = sprintf(__('%1$s and %2$s more', 'enrove-folios'), $page_list, number_format_i18n($more));
       }
       $impact[$theme_id][] = sprintf(
         /* translators: 1: number of blocks, 2: theme name, 3: comma-separated page titles */
@@ -1540,7 +1540,7 @@ class Folio extends Page
           '%1$s %2$s block loses its styling, on: %3$s.',
           '%1$s %2$s blocks lose their styling, on: %3$s.',
           $found['count'],
-          'groove-folios'
+          'enrove-folios'
         ),
         number_format_i18n($found['count']),
         $all_themes[$theme_id]['name'] ?? $theme_id,
@@ -1552,7 +1552,7 @@ class Folio extends Page
   }
 
   /**
-   * Proposal meta that readers see only under Groove Proposal, and that the
+   * Proposal meta that readers see only under Enrove Proposal, and that the
    * Change theme dialog warns about leaving behind. Left out: version, status,
    * scheme and the nav toggle, which are derived or only matter once there is
    * something to show; and prepared_by and the revision log, which no theme
@@ -1566,7 +1566,7 @@ class Folio extends Page
   );
 
   /**
-   * Whether this folio has stored proposal details. groove-main.js prefers the
+   * Whether this folio has stored proposal details. enrove-main.js prefers the
    * Proposal tab's live fields when the tab is on the page, since they hold
    * whatever was typed or cleared since load.
    */
@@ -1593,7 +1593,7 @@ class Folio extends Page
   private static function count_theme_blocks(array $blocks, array $theme_ids, array &$counts): void
   {
     foreach ($blocks as $block) {
-      $owner = \Groove\Themes\Theme_Blocks::get_owner((string) ($block['blockName'] ?? ''), $theme_ids);
+      $owner = \Enrove\Themes\Theme_Blocks::get_owner((string) ($block['blockName'] ?? ''), $theme_ids);
       if ($owner !== '') {
         $counts[$owner] = ($counts[$owner] ?? 0) + 1;
       }
@@ -1606,7 +1606,7 @@ class Folio extends Page
   public function display_theme_selection()
   {
     $fields = $this->get_fields();
-    $all_themes = \Groove\Themes\Themes_Manager::get_all_themes();
+    $all_themes = \Enrove\Themes\Themes_Manager::get_all_themes();
     $current_id = (string) ($fields->theme_id ?? '');
     if ($current_id === '' || !isset($all_themes[$current_id])) {
       $current_id = !empty($all_themes) ? (string) array_key_first($all_themes) : '';
@@ -1625,10 +1625,10 @@ class Folio extends Page
       <div class="g-add-new-modal__dialog">
         <div class="g-add-new-modal__header">
           <h2 id="g-theme-picker-modal-title" class="g-add-new-modal__title">
-            <?php esc_html_e('Change theme', 'groove-folios'); ?>
+            <?php esc_html_e('Change theme', 'enrove-folios'); ?>
           </h2>
           <button type="button" class="g-add-new-modal__close" data-theme-picker-close
-            aria-label="<?php esc_attr_e('Close', 'groove-folios'); ?>">
+            aria-label="<?php esc_attr_e('Close', 'enrove-folios'); ?>">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75"
                 stroke-linecap="round" />
@@ -1641,12 +1641,12 @@ class Folio extends Page
                    The confirm screen takes the pick screen's height, so the
                    dialog does not jump between them. */ ?>
           <div class="g-dialog-screen" data-theme-switch-pick>
-            <p class="g-folio__themes-desc"><?php esc_html_e('Switch the folio theme for the cover and inner pages.', 'groove-folios'); ?></p>
+            <p class="g-folio__themes-desc"><?php esc_html_e('Switch the folio theme for the cover and inner pages.', 'enrove-folios'); ?></p>
             <p class="g-folio__themes-selected">
-              <?php esc_html_e('Selected theme:', 'groove-folios'); ?>
+              <?php esc_html_e('Selected theme:', 'enrove-folios'); ?>
               <strong data-theme-staged-name><?php echo esc_html($all_themes[$current_id]['name'] ?? ''); ?></strong>
             </p>
-            <div class="g-folio__themes" role="radiogroup" aria-label="<?php esc_attr_e('Available themes', 'groove-folios'); ?>">
+            <div class="g-folio__themes" role="radiogroup" aria-label="<?php esc_attr_e('Available themes', 'enrove-folios'); ?>">
               <?php
               foreach ($all_themes as $id => $theme) {
                 Add_New::display_theme_card((string) $id, $theme, $id === $current_id);
@@ -1655,28 +1655,28 @@ class Folio extends Page
             </div>
             <div class="g-folio__theme-button">
               <button type="button" class="button button-secondary" data-theme-picker-close>
-                <?php esc_html_e('Cancel', 'groove-folios'); ?>
+                <?php esc_html_e('Cancel', 'enrove-folios'); ?>
               </button>
               <button type="button" class="button button-primary" data-theme-switch-apply disabled>
-                <?php esc_html_e('Switch theme', 'groove-folios'); ?>
+                <?php esc_html_e('Switch theme', 'enrove-folios'); ?>
               </button>
             </div>
           </div>
 
-          <?php /* Filled in by groove-main.js from data-theme-switch-impact:
+          <?php /* Filled in by enrove-main.js from data-theme-switch-impact:
                    which theme is being left, and what of it is on this folio. */ ?>
           <div class="g-dialog-screen g-dialog-confirm" data-theme-switch-confirm hidden role="group"
             aria-labelledby="g-theme-switch-confirm-lead" aria-describedby="g-theme-switch-confirm-list g-theme-switch-confirm-note"
             data-lead="<?php echo esc_attr(
               /* translators: %s: theme name. Keep the placeholder as %s. */
-              __('Leaving %s changes what readers of this folio see:', 'groove-folios')); ?>"
+              __('Leaving %s changes what readers of this folio see:', 'enrove-folios')); ?>"
             data-note="<?php echo esc_attr(
               /* translators: %s: theme name. Keep the placeholder as %s. */
-              __('Nothing is deleted. Switch back to %s and it all shows again.', 'groove-folios')); ?>"
+              __('Nothing is deleted. Switch back to %s and it all shows again.', 'enrove-folios')); ?>"
             data-title="<?php echo esc_attr(
               /* translators: %s: theme name. Keep the placeholder as %s. */
-              __('Switch to %s?', 'groove-folios')); ?>"
-            data-proposal-details="<?php esc_attr_e('The proposal details stop showing: client, contacts, date and cover button text.', 'groove-folios'); ?>"
+              __('Switch to %s?', 'enrove-folios')); ?>"
+            data-proposal-details="<?php esc_attr_e('The proposal details stop showing: client, contacts, date and cover button text.', 'enrove-folios'); ?>"
             data-proposal-details-stored="<?php echo $this->has_proposal_details() ? '1' : '0'; ?>"
             data-proposal-detail-fields="<?php echo esc_attr(implode(',', self::PROPOSAL_DETAIL_KEYS)); ?>">
             <div class="g-dialog-confirm__subject" aria-hidden="true">
@@ -1697,10 +1697,10 @@ class Folio extends Page
             </div>
             <div class="g-folio__theme-button g-dialog-confirm__actions">
               <button type="button" class="button button-secondary" data-theme-switch-back>
-                <?php esc_html_e('Back', 'groove-folios'); ?>
+                <?php esc_html_e('Back', 'enrove-folios'); ?>
               </button>
               <button type="button" class="button button-primary" data-theme-switch-confirm-apply>
-                <?php esc_html_e('Switch theme', 'groove-folios'); ?>
+                <?php esc_html_e('Switch theme', 'enrove-folios'); ?>
               </button>
             </div>
           </div>
@@ -1715,7 +1715,7 @@ class Folio extends Page
     $tabs = $this->get_tabs();
     $tab_key = $this->current_tab();
     ?>
-    <nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Folio tabs', 'groove-folios'); ?>">
+    <nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e('Folio tabs', 'enrove-folios'); ?>">
       <?php
       foreach ($tabs as $tab_id => $tab) {
         $active_class = $tab_key === $tab_id ? ' nav-tab-active' : '';
@@ -1763,17 +1763,17 @@ class Folio extends Page
   {
     switch ($status) {
       case 'publish':
-        return esc_html__('Published', 'groove-folios');
+        return esc_html__('Published', 'enrove-folios');
       case 'draft':
-        return esc_html__('Draft', 'groove-folios');
+        return esc_html__('Draft', 'enrove-folios');
       case 'pending':
-        return esc_html__('Pending', 'groove-folios');
+        return esc_html__('Pending', 'enrove-folios');
       case 'private':
-        return esc_html__('Private', 'groove-folios');
+        return esc_html__('Private', 'enrove-folios');
       case 'trash':
-        return esc_html__('Trash', 'groove-folios');
+        return esc_html__('Trash', 'enrove-folios');
       default:
-        return esc_html__('All', 'groove-folios');
+        return esc_html__('All', 'enrove-folios');
     }
   }
 
@@ -1789,7 +1789,7 @@ class Folio extends Page
    */
   public static function can_publish_folios()
   {
-    $post_type = get_post_type_object('groove_folio');
+    $post_type = get_post_type_object('enrove_folio');
 
     return current_user_can($post_type ? $post_type->cap->publish_posts : 'publish_posts');
   }
@@ -1798,20 +1798,20 @@ class Folio extends Page
   {
     switch ($status) {
       case 'publish':
-        return esc_html__('Published', 'groove-folios');
+        return esc_html__('Published', 'enrove-folios');
       case 'draft':
       case 'auto-draft':
-        return esc_html__('Draft', 'groove-folios');
+        return esc_html__('Draft', 'enrove-folios');
       case 'pending':
-        return esc_html__('Pending', 'groove-folios');
+        return esc_html__('Pending', 'enrove-folios');
       case 'private':
-        return esc_html__('Private', 'groove-folios');
+        return esc_html__('Private', 'enrove-folios');
       case 'trash':
-        return esc_html__('Trash', 'groove-folios');
+        return esc_html__('Trash', 'enrove-folios');
       default:
         $status = is_string($status) ? trim($status) : '';
         if ($status === '') {
-          return esc_html__('Draft', 'groove-folios');
+          return esc_html__('Draft', 'enrove-folios');
         }
 
         return esc_html(ucwords(str_replace(array('-', '_'), ' ', $status)));
@@ -1942,13 +1942,13 @@ class Folio extends Page
   {
     if ($status === 'trash') {
       return array(
-        'untrash' => esc_html__('Restore', 'groove-folios'),
-        'delete' => esc_html__('Delete Permanently', 'groove-folios'),
+        'untrash' => esc_html__('Restore', 'enrove-folios'),
+        'delete' => esc_html__('Delete Permanently', 'enrove-folios'),
       );
     }
 
     return array(
-      'trash' => esc_html__('Move to Trash', 'groove-folios'),
+      'trash' => esc_html__('Move to Trash', 'enrove-folios'),
     );
   }
 
@@ -1956,10 +1956,10 @@ class Folio extends Page
   {
     // Only the list form carries this nonce. It is verified before the chosen
     // action or the selected pages are read.
-    if (!isset($_REQUEST['_groove_bulk_nonce'])) {
+    if (!isset($_REQUEST['_enrove_bulk_nonce'])) {
       return;
     }
-    check_admin_referer('groove_bulk_pages_action', '_groove_bulk_nonce');
+    check_admin_referer('enrove_bulk_pages_action', '_enrove_bulk_nonce');
 
     $action = isset($_REQUEST['action']) ? sanitize_key(wp_unslash($_REQUEST['action'])) : '-1';
     if ($action === '-1') {
@@ -2041,31 +2041,31 @@ class Folio extends Page
     }
 
     $message = '';
-    $type = \Groove\Toast::SUCCESS;
+    $type = \Enrove\Toast::SUCCESS;
 
     switch ($action) {
       case 'trash':
         $message = sprintf(
           /* translators: %s: number of pages moved to trash */
-          _n('%s page moved to Trash.', '%s pages moved to Trash.', $count, 'groove-folios'),
+          _n('%s page moved to Trash.', '%s pages moved to Trash.', $count, 'enrove-folios'),
           number_format_i18n($count)
         );
-        $type = \Groove\Toast::INFO;
+        $type = \Enrove\Toast::INFO;
         break;
       case 'untrash':
         $message = sprintf(
           /* translators: %s: number of pages restored */
-          _n('%s page restored.', '%s pages restored.', $count, 'groove-folios'),
+          _n('%s page restored.', '%s pages restored.', $count, 'enrove-folios'),
           number_format_i18n($count)
         );
         break;
       case 'delete':
         $message = sprintf(
           /* translators: %s: number of pages deleted */
-          _n('%s page deleted permanently.', '%s pages deleted permanently.', $count, 'groove-folios'),
+          _n('%s page deleted permanently.', '%s pages deleted permanently.', $count, 'enrove-folios'),
           number_format_i18n($count)
         );
-        $type = \Groove\Toast::INFO;
+        $type = \Enrove\Toast::INFO;
         break;
     }
 
@@ -2073,7 +2073,7 @@ class Folio extends Page
       return;
     }
 
-    \Groove\Toast::add($message, $type, array('bulk_action', 'bulk_count'));
+    \Enrove\Toast::add($message, $type, array('bulk_action', 'bulk_count'));
   }
 
   private function get_pages_tab_last_modified_by($post_id)
@@ -2087,7 +2087,7 @@ class Folio extends Page
     }
 
     $author = get_userdata((int) get_post_field('post_author', $post_id));
-    return $author ? $author->display_name : esc_html__('Unknown user', 'groove-folios');
+    return $author ? $author->display_name : esc_html__('Unknown user', 'enrove-folios');
   }
 
   public function display_tab_pages()
@@ -2115,7 +2115,7 @@ class Folio extends Page
       <input type="hidden" name="post_status" class="post_status_page" value="<?php echo esc_attr($status); ?>" />
       <input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>" />
       <input type="hidden" name="order" value="<?php echo esc_attr($order); ?>" />
-      <?php wp_nonce_field('groove_bulk_pages_action', '_groove_bulk_nonce'); ?>
+      <?php wp_nonce_field('enrove_bulk_pages_action', '_enrove_bulk_nonce'); ?>
       <?php Request::nonce_field(); ?>
 
       <ul class="subsubsub">
@@ -2153,23 +2153,23 @@ class Folio extends Page
 
       <p class="search-box">
         <label class="screen-reader-text"
-          for="post-search-input"><?php esc_html_e('Search folio pages', 'groove-folios'); ?>:</label>
+          for="post-search-input"><?php esc_html_e('Search folio pages', 'enrove-folios'); ?>:</label>
         <input type="search" id="post-search-input" name="s" value="<?php echo esc_attr($search); ?>" />
         <input type="submit" id="search-submit" class="button"
-          value="<?php esc_attr_e('Search Folio Pages', 'groove-folios'); ?>" />
+          value="<?php esc_attr_e('Search Folio Pages', 'enrove-folios'); ?>" />
       </p>
 
       <div class="tablenav top">
         <div class="alignleft actions bulkactions">
           <label for="bulk-action-selector-top"
-            class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove-folios'); ?></label>
+            class="screen-reader-text"><?php esc_html_e('Select bulk action', 'enrove-folios'); ?></label>
           <select name="action" id="bulk-action-selector-top">
-            <option value="-1"><?php esc_html_e('Bulk actions', 'groove-folios'); ?></option>
+            <option value="-1"><?php esc_html_e('Bulk actions', 'enrove-folios'); ?></option>
             <?php foreach ($bulk_actions as $action_key => $action_label): ?>
               <option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
             <?php endforeach; ?>
           </select>
-          <input type="submit" id="doaction" class="button action" value="<?php esc_attr_e('Apply', 'groove-folios'); ?>" />
+          <input type="submit" id="doaction" class="button action" value="<?php esc_attr_e('Apply', 'enrove-folios'); ?>" />
         </div>
         <div class="tablenav-pages">
           <?php if ($total_pages > 1): ?>
@@ -2200,7 +2200,7 @@ class Folio extends Page
               <?php
               printf(
                 /* translators: %s: number of items */
-                esc_html(_n('%s item', '%s items', $total_items, 'groove-folios')),
+                esc_html(_n('%s item', '%s items', $total_items, 'enrove-folios')),
                 esc_html(number_format_i18n($total_items))
               );
               ?>
@@ -2213,7 +2213,7 @@ class Folio extends Page
               <?php
               printf(
                 /* translators: %s: number of items */
-                esc_html(_n('%s item', '%s items', $total_items, 'groove-folios')),
+                esc_html(_n('%s item', '%s items', $total_items, 'enrove-folios')),
                 esc_html(number_format_i18n($total_items))
               );
               ?>
@@ -2228,14 +2228,14 @@ class Folio extends Page
           <tr>
             <th scope="col" id="cb" class="manage-column column-cb check-column">
               <label class="screen-reader-text"
-                for="cb-select-all-1"><?php esc_html_e('Select all pages', 'groove-folios'); ?></label>
+                for="cb-select-all-1"><?php esc_html_e('Select all pages', 'enrove-folios'); ?></label>
               <input id="cb-select-all-1" type="checkbox" />
             </th>
             <th scope="col"
               class="manage-column column-primary <?php echo esc_attr($orderby === 'title' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
               <a
                 href="<?php echo esc_url($this->get_pages_tab_sort_url($folio_id, 'title', $orderby, $order, $status, $search)); ?>">
-                <span><?php esc_html_e('Page Name', 'groove-folios'); ?></span>
+                <span><?php esc_html_e('Page Name', 'enrove-folios'); ?></span>
                 <span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span
                     class="sorting-indicator desc" aria-hidden="true"></span></span>
               </a>
@@ -2244,17 +2244,17 @@ class Folio extends Page
               class="manage-column <?php echo esc_attr($orderby === 'menu_order' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
               <a
                 href="<?php echo esc_url($this->get_pages_tab_sort_url($folio_id, 'menu_order', $orderby, $order, $status, $search)); ?>">
-                <span><?php esc_html_e('Menu Position', 'groove-folios'); ?></span>
+                <span><?php esc_html_e('Menu Position', 'enrove-folios'); ?></span>
                 <span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span
                     class="sorting-indicator desc" aria-hidden="true"></span></span>
               </a>
             </th>
-            <th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove-folios'); ?></th>
+            <th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'enrove-folios'); ?></th>
             <th scope="col"
               class="manage-column <?php echo esc_attr($orderby === 'modified' ? 'sorted ' . strtolower($order) : 'sortable desc'); ?>">
               <a
                 href="<?php echo esc_url($this->get_pages_tab_sort_url($folio_id, 'modified', $orderby, $order, $status, $search)); ?>">
-                <span><?php esc_html_e('Last Updated', 'groove-folios'); ?></span>
+                <span><?php esc_html_e('Last Updated', 'enrove-folios'); ?></span>
                 <span class="sorting-indicators"><span class="sorting-indicator asc" aria-hidden="true"></span><span
                     class="sorting-indicator desc" aria-hidden="true"></span></span>
               </a>
@@ -2268,7 +2268,7 @@ class Folio extends Page
               $post_id = (int) $post->ID;
               $post_status = (string) get_post_status($post_id);
               $title = get_the_title($post_id);
-              $post_title = $title !== '' ? $title : esc_html__('(no title)', 'groove-folios');
+              $post_title = $title !== '' ? $title : esc_html__('(no title)', 'enrove-folios');
               $edit_url = get_edit_post_link($post_id, '');
               if (!$edit_url) {
                 $edit_url = add_query_arg(
@@ -2285,28 +2285,28 @@ class Folio extends Page
               }
               $is_preview_status = in_array($post_status, array('draft', 'pending', 'future'), true);
               $row_view_url = $view_url;
-              $row_view_label = $is_preview_status ? esc_html__('Preview', 'groove-folios') : esc_html__('View', 'groove-folios');
+              $row_view_label = $is_preview_status ? esc_html__('Preview', 'enrove-folios') : esc_html__('View', 'enrove-folios');
               $modified_label = sprintf(
                 /* translators: 1: date/time value, 2: user display name */
-                esc_html__('%1$s by %2$s', 'groove-folios'),
+                esc_html__('%1$s by %2$s', 'enrove-folios'),
                 get_the_modified_date(get_option('date_format') . ' ' . get_option('time_format'), $post_id),
                 $this->get_pages_tab_last_modified_by($post_id)
               );
               $quick_edit_aria_label = sprintf(
                 /* translators: %s: Page title. */
-                esc_attr__('Quick edit "%s" inline', 'groove-folios'),
+                esc_attr__('Quick edit "%s" inline', 'enrove-folios'),
                 wp_strip_all_tags($post_title)
               );
               ?>
               <tr id="post-<?php echo esc_attr((string) $post_id); ?>">
                 <th scope="row" class="check-column">
                   <label class="screen-reader-text"
-                    for="cb-select-<?php echo esc_attr((string) $post_id); ?>"><?php esc_html_e('Select page', 'groove-folios'); ?></label>
+                    for="cb-select-<?php echo esc_attr((string) $post_id); ?>"><?php esc_html_e('Select page', 'enrove-folios'); ?></label>
                   <input id="cb-select-<?php echo esc_attr((string) $post_id); ?>" type="checkbox" name="post[]"
                     value="<?php echo esc_attr((string) $post_id); ?>" />
                 </th>
                 <td class="title column-title has-row-actions column-primary page-title"
-                  data-colname="<?php esc_attr_e('Page Name', 'groove-folios'); ?>">
+                  data-colname="<?php esc_attr_e('Page Name', 'enrove-folios'); ?>">
                   <strong class="g-folio__title-wrap">
                     <a class="row-title g-folio__truncate-text" href="<?php echo esc_url($edit_url); ?>"
                       title="<?php echo esc_attr($post_title); ?>">
@@ -2314,26 +2314,26 @@ class Folio extends Page
                     </a>
                   </strong>
                   <div class="row-actions">
-                    <span class="edit"><a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'groove-folios'); ?></a>
+                    <span class="edit"><a href="<?php echo esc_url($edit_url); ?>"><?php esc_html_e('Edit', 'enrove-folios'); ?></a>
                       |</span>
                     <?php if ($post_status !== 'trash'): ?>
                       <span class="inline hide-if-no-js">
                         <button type="button" class="button-link editinline"
                           aria-label="<?php echo esc_attr($quick_edit_aria_label); ?>"
-                          aria-expanded="false"><?php esc_html_e('Quick Edit', 'groove-folios'); ?></button> |
+                          aria-expanded="false"><?php esc_html_e('Quick Edit', 'enrove-folios'); ?></button> |
                       </span>
                     <?php endif; ?>
                     <span class="view"><a href="<?php echo esc_url($row_view_url); ?>" target="_blank"
                         rel="noopener noreferrer"><?php echo esc_html($row_view_label); ?></a> |</span>
                     <?php if ($post_status === 'trash'): ?>
                       <span class="untrash"><a
-                          href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'groove-folios'); ?></a>
+                          href="<?php echo esc_url(wp_nonce_url(admin_url('post.php?action=untrash&post=' . $post_id), 'untrash-post_' . $post_id)); ?>"><?php esc_html_e('Restore', 'enrove-folios'); ?></a>
                         |</span>
                       <span class="delete"><a class="submitdelete"
-                          href="<?php echo esc_url(get_delete_post_link($post_id, '', true)); ?>"><?php esc_html_e('Delete Permanently', 'groove-folios'); ?></a></span>
+                          href="<?php echo esc_url(get_delete_post_link($post_id, '', true)); ?>"><?php esc_html_e('Delete Permanently', 'enrove-folios'); ?></a></span>
                     <?php else: ?>
                       <span class="trash"><a class="submitdelete"
-                          href="<?php echo esc_url(get_delete_post_link($post_id)); ?>"><?php esc_html_e('Trash', 'groove-folios'); ?></a></span>
+                          href="<?php echo esc_url(get_delete_post_link($post_id)); ?>"><?php esc_html_e('Trash', 'enrove-folios'); ?></a></span>
                     <?php endif; ?>
                   </div>
                   <?php
@@ -2342,18 +2342,18 @@ class Folio extends Page
                   }
                   ?>
                   <button type="button" class="toggle-row"><span
-                      class="screen-reader-text"><?php esc_html_e('Show more details', 'groove-folios'); ?></span></button>
+                      class="screen-reader-text"><?php esc_html_e('Show more details', 'enrove-folios'); ?></span></button>
                 </td>
-                <td data-colname="<?php esc_attr_e('Menu Position', 'groove-folios'); ?>">
+                <td data-colname="<?php esc_attr_e('Menu Position', 'enrove-folios'); ?>">
                   <?php echo esc_html((string) (int) get_post_field('menu_order', $post_id)); ?>
                 </td>
-                <td data-colname="<?php esc_attr_e('Publish Status', 'groove-folios'); ?>">
+                <td data-colname="<?php esc_attr_e('Publish Status', 'enrove-folios'); ?>">
                   <?php
                   $status_object = get_post_status_object($post_status);
                   echo esc_html($status_object && !empty($status_object->label) ? (string) $status_object->label : ucfirst($post_status));
                   ?>
                 </td>
-                <td data-colname="<?php esc_attr_e('Last Updated', 'groove-folios'); ?>">
+                <td data-colname="<?php esc_attr_e('Last Updated', 'enrove-folios'); ?>">
                   <?php echo esc_html($modified_label); ?>
                 </td>
               </tr>
@@ -2361,7 +2361,7 @@ class Folio extends Page
           <?php else: ?>
             <tr class="no-items">
               <td class="colspanchange" colspan="5">
-                <?php esc_html_e('No pages found for the current filters.', 'groove-folios'); ?>
+                <?php esc_html_e('No pages found for the current filters.', 'enrove-folios'); ?>
               </td>
             </tr>
           <?php endif; ?>
@@ -2370,13 +2370,13 @@ class Folio extends Page
           <tr>
             <td class="manage-column column-cb check-column">
               <label class="screen-reader-text"
-                for="cb-select-all-2"><?php esc_html_e('Select all pages', 'groove-folios'); ?></label>
+                for="cb-select-all-2"><?php esc_html_e('Select all pages', 'enrove-folios'); ?></label>
               <input id="cb-select-all-2" type="checkbox" />
             </td>
-            <th scope="col" class="manage-column column-primary"><?php esc_html_e('Page Name', 'groove-folios'); ?></th>
-            <th scope="col" class="manage-column"><?php esc_html_e('Menu Position', 'groove-folios'); ?></th>
-            <th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'groove-folios'); ?></th>
-            <th scope="col" class="manage-column"><?php esc_html_e('Last Updated', 'groove-folios'); ?></th>
+            <th scope="col" class="manage-column column-primary"><?php esc_html_e('Page Name', 'enrove-folios'); ?></th>
+            <th scope="col" class="manage-column"><?php esc_html_e('Menu Position', 'enrove-folios'); ?></th>
+            <th scope="col" class="manage-column"><?php esc_html_e('Publish Status', 'enrove-folios'); ?></th>
+            <th scope="col" class="manage-column"><?php esc_html_e('Last Updated', 'enrove-folios'); ?></th>
           </tr>
         </tfoot>
       </table>
@@ -2398,21 +2398,21 @@ class Folio extends Page
         <div class="tablenav bottom">
           <div class="alignleft actions bulkactions">
             <label for="bulk-action-selector-bottom"
-              class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove-folios'); ?></label>
+              class="screen-reader-text"><?php esc_html_e('Select bulk action', 'enrove-folios'); ?></label>
             <select name="action2" id="bulk-action-selector-bottom">
-              <option value="-1"><?php esc_html_e('Bulk actions', 'groove-folios'); ?></option>
+              <option value="-1"><?php esc_html_e('Bulk actions', 'enrove-folios'); ?></option>
               <?php foreach ($bulk_actions as $action_key => $action_label): ?>
                 <option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
               <?php endforeach; ?>
             </select>
-            <input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove-folios'); ?>" />
+            <input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'enrove-folios'); ?>" />
           </div>
           <div class="tablenav-pages">
             <span class="displaying-num">
               <?php
               printf(
                 /* translators: %s: number of items */
-                esc_html(_n('%s item', '%s items', $total_items, 'groove-folios')),
+                esc_html(_n('%s item', '%s items', $total_items, 'enrove-folios')),
                 esc_html(number_format_i18n($total_items))
               );
               ?>
@@ -2449,14 +2449,14 @@ class Folio extends Page
         <div class="tablenav bottom">
           <div class="alignleft actions bulkactions">
             <label for="bulk-action-selector-bottom"
-              class="screen-reader-text"><?php esc_html_e('Select bulk action', 'groove-folios'); ?></label>
+              class="screen-reader-text"><?php esc_html_e('Select bulk action', 'enrove-folios'); ?></label>
             <select name="action2" id="bulk-action-selector-bottom">
-              <option value="-1"><?php esc_html_e('Bulk actions', 'groove-folios'); ?></option>
+              <option value="-1"><?php esc_html_e('Bulk actions', 'enrove-folios'); ?></option>
               <?php foreach ($bulk_actions as $action_key => $action_label): ?>
                 <option value="<?php echo esc_attr($action_key); ?>"><?php echo esc_html($action_label); ?></option>
               <?php endforeach; ?>
             </select>
-            <input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'groove-folios'); ?>" />
+            <input type="submit" id="doaction2" class="button action" value="<?php esc_attr_e('Apply', 'enrove-folios'); ?>" />
           </div>
           <br class="clear" />
         </div>
@@ -2477,7 +2477,7 @@ class Folio extends Page
       // attribute. It carries no Setup fields; save_folio() keeps what is stored.
       ?>
       <form id="g-folio-form" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-        <?php wp_nonce_field('groove_save_folio', 'groove_nonce'); ?>
+        <?php wp_nonce_field('enrove_save_folio', 'enrove_nonce'); ?>
         <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
       </form>
       <?php
@@ -2485,10 +2485,10 @@ class Folio extends Page
       // is nothing on this tab for it to save.
       $original_right_buttons = $this->right_button_items;
       foreach ($this->right_button_items as &$item) {
-        if (isset($item['action']) && $item['action'] === 'save_groove_folio_manual') {
+        if (isset($item['action']) && $item['action'] === 'save_enrove_folio_manual') {
           $item['class'] = 'disabled';
           $item['attrs']['aria-disabled'] = 'true';
-          $item['attrs']['data-groove-save-idle'] = __('Nothing to save here — pages save in the page editor.', 'groove-folios');
+          $item['attrs']['data-enrove-save-idle'] = __('Nothing to save here — pages save in the page editor.', 'enrove-folios');
         }
       }
       unset($item);
@@ -2501,7 +2501,7 @@ class Folio extends Page
     }
     ?>
     <form id="g-folio-form" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-      <?php wp_nonce_field('groove_save_folio', 'groove_nonce'); ?>
+      <?php wp_nonce_field('enrove_save_folio', 'enrove_nonce'); ?>
       <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
       <?php parent::display_page() ?>
     </form>
@@ -2511,7 +2511,7 @@ class Folio extends Page
 
   /**
    * The confirmation behind the header's Publish or Unpublish: what happens
-   * to the folio's pages. groove-main.js opens it, and its confirm button
+   * to the folio's pages. enrove-main.js opens it, and its confirm button
    * runs the save the header button would have.
    */
   private function display_publish_dialog()
@@ -2522,43 +2522,43 @@ class Folio extends Page
 
     $count = (int) $this->publish_confirm['count'];
     if ($this->publish_confirm['kind'] === 'unpublish') {
-      $title = __('Unpublish this folio?', 'groove-folios');
+      $title = __('Unpublish this folio?', 'enrove-folios');
       $lead = $count > 0
         ? sprintf(
           /* translators: %s: number of published, private or scheduled pages. */
-          _n('The folio goes offline, and its %s live page goes back to draft.', 'The folio goes offline, and its %s live pages go back to draft.', $count, 'groove-folios'),
+          _n('The folio goes offline, and its %s live page goes back to draft.', 'The folio goes offline, and its %s live pages go back to draft.', $count, 'enrove-folios'),
           number_format_i18n($count)
         )
-        : __('The folio goes offline.', 'groove-folios');
+        : __('The folio goes offline.', 'enrove-folios');
       $notes = array(
-        __('While the folio is unpublished, its pages can’t be published on their own.', 'groove-folios'),
-        __('Publishing the folio again puts them back as they were, and publishes its other draft and pending pages.', 'groove-folios'),
+        __('While the folio is unpublished, its pages can’t be published on their own.', 'enrove-folios'),
+        __('Publishing the folio again puts them back as they were, and publishes its other draft and pending pages.', 'enrove-folios'),
       );
-      $confirm = __('Unpublish folio', 'groove-folios');
+      $confirm = __('Unpublish folio', 'enrove-folios');
     } else {
-      $title = __('Publish this folio?', 'groove-folios');
+      $title = __('Publish this folio?', 'enrove-folios');
       $lead = $count > 0
         ? sprintf(
           /* translators: %s: number of pages. */
-          _n('The folio goes live, and its %s page is published with it.', 'The folio goes live, and its %s pages are published with it.', $count, 'groove-folios'),
+          _n('The folio goes live, and its %s page is published with it.', 'The folio goes live, and its %s pages are published with it.', $count, 'enrove-folios'),
           number_format_i18n($count)
         )
-        : __('The folio goes live.', 'groove-folios');
+        : __('The folio goes live.', 'enrove-folios');
       $notes = array(
-        __('Once it’s live, each page can be unpublished or published on its own.', 'groove-folios'),
-        __('Unpublishing the folio later returns its live pages to draft until it’s published again.', 'groove-folios'),
+        __('Once it’s live, each page can be unpublished or published on its own.', 'enrove-folios'),
+        __('Unpublishing the folio later returns its live pages to draft until it’s published again.', 'enrove-folios'),
       );
-      $confirm = __('Publish folio', 'groove-folios');
+      $confirm = __('Publish folio', 'enrove-folios');
     }
     ?>
     <div id="g-publish-modal" class="g-theme-details g-publish" role="dialog" aria-modal="true"
       aria-labelledby="g-publish-title" aria-describedby="g-publish-desc" hidden>
-      <div class="g-theme-details__backdrop" data-groove-publish-close></div>
+      <div class="g-theme-details__backdrop" data-enrove-publish-close></div>
       <div class="g-theme-details__dialog g-publish__dialog" tabindex="-1">
         <div class="g-theme-details__header">
           <h2 id="g-publish-title" class="g-theme-details__title"><?php echo esc_html($title); ?></h2>
-          <button type="button" class="g-theme-details__close" data-groove-publish-close
-            aria-label="<?php esc_attr_e('Close', 'groove-folios'); ?>">
+          <button type="button" class="g-theme-details__close" data-enrove-publish-close
+            aria-label="<?php esc_attr_e('Close', 'enrove-folios'); ?>">
             <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
           </button>
         </div>
@@ -2571,8 +2571,8 @@ class Folio extends Page
           </ul>
         </div>
         <div class="g-theme-details__footer">
-          <button type="button" class="button button-secondary" data-groove-publish-close><?php esc_html_e('Cancel', 'groove-folios'); ?></button>
-          <button type="button" class="button button-primary" data-groove-publish-go><?php echo esc_html($confirm); ?></button>
+          <button type="button" class="button button-secondary" data-enrove-publish-close><?php esc_html_e('Cancel', 'enrove-folios'); ?></button>
+          <button type="button" class="button button-primary" data-enrove-publish-go><?php echo esc_html($confirm); ?></button>
         </div>
       </div>
     </div>
