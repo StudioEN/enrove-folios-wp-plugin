@@ -87,7 +87,6 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 == Changelog ==
 
 = 0.5.1 =
-* The plugin is now Enrove Folios; it was Groove Folios. Your folios, pages, collection tags, settings and downloaded fonts and photos move to the new names the first time the site loads after updating.
 * Folios load their fonts from your own site, never from Google. Download them once from Enrove → Settings → Fonts, or use system fonts.
 * A setup dialog the first time an administrator opens an Enrove screen offers the theme fonts and sample photos, and a Reset tab on Settings starts over.
 * Covers without a photo show a soft gradient in the theme's colours.
