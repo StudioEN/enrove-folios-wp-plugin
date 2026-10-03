@@ -428,8 +428,11 @@ body.enrove .g-folio__theme-2-page {
 }
 
 .g-folio__theme-2 .g-folio__theme-logo img {
-  width: 105.898px;
-  height: 20.119px;
+  /* Height only: the width follows the artwork's own proportions, whatever
+     logo the folio carries. */
+  height: 20px;
+  width: auto;
+  max-width: 100%;
   flex-shrink: 0;
 }
 
