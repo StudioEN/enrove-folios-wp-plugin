@@ -84,9 +84,18 @@ Under a base path, `/folio/` by default. You can change it on Enrove → Setting
 
 Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us. To report a security problem, please email rather than posting it publicly.
 
+== Screenshots ==
+
+1. The theme picker.
+2. A theme preview.
+3. The folio editor.
+4. The folio page editor.
+5. The Settings screen.
+
 == Changelog ==
 
 = 0.5.1 =
+* First release on WordPress.org.
 * Folios load their fonts from your own site, never from Google. Download them once from Enrove → Settings → Fonts, or use system fonts.
 * A setup dialog the first time an administrator opens an Enrove screen offers the theme fonts and sample photos, and a Reset tab on Settings starts over.
 * Covers without a photo show a soft gradient in the theme's colours.
@@ -115,7 +124,6 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 * With reduced motion on, the Add New dialog no longer blocks clicks after it closes.
 
 = 0.4.0 =
-* First release on WordPress.org.
 * Sample photos are downloaded on request (Settings → Imagery) instead of being bundled.
 * Published folios are served with HTTP 200 instead of 404.
 * Security: headings in the eBook, Magazine and Newsletter themes can no longer inject markup.
