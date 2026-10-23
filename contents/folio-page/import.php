@@ -35,7 +35,7 @@ class Import
   /** Nonce action for the picker's AJAX requests. */
   const AJAX_NONCE = 'enrove_import';
 
-  /** Nonce action for the folio editor's import form. */
+  /** Nonce action for the folio editor's import form; see get_form_nonce_action(). */
   const FORM_NONCE = 'enrove_import_pages';
 
   /** Nonce field of that form. */
@@ -89,6 +89,18 @@ class Import
       'nonce' => wp_create_nonce(self::AJAX_NONCE),
       'maxSources' => self::MAX_SOURCES,
     );
+  }
+
+  /**
+   * The import form's nonce action for one folio, so a nonce issued for one
+   * folio's form adds nothing to another.
+   *
+   * @param int $folio_id
+   * @return string
+   */
+  public static function get_form_nonce_action($folio_id): string
+  {
+    return self::FORM_NONCE . '_' . (int) $folio_id;
   }
 
   /**

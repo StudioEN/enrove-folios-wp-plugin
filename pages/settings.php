@@ -346,7 +346,9 @@ class Settings extends Page
 
   public function handle_collection_tag_save()
   {
-    check_admin_referer('enrove_save_collection_tag', 'enrove_nonce');
+    // The nonce names the tag (0 for a new one), so its ID is read first.
+    $term_id = isset($_POST['collection_tag_id']) ? absint(wp_unslash($_POST['collection_tag_id'])) : 0;
+    check_admin_referer('enrove_save_collection_tag_' . $term_id, 'enrove_nonce');
 
     if (!$this->can_manage_collection_tags()) {
       wp_die(esc_html__('You do not have permission to manage collection tags.', 'enrove-folios'));
@@ -354,7 +356,6 @@ class Settings extends Page
 
     $term_name = isset($_POST['collection_tag_name']) ? sanitize_text_field(wp_unslash($_POST['collection_tag_name'])) : '';
     $term_slug = isset($_POST['collection_tag_slug']) ? sanitize_title(wp_unslash($_POST['collection_tag_slug'])) : '';
-    $term_id = isset($_POST['collection_tag_id']) ? intval(wp_unslash($_POST['collection_tag_id'])) : 0;
 
     if ($term_name === '') {
       $redirect_args = array('message' => 'collection_tag_empty');
@@ -399,13 +400,14 @@ class Settings extends Page
 
   public function handle_collection_tag_delete()
   {
-    check_admin_referer('enrove_delete_collection_tag', 'enrove_nonce');
+    // The nonce names the tag, so its ID is read first.
+    $term_id = isset($_POST['collection_tag_id']) ? absint(wp_unslash($_POST['collection_tag_id'])) : 0;
+    check_admin_referer('enrove_delete_collection_tag_' . $term_id, 'enrove_nonce');
 
     if (!$this->can_manage_collection_tags()) {
       wp_die(esc_html__('You do not have permission to manage collection tags.', 'enrove-folios'));
     }
 
-    $term_id = isset($_POST['collection_tag_id']) ? intval(wp_unslash($_POST['collection_tag_id'])) : 0;
     if ($term_id <= 0) {
       $this->redirect_to_collections_tab(array('message' => 'collection_tag_error'));
     }
@@ -570,7 +572,7 @@ class Settings extends Page
     </div>
 
     <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4" data-enrove-track-changes>
-      <?php wp_nonce_field('enrove_save_collection_tag', 'enrove_nonce'); ?>
+      <?php wp_nonce_field('enrove_save_collection_tag_' . ($is_editing ? (int) $edit_term->term_id : 0), 'enrove_nonce'); ?>
       <input type="hidden" name="action" value="save_enrove_collection_tag" />
       <input type="hidden" name="collection_tag_id" value="<?php echo esc_attr($is_editing ? (string) $edit_term->term_id : '0'); ?>" />
 
@@ -645,7 +647,7 @@ class Settings extends Page
                     <?php esc_html_e('Edit', 'enrove-folios'); ?>
                   </a>
                   <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="inline-block ml-3" data-enrove-confirm="<?php esc_attr_e('Delete this collection tag?', 'enrove-folios'); ?>">
-                    <?php wp_nonce_field('enrove_delete_collection_tag', 'enrove_nonce'); ?>
+                    <?php wp_nonce_field('enrove_delete_collection_tag_' . (int) $term->term_id, 'enrove_nonce'); ?>
                     <input type="hidden" name="action" value="delete_enrove_collection_tag" />
                     <input type="hidden" name="collection_tag_id" value="<?php echo esc_attr((string) $term->term_id); ?>" />
                     <button type="submit" class="button-link delete"><?php esc_html_e('Delete', 'enrove-folios'); ?></button>

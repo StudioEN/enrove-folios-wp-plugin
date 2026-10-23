@@ -124,7 +124,7 @@ class Page extends Base_Theme
     echo '<div class="g-folio__theme-page-catalogs-content">';
 
     foreach ($this->get_catalog_entries() as $entry) {
-      echo '<div class="g-folio__theme-page-catalog"><a href="' . esc_attr('#' . $entry[0]) . '">' . esc_html($entry[1]) . '</a></div>';
+      echo '<div class="g-folio__theme-page-catalog"><a href="' . esc_url('#' . rawurlencode($entry[0])) . '">' . esc_html($entry[1]) . '</a></div>';
     }
 
     echo '</div>';
@@ -201,7 +201,7 @@ class Page extends Base_Theme
       </summary>
       <div class="g-folio__theme-page-contents-list">
         <?php foreach ($entries as $entry): ?>
-          <a class="g-folio__theme-page-contents-link" href="<?php echo esc_attr('#' . $entry[0]); ?>">
+          <a class="g-folio__theme-page-contents-link" href="<?php echo esc_url('#' . rawurlencode($entry[0])); ?>">
             <?php echo esc_html($entry[1]); ?>
           </a>
         <?php endforeach; ?>

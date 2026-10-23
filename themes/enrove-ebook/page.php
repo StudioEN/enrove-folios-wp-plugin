@@ -32,7 +32,12 @@ class Page extends Base_Theme
   function get_html($html)
   {
     $doc = new \DOMDocument();
-    @$doc->loadHTML($html);
+    // The XML declaration is the charset hint; without it libxml assumes
+    // ISO-8859-1 and "Café" comes out as "CafÃ©".
+    $previous = libxml_use_internal_errors(true);
+    $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html);
+    libxml_clear_errors();
+    libxml_use_internal_errors($previous);
 
     // "On this page" links are intended for section headings only.
     $element_names = ['h2'];
@@ -64,7 +69,7 @@ class Page extends Base_Theme
         $html = $this->get_html($title);
         if ($html) {
           $anchor = $this->to_anchor_name($html[1]);
-          echo '<div class="g-folio__theme-page-catalog"><a href="' . esc_attr($anchor ? ('#' . $anchor) : '') . '">' . esc_html($html[1]) . '</a></div>';
+          echo '<div class="g-folio__theme-page-catalog"><a href="' . esc_url($anchor ? ('#' . rawurlencode($anchor)) : '') . '">' . esc_html($html[1]) . '</a></div>';
         }
       }
     }
@@ -146,7 +151,7 @@ class Page extends Base_Theme
               }
               $anchor = $this->to_anchor_name($html[1]);
               ?>
-              <a class="g-folio__theme-page-mobile-nav-item-link" href="<?php echo esc_attr('#' . $anchor); ?>">
+              <a class="g-folio__theme-page-mobile-nav-item-link" href="<?php echo esc_url('#' . rawurlencode($anchor)); ?>">
                 <div class="g-folio__theme-page-mobile-nav-item"><?php echo esc_html($html[1]); ?></div>
               </a>
               <?php

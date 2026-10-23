@@ -724,7 +724,15 @@
             anchors[i].addEventListener('click', function (e) {
                 var href = this.getAttribute('href');
                 if (!href || href === '#') return;
-                var target = document.querySelector(href);
+                // By id, not querySelector(): an anchor is percent-encoded and
+                // may hold characters a selector cannot (a heading's colon).
+                var id = href.slice(1);
+                try {
+                    id = decodeURIComponent(id);
+                } catch (err) {
+                    // Keep raw id when decoding fails.
+                }
+                var target = document.getElementById(id);
                 if (target) {
                     e.preventDefault();
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });

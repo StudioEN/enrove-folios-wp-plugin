@@ -56,7 +56,12 @@ class Page extends Base_Theme
   public function get_html($html)
   {
     $doc = new \DOMDocument();
-    @$doc->loadHTML($html);
+    // The XML declaration is the charset hint; without it libxml assumes
+    // ISO-8859-1 and "Café" comes out as "CafÃ©".
+    $previous = libxml_use_internal_errors(true);
+    $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html);
+    libxml_clear_errors();
+    libxml_use_internal_errors($previous);
 
     $element_names = ['h2', 'h3'];
 
@@ -379,7 +384,7 @@ class Page extends Base_Theme
         <div class="g-folio__theme-page-mobile-nav-label"><?php echo esc_html(Utils::get_folio_on_this_page_label((int) $this->folio_id)); ?></div>
         <div class="g-folio__theme-page-mobile-navs">
           <?php foreach ($anchors as $anchor): ?>
-            <a class="g-folio__theme-page-mobile-nav-item-link" data-g-scroll-target="#<?php echo esc_attr($anchor['anchor']); ?>" href="#<?php echo esc_attr($anchor['anchor']); ?>">
+            <a class="g-folio__theme-page-mobile-nav-item-link" data-g-scroll-target="#<?php echo esc_attr($anchor['anchor']); ?>" href="<?php echo esc_url('#' . rawurlencode($anchor['anchor'])); ?>">
               <div class="g-folio__theme-page-mobile-nav-item"><?php echo esc_html($anchor['title']); ?></div>
             </a>
           <?php endforeach; ?>
@@ -426,7 +431,7 @@ class Page extends Base_Theme
           <div class="g-folio__theme-page-catalogs-content">
             <?php foreach ($anchors as $anchor): ?>
               <div class="g-folio__theme-page-catalog">
-                <a class="g-folio__theme-page-catalog-link" data-g-scroll-target="#<?php echo esc_attr($anchor['anchor']); ?>" href="#<?php echo esc_attr($anchor['anchor']); ?>">
+                <a class="g-folio__theme-page-catalog-link" data-g-scroll-target="#<?php echo esc_attr($anchor['anchor']); ?>" href="<?php echo esc_url('#' . rawurlencode($anchor['anchor'])); ?>">
                   <?php echo esc_html($anchor['title']); ?>
                 </a>
               </div>

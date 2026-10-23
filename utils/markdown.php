@@ -291,11 +291,12 @@ class Markdown
 
 		return sprintf(
 			'<h%1$d id="%2$s" class="g-docs__h g-docs__h--%1$d">'
-				. '<a class="g-docs__anchor" href="#%2$s" aria-label="%3$s">#</a>%4$s</h%1$d>',
+				. '<a class="g-docs__anchor" href="%5$s" aria-label="%3$s">#</a>%4$s</h%1$d>',
 			$level,
 			esc_attr($anchor),
 			esc_attr__('Link to this section', 'enrove-folios'),
-			$this->inline($text)
+			$this->inline($text),
+			esc_url('#' . rawurlencode($anchor))
 		);
 	}
 
@@ -565,7 +566,7 @@ class Markdown
 		}
 
 		if ($href[0] === '#') {
-			return '<a class="g-docs__link" href="' . esc_attr($href) . '">' . $text . '</a>';
+			return '<a class="g-docs__link" href="' . esc_url('#' . rawurlencode(substr($href, 1))) . '">' . $text . '</a>';
 		}
 
 		if (preg_match('#^https?://#i', $href)) {

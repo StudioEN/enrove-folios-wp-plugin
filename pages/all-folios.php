@@ -157,7 +157,7 @@ class All_Folios extends Page
 
 	/**
 	 * The Duplicate row action: a link naming the folio in enrove_duplicate,
-	 * with a nonce that is verified before the ID is read.
+	 * with a nonce for that folio alone.
 	 *
 	 * @param int   $post_id
 	 * @param array $view_args List state to come back to.
@@ -168,7 +168,7 @@ class All_Folios extends Page
 		// add_query_arg(), not wp_nonce_url(), which returns the URL HTML-escaped.
 		return add_query_arg(
 			'_wpnonce',
-			wp_create_nonce(self::DUPLICATE_NONCE),
+			wp_create_nonce(self::DUPLICATE_NONCE . '_' . (int) $post_id),
 			Request::admin_url(static::PAGE_ID, array_merge($view_args, array('enrove_duplicate' => (int) $post_id)))
 		);
 	}
@@ -179,9 +179,10 @@ class All_Folios extends Page
 		if ($plugin_page !== static::PAGE_ID || !isset($_GET['enrove_duplicate'])) {
 			return;
 		}
-		check_admin_referer(self::DUPLICATE_NONCE);
-
+		// The nonce names the folio, so its ID is read first.
 		$post_id = absint(wp_unslash($_GET['enrove_duplicate']));
+		check_admin_referer(self::DUPLICATE_NONCE . '_' . $post_id);
+
 		if (get_post_type($post_id) !== static::POST_TYPE || !current_user_can('edit_post', $post_id)) {
 			return;
 		}

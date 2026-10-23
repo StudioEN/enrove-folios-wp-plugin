@@ -240,7 +240,7 @@ class Themes extends Page
 			<ul class="g-docs__toc-list">
 				<?php foreach ($entries as $entry): ?>
 					<li class="g-docs__toc-item">
-						<a class="g-docs__toc-link" href="#<?php echo esc_attr($entry['anchor']); ?>">
+						<a class="g-docs__toc-link" href="<?php echo esc_url('#' . rawurlencode($entry['anchor'])); ?>">
 							<?php echo esc_html($entry['text']); ?>
 						</a>
 					</li>

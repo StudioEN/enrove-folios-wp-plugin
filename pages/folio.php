@@ -26,6 +26,8 @@ class Folio extends Page
   const POST_TYPE = 'enrove_folio_page';
   /** save_folio() status for Save and autosave: whatever the folio has now. */
   const KEEP_STATUS = '__keep__';
+  /** Nonce action of the folio form, per folio; see get_save_nonce_action(). */
+  const SAVE_NONCE = 'enrove_save_folio';
 
   private $folio;
   private $fields;
@@ -86,6 +88,18 @@ class Folio extends Page
   public static function get_edit_url($folio_id, array $args = array())
   {
     return Request::admin_url(static::PAGE_ID, array_merge(array('folio_id' => (int) $folio_id), $args));
+  }
+
+  /**
+   * The folio form's nonce action. It names the folio, so a nonce issued for
+   * one folio's form does not save another.
+   *
+   * @param int $folio_id
+   * @return string
+   */
+  public static function get_save_nonce_action($folio_id)
+  {
+    return self::SAVE_NONCE . '_' . (int) $folio_id;
   }
 
   /**
@@ -485,9 +499,10 @@ class Folio extends Page
    */
   public function import_pages()
   {
-    check_admin_referer(Folio_Page_Import::FORM_NONCE, Folio_Page_Import::FORM_NONCE_FIELD);
-
+    // The nonce names the folio, so its ID is read first.
     $folio_id = isset($_POST['folio_id']) ? absint(wp_unslash($_POST['folio_id'])) : 0;
+    check_admin_referer(Folio_Page_Import::get_form_nonce_action($folio_id), Folio_Page_Import::FORM_NONCE_FIELD);
+
     if (!$folio_id || get_post_type($folio_id) !== 'enrove_folio' || !current_user_can('edit_post', $folio_id)) {
       wp_die(
         esc_html__('Sorry, you are not allowed to add a page to that folio.', 'enrove-folios'),
@@ -496,7 +511,7 @@ class Folio extends Page
       );
     }
 
-    $form = Folio_Page_Import::read_form(Folio_Page_Import::FORM_NONCE, Folio_Page_Import::FORM_NONCE_FIELD);
+    $form = Folio_Page_Import::read_form(Folio_Page_Import::get_form_nonce_action($folio_id), Folio_Page_Import::FORM_NONCE_FIELD);
     $page_ids = Folio_Page_Import::create_pages($folio_id, $form['items'], 'draft');
     $skipped = $form['refused'] + count($form['items']) - count($page_ids);
 
@@ -558,15 +573,15 @@ class Folio extends Page
       $post_status = 'publish';
     }
 
-    // Nonce check must come before reading any POST data.
-    check_admin_referer('enrove_save_folio', 'enrove_nonce');
+    // The nonce is the folio's own, so its ID is read first; nothing else is
+    // read before the check.
+    $id = isset($_POST['folio_id']) ? absint(wp_unslash($_POST['folio_id'])) : 0;
+    check_admin_referer(self::get_save_nonce_action($id), 'enrove_nonce');
 
-    if (empty($_POST['folio_id'])) {
+    if (!$id) {
       wp_send_json(array('code' => 400, 'message' => __('Missing folio ID.', 'enrove-folios')));
       return;
     }
-
-    $id = intval(wp_unslash($_POST['folio_id']));
 
     if (!current_user_can('edit_post', $id)) {
       wp_send_json(array('code' => 403, 'message' => __('Sorry, you are not allowed to edit this folio.', 'enrove-folios')));
@@ -1409,7 +1424,7 @@ class Folio extends Page
         <h3 class="text-sm font-semibold text-gray-800 m-0"><?php esc_html_e('Essentials', 'enrove-folios'); ?></h3>
       </div>
       <div class="p-4 space-y-4">
-        <?php wp_nonce_field('enrove_save_folio', 'enrove_nonce'); ?>
+        <?php wp_nonce_field(self::get_save_nonce_action((int) $fields->ID), 'enrove_nonce'); ?>
         <div>
           <label for="title" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Title', 'enrove-folios'); ?></label>
           <input type="text" id="title" name="title" value="<?php echo esc_attr($fields->title) ?>"
@@ -2575,7 +2590,7 @@ class Folio extends Page
       // attribute. It carries no Setup fields; save_folio() keeps what is stored.
       ?>
       <form id="g-folio-form" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-        <?php wp_nonce_field('enrove_save_folio', 'enrove_nonce'); ?>
+        <?php wp_nonce_field(self::get_save_nonce_action($folio_id), 'enrove_nonce'); ?>
         <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
       </form>
       <?php
@@ -2600,7 +2615,7 @@ class Folio extends Page
     }
     ?>
     <form id="g-folio-form" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-      <?php wp_nonce_field('enrove_save_folio', 'enrove_nonce'); ?>
+      <?php wp_nonce_field(self::get_save_nonce_action($folio_id), 'enrove_nonce'); ?>
       <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
       <?php parent::display_page() ?>
     </form>
@@ -2670,7 +2685,7 @@ class Folio extends Page
         </div>
         <?php if ($folio_id > 0) : ?>
         <form class="g-theme-details__footer g-import__footer" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-          <?php wp_nonce_field(Folio_Page_Import::FORM_NONCE, Folio_Page_Import::FORM_NONCE_FIELD); ?>
+          <?php wp_nonce_field(Folio_Page_Import::get_form_nonce_action($folio_id), Folio_Page_Import::FORM_NONCE_FIELD); ?>
           <input type="hidden" name="action" value="enrove_import_pages" />
           <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
           <p class="g-import__status" data-enrove-import-status><?php esc_html_e('Each one is copied as a draft page, in the order you pick them.', 'enrove-folios'); ?></p>

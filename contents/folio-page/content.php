@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 
 class Content extends BaseContent
 {
-  /** Nonce action on every Add Page link (get_add_page_url()). */
+  /** Nonce action on every Add Page link (get_add_page_url()), followed by the folio's ID. */
   const ADD_PAGE_NONCE = 'enrove_add_folio_page';
 
   /** The folio a verified Add Page link names, until its page is created. */
@@ -86,7 +86,7 @@ class Content extends BaseContent
       array(
         'post_type' => 'enrove_folio_page',
         'folio_id' => (int) $folio_id,
-        '_wpnonce' => wp_create_nonce(self::ADD_PAGE_NONCE),
+        '_wpnonce' => wp_create_nonce(self::ADD_PAGE_NONCE . '_' . (int) $folio_id),
       ),
       admin_url('post-new.php')
     );
@@ -105,14 +105,14 @@ class Content extends BaseContent
   {
     global $typenow;
 
-    // Presence only: a folio_id marks an Add Page link. Its value is read
-    // after check_admin_referer() below.
+    // A folio_id marks an Add Page link. The nonce names that folio, so the
+    // ID is read first; nothing is done with it until the nonce checks out.
     if ($typenow !== 'enrove_folio_page' || !isset($_GET['folio_id'])) {
       return;
     }
-    check_admin_referer(self::ADD_PAGE_NONCE);
-
     $folio_id = absint(wp_unslash($_GET['folio_id']));
+    check_admin_referer(self::ADD_PAGE_NONCE . '_' . $folio_id);
+
     if (!$folio_id || get_post_type($folio_id) !== 'enrove_folio' || !current_user_can('edit_post', $folio_id)) {
       wp_die(
         esc_html__('Sorry, you are not allowed to add a page to that folio.', 'enrove-folios'),
