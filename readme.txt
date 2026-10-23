@@ -100,6 +100,7 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 * Posts written in the classic editor are converted to blocks on the way in, so their paragraphs, headings, captions, galleries and embeds come across and their headings appear in the folio's "On this page" list.
 * The dialog says what will not come across before you add a post: a page builder's layout, shortcodes, or a password.
 * You can copy only posts and pages you could already edit.
+* Fixed: Enrove eBook, Magazine, Newsletter and Proposal garbled headings with accents or other non-English characters ("Café" showed as "CafÃ©").
 
 = 0.5.1 =
 * First release on WordPress.org.
