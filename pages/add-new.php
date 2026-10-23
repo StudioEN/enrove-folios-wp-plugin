@@ -6,6 +6,7 @@ use Enrove\Pages\Overview;
 use Enrove\Menu\Menu_Manager;
 use Enrove\Menu\Add_New_Menu_Item;
 use Enrove\Utils\Request;
+use Enrove\Contents\FolioPage\Import;
 
 
 if (!defined('ABSPATH')) {
@@ -75,6 +76,17 @@ class Add_New extends Page
     }
     $seed_sample_content = $sample_content !== null && $seed_requested;
 
+    // Posts picked with Use existing posts become the folio's pages, in the
+    // place of sample content. The nonce checked above guards these fields
+    // too; read_form() checks it again before it reads them.
+    $import = isset($_POST['sources'])
+      ? Import::read_form('enrove_create_folio_action', 'enrove_nonce')
+      : array('items' => array(), 'refused' => 0);
+    $importing = !empty($import['items']) || $import['refused'] > 0;
+    if ($importing) {
+      $seed_sample_content = false;
+    }
+
     $default_status = (string) get_option('enrove_default_folio_status', 'draft');
     if (!in_array($default_status, ['draft', 'publish'], true)) {
       $default_status = 'draft';
@@ -97,7 +109,11 @@ class Add_New extends Page
     // An explicit default folio title always wins. Left blank, the title comes
     // from the theme being created, so a magazine starts as "A New Issue" and
     // a proposal as "A New Proposal" rather than everything sharing one name.
+    // Made from a single post, the folio is named after it.
     $title = trim((string) get_option('enrove_default_folio_title', ''));
+    if ($title === '' && count($import['items']) === 1 && $import['items'][0]['post']->post_title !== '') {
+      $title = $import['items'][0]['post']->post_title;
+    }
     if ($title === '') {
       $title = \Enrove\Themes\Themes_Manager::get_default_folio_title($theme_id);
     }
@@ -137,6 +153,21 @@ class Add_New extends Page
     if (!is_wp_error($folio_id)) {
       if ($seed_sample_content) {
         $this->create_sample_pages((int) $folio_id, $default_status, $sample_content['pages']);
+      }
+
+      if ($importing) {
+        // The pages take the folio's status: live with a published folio,
+        // for a user who may publish them (Import::create_pages()).
+        $page_ids = Import::create_pages((int) $folio_id, $import['items'], $default_status);
+        $skipped = $import['refused'] + count($import['items']) - count($page_ids);
+        wp_safe_redirect(Folio::get_edit_url((int) $folio_id, array(
+          'tab_key' => 'pages',
+          'bulk_action' => 'import',
+          'bulk_count' => count($page_ids),
+          'bulk_skipped' => $skipped > 0 ? $skipped : null,
+          'bulk_live' => $page_ids && get_post_status($page_ids[0]) !== 'draft' ? 1 : null,
+        )));
+        exit;
       }
 
       wp_safe_redirect(Folio::get_edit_url((int) $folio_id));
@@ -249,7 +280,7 @@ class Add_New extends Page
   <?php echo esc_html__('Selected theme:', 'enrove-folios'); ?>
   <strong id="g-folio-selected-theme-name"><?php echo esc_html($first_theme_name); ?></strong>
 </p>
-<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" data-enrove-import-target>
   <?php wp_nonce_field('enrove_create_folio_action', 'enrove_nonce'); ?>
   <input type="hidden" name="action" value="enrove_create_folio" />
 
@@ -298,6 +329,19 @@ class Add_New extends Page
       <?php endif; ?>
     </div>
     <?php endforeach; ?>
+    <?php if (Import::get_post_types()) : ?>
+    <?php /* Starting from existing posts takes the sample toggle's place once
+             they are picked: a folio starts one way or the other.
+             enrove-import.js fills the summary and the sources[] fields. */ ?>
+    <p class="g-folio__import-summary" data-enrove-import-summary hidden>
+      <span data-enrove-import-summary-text></span>
+      <button type="button" class="button-link" data-enrove-import-change><?php esc_html_e('Change', 'enrove-folios'); ?></button>
+      <button type="button" class="button-link" data-enrove-import-clear><?php esc_html_e('Remove', 'enrove-folios'); ?></button>
+    </p>
+    <button type="button" class="button button-secondary" id="g-add-new-import-open"
+      aria-haspopup="dialog" aria-controls="g-import-modal"><?php esc_html_e('Use existing posts…', 'enrove-folios'); ?></button>
+    <div hidden data-enrove-import-fields></div>
+    <?php endif; ?>
     <button type="submit" class="button button-primary">
       <?php echo esc_html__('Continue', 'enrove-folios'); ?>
     </button>

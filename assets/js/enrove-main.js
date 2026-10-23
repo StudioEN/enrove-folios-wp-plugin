@@ -1915,7 +1915,10 @@ jQuery(function () {
     $backdrop.on('click', closeAddNewModal)
 
     jQuery(document).on('keydown', function (e) {
-      if (e.key === 'Escape' && addNewModalEl.classList.contains('is-open')) {
+      // Not under the Add existing dialog it opens. That one's Escape closes
+      // only itself (enrove-dialog.js), which marks it spent with
+      // preventDefault(); whichever handler runs first, one Escape closes one dialog.
+      if (e.key === 'Escape' && !e.isDefaultPrevented() && addNewModalEl.classList.contains('is-open') && !document.querySelector('#g-import-modal.is-open')) {
         closeAddNewModal()
       }
     })

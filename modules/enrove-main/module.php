@@ -97,6 +97,24 @@ class Module extends BaseModule
 			wp_enqueue_script('enrove-reset', $this->get_js_assets_url('enrove-reset'), ['enrove-dialog'], $enrove_reset_js_version, true);
 		}
 
+		// The Add existing dialog, on the folio editor and on All Folios (where
+		// the Add New picker opens it), and the hidden converter it hands
+		// classic posts to. The block library that converts them loads only
+		// inside the converter's own frame, never on these screens.
+		if (in_array($current_page, [\Enrove\Pages\Folio::PAGE_ID, \Enrove\Pages\All_Folios::PAGE_ID], true)) {
+			\Enrove\Contents\FolioPage\Block_Converter::enqueue_client();
+			$enrove_import_deps = ['enrove-dialog', 'wp-i18n', \Enrove\Contents\FolioPage\Block_Converter::CLIENT_HANDLE];
+			$enrove_import_js_path = plugin_dir_path(dirname(__DIR__)) . 'assets/js/enrove-import.js';
+			$enrove_import_js_version = file_exists($enrove_import_js_path) ? (string) filemtime($enrove_import_js_path) : ENROVE_VERSION;
+			wp_enqueue_script('enrove-import', $this->get_js_assets_url('enrove-import'), $enrove_import_deps, $enrove_import_js_version, true);
+			wp_set_script_translations('enrove-import', 'enrove-folios');
+			wp_add_inline_script(
+				'enrove-import',
+				'window.ENROVE_IMPORT = ' . wp_json_encode(\Enrove\Contents\FolioPage\Import::script_settings(), JSON_HEX_TAG | JSON_HEX_AMP) . ';',
+				'before'
+			);
+		}
+
 		// First-run setup, on Enrove's own admin pages (not the list tables or
 		// the block editor) while fonts or photos are undecided; and on
 		// Overview, whose panel is the way back, while one is declined.

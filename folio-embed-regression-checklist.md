@@ -41,6 +41,15 @@ Use this checklist whenever folio page rendering, block rendering, or theme page
 6. Existing headings still have anchor IDs and sidebar/mobile heading navigation still works.
 7. No script or CSS text shows on the page where a Custom HTML block held a `<script>` or `<style>`.
 
+## Imported Pages (Add Existing / Use existing posts)
+Run when import, the converter frame, or page rendering changes. Keep a few classic-editor posts on the test site: one with headings, one with `[caption]` and `[gallery]` (one gallery naming no `ids`), one with a bare YouTube URL on its own line and `[audio]`/`[video]`, one with an unknown shortcode, and one block-editor post with a featured image.
+1. From the folio editor, Add Existing: pick them in a chosen order and add them. They arrive as drafts after the last page, in pick order, and the toast counts them.
+2. Each classic copy is real blocks in the page editor (no Classic block), its headings show in the theme's "On this page" list, and every gallery image renders.
+3. The YouTube link renders as an embed and the audio/video players show; the unknown shortcode prints as typed.
+4. The block-editor post is copied unchanged, featured image included.
+5. From All Folios → Add New, Use existing posts with one post: the new folio takes that post's title, and with a "publish" default folio status its page is published with it.
+6. With the converter frame blocked (DevTools → block `admin-post.php?action=enrove_block_converter`), an import still succeeds and the classic copy keeps its paragraphs.
+
 ## Cross-Checks
 1. Regular WordPress post with same URLs still embeds correctly.
 2. Folio cover page behavior is unchanged.

@@ -1084,6 +1084,54 @@ body.enrove .g-folio__sample-toggle.hidden {
   display: none;
 }
 
+/* Posts picked with Use existing posts (enrove-import.js): their summary
+   takes the sample toggle's place, since a folio starts one way or the other. */
+body.enrove .g-folio__theme-button.is-importing .g-folio__sample-toggle {
+  display: none;
+}
+
+/* Core's .button display beats the hidden attribute. */
+body.enrove .g-folio__theme-button [hidden] {
+  display: none;
+}
+
+body.enrove .g-folio__import-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0 auto 0 0;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--g-gray-90);
+}
+
+body.enrove .g-folio__import-summary .button-link {
+  font-size: 13px;
+}
+
+/* At phone width the Add New row holds three things: the sample toggle (or
+   the summary) takes a line of its own and the two buttons share the next.
+   Scoped to the Add New dialog; the Themes screen's details dialog stacks
+   its own copy of this row (.g-theme-details__actions). */
+@media (max-width: 600px) {
+  .g-add-new-modal .g-folio__theme-button {
+    flex-wrap: wrap;
+  }
+
+  body.enrove .g-add-new-modal .g-folio__sample-toggle,
+  body.enrove .g-add-new-modal .g-folio__import-summary {
+    flex: 1 1 100%;
+    margin-right: 0;
+  }
+
+  .g-add-new-modal .g-folio__theme-button > .button {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}
+
 body.enrove .g-folio__sample-info {
   -webkit-appearance: none;
   appearance: none;
@@ -1910,6 +1958,225 @@ body.enrove .g-settings-remove__note {
    notes, so narrower than Reset. */
 .g-publish__dialog {
   width: 520px;
+}
+
+/* ── Add existing ────────────────────────────────────────────────────────
+   The folio editor's import dialog (Folio::display_import_dialog(),
+   enrove-import.js). A fixed height, so the frame holds still while results
+   come and go; the search stays put above the scrolling list and the actions
+   are docked below it. Rows are separated by space rather than rules, and a
+   pick shows as weight, a faint tint and its place in the order. */
+
+.g-import__dialog {
+  width: 640px;
+  height: 640px;
+}
+
+.g-import__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  flex-shrink: 0;
+  padding: 14px 20px 6px;
+}
+
+body.enrove .g-import__search {
+  flex: 1 1 220px;
+  min-width: 0;
+  margin: 0;
+}
+
+.g-import__types {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 6px;
+  background: var(--g-surface-alt);
+}
+
+.g-import__type {
+  position: relative;
+  cursor: pointer;
+}
+
+.g-import__type input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.g-import__type span {
+  display: block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--g-text-muted);
+}
+
+.g-import__type input:checked + span {
+  background: var(--g-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  color: var(--g-text);
+  font-weight: 600;
+}
+
+.g-import__type input:focus-visible + span {
+  outline: 2px solid var(--g-accent);
+  outline-offset: 1px;
+}
+
+.g-import__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 6px 12px 16px;
+}
+
+body.enrove .g-import__list,
+body.enrove .g-import__item {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.g-import__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 24px;
+  align-items: start;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.g-import__row:hover {
+  background: var(--g-surface-alt);
+}
+
+.g-import__item.is-picked .g-import__row {
+  background: rgba(var(--g-accent-rgb), 0.05);
+}
+
+body.enrove .g-import__check {
+  margin: 2px 0 0;
+}
+
+.g-import__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.g-import__title {
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 500;
+  color: var(--g-text);
+  overflow-wrap: anywhere;
+}
+
+.g-import__item.is-picked .g-import__title {
+  font-weight: 600;
+}
+
+.g-import__meta,
+.g-import__note {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--g-text-muted);
+}
+
+.g-import__notes {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 2px;
+}
+
+/* What won't come across reads in ink, behind a small square; the rest stays
+   muted. */
+.g-import__note.is-warn {
+  color: var(--g-text);
+}
+
+.g-import__note.is-warn::before,
+.g-import__note.is-settled::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 7px 1px 0;
+  border-radius: 1px;
+  background: var(--g-yellow-30);
+}
+
+.g-import__note.is-settled::before {
+  background: var(--g-text-muted);
+}
+
+.g-import__order {
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--g-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+body.enrove .g-import__empty {
+  margin: 0;
+  padding: 32px 8px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--g-text-muted);
+}
+
+body.enrove .g-import__more {
+  display: block;
+  margin: 12px auto 0;
+}
+
+body.enrove .g-import__more[hidden] {
+  display: none;
+}
+
+.g-import__footer {
+  align-items: center;
+}
+
+body.enrove .g-import__status {
+  flex: 1 1 200px;
+  margin: 0 auto 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--g-text-muted);
+}
+
+@media (max-width: 600px) {
+  .g-import__dialog {
+    height: calc(100vh - 96px);
+    height: calc(100dvh - 96px);
+  }
+
+  .g-import__types {
+    flex: 1 1 100%;
+  }
+
+  .g-import__type {
+    flex: 1 1 0;
+    text-align: center;
+  }
+
+  /* Dialog footers stack in reverse here (primary on top), and a flex basis
+     would become height in a column. Sorted last, the status reads first. */
+  body.enrove .g-import__status {
+    flex: none;
+    order: 1;
+    margin: 0;
+  }
 }
 
 body.enrove .g-reset-list {

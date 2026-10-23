@@ -1550,6 +1550,8 @@ class All_Folios extends Page
 		</form>
 		<?php $this->display_add_new_modal(); ?>
 		<?php
+		// After the Add New dialog, so it stacks above the picker that opens it.
+		Folio::render_import_dialog(0);
 	}
 
 	private function display_add_new_modal()

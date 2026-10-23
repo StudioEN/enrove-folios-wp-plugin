@@ -4,7 +4,7 @@ Tags: ebook, newsletter, portfolio, publishing, documents
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 7.1
-Stable tag: 0.5.1
+Stable tag: 0.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,6 +21,7 @@ Folios render through their own self-contained themes, not your site's WordPress
 * **Five built-in folio themes:** Folio Starter, Enrove eBook, Enrove Newsletter, Enrove Magazine and Enrove Proposal. Each has its own cover, page layout, typography and, where it helps, its own content blocks.
 * **A dedicated folio editor:** add, reorder and edit pages, set the cover, logo and typefaces, and preview the result before publishing.
 * **Sample content** for every theme, so a new folio starts as a finished example you can write over.
+* **Start from what you have:** copy existing posts and pages into a new or existing folio. Posts written in the classic editor are converted to blocks on the way in.
 * **Password-protected folios**, with a reading gate styled to match the theme.
 * **Collection tags** to organise folios, plus quick edit and duplication from the All Folios list.
 * **Configurable URLs:** folios live under a base path you choose, for example `/folio/your-title/`.
@@ -94,6 +95,12 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 
 == Changelog ==
 
+= 0.6.0 =
+* Make folios from posts and pages you already have: **Add Existing** in the folio editor copies them into a folio as draft pages, and **Use existing posts…** in the theme picker starts a new folio from them.
+* Posts written in the classic editor are converted to blocks on the way in, so their paragraphs, headings, captions, galleries and embeds come across and their headings appear in the folio's "On this page" list.
+* The dialog says what will not come across before you add a post: a page builder's layout, shortcodes, or a password.
+* You can copy only posts and pages you could already edit.
+
 = 0.5.1 =
 * First release on WordPress.org.
 * Folios load their fonts from your own site, never from Google. Download them once from Enrove → Settings → Fonts, or use system fonts.
@@ -131,6 +138,9 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 * CHANGELOG.md in the plugin folder has the full history.
 
 == Upgrade Notice ==
+
+= 0.6.0 =
+Make folios from the posts and pages you already have, with classic-editor posts converted to blocks on the way in.
 
 = 0.5.1 =
 Security fixes: Contributors could publish folios, and pages of private folios were readable through the REST API. Fonts are now served from your site; press Download Fonts on Enrove → Settings → Fonts. Covers show a logo only if you choose one.

@@ -280,6 +280,8 @@ class Content extends BaseContent
     add_filter('is_protected_meta', [$this, 'protect_folio_link'], 10, 3);
     Publishing::register();
     Visibility::register();
+    Import::register();
+    Block_Converter::register();
   }
 }
 ?>
