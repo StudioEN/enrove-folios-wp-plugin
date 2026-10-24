@@ -503,7 +503,9 @@ class First_Run
       <h2 id="g-setup-title" class="g-theme-details__title"><?php echo static::needs_attention() ? esc_html__('Finish setting up Enrove Folios', 'enrove-folios') : esc_html__('Fonts and photos', 'enrove-folios'); ?></h2>
       <button type="button" class="g-theme-details__close" data-enrove-setup-close
         aria-label="<?php esc_attr_e('Close', 'enrove-folios'); ?>">
-        <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+        </svg>
       </button>
     </div>
     <div class="g-theme-details__body g-setup__body">

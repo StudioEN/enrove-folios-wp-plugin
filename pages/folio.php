@@ -182,22 +182,22 @@ class Folio extends Page
         // Carries the nonce that Folio_Page_Content::verify_add_page_link()
         // checks before the new page is linked to this folio.
         'link' => Folio_Page_Content::get_add_page_url($folio_id),
-        // At phone width Add Page, Preview and Copy link go into the More
-        // actions menu (Page::display_overflow_menu()); Save and Publish stay.
+        // At phone width Add Page, its menu, Preview and Copy link go into the
+        // More actions menu (Page::display_overflow_menu()); Save and Publish stay.
         'overflow' => true,
-      ),
-      array(
-        'text' => __('Add Existing', 'enrove-folios'),
-        'type' => '',
-        // Opens the import dialog (display_import_dialog(), enrove-import.js).
-        'action' => 'open_enrove_import',
-        'button_type' => 'button',
-        'overflow' => true,
-        'menu_text' => __('Add existing posts or pages', 'enrove-folios'),
-        'attrs' => array(
-          'id' => 'g-folio-import-open',
-          'aria-haspopup' => 'dialog',
-          'aria-controls' => 'g-import-modal',
+        // A split button (Page::print_split_button()): the other way to add pages.
+        'menu_label' => __('More ways to add pages', 'enrove-folios'),
+        'menu' => array(
+          array(
+            'text' => __('Import posts and pages…', 'enrove-folios'),
+            // Opens the import dialog (display_import_dialog(), enrove-import.js).
+            'action' => 'open_enrove_import',
+            'attrs' => array(
+              'id' => 'g-folio-import-open',
+              'aria-haspopup' => 'dialog',
+              'aria-controls' => 'g-import-modal',
+            ),
+          ),
         ),
       ),
     ];
@@ -493,7 +493,7 @@ class Folio extends Page
   }
 
   /**
-   * The Add existing dialog's form: copies the posts it names into this
+   * The Import posts and pages dialog's form: copies the posts it names into this
    * folio as draft pages (Contents\FolioPage\Import), then opens the Pages
    * tab, which reports how many (queue_pages_tab_bulk_toast()).
    */
@@ -1192,7 +1192,9 @@ class Folio extends Page
             class="g-theme-picker-modal__close"
             data-version-history-close
             aria-label="<?php esc_attr_e('Close version history', 'enrove-folios'); ?>">
-            <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+            </svg>
           </button>
         </div>
         <div class="g-theme-picker-modal__body">
@@ -2625,81 +2627,100 @@ class Folio extends Page
     $this->display_import_dialog();
   }
 
-  /** The Add existing dialog for the open folio; see render_import_dialog(). */
+  /** The Import posts and pages dialog for the open folio; see render_import_dialog(). */
   private function display_import_dialog()
   {
     static::render_import_dialog((int) $this->folio->ID);
   }
 
   /**
-   * The Add existing dialog: search the posts and pages the user may edit
-   * and pick some, in order. enrove-import.js fills the list.
-   *
-   * For a folio, its footer is a form: the picks are copied into the folio
-   * as draft pages (import_pages()), the classic ones converted to blocks on
-   * the way. With no folio (0), All Folios' Add New picker opened it, and its
-   * footer only hands the picks back to that picker's create form
-   * (Add_New::create_folio()), which makes them the new folio's pages.
-   *
-   * @param int $folio_id 0 for a folio still to be created.
+   * The Import posts and pages dialog: search the posts and pages the user may
+   * edit and pick some, in order. Its footer is a form: the picks are copied
+   * into the folio as draft pages (import_pages()), the classic ones converted
+   * to blocks on the way. enrove-import.js fills the list.
    */
   public static function render_import_dialog($folio_id)
   {
     $folio_id = (int) $folio_id;
+    ?>
+    <div id="g-import-modal" class="g-theme-details g-import" role="dialog" aria-modal="true"
+      aria-labelledby="g-import-title" data-enrove-import data-mode="folio"
+      data-folio-id="<?php echo esc_attr($folio_id); ?>" hidden>
+      <div class="g-theme-details__backdrop" data-enrove-import-close></div>
+      <div class="g-theme-details__dialog g-import__dialog" tabindex="-1">
+        <div class="g-theme-details__header">
+          <h2 id="g-import-title" class="g-theme-details__title"><?php esc_html_e('Import posts and pages', 'enrove-folios'); ?></h2>
+          <button type="button" class="g-theme-details__close" data-enrove-import-close
+            aria-label="<?php esc_attr_e('Close', 'enrove-folios'); ?>">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <?php static::display_import_picker(); ?>
+        <form class="g-theme-details__footer g-import__footer" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+          <?php wp_nonce_field(Folio_Page_Import::get_form_nonce_action($folio_id), Folio_Page_Import::FORM_NONCE_FIELD); ?>
+          <input type="hidden" name="action" value="enrove_import_pages" />
+          <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
+          <p class="g-import__status" data-enrove-import-status><?php esc_html_e('Each one is copied as a draft page, in the order you select them.', 'enrove-folios'); ?></p>
+          <button type="button" class="button button-secondary" data-enrove-import-close><?php esc_html_e('Cancel', 'enrove-folios'); ?></button>
+          <button type="submit" class="button button-primary" data-enrove-import-submit disabled><?php esc_html_e('Import pages', 'enrove-folios'); ?></button>
+        </form>
+      </div>
+    </div>
+    <?php
+  }
+
+  /**
+   * The same picker for a folio still to be created: the Add New dialog's
+   * second screen, not a dialog of its own, so picking posts happens in the
+   * frame the theme was picked in (the dialog-screens pattern in
+   * enrove-main.css). Done returns to the themes with the selection, Cancel
+   * with the one it opened on; only the themes screen's Continue creates the
+   * folio, through the picker's create form (Add_New::create_folio()).
+   */
+  public static function render_import_screen()
+  {
+    ?>
+    <div class="g-dialog-screen g-import g-import--screen" data-enrove-import data-mode="new" data-folio-id="0"
+      data-title="<?php esc_attr_e('Import posts and pages', 'enrove-folios'); ?>" hidden>
+      <?php static::display_import_picker(); ?>
+      <div class="g-folio__theme-button g-import__actions">
+        <p class="g-import__status" data-enrove-import-status><?php esc_html_e('Each one is copied as a page of the new folio, in the order you select them.', 'enrove-folios'); ?></p>
+        <button type="button" class="button button-secondary" data-enrove-import-cancel><?php esc_html_e('Cancel', 'enrove-folios'); ?></button>
+        <button type="button" class="button button-primary" data-enrove-import-submit><?php esc_html_e('Done', 'enrove-folios'); ?></button>
+      </div>
+    </div>
+    <?php
+  }
+
+  /** The search, the type filter and the list, shared by the dialog and the screen. */
+  private static function display_import_picker()
+  {
     $types = array();
     foreach (Folio_Page_Import::get_post_types() as $type) {
       $object = get_post_type_object($type);
       $types[$type] = $object ? (string) $object->labels->name : $type;
     }
     ?>
-    <div id="g-import-modal" class="g-theme-details g-import" role="dialog" aria-modal="true"
-      aria-labelledby="g-import-title" data-folio-id="<?php echo esc_attr($folio_id); ?>"
-      data-mode="<?php echo esc_attr($folio_id > 0 ? 'folio' : 'new'); ?>" hidden>
-      <div class="g-theme-details__backdrop" data-enrove-import-close></div>
-      <div class="g-theme-details__dialog g-import__dialog" tabindex="-1">
-        <div class="g-theme-details__header">
-          <h2 id="g-import-title" class="g-theme-details__title"><?php esc_html_e('Add existing posts or pages', 'enrove-folios'); ?></h2>
-          <button type="button" class="g-theme-details__close" data-enrove-import-close
-            aria-label="<?php esc_attr_e('Close', 'enrove-folios'); ?>">
-            <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
-          </button>
-        </div>
-        <div class="g-import__controls">
-          <label class="screen-reader-text" for="g-import-search"><?php esc_html_e('Search posts and pages', 'enrove-folios'); ?></label>
-          <input type="search" id="g-import-search" class="g-import__search" autocomplete="off"
-            placeholder="<?php esc_attr_e('Search posts and pages', 'enrove-folios'); ?>" />
-          <?php if (count($types) > 1) : ?>
-          <div class="g-import__types" role="radiogroup" aria-label="<?php esc_attr_e('Show', 'enrove-folios'); ?>">
-            <label class="g-import__type"><input type="radio" name="g-import-type" value="" checked /><span><?php esc_html_e('All', 'enrove-folios'); ?></span></label>
-            <?php foreach ($types as $type => $label) : ?>
-            <label class="g-import__type"><input type="radio" name="g-import-type" value="<?php echo esc_attr($type); ?>" /><span><?php echo esc_html($label); ?></span></label>
-            <?php endforeach; ?>
-          </div>
-          <?php endif; ?>
-        </div>
-        <div class="g-theme-details__body g-import__body">
-          <ul class="g-import__list" aria-label="<?php esc_attr_e('Posts and pages', 'enrove-folios'); ?>"></ul>
-          <p class="g-import__empty" data-enrove-import-empty hidden></p>
-          <button type="button" class="button g-import__more" data-enrove-import-more hidden><?php esc_html_e('Show more', 'enrove-folios'); ?></button>
-          <p class="screen-reader-text" aria-live="polite" data-enrove-import-live></p>
-        </div>
-        <?php if ($folio_id > 0) : ?>
-        <form class="g-theme-details__footer g-import__footer" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-          <?php wp_nonce_field(Folio_Page_Import::get_form_nonce_action($folio_id), Folio_Page_Import::FORM_NONCE_FIELD); ?>
-          <input type="hidden" name="action" value="enrove_import_pages" />
-          <input type="hidden" name="folio_id" value="<?php echo esc_attr($folio_id); ?>" />
-          <p class="g-import__status" data-enrove-import-status><?php esc_html_e('Each one is copied as a draft page, in the order you pick them.', 'enrove-folios'); ?></p>
-          <button type="button" class="button button-secondary" data-enrove-import-close><?php esc_html_e('Cancel', 'enrove-folios'); ?></button>
-          <button type="submit" class="button button-primary" data-enrove-import-submit disabled><?php esc_html_e('Add pages', 'enrove-folios'); ?></button>
-        </form>
-        <?php else : ?>
-        <div class="g-theme-details__footer g-import__footer">
-          <p class="g-import__status" data-enrove-import-status><?php esc_html_e('Each one is copied as a page of the new folio, in the order you pick them.', 'enrove-folios'); ?></p>
-          <button type="button" class="button button-secondary" data-enrove-import-close><?php esc_html_e('Cancel', 'enrove-folios'); ?></button>
-          <button type="button" class="button button-primary" data-enrove-import-submit disabled><?php esc_html_e('Use these', 'enrove-folios'); ?></button>
-        </div>
-        <?php endif; ?>
+    <div class="g-import__controls">
+      <label class="screen-reader-text" for="g-import-search"><?php esc_html_e('Search posts and pages', 'enrove-folios'); ?></label>
+      <input type="search" id="g-import-search" class="g-import__search" autocomplete="off"
+        placeholder="<?php esc_attr_e('Search posts and pages', 'enrove-folios'); ?>" />
+      <?php if (count($types) > 1) : ?>
+      <div class="g-import__types" role="radiogroup" aria-label="<?php esc_attr_e('Show', 'enrove-folios'); ?>">
+        <label class="g-import__type"><input type="radio" name="g-import-type" value="" checked /><span><?php esc_html_e('All', 'enrove-folios'); ?></span></label>
+        <?php foreach ($types as $type => $label) : ?>
+        <label class="g-import__type"><input type="radio" name="g-import-type" value="<?php echo esc_attr($type); ?>" /><span><?php echo esc_html($label); ?></span></label>
+        <?php endforeach; ?>
       </div>
+      <?php endif; ?>
+    </div>
+    <div class="g-theme-details__body g-import__body">
+      <ul class="g-import__list" aria-label="<?php esc_attr_e('Posts and pages', 'enrove-folios'); ?>"></ul>
+      <p class="g-import__empty" data-enrove-import-empty hidden></p>
+      <button type="button" class="button g-import__more" data-enrove-import-more hidden><?php esc_html_e('Show more', 'enrove-folios'); ?></button>
+      <p class="screen-reader-text" aria-live="polite" data-enrove-import-live></p>
     </div>
     <?php
   }
@@ -2754,7 +2775,9 @@ class Folio extends Page
           <h2 id="g-publish-title" class="g-theme-details__title"><?php echo esc_html($title); ?></h2>
           <button type="button" class="g-theme-details__close" data-enrove-publish-close
             aria-label="<?php esc_attr_e('Close', 'enrove-folios'); ?>">
-            <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+            </svg>
           </button>
         </div>
         <div id="g-publish-desc" class="g-theme-details__body g-dialog-confirm">

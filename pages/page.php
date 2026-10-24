@@ -144,6 +144,47 @@ abstract class Page extends Assets
 		echo '</button>';
 	}
 
+	/**
+	 * A split button: the item's own action, and beside it a chevron that
+	 * opens a menu of related ones ('menu', each a link item or an action item
+	 * with an id; 'menu_label' names the chevron). An action entry is a plain
+	 * button for a script to bind by its id, not a form submit. enrove-main.js
+	 * runs the menu (initMenu()).
+	 *
+	 * @param array    $button_item    The item, with 'menu'.
+	 * @param string   $classes        The main button's class list, unescaped.
+	 * @param string   $type_class     ' button-primary', ' button-secondary' or ''.
+	 * @param string   $overflow_class ' g-page-header__overflow-item' or ''.
+	 * @param string   $text           Button text.
+	 * @param string[] $icon_classes   Sanitised icon classes; empty for a text button.
+	 */
+	protected function print_split_button($button_item, $classes, $type_class, $overflow_class, $text, array $icon_classes)
+	{
+		$menu_id = wp_unique_id('g-split-menu-');
+		$menu_label = isset($button_item['menu_label']) ? (string) $button_item['menu_label'] : __('More actions', 'enrove-folios');
+		?>
+		<div class="g-split-button<?php echo esc_attr($overflow_class); ?>" data-enrove-menu>
+			<?php $this->print_button_item($button_item, $classes . ' g-split-button__main', $text, $icon_classes); ?>
+			<button type="button" class="<?php echo esc_attr('button g-split-button__toggle' . $type_class); ?>" data-enrove-menu-toggle
+				aria-haspopup="menu" aria-expanded="false" aria-controls="<?php echo esc_attr($menu_id); ?>"
+				aria-label="<?php echo esc_attr($menu_label); ?>" title="<?php echo esc_attr($menu_label); ?>">
+				<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
+			</button>
+			<div class="g-menu" id="<?php echo esc_attr($menu_id); ?>" role="menu" aria-label="<?php echo esc_attr($menu_label); ?>" hidden>
+				<?php foreach ($button_item['menu'] as $menu_item):
+					$label = isset($menu_item['text']) ? (string) $menu_item['text'] : '';
+					$attrs = isset($menu_item['attrs']) ? $menu_item['attrs'] : array();
+					if (isset($menu_item['link'])): ?>
+						<a class="g-menu__item" role="menuitem" tabindex="-1" href="<?php echo esc_url($menu_item['link']); ?>"<?php $this->print_attributes($attrs); ?>><?php echo esc_html($label); ?></a>
+					<?php elseif (isset($menu_item['action'])): ?>
+						<button type="button" class="g-menu__item" role="menuitem" tabindex="-1"<?php $this->print_attributes($attrs); ?>><?php echo esc_html($label); ?></button>
+					<?php endif;
+				endforeach; ?>
+			</div>
+		</div>
+		<?php
+	}
+
 	// pages/folio.php display_tabs() loop body:
 
 	public function display_button_items($button_items)
@@ -179,12 +220,13 @@ abstract class Page extends Assets
 				$overflow_class = static::is_overflow_item($button_item) ? ' g-page-header__overflow-item' : '';
 
 				if ($ui === 'wp') {
-					$wp_classes = 'button' . $overflow_class;
+					$type_class = '';
 					if ($type === 'primary') {
-						$wp_classes .= ' button-primary';
+						$type_class = ' button-primary';
 					} else if ($type === 'secondary') {
-						$wp_classes .= ' button-secondary';
+						$type_class = ' button-secondary';
 					}
+					$wp_classes = 'button' . $overflow_class . $type_class;
 
 					if ($has_icon) {
 						$wp_classes .= ' g-page-header__icon-button';
@@ -200,6 +242,11 @@ abstract class Page extends Assets
 								}
 							}
 						}
+					}
+
+					if (!empty($button_item['menu'])) {
+						$this->print_split_button($button_item, $wp_classes, $type_class, $overflow_class, $text, $icon_classes);
+						continue;
 					}
 
 					$this->print_button_item($button_item, $wp_classes, $text, $icon_classes);
@@ -241,16 +288,31 @@ abstract class Page extends Assets
 
 	/**
 	 * The header items, left then right, that go into the More actions menu.
+	 * A split button goes in whole: its own action, then each entry of its menu.
 	 *
 	 * @return array[]
 	 */
 	protected function get_overflow_items()
 	{
 		$items = array_merge((array) $this->left_button_items, (array) $this->right_button_items);
+		$overflow = array();
 
-		return array_values(array_filter($items, function ($item) {
-			return static::is_overflow_item($item);
-		}));
+		foreach ($items as $item) {
+			if (!static::is_overflow_item($item)) {
+				continue;
+			}
+			$overflow[] = $item;
+
+			if (!empty($item['menu'])) {
+				foreach ($item['menu'] as $menu_item) {
+					if (static::is_overflow_item(array('overflow' => true) + $menu_item)) {
+						$overflow[] = $menu_item;
+					}
+				}
+			}
+		}
+
+		return $overflow;
 	}
 
 	/**

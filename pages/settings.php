@@ -1592,7 +1592,9 @@ class Settings extends Page
         <h2 id="g-reset-title" class="g-theme-details__title"><?php esc_html_e('Reset Enrove Folios?', 'enrove-folios'); ?></h2>
         <button type="button" class="g-theme-details__close" data-enrove-reset-close
           aria-label="<?php esc_attr_e('Close', 'enrove-folios'); ?>">
-          <span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+          </svg>
         </button>
       </div>
       <div class="g-theme-details__body g-dialog-confirm g-reset__body">

@@ -489,6 +489,77 @@ body.enrove .g-page-header__icon-button .dashicons {
   line-height: 16px;
 }
 
+/* A split button (Page::print_split_button()): the action, and a chevron
+   joined to it that opens a menu of related ones. The two halves share one
+   outline; the hovered or focused half comes forward so its edge shows. */
+body.enrove .g-split-button {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+}
+
+body.enrove .g-split-button > .button {
+  position: relative;
+  margin: 0;
+}
+
+/* Over the main button's edge, so the two share one 1px divider. */
+body.enrove .g-split-button > .g-split-button__toggle {
+  margin-inline-start: -1px;
+}
+
+body.enrove .g-split-button > .button:hover,
+body.enrove .g-split-button > .button:focus {
+  z-index: 1;
+}
+
+body.enrove .g-split-button__main {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+body.enrove .g-split-button__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+body.enrove .g-split-button__toggle .dashicons {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  line-height: 14px;
+  transition: transform 0.15s ease;
+}
+
+body.enrove .g-split-button__toggle[aria-expanded="true"] .dashicons {
+  transform: rotate(180deg);
+}
+
+/* Under the button's left edge: the bar it sits in starts at the left. */
+body.enrove .g-split-button .g-menu {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.enrove .g-split-button__toggle .dashicons {
+    transition: none;
+  }
+}
+
+@media screen and (max-width: 782px) {
+  body.enrove .g-split-button__toggle {
+    width: 36px;
+    min-width: 36px;
+  }
+}
+
 /* The More actions menu button: only at phone width, see below. */
 body.enrove .g-page-header__more {
   display: none;
@@ -519,7 +590,10 @@ body.enrove .g-page-header__more {
   }
 }
 
-/* A menu of actions, anchored under its button's right edge. */
+/* A menu of actions, anchored under its button's right edge. Drawn as the
+   block editor draws its dropdown menus (the components Menu): a hairline
+   ring and a soft layered shadow, 32px items, and the item under the pointer
+   filled with the admin theme colour. Keyboard focus is a ring instead. */
 body.enrove .g-menu {
   position: absolute;
   top: calc(100% + 4px);
@@ -527,13 +601,17 @@ body.enrove .g-menu {
   z-index: 1000;
   box-sizing: border-box;
   width: max-content;
-  min-width: 180px;
+  min-width: 160px;
   max-width: min(320px, calc(100vw - 32px));
   padding: 4px;
-  border: 1px solid var(--g-border-strong);
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--g-surface);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  box-shadow:
+    0 0 0 1px var(--g-gray-10),
+    0 2px 3px rgba(0, 0, 0, 0.05),
+    0 4px 5px rgba(0, 0, 0, 0.04),
+    0 12px 12px rgba(0, 0, 0, 0.03),
+    0 16px 16px rgba(0, 0, 0, 0.02);
 }
 
 body.enrove .g-menu[hidden] {
@@ -545,37 +623,52 @@ body.enrove .g-menu__item {
   align-items: center;
   box-sizing: border-box;
   width: 100%;
-  min-height: 40px;
+  min-height: 32px;
   margin: 0;
-  padding: 8px 12px;
+  padding: 4px 12px;
   border: 0;
-  border-radius: 4px;
+  border-radius: 2px;
   background: none;
   box-shadow: none;
+  outline: none;
   color: var(--g-text);
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 13px;
+  line-height: 20px;
   text-align: start;
   text-decoration: none;
   cursor: pointer;
 }
 
-body.enrove .g-menu__item:hover,
 body.enrove .g-menu__item:focus {
-  background: var(--g-surface-alt);
+  background: none;
   color: var(--g-text);
   box-shadow: none;
+  outline: none;
+}
+
+body.enrove .g-menu__item:hover:not(:focus-visible) {
+  background: var(--g-accent);
+  color: #fff;
 }
 
 body.enrove .g-menu__item:focus-visible {
-  outline: 2px solid var(--g-accent);
-  outline-offset: -2px;
+  box-shadow: 0 0 0 1.5px var(--g-accent);
+  outline: 2px solid transparent;
 }
 
-body.enrove .g-menu__item[aria-disabled="true"] {
-  color: var(--g-text-muted);
+body.enrove .g-menu__item[aria-disabled="true"],
+body.enrove .g-menu__item[aria-disabled="true"]:hover {
   background: none;
+  color: var(--g-text-muted);
   cursor: default;
+}
+
+/* Where wp-admin goes mobile, items keep core's 40px touch size. */
+@media screen and (max-width: 782px) {
+  body.enrove .g-menu__item {
+    min-height: 40px;
+    font-size: 14px;
+  }
 }
 
 body.enrove .g-tooltip-button {
@@ -1084,7 +1177,7 @@ body.enrove .g-folio__sample-toggle.hidden {
   display: none;
 }
 
-/* Posts picked with Use existing posts (enrove-import.js): their summary
+/* Posts selected with Import posts and pages (enrove-import.js): their summary
    takes the sample toggle's place, since a folio starts one way or the other. */
 body.enrove .g-folio__theme-button.is-importing .g-folio__sample-toggle {
   display: none;
@@ -1121,7 +1214,8 @@ body.enrove .g-folio__import-summary .button-link {
   }
 
   body.enrove .g-add-new-modal .g-folio__sample-toggle,
-  body.enrove .g-add-new-modal .g-folio__import-summary {
+  body.enrove .g-add-new-modal .g-folio__import-summary,
+  body.enrove .g-add-new-modal .g-import__status {
     flex: 1 1 100%;
     margin-right: 0;
   }
@@ -1403,8 +1497,15 @@ body.g-modal-open {
   outline: none;
 }
 
-.g-theme-details__header {
+/* One header for every Enrove dialog frame: this one, Add New's and Change
+   theme's (.g-add-new-modal) and version history's (.g-theme-picker-modal).
+   The title sits on the frame's 20px edge; the close button's 32px target
+   takes 16px, so its thin X lines up with the body's edge. */
+.g-theme-details__header,
+.g-add-new-modal__header,
+body.enrove .g-theme-picker-modal__header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -1420,7 +1521,9 @@ body.g-modal-open {
   min-width: 0;
 }
 
-.g-theme-details__title {
+.g-theme-details__title,
+.g-add-new-modal__title,
+body.enrove .g-theme-picker-modal__title {
   margin: 0;
   font-size: 16px;
   line-height: 1.3;
@@ -1428,7 +1531,12 @@ body.g-modal-open {
   color: var(--g-text);
 }
 
-.g-theme-details__close {
+.g-theme-details__close,
+.g-add-new-modal__close,
+body.enrove .g-theme-picker-modal__close {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1444,14 +1552,31 @@ body.g-modal-open {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.g-theme-details__close:hover {
+.g-theme-details__close:hover,
+.g-add-new-modal__close:hover,
+body.enrove .g-theme-picker-modal__close:hover {
   background: var(--g-surface-alt);
   color: var(--g-text);
 }
 
-.g-theme-details__close:focus-visible {
+.g-theme-details__close:focus,
+.g-add-new-modal__close:focus,
+body.enrove .g-theme-picker-modal__close:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.g-theme-details__close:focus-visible,
+.g-add-new-modal__close:focus-visible,
+body.enrove .g-theme-picker-modal__close:focus-visible {
   outline: 2px solid var(--g-accent);
   outline-offset: 1px;
+}
+
+.g-theme-details__close svg,
+.g-add-new-modal__close svg,
+.g-theme-picker-modal__close svg {
+  display: block;
 }
 
 .g-theme-details__body {
@@ -1960,16 +2085,43 @@ body.enrove .g-settings-remove__note {
   width: 520px;
 }
 
-/* ── Add existing ────────────────────────────────────────────────────────
-   The folio editor's import dialog (Folio::display_import_dialog(),
-   enrove-import.js). A fixed height, so the frame holds still while results
+/* ── Import posts and pages ──────────────────────────────────────────────
+   The folio editor's import dialog (Folio::render_import_dialog()) and the
+   Add New dialog's second screen (Folio::render_import_screen()), driven by
+   enrove-import.js. A fixed height, so the frame holds still while results
    come and go; the search stays put above the scrolling list and the actions
    are docked below it. Rows are separated by space rather than rules, and a
-   pick shows as weight, a faint tint and its place in the order. */
+   pick shows as weight, a faint tint and its place in the order. A row reads
+   title, then what it is in one muted line, then, only when there is any,
+   what won't come across, in ink behind a small amber square. */
 
+/* The shared 700px frame; only the height is the list's own. */
 .g-import__dialog {
-  width: 640px;
   height: 640px;
+}
+
+/* As Add New's second screen: the grid's height, set by the script, and the
+   frame's own 20px padding in place of the dialog's. The list keeps the
+   rows' 12px inset, so the checkboxes line up under the search as they do
+   in the dialog. */
+body.enrove .g-import--screen:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+body.enrove .g-import--screen .g-import__controls {
+  padding: 0 0 8px;
+}
+
+body.enrove .g-import--screen .g-import__body {
+  margin: 0 -8px;
+  padding: 0 0 4px;
+}
+
+body.enrove .g-import__actions {
+  flex-shrink: 0;
+  margin-top: 16px;
 }
 
 .g-import__controls {
@@ -2042,10 +2194,10 @@ body.enrove .g-import__item {
 
 .g-import__row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 24px;
+  grid-template-columns: auto minmax(0, 1fr) 20px;
   align-items: start;
   gap: 12px;
-  padding: 10px 8px;
+  padding: 12px;
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -2059,6 +2211,20 @@ body.enrove .g-import__item {
   background: rgba(var(--g-accent-rgb), 0.05);
 }
 
+/* Already copied into this folio: shown, settled, not pickable. */
+.g-import__item.is-held .g-import__row {
+  cursor: default;
+}
+
+.g-import__item.is-held .g-import__row:hover {
+  background: none;
+}
+
+.g-import__item.is-held .g-import__title {
+  color: var(--g-text-muted);
+}
+
+/* Centred on the title's first line (20px). */
 body.enrove .g-import__check {
   margin: 2px 0 0;
 }
@@ -2070,9 +2236,21 @@ body.enrove .g-import__check {
   min-width: 0;
 }
 
+/* "In this folio" sits at the title's right, and drops under it where the
+   two would squeeze the title (a phone), rather than narrowing it. */
+.g-import__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 12px;
+  min-width: 0;
+}
+
 .g-import__title {
+  flex: 1 1 200px;
+  min-width: 0;
   font-size: 14px;
-  line-height: 1.35;
+  line-height: 20px;
   font-weight: 500;
   color: var(--g-text);
   overflow-wrap: anywhere;
@@ -2082,39 +2260,43 @@ body.enrove .g-import__check {
   font-weight: 600;
 }
 
-.g-import__meta,
-.g-import__note {
+/* Copied here before: said, quietly, where the eye finishes the title. */
+.g-import__held {
+  flex: none;
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 20px;
+  color: var(--g-text-muted);
+  white-space: nowrap;
+}
+
+.g-import__meta,
+.g-import__warning {
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.g-import__meta {
   color: var(--g-text-muted);
 }
 
-.g-import__notes {
+.g-import__warnings {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
-/* What won't come across reads in ink, behind a small square; the rest stays
-   muted. */
-.g-import__note.is-warn {
+.g-import__warning {
   color: var(--g-text);
 }
 
-.g-import__note.is-warn::before,
-.g-import__note.is-settled::before {
+.g-import__warning::before {
   content: '';
   display: inline-block;
   width: 6px;
   height: 6px;
-  margin: 0 7px 1px 0;
+  margin: 0 8px 1px 1px;
   border-radius: 1px;
   background: var(--g-yellow-30);
-}
-
-.g-import__note.is-settled::before {
-  background: var(--g-text-muted);
 }
 
 .g-import__order {
@@ -2172,7 +2354,7 @@ body.enrove .g-import__status {
 
   /* Dialog footers stack in reverse here (primary on top), and a flex basis
      would become height in a column. Sorted last, the status reads first. */
-  body.enrove .g-import__status {
+  body.enrove .g-import__footer .g-import__status {
     flex: none;
     order: 1;
     margin: 0;
@@ -2395,7 +2577,6 @@ body.enrove .g-theme-picker-summary__description {
   color: var(--g-text-muted);
 }
 
-body.enrove .g-theme-picker-modal__close,
 body.enrove .g-theme-picker-modal__done {
   display: inline-flex;
   align-items: center;
@@ -2412,7 +2593,6 @@ body.enrove .g-theme-picker-modal__done {
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-body.enrove .g-theme-picker-modal__close:hover,
 body.enrove .g-theme-picker-modal__done:hover {
   background: var(--g-surface-alt);
   border-color: var(--g-gray-40);
@@ -2422,7 +2602,6 @@ body.enrove .g-theme-picker-summary__button {
   margin-top: 12px;
 }
 
-body.enrove .g-theme-picker-modal__close:focus,
 body.enrove .g-theme-picker-modal__done:focus {
   outline: 2px solid var(--g-accent);
   outline-offset: 2px;
@@ -2464,47 +2643,29 @@ body.enrove .g-theme-picker-modal__frame {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
 }
 
-body.enrove .g-theme-picker-modal__header,
-body.enrove .g-theme-picker-modal__footer {
-  display: flex;
+/* With a subtitle under the title, the close button keeps to the top. */
+body.enrove .g-theme-picker-modal__header {
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--g-border);
 }
 
 body.enrove .g-theme-picker-modal__footer {
+  display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
   border-top: 1px solid var(--g-border);
-  border-bottom: 0;
 }
 
 body.enrove .g-theme-picker-modal__heading {
   min-width: 0;
 }
 
-body.enrove .g-theme-picker-modal__title {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.3;
-  font-weight: 600;
-  color: var(--g-text);
-}
-
 body.enrove .g-theme-picker-modal__subtitle {
-  margin: 6px 0 0;
+  margin: 2px 0 0;
   font-size: 13px;
   line-height: 1.5;
   color: var(--g-text-muted);
-}
-
-body.enrove .g-theme-picker-modal__close {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  flex: 0 0 36px;
 }
 
 body.enrove .g-theme-picker-modal__body {
@@ -2536,7 +2697,6 @@ body.enrove .g-version-history-modal__frame {
     padding: 12px;
   }
 
-  body.enrove .g-theme-picker-modal__header,
   body.enrove .g-theme-picker-modal__footer,
   body.enrove .g-theme-picker-modal__body {
     padding: 16px;
@@ -2911,44 +3071,7 @@ body.enrove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
   transform: translateY(0) scale(1);
 }
 
-.g-add-new-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--g-border);
-  flex-shrink: 0;
-}
-
-.g-add-new-modal__title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--g-text);
-}
-
-.g-add-new-modal__close {
-  -webkit-appearance: none;
-  appearance: none;
-  background: none;
-  border: none;
-  padding: 6px;
-  margin: 0;
-  cursor: pointer;
-  color: var(--g-gray-30);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s, background 0.15s;
-}
-
-.g-add-new-modal__close:hover,
-.g-add-new-modal__close:focus-visible {
-  color: var(--g-gray-80);
-  background: var(--g-gray-5);
-  outline: none;
-}
+/* Header, title and close: the shared dialog header (.g-theme-details__header). */
 
 .g-add-new-modal__body {
   overflow-y: auto;
@@ -2994,7 +3117,8 @@ body.enrove .g-tag-dropdown li.g-tag-dropdown__create.is-active {
 /* ── Dialog screens: confirm on a second screen in the same frame ────────
    A dialog that has to ask before something disruptive — Change theme on a
    folio, Remove theme on the Themes screen — does not stack a second dialog
-   or grow a box under its buttons. The screen it was on steps aside and the
+   or grow a box under its buttons. Neither does one that needs a second step:
+   Add New's Import posts and pages (.g-import--screen) works the same way. The screen it was on steps aside and the
    question stands in its place, at that screen's height (the JS sets it), so
    the frame neither jumps nor grows to ask. The dialog's title becomes the
    question, and the answers sit on the bottom row the first screen's own

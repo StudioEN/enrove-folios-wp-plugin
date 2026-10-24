@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- In the folio editor, importing posts and pages is now part of **Add Page**: a chevron beside it opens a menu with **Import posts and pages…**, in place of the separate Add Existing button, so the header keeps one way in to adding pages. On a phone both are still under More actions. The dialog is titled Import posts and pages, and its button counts what it will do ("Import 2 pages").
+- A post or page already copied into a folio can't be imported into it again: the dialog shows it, muted and marked "In this folio", with its checkbox off, and a form sent anyway (an old tab) gets no second copy.
+- The header's menus (More actions, and Add Page's) look and behave like the block editor's dropdown menus: the item under the pointer fills with the admin colour, where it used to take a grey too faint to see, and the item reached with the keyboard is ringed.
+- Starting a new folio from existing posts no longer opens a second dialog over the theme picker. **Import posts and pages…** (it was Use existing posts…, though pages could be chosen too) turns the Add New dialog itself to the list, in the same frame and at the same size, titled Import posts and pages. **Done** takes the selection back to the themes, summed up in place of the sample-content toggle ("1 post and 1 page selected", with Change and Remove), and **Cancel** goes back without changing it; the folio is made only when Continue is pressed there. The folio editor's import dialog is now as wide as the other Enrove dialogs.
+- Every Enrove dialog has the same header: the title in one size, and the same thin close button in the same place. Add New, Change theme and version history used a different size of title, and the others a heavier close icon.
+- The import dialog's list is easier to scan. Each post or page takes at most three lines: its title, with "In this folio" beside it when it was copied in before; one line saying what it is ("Page · Draft · October 23, 2026 · Converts to blocks"); and, only when something won't come across, a short warning for each thing ("Page builder layout isn’t kept", "[contact-form-7] will show as plain text", "Password protection isn’t kept").
+
 ## [0.6.0] - 2026-10-23
 
 ### Added

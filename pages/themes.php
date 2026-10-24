@@ -405,7 +405,9 @@ class Themes extends Page
 					</div>
 					<button type="button" class="g-theme-details__close" data-enrove-theme-close
 						aria-label="<?php esc_attr_e('Close theme details', 'enrove-folios'); ?>">
-						<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+						<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+							<path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+						</svg>
 					</button>
 				</div>
 				<div class="g-theme-details__body">

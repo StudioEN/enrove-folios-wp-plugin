@@ -97,8 +97,8 @@ class Module extends BaseModule
 			wp_enqueue_script('enrove-reset', $this->get_js_assets_url('enrove-reset'), ['enrove-dialog'], $enrove_reset_js_version, true);
 		}
 
-		// The Add existing dialog, on the folio editor and on All Folios (where
-		// the Add New picker opens it), and the hidden converter it hands
+		// The Import posts and pages picker, a dialog on the folio editor and the
+		// Add New dialog's second screen on All Folios, and the hidden converter it hands
 		// classic posts to. The block library that converts them loads only
 		// inside the converter's own frame, never on these screens.
 		if (in_array($current_page, [\Enrove\Pages\Folio::PAGE_ID, \Enrove\Pages\All_Folios::PAGE_ID], true)) {

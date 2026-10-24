@@ -1551,8 +1551,6 @@ class All_Folios extends Page
 		</form>
 		<?php $this->display_add_new_modal(); ?>
 		<?php
-		// After the Add New dialog, so it stacks above the picker that opens it.
-		Folio::render_import_dialog(0);
 	}
 
 	private function display_add_new_modal()
@@ -1575,7 +1573,16 @@ class All_Folios extends Page
 					</button>
 				</div>
 				<div class="g-add-new-modal__body">
-					<?php \Enrove\Plugin::instance()->add_new->display__themes(); ?>
+					<?php /* Two screens in one frame: the themes, then, from Import
+					         posts and pages, the ones to start from (enrove-import.js). */ ?>
+					<div class="g-dialog-screen" data-add-new-screen>
+						<?php \Enrove\Plugin::instance()->add_new->display__themes(); ?>
+					</div>
+					<?php
+					if (\Enrove\Contents\FolioPage\Import::get_post_types()) {
+						Folio::render_import_screen();
+					}
+					?>
 				</div>
 			</div>
 		</div>

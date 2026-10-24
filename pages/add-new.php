@@ -76,7 +76,7 @@ class Add_New extends Page
     }
     $seed_sample_content = $sample_content !== null && $seed_requested;
 
-    // Posts picked with Use existing posts become the folio's pages, in the
+    // Posts selected with Import posts and pages become the folio's pages, in the
     // place of sample content. The nonce checked above guards these fields
     // too; read_form() checks it again before it reads them.
     $import = isset($_POST['sources'])
@@ -331,15 +331,14 @@ class Add_New extends Page
     <?php endforeach; ?>
     <?php if (Import::get_post_types()) : ?>
     <?php /* Starting from existing posts takes the sample toggle's place once
-             they are picked: a folio starts one way or the other.
+             they are selected: a folio starts one way or the other.
              enrove-import.js fills the summary and the sources[] fields. */ ?>
     <p class="g-folio__import-summary" data-enrove-import-summary hidden>
       <span data-enrove-import-summary-text></span>
       <button type="button" class="button-link" data-enrove-import-change><?php esc_html_e('Change', 'enrove-folios'); ?></button>
       <button type="button" class="button-link" data-enrove-import-clear><?php esc_html_e('Remove', 'enrove-folios'); ?></button>
     </p>
-    <button type="button" class="button button-secondary" id="g-add-new-import-open"
-      aria-haspopup="dialog" aria-controls="g-import-modal"><?php esc_html_e('Use existing posts…', 'enrove-folios'); ?></button>
+    <button type="button" class="button button-secondary" id="g-add-new-import-open"><?php esc_html_e('Import posts and pages…', 'enrove-folios'); ?></button>
     <div hidden data-enrove-import-fields></div>
     <?php endif; ?>
     <button type="submit" class="button button-primary">

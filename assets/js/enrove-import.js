@@ -1,15 +1,17 @@
 // ── Import existing posts ──────────────────────────────────────────────────
-// Drives the Add existing dialog (Folio::render_import_dialog()): searches
+// Drives the Import posts and pages dialog (Folio::render_import_dialog()): searches
 // the posts and pages the user may edit (Contents\FolioPage\Import, over
 // admin-ajax), keeps what they pick in the order they pick it, and on submit
 // converts the classic ones to blocks in the hidden converter
 // (window.enroveBlockConverter) before the form goes to admin-post.php.
 //
-// Two modes, from the dialog's data-mode. 'folio', in the folio editor: the
-// dialog's own footer form copies the picks into that folio. 'new', on All
-// Folios: the Add New picker opened it, so the picks go back to the picker,
-// whose create form (data-enrove-import-target) makes them the new folio's
-// pages when Continue is pressed.
+// Two modes, from data-mode. 'folio', in the folio editor, is a dialog
+// (Folio::render_import_dialog()) whose own footer form copies the picks into
+// that folio. 'new', on All Folios, is the Add New dialog's second screen
+// (Folio::render_import_screen()): the theme grid steps aside for it, Done
+// takes the selection back to the themes (Cancel, the one it opened on), and
+// Continue there sends the picks with the picker's create form
+// (data-enrove-import-target), which makes them the new folio's pages.
 //
 // A conversion that fails, or a converter that never loads, costs nothing but
 // the conversion: the post is sent without blocks and the server copies it
@@ -17,8 +19,8 @@
 // shows arrives as data and is set as text, never as HTML.
 (function () {
   var cfg = window.ENROVE_IMPORT;
-  var modal = document.getElementById('g-import-modal');
-  if (!cfg || !modal || typeof window.enroveDialog !== 'function') return;
+  var modal = document.querySelector('[data-enrove-import]');
+  if (!cfg || !modal) return;
 
   var __ = wp.i18n.__;
   var _n = wp.i18n._n;
@@ -39,6 +41,7 @@
   var status = modal.querySelector('[data-enrove-import-status]');
   var submit = modal.querySelector('[data-enrove-import-submit]');
   var hint = status.textContent;
+  var idleLabel = submit.textContent.trim();
   var max = parseInt(cfg.maxSources, 10) || 50;
 
   var picked = [];   // IDs, in the order they were picked
@@ -50,9 +53,10 @@
   var busy = false;
   var searchTimer = null;
 
-  var dialog = window.enroveDialog(modal, {
-    canEscape: function () { return !busy; },
-  });
+  var dialog = mode === 'folio' && typeof window.enroveDialog === 'function'
+    ? window.enroveDialog(modal, { canEscape: function () { return !busy; } })
+    : null;
+  if (mode === 'folio' && !dialog) return;
 
   function post(data) {
     var body = new FormData();
@@ -79,23 +83,19 @@
 
   // ── The list ──
 
-  function notesFor(item) {
-    var notes = [];
-    if (item.held) notes.push({ text: __('Already in this folio', 'enrove-folios'), settled: true });
-    if (item.builder) notes.push({ text: __('Made with a page builder: its layout won’t come across', 'enrove-folios'), warn: true });
+  // What won't survive the copy, one line each.
+  function warningsFor(item) {
+    var warnings = [];
+    if (item.builder) warnings.push(__('Page builder layout isn’t kept', 'enrove-folios'));
     if (item.shortcodes && item.shortcodes.length) {
-      notes.push({
-        text: sprintf(
-          /* translators: %s: shortcode names, e.g. [contact-form-7], [button] */
-          __('Shows %s as text', 'enrove-folios'),
-          item.shortcodes.map(function (tag) { return '[' + tag + ']'; }).join(', ')
-        ),
-        warn: true,
-      });
+      warnings.push(sprintf(
+        /* translators: %s: shortcode names, e.g. [contact-form-7], [button] */
+        __('%s will show as plain text', 'enrove-folios'),
+        item.shortcodes.map(function (tag) { return '[' + tag + ']'; }).join(', ')
+      ));
     }
-    if (item.password) notes.push({ text: __('Its password isn’t copied', 'enrove-folios'), warn: true });
-    if (item.classic) notes.push({ text: __('Classic editor: converted to blocks', 'enrove-folios') });
-    return notes;
+    if (item.password) warnings.push(__('Password protection isn’t kept', 'enrove-folios'));
+    return warnings;
   }
 
   function el(tag, className, text) {
@@ -105,8 +105,13 @@
     return node;
   }
 
+  // A row is at most three lines: the title; what it is (type, status, date,
+  // and whether it converts); and, only when there are any, what won't come
+  // across. One already copied into this folio says "In this folio" at the
+  // title's right and can't be picked again (create_pages() refuses it too),
+  // so it keeps only what identifies it.
   function renderRow(item) {
-    var li = el('li', 'g-import__item');
+    var li = el('li', 'g-import__item' + (item.held ? ' is-held' : ''));
     var label = el('label', 'g-import__row');
     var box = el('input', 'g-import__check');
     box.type = 'checkbox';
@@ -114,19 +119,24 @@
     box.checked = picked.indexOf(item.id) !== -1;
 
     var text = el('span', 'g-import__text');
-    text.appendChild(el('span', 'g-import__title', item.title));
+    var head = el('span', 'g-import__head');
+    head.appendChild(el('span', 'g-import__title', item.title));
+    if (item.held) head.appendChild(el('span', 'g-import__held', __('In this folio', 'enrove-folios')));
+    text.appendChild(head);
+
     var meta = [item.typeLabel];
     if (item.status !== 'publish') meta.push(item.statusLabel);
     meta.push(item.modified);
+    if (item.classic && !item.held) meta.push(__('Converts to blocks', 'enrove-folios'));
     text.appendChild(el('span', 'g-import__meta', meta.join(' · ')));
 
-    var notes = notesFor(item);
-    if (notes.length) {
-      var ul = el('span', 'g-import__notes');
-      notes.forEach(function (note) {
-        ul.appendChild(el('span', 'g-import__note' + (note.warn ? ' is-warn' : '') + (note.settled ? ' is-settled' : ''), note.text));
+    var warnings = item.held ? [] : warningsFor(item);
+    if (warnings.length) {
+      var lines = el('span', 'g-import__warnings');
+      warnings.forEach(function (warning) {
+        lines.appendChild(el('span', 'g-import__warning', warning));
       });
-      text.appendChild(ul);
+      text.appendChild(lines);
     }
 
     var order = el('span', 'g-import__order');
@@ -197,20 +207,23 @@
       var id = parseInt(box.value, 10);
       var at = picked.indexOf(id);
       box.checked = at !== -1;
-      box.disabled = busy || (full && at === -1);
+      box.disabled = busy || (at === -1 && (full || (items[id] && items[id].held)));
       box.closest('.g-import__item').classList.toggle('is-picked', at !== -1);
       box.closest('.g-import__row').querySelector('.g-import__order').textContent = at === -1 ? '' : String(at + 1);
     });
 
     if (busy) return;
-    submit.disabled = picked.length === 0;
-    submit.textContent = picked.length
-      ? sprintf(
-        /* translators: %s: number of pages to add */
-        _n('Add %s page', 'Add %s pages', picked.length, 'enrove-folios'),
-        picked.length
-      )
-      : __('Add pages', 'enrove-folios');
+    // Done confirms whatever is selected, none included; Import needs one.
+    if (mode === 'folio') {
+      submit.disabled = picked.length === 0;
+      submit.textContent = picked.length
+        ? sprintf(
+          /* translators: %s: number of pages to import */
+          _n('Import %s page', 'Import %s pages', picked.length, 'enrove-folios'),
+          picked.length
+        )
+        : idleLabel;
+    }
     status.textContent = full
       ? sprintf(
         /* translators: %s: the most posts one import takes */
@@ -329,16 +342,23 @@
     });
   }
 
-  // ── A new folio: the picks go back to the Add New picker ──
+  // ── A new folio: the Add New dialog's second screen ──
 
   var row = form.querySelector('.g-folio__theme-button');
   var summary = form.querySelector('[data-enrove-import-summary]');
   var summaryText = form.querySelector('[data-enrove-import-summary-text]');
   var openNew = document.getElementById('g-add-new-import-open');
+  var addNew = modal.closest('.g-add-new-modal');
+  var themesScreen = addNew && addNew.querySelector('[data-add-new-screen]');
+  var title = addNew && addNew.querySelector('.g-add-new-modal__title');
+  var themesTitle = title ? title.textContent.trim() : '';
+  // The selection the themes screen shows and Continue sends. The list works
+  // on a copy (picked) until Done.
+  var confirmed = [];
 
   function showPicks() {
-    var count = picked.length;
-    // The sample toggle steps aside while posts are picked: a folio starts
+    var count = confirmed.length;
+    // The sample toggle steps aside while posts are selected: a folio starts
     // one way or the other, and create_folio() ignores the sample when both come.
     if (row) row.classList.toggle('is-importing', count > 0);
     if (openNew) openNew.hidden = count > 0;
@@ -347,15 +367,15 @@
     summaryText.textContent = describePicks();
   }
 
-  // "2 posts picked", "1 page picked", "1 post and 2 pages picked": every
-  // pick came from the list, so its type is known.
+  // "2 posts selected", "1 page selected", "1 post and 2 pages selected":
+  // every pick came from the list, so its type is known.
   function describePicks() {
-    var pages = picked.filter(function (id) { return items[id] && items[id].type === 'page'; }).length;
-    var posts = picked.length - pages;
+    var pages = confirmed.filter(function (id) { return items[id] && items[id].type === 'page'; }).length;
+    var posts = confirmed.length - pages;
     if (posts && pages) {
       return sprintf(
         /* translators: 1: "1 post" / "2 posts", 2: "1 page" / "2 pages" */
-        __('%1$s and %2$s picked', 'enrove-folios'),
+        __('%1$s and %2$s selected', 'enrove-folios'),
         /* translators: %s: number of posts */
         sprintf(_n('%s post', '%s posts', posts, 'enrove-folios'), posts),
         /* translators: %s: number of pages */
@@ -363,62 +383,111 @@
       );
     }
     return pages
-      /* translators: %s: number of pages picked */
-      ? sprintf(_n('%s page picked', '%s pages picked', pages, 'enrove-folios'), pages)
-      /* translators: %s: number of posts picked */
-      : sprintf(_n('%s post picked', '%s posts picked', posts, 'enrove-folios'), posts);
+      /* translators: %s: number of pages selected */
+      ? sprintf(_n('%s page selected', '%s pages selected', pages, 'enrove-folios'), pages)
+      /* translators: %s: number of posts selected */
+      : sprintf(_n('%s post selected', '%s posts selected', posts, 'enrove-folios'), posts);
   }
 
-  if (mode === 'new') {
-    submit.addEventListener('click', function () {
-      if (!picked.length) return;
-      dialog.close();
-      showPicks();
-      form.querySelector('button[type="submit"]').focus();
-    });
+  // Each screen comes in from the side it sits on, as Change theme's do:
+  // this one from the right, the themes back from the left.
+  function enterScreen(screen, className) {
+    screen.classList.remove('is-entering-forward', 'is-entering-back');
+    void screen.offsetWidth;
+    screen.classList.add(className);
+  }
 
+  // The list stands where the theme grid was, at its height, so the frame
+  // neither jumps nor grows; the dialog's title names the step.
+  function showList() {
+    var height = themesScreen.offsetHeight;
+    picked = confirmed.slice();
+    refresh();
+    modal.style.height = height ? height + 'px' : '';
+    themesScreen.hidden = true;
+    modal.hidden = false;
+    if (title) title.textContent = modal.getAttribute('data-title') || themesTitle;
+    enterScreen(modal, 'is-entering-forward');
+    if (!loaded) load(1);
+    preloadConverter();
+    search.focus();
+  }
+
+  // Back to the themes, keeping the list's selection (Done) or not (Cancel,
+  // or the dialog closed). The focus lands on what comes next: Continue
+  // once something is selected, otherwise the way back in.
+  function showThemes(keep, animate) {
+    if (modal.hidden) return;
+    if (keep) confirmed = picked.slice();
+    picked = confirmed.slice();
+    refresh();
+    modal.hidden = true;
+    modal.style.height = '';
+    themesScreen.hidden = false;
+    if (title) title.textContent = themesTitle;
+    showPicks();
+    if (!animate) return;
+    enterScreen(themesScreen, 'is-entering-back');
+    (confirmed.length ? form.querySelector('button[type="submit"]') : openNew).focus();
+  }
+
+  if (mode === 'new' && themesScreen) {
+    // Continue, once posts are selected: convert them and create the folio.
+    // The dialog stays put until the page goes.
     form.addEventListener('submit', function (e) {
-      if (!picked.length) return;
+      if (!confirmed.length) return;
       e.preventDefault();
       if (busy) return;
       busy = true;
+      addNew.setAttribute('data-enrove-busy', '');
       Array.prototype.forEach.call(form.querySelectorAll('button'), function (button) { button.disabled = true; });
       submitPicks(function (text) { summaryText.textContent = text; });
     });
 
+    submit.addEventListener('click', function () { showThemes(true, true); });
+    modal.addEventListener('click', function (e) {
+      if (e.target.closest('[data-enrove-import-cancel]')) showThemes(false, true);
+    });
+
     form.addEventListener('click', function (e) {
       if (busy) return;
-      if (e.target.closest('[data-enrove-import-change]')) open();
+      if (e.target.closest('#g-add-new-import-open, [data-enrove-import-change]')) showList();
       if (e.target.closest('[data-enrove-import-clear]')) {
         picked = [];
+        confirmed = [];
         refresh();
         showPicks();
         if (openNew) openNew.focus();
       }
     });
+
+    // The dialog always opens on the themes, with the confirmed selection.
+    addNew.addEventListener('enrove:add-new-open', function () { showThemes(false, false); });
   }
 
-  // ── Opening and closing ──
+  // ── Opening and closing the folio editor's dialog ──
 
-  function open() {
-    dialog.open();
-    if (!loaded) load(1);
-    // Start the converter loading now, so it is ready by the time a pick is made.
+  // Start the converter loading now, so it is ready by the time a pick is made.
+  function preloadConverter() {
     if (window.enroveBlockConverter && typeof window.enroveBlockConverter.preload === 'function') {
       window.enroveBlockConverter.preload();
     }
-    window.setTimeout(function () { search.focus(); }, 50);
   }
 
-  modal.addEventListener('click', function (e) {
-    if (!busy && e.target.closest('[data-enrove-import-close]')) dialog.close();
-  });
-
-  var opener = document.getElementById(mode === 'folio' ? 'g-folio-import-open' : 'g-add-new-import-open');
-  if (opener) {
-    opener.addEventListener('click', function (e) {
-      e.preventDefault();
-      open();
+  if (mode === 'folio') {
+    modal.addEventListener('click', function (e) {
+      if (!busy && e.target.closest('[data-enrove-import-close]')) dialog.close();
     });
+
+    var opener = document.getElementById('g-folio-import-open');
+    if (opener) {
+      opener.addEventListener('click', function (e) {
+        e.preventDefault();
+        dialog.open();
+        if (!loaded) load(1);
+        preloadConverter();
+        window.setTimeout(function () { search.focus(); }, 50);
+      });
+    }
   }
 })();

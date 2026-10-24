@@ -278,13 +278,15 @@ jQuery(function () {
     }
   }
 
-  // The header's More actions menu (Page::display_overflow_menu()), shown at
-  // phone width in place of the items that carry 'overflow'. A menu button
+  // A header menu: More actions (Page::display_overflow_menu()), shown at
+  // phone width in place of the items that carry 'overflow', and a split
+  // button's chevron menu (Page::print_split_button()). A menu button
   // as the ARIA pattern has it: arrow keys, Home and End move between items,
   // Escape closes and returns to the button, Tab or a click elsewhere closes.
   // An item with data-enrove-menu-proxy presses the real control, which keeps
   // its own state and script; a link item is an ordinary link, re-read from
-  // its bar copy (data-enrove-menu-mirror) each time the menu opens.
+  // its bar copy (data-enrove-menu-mirror) each time the menu opens; any
+  // other button item is bound by its own script.
   function initMenu(root) {
     const toggle = root.querySelector('[data-enrove-menu-toggle]')
     const menu = root.querySelector('[role="menu"]')
@@ -418,6 +420,8 @@ jQuery(function () {
       }
     })
 
+    // Captured, so it runs before a button item's own handler: focus is back
+    // on the menu button by then, and a dialog that item opens returns there.
     menu.addEventListener('click', function (event) {
       const item = event.target.closest('[role="menuitem"]')
       if (!item) {
@@ -425,21 +429,22 @@ jQuery(function () {
       }
       if (item.getAttribute('aria-disabled') === 'true') {
         event.preventDefault()
+        event.stopPropagation()
         return
       }
 
-      const id = item.getAttribute('data-enrove-menu-proxy')
-      if (!id) {
+      if (item.tagName === 'A') {
         close(false)
         return
       }
 
       close(true)
-      const target = document.getElementById(id)
+      const id = item.getAttribute('data-enrove-menu-proxy')
+      const target = id ? document.getElementById(id) : null
       if (target) {
         target.click()
       }
-    })
+    }, true)
 
     document.addEventListener('pointerdown', function (event) {
       if (isOpen() && !root.contains(event.target)) {
@@ -453,12 +458,13 @@ jQuery(function () {
       }
     })
 
-    // Widening past phone width hides the menu button; don't leave the menu
+    // Crossing phone width hides one of the two menu buttons (More actions
+    // when widening, a split button when narrowing); don't leave its menu
     // open behind it.
     if (window.matchMedia) {
       const phone = window.matchMedia('(max-width: 600px)')
       const onChange = function () {
-        if (phone.matches || !isOpen()) {
+        if (!isOpen() || toggle.offsetParent) {
           return
         }
         const focused = root.contains(document.activeElement) ? document.activeElement : null
@@ -1896,6 +1902,8 @@ jQuery(function () {
     const $backdrop      = $addNewModal.find('.g-add-new-modal__backdrop')
 
     function openAddNewModal() {
+      // Always on the themes: enrove-import.js steps back from its screen.
+      addNewModalEl.dispatchEvent(new CustomEvent('enrove:add-new-open'))
       addNewModalEl.removeAttribute('hidden')
       requestAnimationFrame(function () {
         addNewModalEl.classList.add('is-open')
@@ -1905,6 +1913,10 @@ jQuery(function () {
     }
 
     function closeAddNewModal() {
+      // Held open while the picked posts are converted and the folio is made.
+      if (addNewModalEl.hasAttribute('data-enrove-busy')) {
+        return
+      }
       addNewModalEl.classList.remove('is-open')
       document.body.style.overflow = ''
       hideAfterFade(addNewModalEl)
@@ -1915,10 +1927,9 @@ jQuery(function () {
     $backdrop.on('click', closeAddNewModal)
 
     jQuery(document).on('keydown', function (e) {
-      // Not under the Add existing dialog it opens. That one's Escape closes
-      // only itself (enrove-dialog.js), which marks it spent with
-      // preventDefault(); whichever handler runs first, one Escape closes one dialog.
-      if (e.key === 'Escape' && !e.isDefaultPrevented() && addNewModalEl.classList.contains('is-open') && !document.querySelector('#g-import-modal.is-open')) {
+      // An Escape another dialog has already spent (enrove-dialog.js marks
+      // it with preventDefault()) is not this one's.
+      if (e.key === 'Escape' && !e.isDefaultPrevented() && addNewModalEl.classList.contains('is-open')) {
         closeAddNewModal()
       }
     })

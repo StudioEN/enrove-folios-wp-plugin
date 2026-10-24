@@ -410,6 +410,8 @@ class Import
    * classic one takes its converted blocks, or, with none, its own content
    * with paragraphs added. Each copy takes the source's title, excerpt and
    * featured image, belongs to the user making it, and notes its source.
+   * A source the folio already holds a copy of is skipped: the dialog does
+   * not offer it, and a stale or hand-made form gets no second copy.
    * Live statuses are for users who may publish; anyone else's copies are
    * drafts, and Publishing holds a live copy back while its folio is not live.
    *
@@ -436,10 +438,14 @@ class Import
     }
 
     $menu_order = static::get_last_menu_order($folio_id);
+    $held = static::get_imported_source_ids($folio_id);
     $page_ids = array();
 
     foreach ($items as $item) {
       $source = $item['post'];
+      if (in_array((int) $source->ID, $held, true)) {
+        continue;
+      }
       if (has_blocks($source->post_content)) {
         $content = $source->post_content;
       } elseif (isset($item['content']) && is_string($item['content']) && $item['content'] !== '') {
@@ -474,6 +480,7 @@ class Import
       }
 
       $page_ids[] = (int) $page_id;
+      $held[] = (int) $source->ID;
     }
 
     return $page_ids;
