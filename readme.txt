@@ -98,8 +98,9 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 = 0.6.0 =
 * Make folios from posts and pages you already have: **Import posts and pages** (in the folio editor's Add Page menu) copies them into a folio as draft pages, and **Import posts and pages…** in the theme picker starts a new folio from them.
 * Posts written in the classic editor are converted to blocks on the way in, so their paragraphs, headings, captions, galleries and embeds come across and their headings appear in the folio's "On this page" list.
-* The dialog says what will not come across before you add a post: a page builder's layout, shortcodes, or a password.
+* The dialog says what will not come across before you add a post: a page builder's layout, shortcodes, or a password. A post already in the folio is marked and can't be added twice.
 * You can copy only posts and pages you could already edit.
+* The folio editor's header menus look and behave like the block editor's, and every Enrove dialog has the same header.
 * Fixed: Enrove eBook, Magazine, Newsletter and Proposal garbled headings with accents or other non-English characters ("Café" showed as "CafÃ©").
 
 = 0.5.1 =
