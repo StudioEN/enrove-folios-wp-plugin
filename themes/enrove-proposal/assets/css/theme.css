@@ -1573,27 +1573,31 @@ a.gp-page__footer-arrow {
   transition: border-color var(--gp-transition), color var(--gp-transition), background var(--gp-transition);
 }
 
-a.gp-page__footer-arrow::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 0.4rem);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 0.3em 0.55em;
-  background: var(--gp-text);
-  color: var(--gp-bg);
-  font-size: 0.625rem;
-  font-weight: 500;
-  line-height: 1.3;
-  white-space: nowrap;
-  border-radius: 0.25rem;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--gp-transition);
-}
+/* Hover only: unseen, a tooltip still takes up room, and past the edge of a phone's
+   screen it widens the whole page. */
+@media (hover: hover) {
+  a.gp-page__footer-arrow::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 0.4rem);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.3em 0.55em;
+    background: var(--gp-text);
+    color: var(--gp-bg);
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    border-radius: 0.25rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--gp-transition);
+  }
 
-a.gp-page__footer-arrow:hover::after {
-  opacity: 1;
+  a.gp-page__footer-arrow:hover::after {
+    opacity: 1;
+  }
 }
 
 .gp-page__footer-arrow:hover {

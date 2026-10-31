@@ -12,6 +12,7 @@
 - The label of a Button block was unreadable on a folio page in every theme that colours the links in its page body, the link colour landing on the button's dark ground. So was the button of Enrove Proposal's call-to-action block, blue on blue. Both now show white.
 - Enrove Proposal had no style for code blocks, so they ran as plain text in the page. They now sit on a tinted panel in a monospaced font.
 - Enrove Newsletter's contents panel cut off a long list on a short window, the list running past the panel's foot. It now scrolls inside the panel.
+- Enrove Proposal's pages were wider than a phone's screen, so they sat slightly zoomed out and could scroll sideways. The hover tooltips on the Previous and Next arrows at the foot of a page took up room even while hidden. They now exist only where there is a pointer to hover with.
 
 ## [0.6.0] - 2026-10-23
 

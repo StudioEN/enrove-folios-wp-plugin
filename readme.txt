@@ -106,6 +106,7 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 * Fixed: a Button block's label was unreadable in every theme that colours the links in its page body, and so was the button of Enrove Proposal's call-to-action block.
 * Fixed: Enrove Proposal had no style for code blocks.
 * Fixed: Enrove Newsletter's contents panel cut off a long list on a short window.
+* Fixed: Enrove Proposal's pages were wider than a phone's screen.
 
 = 0.6.0 =
 * Make folios from posts and pages you already have: **Import posts and pages** (in the folio editor's Add Page menu) copies them into a folio as draft pages, and **Import posts and pages…** in the theme picker starts a new folio from them.
