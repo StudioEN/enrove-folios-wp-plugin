@@ -388,6 +388,7 @@ body.g-folio-print .g-folio-print__bar-button:focus-visible {
 
 .g-folio-print__contents-item a {
   color: inherit;
+  flex: 1;
   text-decoration: none;
 }
 

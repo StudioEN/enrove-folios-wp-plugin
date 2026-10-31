@@ -55,7 +55,7 @@ Run per theme, in the real print window of Chrome and of one other browser, on a
 1. Save as PDF… from the folio editor, and from All Folios, opens the folio in a new tab with the print window on top.
 2. The cover fills the sheet to all four edges in Chrome and Edge, with no navigation and no Open folio button, and it appears once. In Safari it sits on one sheet inside a white margin, the contents page has no numbers, and the bar above the document names Chrome and Edge. A cover that repeats on every sheet is `position: fixed` getting through.
 3. With a printer as the destination, in the print window's preview (no need to print), the cover reaches all four edges. It stays there, with no date or URL on the sheet, when Paper size under More settings changes between A4 and Letter. Run step 4 on both papers.
-4. Each number on the contents page matches the sheet that section starts on, and each entry links to it.
+4. Each number on the contents page matches the sheet that section starts on, and in the saved PDF clicking an entry opens that sheet, in Firefox as well as Chrome.
 5. Accordions are open, an embed is a link, and no block is sliced by a sheet edge. A short table stays whole with the heading above it, a long one splits between rows and repeats its head, and no column breaks a word in two.
 6. Text is selectable, links work, and the theme's fonts are embedded (download them first on Settings → Fonts).
 7. Firefox, current release, with Margins on Default and on None: the cover fills the sheet, no sheet is blank, every sheet after the cover has the footer with the folio's title and the right number, the contents numbers match it, and no address or date appears. Safari: nothing on the cover is clipped or black, and the bar's hint shows.

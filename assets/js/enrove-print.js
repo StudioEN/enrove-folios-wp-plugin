@@ -265,6 +265,7 @@
     var flow = document.querySelector('.g-folio-print__flow');
     var pages = {};
     var breaks = {};
+    var starts = {};
     var feet = [];
     var sheets = 0;
 
@@ -352,6 +353,7 @@
           return getPosition(section, block);
         });
 
+        starts[section.id] = blocks.length ? getPosition(section, blocks[0]) : -1;
         roots.push({ selector: '#' + section.id, element: section, blocks: blocks });
         lastSheet = column;
 
@@ -366,7 +368,7 @@
       }
     }
 
-    return { pages: pages, breaks: breaks, feet: feet, sheets: sheets };
+    return { pages: pages, breaks: breaks, starts: starts, feet: feet, sheets: sheets };
   }
 
   function measure() {
@@ -414,6 +416,14 @@
             elements[index].style.breakBefore = 'page';
           }
         });
+
+        // In a PDF from Firefox a link goes to the last sheet its target reaches, so a
+        // section spanning sheets would open at its end. Its first block is on one.
+        var start = elements[layout.starts[id]];
+        if (!canForceColumn && link && start) {
+          start.id = start.id || id + '-start';
+          link.setAttribute('href', '#' + start.id);
+        }
       }
     });
 
