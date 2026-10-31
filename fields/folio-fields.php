@@ -25,6 +25,7 @@ class FolioFields
   public $byline;
   public $show_byline;
   public $show_logo;
+  public $show_pdf_link;
   public $proposal_version;
   public $proposal_status;
   public $proposal_prepared_for;
@@ -74,6 +75,7 @@ class FolioFields
     $this->copyright = $meta['copyright'][0] ?? '';
     $this->subtitle = $meta['subtitle'][0] ?? '';
     $this->use_folio = $meta['use_folio'][0] ?? '1';
+    $this->show_pdf_link = $meta['show_pdf_link'][0] ?? '0';
     $this->theme_id = $meta['theme_id'][0] ?? '';
     $this->permalink = $meta['permalink'][0] ?? '';
     $legacy_font = Utils::normalize_primary_font_key($meta['fonts'][0] ?? '');

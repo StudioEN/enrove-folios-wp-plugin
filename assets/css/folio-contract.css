@@ -177,3 +177,33 @@
   background-repeat: no-repeat;
   background-size: cover;
 }
+
+/* ── Buttons ────────────────────────────────────────────────────────────────
+   Core gives a Button block its white text with one class, and a theme's rule for
+   links in the page body outranks that, so the label took the link colour on the
+   button's dark ground. */
+body.enrove .wp-block-button:not(.is-style-outline) .wp-block-button__link:not(.has-text-color) {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* ── Save as PDF ────────────────────────────────────────────────────────────
+   The link Base_Theme::display_pdf_link() prints, on a folio that offers one.
+   It sits on covers of every colour, so it takes its colour from where it is. */
+.g-folio__pdf-link {
+  color: inherit;
+  display: inline-block;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.g-folio__pdf-link:hover {
+  opacity: 0.75;
+}
+
+.g-folio__pdf-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}

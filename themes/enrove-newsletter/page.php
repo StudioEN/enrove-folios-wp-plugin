@@ -306,7 +306,7 @@ class Page extends Base_Theme
       // guideline 10 allows no public credit without the site admin opting in.
       // The empty cell stays: it is the middle column of the footer grid.
       ?>
-      <div class="g-folio__theme-page-powerby" aria-hidden="true"></div>
+      <div class="g-folio__theme-page-powerby"><?php $this->display_pdf_link(); ?></div>
 
       <div class="g-folio__theme-page-next">
         <?php
@@ -350,6 +350,30 @@ class Page extends Base_Theme
     <?php
   }
 
+  public function get_print_root_class(): string
+  {
+    return 'g-folio__theme-newsletter-page gn gn-page';
+  }
+
+  protected function display_article()
+  {
+    $page_date_label = $this->get_page_date_label();
+    ?>
+    <div class="g-folio__theme-page-container">
+      <header class="gn-page__header">
+        <?php if ($page_date_label !== ''): ?>
+          <p class="gn-page__dateline"><?php echo esc_html($page_date_label); ?></p>
+        <?php endif; ?>
+        <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
+      </header>
+      <article class="g-folio__theme-page-content">
+        <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
+      </article>
+      <?php if (!$this->is_print_mode) { $this->display_footer(); } ?>
+    </div>
+    <?php
+  }
+
   function display_theme()
   {
     if (!parent::display_theme()) {
@@ -357,7 +381,6 @@ class Page extends Base_Theme
     }
 
     $on_this_page_label = Utils::get_folio_on_this_page_label((int) $this->folio_id);
-    $page_date_label = $this->get_page_date_label();
 
     ?>
     <div class="g-folio__theme-newsletter-page gn gn-page">
@@ -369,18 +392,7 @@ class Page extends Base_Theme
               <?php $this->display_navbar() ?>
               <?php $this->display_editorial_rail() ?>
             </div>
-            <div class="g-folio__theme-page-container">
-              <header class="gn-page__header">
-                <?php if ($page_date_label !== ''): ?>
-                  <p class="gn-page__dateline"><?php echo esc_html($page_date_label); ?></p>
-                <?php endif; ?>
-                <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
-              </header>
-              <article class="g-folio__theme-page-content">
-                <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
-              </article>
-              <?php $this->display_footer() ?>
-            </div>
+            <?php $this->display_article(); ?>
             <div class="g-folio__theme-page-sidebar">
               <div class="g-folio__theme-page-catalogs">
                 <label class="g-folio__theme-page-catalogs-label"><?php echo esc_html($on_this_page_label); ?></label>

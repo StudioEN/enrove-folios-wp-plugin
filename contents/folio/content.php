@@ -122,6 +122,7 @@ class Content extends BaseContent
       'header_font' => 'sanitize_key',
       'body_font' => 'sanitize_key',
       'show_byline' => 'sanitize_key',
+      'show_pdf_link' => 'sanitize_key',
       'proposal_version' => 'sanitize_text_field',
       'proposal_status' => 'sanitize_text_field',
       'proposal_prepared_for' => 'sanitize_text_field',

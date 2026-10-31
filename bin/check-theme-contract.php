@@ -905,6 +905,11 @@ function enrove_check_theme_dir(string $dir, string $root, array $core): ?array
         return ['id' => $id, 'filled' => 0, 'total' => count($core), 'missing' => [], 'warn' => $warn];
     }
 
+    if (!is_readable($dir . '/assets/css/print.css')) {
+        $warn[] = 'no assets/css/print.css — a folio saved as a PDF gets the shared print layer alone, '
+            . 'so the cover keeps its navigation and the theme\'s phone layouts reach the paper';
+    }
+
     $src = enrove_strip_comments(file_get_contents($css));
 
     if (preg_match('/@import/i', $src)) {

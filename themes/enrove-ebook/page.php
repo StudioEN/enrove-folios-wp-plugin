@@ -243,7 +243,7 @@ class Page extends Base_Theme
       // guideline 10 allows no public credit without the site admin opting in.
       // The empty cell stays: it is the middle column of the footer grid.
       ?>
-      <div class="g-folio__theme-page-powerby" aria-hidden="true"></div>
+      <div class="g-folio__theme-page-powerby"><?php $this->display_pdf_link(); ?></div>
 
       <div class="g-folio__theme-page-next">
         <?php
@@ -260,6 +260,24 @@ class Page extends Base_Theme
     <?php
   }
 
+  public function get_print_root_class(): string
+  {
+    return 'g-folio__theme-2-page';
+  }
+
+  protected function display_article()
+  {
+    ?>
+    <div class="g-folio__theme-page-container">
+      <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
+      <div class="g-folio__theme-page-content">
+        <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
+      </div>
+      <?php if (!$this->is_print_mode) { $this->display_footer(); } ?>
+    </div>
+    <?php
+  }
+
   function display_theme()
   {
     if (!parent::display_theme()) {
@@ -273,13 +291,7 @@ class Page extends Base_Theme
       <main class="g-folio__theme-page-main">
         <div class="g-folio__theme-page-body">
           <div class="g-folio__theme-page-center">
-            <div class="g-folio__theme-page-container">
-              <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
-              <div class="g-folio__theme-page-content">
-                <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
-              </div>
-              <?php $this->display_footer() ?>
-            </div>
+            <?php $this->display_article(); ?>
             <div class="g-folio__theme-page-sidebar">
               <div class="g-folio__theme-page-catalogs">
                 <label class="g-folio__theme-page-catalogs-label"><?php echo esc_html($on_this_page_label); ?></label>

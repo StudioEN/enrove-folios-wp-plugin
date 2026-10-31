@@ -1139,6 +1139,10 @@ html {
 }
 
 /* ── Footer (prev/next navigation) ── */
+.gm-page__pdf-link {
+  color: var(--gm-text-muted);
+}
+
 .gm-page__footer {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

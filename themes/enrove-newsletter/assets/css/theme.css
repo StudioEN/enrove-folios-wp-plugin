@@ -2126,7 +2126,7 @@ body.enrove .gn-page .g-folio__theme-page-mobile-nav-back {
 
   /* An empty spacer for the desktop grid's middle column (the credit it held
      is no longer rendered); stacked, it would only add a gap. */
-  body.enrove .gn-page .g-folio__theme-page-powerby {
+  body.enrove .gn-page .g-folio__theme-page-powerby:empty {
     display: none;
   }
 

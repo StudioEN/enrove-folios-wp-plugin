@@ -454,6 +454,11 @@ body.enrove .g-folio__theme-2-page {
   font-size: var(--ge-text-ui);
 }
 
+/* Save as PDF, when the folio offers it, on the cover's coloured card. */
+.g-folio__theme-2 .g-folio__pdf-link {
+  color: var(--ge-on-ground);
+}
+
 .g-folio__theme-2 .g-folio__theme-fields-submit {
   display: flex;
   height: 40px;
@@ -1596,7 +1601,7 @@ body.enrove .g-folio__theme-2-page {
     padding: 32px 24px;
   }
 
-  .g-folio__theme-2-page .g-folio__theme-page-powerby {
+  .g-folio__theme-2-page .g-folio__theme-page-powerby:empty {
     display: none;
   }
 

@@ -527,6 +527,8 @@
 
 .gp-cover__lower-cta {
   display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   align-items: center;
   justify-content: center;
   padding: 0 0 0 clamp(1.5rem, 3vw, 3rem);
@@ -1318,6 +1320,21 @@
   padding: 1rem 1.1rem;
 }
 
+/* Code */
+.gp-page__content pre {
+  background: var(--gp-surface-muted);
+  border: 1px solid var(--gp-border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  padding: 0.875rem 1rem;
+}
+
+.gp-page__content pre code {
+  font: inherit;
+}
+
 /* Tables */
 .gp-page__content .wp-block-table table {
   width: 100%;
@@ -1522,6 +1539,12 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+}
+
+/* Save as PDF, when the folio offers it, across from the arrows. */
+.gp-page__footer .g-folio__pdf-link {
+  margin-right: auto;
+  order: -1;
 }
 
 /* Arrow nav (right) */
@@ -2867,6 +2890,13 @@ a.gp-page__footer-arrow:hover::after {
 
 .gp-cta__button:hover {
   background: var(--gp-accent-hover);
+}
+
+/* `.gp-page__content a` would otherwise paint the label the colour of the button. */
+.gp-page__content .gp-cta__button,
+.gp-page__content .gp-cta__button:hover {
+  color: var(--gp-on-accent);
+  text-decoration: none;
 }
 
 /* Subtle variant */

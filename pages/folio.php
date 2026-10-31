@@ -256,6 +256,22 @@ class Folio extends Page
       )
     ];
 
+    // The other way to hand the folio on: Copy link's menu, so that it adds no
+    // button to a header that is full at tablet width.
+    $print_url = $folio_id > 0 ? Utils::get_folio_print_url($folio_id) : '';
+    if ($print_url !== '') {
+      $this->right_button_items[3]['menu_label'] = __('More ways to share', 'enrove-folios');
+      $this->right_button_items[3]['menu'] = array(
+        array(
+          'text' => __('Save as PDF…', 'enrove-folios'),
+          'link' => $print_url,
+          'attrs' => array(
+            'target' => '_blank',
+            'rel' => 'noopener',
+          ),
+        ),
+      );
+    }
   }
 
   public function inline_save()
@@ -626,6 +642,8 @@ class Folio extends Page
     $use_folio = $use_folio === '1' ? '1' : '0';
     $show_logo = isset($_POST['show_logo']) ? sanitize_key(wp_unslash($_POST['show_logo'])) : $fields->show_logo;
     $show_logo = $show_logo === '1' ? '1' : '0';
+    $show_pdf_link = isset($_POST['show_pdf_link']) ? sanitize_key(wp_unslash($_POST['show_pdf_link'])) : $fields->show_pdf_link;
+    $show_pdf_link = $show_pdf_link === '1' ? '1' : '0';
     $theme_id = isset($_POST['theme_id']) ? sanitize_key(wp_unslash($_POST['theme_id'])) : $fields->theme_id;
     $header_font = isset($_POST['header_font']) ? sanitize_key(wp_unslash($_POST['header_font'])) : $fields->header_font;
     $header_font = Utils::normalize_primary_font_key($header_font);
@@ -702,6 +720,7 @@ class Folio extends Page
         'copyright' => $copyright,
         'use_folio' => $use_folio,
         'show_logo' => $show_logo,
+        'show_pdf_link' => $show_pdf_link,
         // Keep legacy `fonts` synced for existing theme CSS/older installs.
         'fonts' => $body_font,
         'header_font' => $header_font,
@@ -1379,6 +1398,15 @@ class Folio extends Page
           <input type="checkbox" id="use_folio" name="use_folio" value="1"
             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php echo checked($is_using_folio, true, false) ?> />
           <label for="use_folio" class="ml-2 block text-sm text-gray-900"><?php esc_html_e('Use folio cover', 'enrove-folios'); ?></label>
+        </div>
+        <div>
+          <div class="flex items-center">
+            <input type="hidden" name="show_pdf_link" value="0" />
+            <input type="checkbox" id="show_pdf_link" name="show_pdf_link" value="1"
+              class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php checked((string) $fields->show_pdf_link, '1'); ?> />
+            <label for="show_pdf_link" class="ml-2 block text-sm text-gray-900"><?php esc_html_e('Let readers save as PDF', 'enrove-folios'); ?></label>
+          </div>
+          <div class="mt-1 ml-6 text-xs text-gray-500"><?php esc_html_e('Adds a Save as PDF link to the cover and to every page.', 'enrove-folios'); ?></div>
         </div>
         <div>
           <label for="permalink" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Permalink (read-only)', 'enrove-folios'); ?></label>

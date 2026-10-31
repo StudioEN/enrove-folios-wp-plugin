@@ -1,0 +1,29 @@
+/*
+ * Enrove Ebook on paper. Loaded on the print document only, after
+ * assets/css/folio-print.css, which holds what every theme shares.
+ */
+
+.g-folio-print__flow .g-folio__theme-page-container {
+  margin: 0;
+  max-width: none;
+  padding: 0;
+  width: auto;
+}
+
+/* Coloured for the ground it stands on on screen, which paper does not have. */
+.g-folio__theme-2-page .g-folio__theme-page-title {
+  color: var(--folio-text);
+  margin-top: 0;
+}
+
+/* Running text keeps to a readable line; see --g-folio-print-measure. */
+.g-folio-print__flow .g-folio__theme-page-content > :is(p, ul, ol) {
+  max-width: var(--g-folio-print-measure);
+}
+
+/* Fixed sizes for the fluid ones: see Type in assets/css/folio-print.css. */
+body.enrove .g-folio-print__flow {
+  --ge-text-page-title: 1.75rem;
+  --ge-text-ordinal: 1.5rem;
+  --ge-text-subtitle: 1.25rem;
+}

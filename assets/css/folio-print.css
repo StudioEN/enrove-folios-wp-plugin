@@ -1,0 +1,458 @@
+/*
+ * A folio on paper. Loaded on the print document only (themes/folio-print.php),
+ * after the theme's own CSS and before its print.css.
+ *
+ * None of this sits in @media print. The script works out the contents page's
+ * page numbers by laying this same layout out on screen, in a hidden frame, so
+ * the screen and the page must agree.
+ *
+ * Folio_Print::get_inline_css() adds the paper size, the footer's title and font,
+ * and the --g-folio-print-* measurements.
+ */
+
+@page {
+  margin: 20mm 18mm 22mm;
+
+  @bottom-left {
+    color: #666;
+    font-size: 8.5pt;
+    vertical-align: middle;
+  }
+
+  @bottom-right {
+    color: #666;
+    content: counter(page) " / " counter(pages);
+    font-size: 8.5pt;
+    vertical-align: middle;
+  }
+}
+
+@page g-folio-print-cover {
+  margin: 0;
+
+  @bottom-left {
+    content: none;
+  }
+
+  @bottom-right {
+    content: none;
+  }
+}
+
+:root {
+  /* How much smaller the flow prints than it shows on screen. Screen sizes read
+     large on paper. A theme can set its own in print.css. */
+  --g-folio-print-scale: 0.75;
+
+  /* Text at that size across a whole sheet runs past a hundred characters a line.
+     A theme's print.css holds its running text to this, and leaves the blocks that
+     want the width (tables, images, code) to take it. */
+  --g-folio-print-measure: 680px;
+}
+
+html,
+body.g-folio-print {
+  background: #fff !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+body.g-folio-print {
+  margin: 0;
+}
+
+/* What only makes sense on a live screen. */
+.g-folio-print *,
+.g-folio-print *::before,
+.g-folio-print *::after {
+  -webkit-backdrop-filter: none !important;
+  animation: none !important;
+  backdrop-filter: none !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  transition: none !important;
+}
+
+/* ── The bar on screen ───────────────────────────────────────────────────── */
+
+.g-folio-print__bar {
+  align-items: center;
+  background: #1d2327;
+  box-sizing: border-box;
+  color: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  gap: 12px 24px;
+  justify-content: space-between;
+  padding: 12px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.g-folio-print__bar-title,
+.g-folio-print__bar-hint {
+  margin: 0;
+}
+
+.g-folio-print__bar-title {
+  font-weight: 600;
+}
+
+.g-folio-print__bar-hint {
+  color: #c3c4c7;
+  font-size: 13px;
+}
+
+.g-folio-print__bar-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+
+.g-folio-print__bar-paper {
+  display: flex;
+  gap: 4px;
+}
+
+.g-folio-print__bar-paper a {
+  border-radius: 4px;
+  color: #c3c4c7;
+  font-size: 13px;
+  padding: 4px 8px;
+  text-decoration: none;
+}
+
+.g-folio-print__bar-paper a:hover {
+  color: #fff;
+}
+
+.g-folio-print__bar-paper a[aria-current] {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.g-folio-print__bar-paper a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.g-folio-print__bar-button {
+  background: #fff;
+  border: 0;
+  border-radius: 4px;
+  color: #1d2327;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  padding: 8px 16px;
+}
+
+.g-folio-print__bar-button:hover {
+  background: #f0f0f1;
+}
+
+.g-folio-print__bar-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media print {
+  .g-folio-print__bar {
+    display: none;
+  }
+}
+
+/* ── The cover: a whole sheet, edge to edge ──────────────────────────────── */
+
+.g-folio-print__cover {
+  break-after: page;
+  page: g-folio-print-cover;
+}
+
+.g-folio-print__cover > * {
+  box-sizing: border-box;
+  height: var(--g-folio-print-paper-height) !important;
+  min-height: 0 !important;
+  overflow: hidden;
+}
+
+/* A theme's cover is often pinned to the viewport, and the browser repeats
+   anything position: fixed on every sheet it prints. */
+.g-folio-print__cover > * {
+  inset: auto !important;
+  position: relative !important;
+  width: 100% !important;
+}
+
+/* Safari. WebKit takes one set of margins from the first sheet and uses it for every
+   sheet, and ignores a named @page, so its cover has the same margins as the rest:
+   zero margins on the first sheet would take them off every sheet. Its layout on
+   paper also differs from the one the script measures, and it has no margin boxes,
+   so a sheet has no number to find. No number beats a wrong one. A sheet holds less
+   than its size says there, and a cover that does not fit leaves a blank sheet after
+   it: 215mm of 255mm fits, 240mm does not. The query is the test for WebKit: no other
+   engine knows this font keyword. */
+.g-folio-print__bar-hint--safari {
+  display: none;
+}
+
+@supports (font: -apple-system-body) {
+  .g-folio-print__cover > * {
+    height: calc(var(--g-folio-print-height) * 0.84) !important;
+  }
+
+  .g-folio-print__bar-hint--safari {
+    display: block;
+  }
+}
+
+/* Navigation and the way in: on paper there is nowhere to go. */
+.g-folio-print__cover button,
+.g-folio-print__cover .g-folio__theme-nav,
+.g-folio-print__cover .g-folio__theme-fields-submit {
+  display: none !important;
+}
+
+/* ── The flow: contents and pages ────────────────────────────────────────── */
+
+.g-folio-print__flow {
+  background: transparent !important;
+  box-sizing: border-box;
+  display: block !important;
+  height: auto !important;
+  margin: 0 auto;
+  max-width: var(--g-folio-print-width);
+  min-height: 0 !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+@media print {
+  .g-folio-print__flow {
+    max-width: none;
+  }
+}
+
+.g-folio-print__contents {
+  break-after: page;
+}
+
+.g-folio-print__contents-title {
+  font-family: var(--g-folio-header-font, inherit);
+  font-size: 22pt;
+  font-weight: 400;
+  margin: 0 0 10mm;
+}
+
+.g-folio-print__contents-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.g-folio-print__contents-item {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  font-size: 11pt;
+  gap: 8mm;
+  justify-content: space-between;
+  margin: 0;
+  padding: 2.5mm 0;
+}
+
+.g-folio-print__contents-item a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.g-folio-print__contents-item[data-page]::after {
+  content: attr(data-page);
+  font-variant-numeric: tabular-nums;
+}
+
+/* See Safari under The cover. */
+@supports (font: -apple-system-body) {
+  .g-folio-print__contents-item[data-page]::after {
+    content: none;
+  }
+}
+
+.g-folio-print__page {
+  break-before: page;
+}
+
+.g-folio-print__contents + .g-folio-print__page,
+.g-folio-print__flow > .g-folio-print__page:first-child {
+  break-before: auto;
+}
+
+/* Space below a page's last block must not spill onto a sheet of its own. */
+.g-folio-print__page > *,
+.g-folio-print__page > * > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.g-folio-print__page > * {
+  padding-bottom: 0 !important;
+}
+
+/* ── Type ────────────────────────────────────────────────────────────────── */
+
+/* zoom rather than a font size: themes size their type in px, rem and tokens alike,
+   and this keeps each theme's proportions, spacing included. On the flow's children
+   and not the flow, so the flow is still one sheet wide, which is what the script
+   measures against. A section lays out wider than the sheet in CSS pixels, by 1/scale,
+   so a length that means the paper has to be divided by the scale. */
+.g-folio-print__contents,
+.g-folio-print__page {
+  zoom: var(--g-folio-print-scale);
+}
+
+/* Paper does not change size, so nothing in the flow is sized in vw: the contract's
+   type scale is pinned here, and each theme's print.css pins its own. It is more
+   than tidiness. A full-bleed cover makes the first sheet the document's viewport,
+   so vw here means the width of the paper, while the script's hidden frame cannot
+   be that wide without crossing the themes' tablet breakpoints. Text sized in vw
+   would then set larger on paper than it measured. */
+.g-folio-print__flow {
+  --folio-text-display: 2.5rem;
+  --folio-text-title: 1.75rem;
+  --folio-text-h2: 1.375rem;
+  --folio-text-h3: 1.125rem;
+  --folio-text-body: 1rem;
+}
+
+/* ── Breaks ──────────────────────────────────────────────────────────────── */
+
+/* A kicker or dateline goes with the title under it, or it is left alone on a sheet. */
+.g-folio-print__flow :has(+ h1),
+.g-folio-print__flow h1,
+.g-folio-print__flow h2,
+.g-folio-print__flow h3,
+.g-folio-print__flow h4 {
+  break-after: avoid;
+}
+
+/* Paragraphs too: a sheet can then end only between blocks, and those are the
+   breaks the script sets. One taller than a sheet still splits. A table is the
+   exception that proves it: its rows are the blocks, and the script keeps a short
+   one whole. */
+.g-folio-print__flow p,
+.g-folio-print__flow li,
+.g-folio-print__flow img,
+.g-folio-print__flow .wp-block-buttons,
+.g-folio-print__flow .wp-block-columns,
+.g-folio-print__flow .wp-block-cover,
+.g-folio-print__flow .wp-block-media-text,
+.g-folio-print__flow figure,
+.g-folio-print__flow blockquote,
+.g-folio-print__flow details,
+.g-folio-print__flow pre,
+.g-folio-print__flow tr {
+  break-inside: avoid;
+}
+
+.g-folio-print__flow thead {
+  display: table-header-group;
+}
+
+/* Core lets a wide table scroll, and a box that scrolls cannot break across
+   sheets. Fixed cells are for a block that must fit a phone; on paper the columns
+   can take the width their contents need, and a table has the whole sheet. */
+.g-folio-print__flow .wp-block-table {
+  break-inside: auto;
+  max-width: none !important;
+  overflow: visible !important;
+  width: 100%;
+}
+
+.g-folio-print__flow table {
+  display: table !important;
+  table-layout: auto !important;
+  width: 100% !important;
+}
+
+/* Core lets a word break in a fixed table's cells, which the layout above takes
+   as leave to make a column narrower than its longest word: "Severity" in two. */
+.g-folio-print__flow :is(th, td) {
+  word-break: normal !important;
+}
+
+.g-folio-print__flow :is(th, td).has-text-align-right {
+  text-align: right !important;
+}
+
+/* A page of paper is narrower than most themes' tablet breakpoint, and than the
+   782px core's Columns block stacks at, so what stands side by side on a desktop
+   would pile up here, each portrait the full width of the page. */
+.g-folio-print__flow .wp-block-columns {
+  flex-wrap: nowrap !important;
+}
+
+.g-folio-print__flow .wp-block-columns > .wp-block-column {
+  flex: 1 1 0 !important;
+  min-width: 0;
+}
+
+.g-folio-print__flow figure img {
+  display: block;
+  margin-inline: auto;
+  max-height: calc(120mm / var(--g-folio-print-scale));
+  max-width: 100%;
+  width: auto;
+}
+
+/* A drop cap is taller than a short opening paragraph at this width, and whatever
+   followed would start beside it. */
+.g-folio-print__flow .has-drop-cap + * {
+  clear: left;
+}
+
+.g-folio-print__flow .wp-block-media-text + .wp-block-media-text {
+  margin-top: 2rem;
+}
+
+/* Nothing can scroll on paper. */
+.g-folio-print__flow pre {
+  overflow: visible !important;
+  white-space: pre-wrap;
+}
+
+/* An embed cannot print; the script leaves a link in its place. */
+.g-folio-print__embed {
+  overflow-wrap: anywhere;
+}
+
+/* ── Measuring: one column to a sheet, in the script's hidden frame ──────── */
+
+html.g-folio-print--measure .g-folio-print__bar,
+html.g-folio-print--measure .g-folio-print__cover {
+  display: none;
+}
+
+html.g-folio-print--measure .g-folio-print__flow {
+  column-fill: auto;
+  column-gap: 0;
+  column-width: var(--g-folio-print-width);
+  height: var(--g-folio-print-height) !important;
+  max-height: var(--g-folio-print-height);
+  max-width: none;
+  width: var(--g-folio-print-width);
+}
+
+html.g-folio-print--measure .g-folio-print__contents {
+  break-after: column;
+}
+
+html.g-folio-print--measure .g-folio-print__page {
+  break-before: column;
+}
+
+html.g-folio-print--measure .g-folio-print__contents + .g-folio-print__page,
+html.g-folio-print--measure .g-folio-print__flow > .g-folio-print__page:first-child {
+  break-before: auto;
+}

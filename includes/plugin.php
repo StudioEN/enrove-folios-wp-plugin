@@ -11,6 +11,7 @@ use Enrove\Pages\Add_New;
 use Enrove\Pages\Settings;
 use Enrove\Pages\Themes;
 use Enrove\Menu\Menu_Manager;
+use Enrove\Themes\Folio_Print;
 use Enrove\Themes\Themes_Manager;
 use Enrove\Themes\Theme_Blocks;
 use Enrove\Themes\Site_Theme_Isolation;
@@ -329,6 +330,15 @@ class Plugin
 				// A folio is its own document: nothing of the site's theme.
 				Site_Theme_Isolation::isolate_front_end();
 				$plugin_dir = plugin_dir_path(__FILE__);
+
+				// The whole folio as one document to print. A folio this request
+				// may not see carries on below, to the password gate or the notice.
+				$print_folio = Folio_Print::get_requested_folio();
+				if ($print_folio) {
+					require_once $plugin_dir . 'folio-print-template.php';
+					exit;
+				}
+
 				require_once $plugin_dir . 'folio-preview-template.php';
 				exit; // Stop WP execution, we've handled the template
 			}

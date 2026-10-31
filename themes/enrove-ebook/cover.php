@@ -85,6 +85,7 @@ class Cover extends Base_Theme
           </a>
         <?php endif; ?>
       </div>
+      <?php $this->display_pdf_link(); ?>
       <?php if (!empty($this->copyright)): ?>
         <div class="g-folio__theme-copyright">
           <?php echo esc_html($this->copyright); ?>

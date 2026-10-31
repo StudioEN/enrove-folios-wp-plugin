@@ -1,0 +1,159 @@
+/*
+ * Enrove Proposal on paper. Loaded on the print document only, after
+ * assets/css/folio-print.css, which holds what every theme shares.
+ *
+ * A page of paper is under this theme's 768px breakpoint, so the first job here
+ * is to put back the desktop layouts that breakpoint stacks.
+ */
+
+/* This theme's text starts smaller than most, 15px with a lot of 12px and 13px
+   beside it, so it shrinks less: its running text lands on the same size as theirs,
+   and its labels stay legible. */
+:root {
+  --g-folio-print-scale: 0.8;
+}
+
+.gp-cover__cta,
+.gp-cover__mobile-header {
+  display: none !important;
+}
+
+/* The strip at the foot of the cover becomes the bottom of the sheet: edge to edge
+   and down to the foot, however tall the text above it runs. The padding moves from
+   the column to its text, so the image can have the column's whole width. The
+   sheets after this one have the same side margin. The theme's phone layout makes
+   the row a plain block, which the column cannot fill. */
+.gp-cover .gp-layout {
+  display: flex;
+}
+
+.gp-cover__content-area {
+  padding-inline: 0;
+}
+
+.gp-cover__document,
+.gp-cover__footer {
+  box-sizing: border-box;
+  max-width: none;
+  padding-inline: 18mm;
+}
+
+.gp-cover__document {
+  flex: 0 0 auto;
+}
+
+.gp-cover__footer {
+  padding-bottom: 6mm;
+}
+
+.gp-cover__hero {
+  flex: 1 1 0;
+  height: auto;
+  max-width: none;
+  min-height: 80mm;
+  order: 1;
+}
+
+.gp-cover__hero-image {
+  inset: 0;
+  position: absolute;
+}
+
+.gp-page__content .gp-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.gp-page__content .gp-team {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.gp-page__content .gp-team--cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.gp-page__content .gp-team--list {
+  grid-template-columns: 1fr;
+}
+
+.gp-page__content .gp-steps:not(.gp-steps--vertical) {
+  flex-direction: row;
+  gap: 0;
+}
+
+.gp-steps:not(.gp-steps--vertical) .gp-steps__connector {
+  display: block;
+}
+
+.gp-pricing__row {
+  align-items: baseline;
+  flex-direction: row;
+  gap: 1.5rem;
+}
+
+/* !important because the theme's own stacking rule is. */
+.gp-compare--cols-2 .gp-compare__header,
+.gp-compare--cols-2 .gp-compare__row {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+.gp-compare--cols-3 .gp-compare__header,
+.gp-compare--cols-3 .gp-compare__row {
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+
+.gp-compare__header-cell,
+.gp-compare__cell {
+  border-left: 1px solid var(--gp-border);
+  border-top: 0;
+}
+
+.gp-compare__header-cell:first-child,
+.gp-compare__cell:first-child {
+  border-left: 0;
+}
+
+/* The accordion's chevron says something can be opened; on paper it is open. */
+.gp-faq__question::after {
+  display: none !important;
+}
+
+/* Whole blocks stay together where they fit on one sheet. */
+.gp-page__content .gp-metrics,
+.gp-page__content .gp-compare,
+.gp-page__content .gp-steps,
+.gp-page__content .gp-logos,
+.gp-cta,
+.gp-pricing,
+.gp-pricing__row,
+.gp-team__card,
+.gp-steps__step,
+.gp-timeline__phase,
+.gp-checklist__item,
+.gp-faq__item,
+.gp-callout-box {
+  break-inside: avoid;
+}
+
+/* Fixed sizes for the fluid ones: see Type in assets/css/folio-print.css. */
+.gp-page__title {
+  font-size: 2rem;
+}
+
+.gp-page__content h2 {
+  font-size: 1.3rem;
+}
+
+.gp-metrics__value {
+  font-size: 2rem;
+}
+
+.gp-page__content .gp-quote__text,
+.gp-page__content .gp-case-study--compact .gp-case-study__title {
+  font-size: 1.125rem;
+}
+
+.gp-page__content .gp-case-study__title,
+.gp-case-study__stat-value,
+.gp-cta__heading {
+  font-size: 1.5rem;
+}

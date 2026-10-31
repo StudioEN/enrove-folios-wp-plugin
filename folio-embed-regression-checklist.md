@@ -50,6 +50,17 @@ Run when import, the converter frame, or page rendering changes. Keep a few clas
 5. From All Folios → Add New, Import posts and pages with one post (the list replaces the themes in the same dialog; Done returns to them with the selection, Cancel without it), then Continue: the new folio takes that post's title, and with a "publish" default folio status its page is published with it.
 6. With the converter frame blocked (DevTools → block `admin-post.php?action=enrove_block_converter`), an import still succeeds and the classic copy keeps its paragraphs.
 
+## Saving as a PDF
+Run per theme, in the real print window of Chrome and of one other browser, on a folio with an accordion, an embed, a Button and a table of more than a sheet.
+1. Save as PDF… from the folio editor, and from All Folios, opens the folio in a new tab with the print window on top.
+2. The cover fills the sheet to all four edges in Chrome and Edge, with no navigation and no Open folio button, and it appears once. In Safari it sits on one sheet inside a white margin, the contents page has no numbers, and the bar above the document names Chrome and Edge. A cover that repeats on every sheet is `position: fixed` getting through.
+3. With a printer as the destination, in the print window's preview (no need to print), the cover reaches all four edges. The A4 and US Letter switch in the bar reloads on that paper, and on the wrong one the preview shows white strips.
+4. Each number on the contents page matches the sheet that section starts on, and each entry links to it.
+5. Accordions are open, an embed is a link, and no block is sliced by a sheet edge. A short table stays whole with the heading above it, a long one splits between rows and repeats its head, and no column breaks a word in two.
+6. Text is selectable, links work, and the theme's fonts are embedded (download them first on Settings → Fonts).
+7. Let readers save as PDF shows the link on the cover and page footers, and turning it off removes it.
+8. Logged out, a draft or private folio's print address is a 404, and a locked folio shows the password gate, then the document.
+
 ## Cross-Checks
 1. Regular WordPress post with same URLs still embeds correctly.
 2. Folio cover page behavior is unchanged.

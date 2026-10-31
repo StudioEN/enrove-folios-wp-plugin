@@ -1205,7 +1205,7 @@ html:has(.g-folio__theme-1-page) {
 
   /* The credit that had its own row here is no longer rendered; the cell is
      an empty spacer for the desktop grid's middle column. */
-  .g-folio__theme-1-page .g-folio__theme-page-powerby {
+  .g-folio__theme-1-page .g-folio__theme-page-powerby:empty {
     display: none;
   }
 }

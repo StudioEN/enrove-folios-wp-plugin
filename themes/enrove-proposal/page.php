@@ -484,7 +484,31 @@ class Page extends Base_Theme
           <span class="gp-page__footer-arrow gp-page__footer-arrow--disabled" aria-hidden="true">&rarr;</span>
         <?php endif; ?>
       </nav>
+      <?php $this->display_pdf_link(); ?>
     </footer>
+    <?php
+  }
+
+  public function get_print_root_class(): string
+  {
+    return 'gp gp-page g-folio__theme-page';
+  }
+
+  protected function display_article()
+  {
+    $page_role = $this->get_page_role();
+    $container_role_class = $page_role['key'] !== '' ? ' gp-page__container--role-' . sanitize_html_class($page_role['key']) : '';
+    ?>
+    <article class="g-folio__theme-page-container gp-page__container<?php echo esc_attr($container_role_class); ?>">
+      <?php if ($page_role['label'] !== ''): ?>
+        <p class="gp-page__role"><?php echo esc_html($page_role['label']); ?></p>
+      <?php endif; ?>
+      <h1 class="g-folio__theme-page-title gp-page__title"><?php echo esc_html($this->title); ?></h1>
+      <div class="g-folio__theme-page-content gp-page__content">
+        <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
+      </div>
+      <?php if (!$this->is_print_mode) { $this->display_footer(); } ?>
+    </article>
     <?php
   }
 
@@ -497,8 +521,6 @@ class Page extends Base_Theme
     $progress = $this->get_progress_context();
     $anchors = $this->get_heading_anchors();
     $show_in_page_nav = $this->should_display_in_page_nav($anchors);
-    $page_role = $this->get_page_role();
-    $container_role_class = $page_role['key'] !== '' ? ' gp-page__container--role-' . sanitize_html_class($page_role['key']) : '';
     $folio_id = isset($this->folio->ID) ? (int) $this->folio->ID : (int) $this->folio_id;
     if ($folio_id <= 0) {
       $folio_id = $this->get_folio_id_for_customization();
@@ -525,16 +547,7 @@ class Page extends Base_Theme
 
           <div class="g-folio__theme-page-body gp-page__body">
             <div class="g-folio__theme-page-center gp-page__center">
-              <article class="g-folio__theme-page-container gp-page__container<?php echo esc_attr($container_role_class); ?>">
-                <?php if ($page_role['label'] !== ''): ?>
-                  <p class="gp-page__role"><?php echo esc_html($page_role['label']); ?></p>
-                <?php endif; ?>
-                <h1 class="g-folio__theme-page-title gp-page__title"><?php echo esc_html($this->title); ?></h1>
-                <div class="g-folio__theme-page-content gp-page__content">
-                  <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
-                </div>
-                <?php $this->display_footer(); ?>
-              </article>
+              <?php $this->display_article(); ?>
               <?php $this->display_catalogs($anchors, $show_in_page_nav); ?>
             </div>
           </div>

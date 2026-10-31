@@ -547,6 +547,12 @@ body.enrove .g-split-button .g-menu {
   inset-inline-end: auto;
 }
 
+/* At the header's far end the same menu would run off the screen. */
+body.enrove .g-page-header__right .g-split-button .g-menu {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   body.enrove .g-split-button__toggle .dashicons {
     transition: none;
@@ -557,6 +563,12 @@ body.enrove .g-split-button .g-menu {
   body.enrove .g-split-button__toggle {
     width: 36px;
     min-width: 36px;
+  }
+
+  /* Core's margin under its touch-size buttons, so a split button stays in line
+     with the plain ones beside it. */
+  body.enrove .g-page-header__right .g-split-button > .button {
+    margin-bottom: 4px;
   }
 }
 

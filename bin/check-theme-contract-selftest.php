@@ -318,6 +318,9 @@ function enrove_cases(string $subject, string $theme, string $gate): array
             // blocks.php is where a theme most plausibly enqueues one.
             file_put_contents($theme . '/blocks.php', "<?php\nwp_enqueue_style('x', 'https://fonts.googleapis.com/css2?family=Inter');\n");
         }],
+        'no print.css' => ['warn', 'no assets/css/print.css', static function () use ($theme) {
+            unlink($theme . '/assets/css/print.css');
+        }],
         'no theme.css at all' => ['warn', 'renders unstyled', static function () use ($css) {
             unlink($css);
         }],

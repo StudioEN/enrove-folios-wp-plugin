@@ -31,6 +31,8 @@ abstract class Base_Theme extends Assets
   public $theme_logo_url;
   public $show_logo = true;
   public $is_preview_mode = false;
+  /** True while Folio_Print renders a page into the print document. */
+  public $is_print_mode = false;
 
   public function __construct()
   {
@@ -1114,5 +1116,92 @@ abstract class Base_Theme extends Assets
     // Themes_Manager ensures the right class is used for the right post type.
     // No guard needed here — child classes control their own output.
     return true;
+  }
+
+  // -----------------------------------------------------------------------
+  // Printing
+  // -----------------------------------------------------------------------
+
+  /**
+   * This page's body, for a theme that does not write its own get_content().
+   *
+   * @return string Echo it through get_content_allowed_html().
+   */
+  function get_content()
+  {
+    return $this->apply_embed_processing(do_blocks((string) $this->content));
+  }
+
+  /**
+   * The classes of the element around a theme's pages in the print document:
+   * the same as the root of its page view, so its CSS applies and the font
+   * contract holds (the last class ends in -page).
+   *
+   * @return string
+   */
+  public function get_print_root_class(): string
+  {
+    return 'g-folio__theme-page';
+  }
+
+  /**
+   * A page's title and body, without its navigation. display_theme() calls this
+   * for the screen, and display_print_page() for paper, with $is_print_mode set
+   * so the theme can leave out a pager and add what a sheet of paper needs.
+   */
+  protected function display_article()
+  {
+    ?>
+    <h1 class="g-folio__theme-page-title"><?php echo esc_html($this->title); ?></h1>
+    <div class="g-folio__theme-page-content">
+      <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
+    </div>
+    <?php
+  }
+
+  /**
+   * The link a reader saves the folio from, on a folio whose editor turned it on
+   * (the show_pdf_link meta). Prints nothing otherwise, in the theme picker's
+   * preview, and on paper.
+   *
+   * Every theme puts this on its cover and in its page footer.
+   *
+   * @param string $class Extra classes.
+   */
+  protected function display_pdf_link(string $class = ''): void
+  {
+    $folio_id = (int) $this->get_folio_id_for_customization();
+    if ($this->is_preview_mode || $this->is_print_mode || $folio_id <= 0) {
+      return;
+    }
+    if ((string) get_post_meta($folio_id, 'show_pdf_link', true) !== '1') {
+      return;
+    }
+
+    $url = Utils::get_folio_print_url($folio_id);
+    if ($url === '') {
+      return;
+    }
+    ?>
+    <a class="<?php echo esc_attr(trim('g-folio__pdf-link ' . $class)); ?>" href="<?php echo esc_url($url); ?>" target="_blank" rel="noopener"><?php esc_html_e('Save as PDF', 'enrove-folios'); ?></a>
+    <?php
+  }
+
+  /**
+   * Render one page of a folio into the print document. One theme object renders
+   * them all, so it is pointed at each page in turn.
+   *
+   * @param \WP_Post $page
+   * @param int      $folio_id
+   */
+  public function display_print_page(\WP_Post $page, int $folio_id): void
+  {
+    $this->is_print_mode = true;
+    $this->post_type = 'enrove_folio_page';
+    $this->id = (int) $page->ID;
+    $this->folio_id = $folio_id;
+
+    $this->get_data();
+    $this->display_article();
   }
 }

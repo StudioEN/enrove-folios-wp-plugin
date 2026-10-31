@@ -1362,6 +1362,13 @@ class All_Folios extends Page
 												}))); ?>"><?php esc_html_e('Duplicate', 'enrove-folios'); ?></a> |
 											</span>
 										<?php endif; ?>
+										<?php if ($can_edit && $post_status !== 'trash'): ?>
+											<span class="enrove_pdf">
+												<a href="<?php echo esc_url(Utils::get_folio_print_url($post_id)); ?>" target="_blank"
+													rel="noopener noreferrer"
+													aria-label="<?php /* translators: %s: Folio title. */ echo esc_attr(sprintf(__('Save “%s” as a PDF', 'enrove-folios'), $title)); ?>"><?php esc_html_e('Save as PDF', 'enrove-folios'); ?></a> |
+											</span>
+										<?php endif; ?>
 										<span class="view">
 											<a href="<?php echo esc_url($row_view_url); ?>" target="_blank"
 												rel="noopener noreferrer"><?php echo esc_html($row_view_label); ?></a><?php if ($can_delete): ?> |<?php endif; ?>

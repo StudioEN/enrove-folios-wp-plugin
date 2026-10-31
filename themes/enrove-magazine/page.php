@@ -257,6 +257,28 @@ class Page extends Base_Theme
                 <?php endif; ?>
             </div>
         </nav>
+        <?php $this->display_pdf_link('gm-page__pdf-link'); ?>
+        <?php
+    }
+
+    public function get_print_root_class(): string
+    {
+        return 'gm gm-page g-folio__theme-enrove-magazine-page';
+    }
+
+    protected function display_article()
+    {
+        ?>
+        <?php if ($this->is_print_mode) { $this->display_hero(); } ?>
+        <article class="gm-page__container">
+            <h1 class="gm-page__title">
+                <?php echo esc_html($this->title); ?>
+            </h1>
+            <div class="gm-page__content">
+                <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
+            </div>
+            <?php if (!$this->is_print_mode) { $this->display_footer(); } ?>
+        </article>
         <?php
     }
 
@@ -278,15 +300,7 @@ class Page extends Base_Theme
             <main class="gm-page__main">
                 <div class="gm-page__body">
                     <div class="gm-page__center">
-                        <article class="gm-page__container">
-                            <h1 class="gm-page__title">
-                                <?php echo esc_html($this->title); ?>
-                            </h1>
-                            <div class="gm-page__content">
-                                <?php echo wp_kses($this->get_content(), static::get_content_allowed_html()); ?>
-                            </div>
-                            <?php $this->display_footer() ?>
-                        </article>
+                        <?php $this->display_article(); ?>
                         <aside class="gm-page__sidebar">
                             <div class="gm-page__catalogs">
                                 <label class="gm-page__catalogs-label">

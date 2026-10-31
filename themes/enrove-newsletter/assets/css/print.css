@@ -1,0 +1,61 @@
+/*
+ * Enrove Newsletter on paper. Loaded on the print document only, after
+ * assets/css/folio-print.css, which holds what every theme shares.
+ */
+
+.gn-cover .gn-nav-trigger {
+  display: none !important;
+}
+
+body.enrove .g-folio-print__flow .g-folio__theme-page-container {
+  margin: 0;
+  max-width: none;
+  padding: 0;
+  width: auto;
+}
+
+/* The dateline and title are one heading. */
+.gn-page__header {
+  break-after: avoid;
+  break-inside: avoid;
+}
+
+/* Running text keeps to a readable line; see --g-folio-print-measure. */
+body.enrove .gn-page .g-folio__theme-page-content > :is(p, ul, ol) {
+  max-width: var(--g-folio-print-measure);
+}
+
+/* A page's lead picture should not take the sheet. */
+body.enrove .gn-page .g-folio__theme-page-content .gn-page__feature img {
+  height: calc(80mm / var(--g-folio-print-scale));
+  max-height: none;
+  object-fit: cover;
+  width: 100%;
+}
+
+/* Fixed sizes for the fluid ones: see Type in assets/css/folio-print.css. */
+body.enrove .gn-page .g-folio__theme-page-title {
+  font-size: 2.8rem;
+}
+
+body.enrove .gn-page .g-folio__theme-page-content p,
+body.enrove .gn-page .g-folio__theme-page-content li,
+body.enrove .gn-page .g-folio__theme-page-content blockquote {
+  font-size: 1.04rem;
+}
+
+body.enrove .gn-page .g-folio__theme-page-content > p:first-of-type {
+  font-size: 1.2rem;
+}
+
+body.enrove .gn-page .g-folio__theme-page-content h1 {
+  font-size: 2rem;
+}
+
+body.enrove .gn-page .g-folio__theme-page-content h2 {
+  font-size: 1.65rem;
+}
+
+body.enrove .gn-page .g-folio__theme-page-content h3 {
+  font-size: 1.38rem;
+}

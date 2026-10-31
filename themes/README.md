@@ -899,6 +899,19 @@ All three are inherited from `Base_Theme` — see §6.
 
 ---
 
+### Printing and PDF
+
+A folio is saved as a PDF by the reader's own browser, from one document holding the whole folio: the URL is the folio's with `?enrove_print=1`, and `Enrove\Themes\Folio_Print` builds it. Nothing in the plugin makes a PDF. A theme takes part in four ways.
+
+- **`display_article()`** on `Page` prints the title and body, without navigation. `display_theme()` calls it for the screen, and `display_print_page()` calls it once per page for paper, on one object pointed at each page in turn, with `$this->is_print_mode` true. Leave the pager out when that is set, and add what paper needs (Magazine adds its hero there).
+- **`get_print_root_class()`** on `Page` returns the classes of the theme's page root. They go on the element around every page, so the theme's CSS applies and the font contract holds: the last class ends in `-page`.
+- **`assets/css/print.css`** loads on that document only, after `assets/css/folio-print.css`. It needs to do five things. Hide the cover's way in. Put back the desktop layouts the theme's breakpoints stack: paper is about 660 CSS px wide, and in print a media query sees a width of its own, around 740px, set by the print window and not by `@page`. And pin every size in `vw` that reaches a page, because a full-bleed cover makes the sheet the document's viewport. Text sized in `vw` sets larger on paper than it measures on screen, and the contents page's numbers are then wrong. The contract's type tokens are pinned for you. And hold running text to `--g-folio-print-measure`, on the direct `p`, `ul` and `ol` of the page body, unless the theme already keeps it to a measure of its own, leaving tables, images and code the full width. And take any padding off the cover's art, moving it to the text, so that the art runs to the edge of the sheet. Chrome and Edge print the cover with no margin. Safari cannot, as it uses one set of margins for every sheet, so there the cover keeps a white margin.
+- **`display_pdf_link()`** goes on the cover and in the page footer, as a theme's own footer allows. It prints nothing unless the folio's editor turned on Let readers save as PDF.
+
+The document is forced light with `folio-scheme-light` on the root, and a theme's scripts do not run on it, so a palette a script takes from the cover image stays at the theme's defaults. Every block in the flow avoids breaking inside, except tables, which split between rows once they are over half a sheet. `assets/js/enrove-print.js` lays the same document out in a hidden frame, one column to a sheet, and gives each block that starts a sheet a forced page break, so the browser's own breaks follow the contents page rather than the other way round. Anything `position: fixed` repeats on every sheet, which is why a theme's fixed cover is made relative by `folio-print.css`.
+
+Everything after the cover prints at `--g-folio-print-scale`, which is 0.75: a body of 16px comes out at 12px, or 9pt. A theme whose text starts smaller can set its own on `:root` in `print.css`, as Enrove Proposal does with 0.8. It is CSS `zoom`, so spacing scales with the type, and a section lays out wider than the sheet in CSS pixels. Divide a length that is meant for the paper by the scale: `calc(80mm / var(--g-folio-print-scale))`.
+
 ## 9. Theme-specific data
 
 Themes that need their own fields store them as **post meta on the folio** and add UI in
@@ -1053,6 +1066,7 @@ Consequences for theme code:
    `get_prev_page()`, `get_next_page()`, `to_anchor_name()` and `get_html_id()` from `Base_Theme` — do
    not copy them in (§6).
 5. Both files start with `if (!defined('ABSPATH')) { exit; }`.
+   Put the title and body in `display_article()`, return the page root's classes from `get_print_root_class()`, and write `assets/css/print.css` (§8, Printing and PDF).
 6. `assets/css/theme.css` scoped to a theme-private root, consuming `--g-folio-header-font` /
    `--g-folio-body-font` with fallbacks — and loading no font of its own (no `@import`; declare
    `fonts` in `setup.php` instead).

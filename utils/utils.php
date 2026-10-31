@@ -12,7 +12,7 @@ class Utils
    * folio by ID for drafts and previews, and the theme picker's preview.
    * WordPress parses them, so routing reads get_query_var(), never $_GET.
    */
-  const ROUTE_QUERY_VARS = array('folio_id', 'enrove_preview', 'enrove_theme_preview', 'enrove_preview_view', 'enrove_preview_page');
+  const ROUTE_QUERY_VARS = array('folio_id', 'enrove_preview', 'enrove_print', 'enrove_print_paper', 'enrove_theme_preview', 'enrove_preview_view', 'enrove_preview_page');
 
   static function can_preview_unpublished_posts()
   {
@@ -486,6 +486,21 @@ class Utils
     }
 
     return add_query_arg($query_args, home_url('/'));
+  }
+
+  /**
+   * The address of a folio's print document, from which it is saved as a PDF.
+   *
+   * @return string '' for anything but a folio.
+   */
+  static function get_folio_print_url($folio_id)
+  {
+    $url = Utils::get_folio_permalink_by_id($folio_id);
+    if ($url === '' || get_post_type($folio_id) !== 'enrove_folio') {
+      return '';
+    }
+
+    return add_query_arg('enrove_print', 1, $url);
   }
 
   static function get_post_slug($post)

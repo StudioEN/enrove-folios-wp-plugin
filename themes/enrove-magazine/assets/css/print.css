@@ -1,0 +1,35 @@
+/*
+ * Enrove Magazine on paper. Loaded on the print document only, after
+ * assets/css/folio-print.css, which holds what every theme shares.
+ */
+
+.gm-cover__nav-toggle {
+  display: none !important;
+}
+
+/* On screen the hero slides under a fixed navbar. */
+.gm-page__hero {
+  break-after: avoid;
+  break-inside: avoid;
+  height: 70mm;
+  margin: 0 0 8mm;
+}
+
+.gm-page__container {
+  max-width: none;
+  padding: 0;
+}
+
+/* Running text keeps to a readable line; see --g-folio-print-measure. */
+.gm-page__content > :is(p, ul, ol) {
+  max-width: var(--g-folio-print-measure);
+}
+
+/* Fixed sizes for the fluid ones: see Type in assets/css/folio-print.css. */
+.g-folio-print__flow {
+  --gm-text-h3: 1.125rem;
+}
+
+.gm-page__title {
+  font-size: 28px;
+}

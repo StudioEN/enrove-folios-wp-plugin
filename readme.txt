@@ -22,6 +22,7 @@ Folios render through their own self-contained themes, not your site's WordPress
 * **A dedicated folio editor:** add, reorder and edit pages, set the cover, logo and typefaces, and preview the result before publishing.
 * **Sample content** for every theme, so a new folio starts as a finished example you can write over.
 * **Start from what you have:** copy existing posts and pages into a new or existing folio. Posts written in the classic editor are converted to blocks on the way in.
+* **Save as PDF:** the whole folio as one document in your browser's print window, with its cover, a numbered contents page and real, selectable text. Offer it to readers, folio by folio, if you like.
 * **Password-protected folios**, with a reading gate styled to match the theme.
 * **Collection tags** to organise folios, plus quick edit and duplication from the All Folios list.
 * **Configurable URLs:** folios live under a base path you choose, for example `/folio/your-title/`.
