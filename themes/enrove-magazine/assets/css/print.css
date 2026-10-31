@@ -7,6 +7,21 @@
   display: none !important;
 }
 
+/* Fixed and off to the left, and its shadow runs down the edge of every sheet. */
+.gm-nav {
+  display: none !important;
+}
+
+/* Safari prints a gradient or a mask that fades to nothing as solid black, over the
+   photograph. The cover keeps its flat tint. */
+@supports (font: -apple-system-body) {
+  .gm-cover__hero::after,
+  .gm-cover__hero-overlay::before,
+  .gm-page__hero-overlay {
+    display: none !important;
+  }
+}
+
 /* On screen the hero slides under a fixed navbar. */
 .gm-page__hero {
   break-after: avoid;

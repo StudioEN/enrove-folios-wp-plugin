@@ -59,3 +59,18 @@ body.enrove .gn-page .g-folio__theme-page-content h2 {
 body.enrove .gn-page .g-folio__theme-page-content h3 {
   font-size: 1.38rem;
 }
+
+/* Safari prints a gradient that fades to nothing as solid black, over the photograph
+   and the panel. Flat colours do the same job. */
+@supports (font: -apple-system-body) {
+  body.enrove .gn-cover::before {
+    background: var(--gn-cover-left-bg) !important;
+    right: calc(100% - var(--gn-cover-split));
+  }
+
+  body.enrove .gn-cover::after {
+    background: rgba(17, 17, 19, 0.72) !important;
+    left: var(--gn-cover-split);
+    opacity: 1;
+  }
+}

@@ -25,6 +25,14 @@
   var MEASURE_TIMEOUT = 15000;
   var SLACK = 38; // px: 10mm.
   var SHORT_TABLE = 0.5; // Of a sheet. Up to this a table stays whole; longer ones split between rows.
+  var SPACER = 'g-folio-print__spacer';
+
+  // Firefox has no forced column break, so there a spacer does the job.
+  var canForceColumn = window.CSS && CSS.supports('break-before', 'column');
+
+  // Firefox has no margin boxes either, so from the version with zoom it gets a
+  // footer of ours on each sheet, and leaves its own off (see folio-print.css).
+  var needsFeet = !canForceColumn && CSS.supports('zoom', '1');
 
   var isMeasuring = new URLSearchParams(window.location.search).has(MEASURE_PARAM);
 
@@ -161,18 +169,122 @@
     return blocks[target].tagName === 'TR' ? blocks[target].closest('figure, table') : blocks[target];
   }
 
+  // Fill what is left of a column above `element`, which moves it to the next one.
+  function pushToNextColumn(element, box) {
+    var top = element.getClientRects()[0].top - box.top;
+    if (top <= 1) {
+      return;
+    }
+
+    // A table takes a row and nothing else, and a spacer has to be one to hold its place.
+    var isRow = element.tagName === 'TR';
+    var spacer = document.createElement(isRow ? 'tr' : 'div');
+    var filler = spacer;
+
+    spacer.className = SPACER;
+    if (isRow) {
+      filler = spacer.appendChild(document.createElement('td'));
+      filler.colSpan = element.cells.length || 1;
+      filler.style.border = '0';
+      filler.style.padding = '0';
+    }
+
+    element.parentNode.insertBefore(spacer, element);
+
+    // The section's zoom scales the spacer too.
+    var height = box.height - top;
+    filler.style.height = height + 'px';
+    var drawn = filler.getBoundingClientRect().height;
+    if (drawn > 0) {
+      filler.style.height = (height * height / drawn) + 'px';
+    }
+  }
+
+  // An element's place in `root`, so the other document can find it. That document
+  // has no spacers, so they cannot count.
+  function getPosition(root, element) {
+    return Array.prototype.filter.call(root.getElementsByTagName('*'), function (candidate) {
+      return !candidate.closest('.' + SPACER);
+    }).indexOf(element);
+  }
+
+  // A flex or grid box would give a foot a share of its row, and a box that clips
+  // would hide it. A contents line is flex, and its foot takes up no room there.
+  function canHoldFoot(element) {
+    var style = window.getComputedStyle(element);
+
+    return style.overflowY === 'visible' && (
+      /^(block|flow-root|list-item|table-cell)$/.test(style.display) ||
+      element.classList.contains('g-folio-print__contents-item')
+    );
+  }
+
+  // One block on each sheet, to hold its footer, and where a foot put in it would
+  // start. A block that runs on to another sheet would take it to the wrong one, so
+  // a sheet with nothing else on it has no footer.
+  function findFeet(roots, box, columnOf) {
+    var feet = {};
+
+    roots.forEach(function (root) {
+      root.blocks.forEach(function (block) {
+        var rects = block.getClientRects();
+        var sheet = columnOf(rects[0]);
+        var host = block.tagName === 'TR' ? block.cells[block.cells.length - 1] : block;
+
+        if (feet[sheet] || sheet !== columnOf(rects[rects.length - 1]) || !host || !canHoldFoot(host)) {
+          return;
+        }
+
+        var probe = document.createElement('div');
+        probe.style.cssText = 'flex:none;height:0;width:0';
+        host.appendChild(probe);
+        var rect = probe.getClientRects()[0];
+        probe.remove();
+
+        // An image or a rule takes a child and draws no box for it.
+        if (rect) {
+          feet[sheet] = {
+            root: root.selector,
+            index: getPosition(root.element, host),
+            sheet: sheet,
+            left: rect.left - box.left - sheet * box.width,
+            top: rect.top - box.top
+          };
+        }
+      });
+    });
+
+    return Object.keys(feet).map(function (sheet) {
+      return feet[sheet];
+    });
+  }
+
   // In the hidden frame: report each section's first sheet, and the blocks in it
   // that start a sheet, by position so the other document can find the same ones.
   function layOut() {
     var flow = document.querySelector('.g-folio-print__flow');
     var pages = {};
     var breaks = {};
+    var feet = [];
+    var sheets = 0;
 
     if (flow) {
       var box = flow.getBoundingClientRect();
       var columnOf = function (rect) {
         return Math.floor((rect.left - box.left + 1) / box.width);
       };
+
+      // The last sheet in use, so that Firefox pushes only what is still on it.
+      var contents = flow.querySelector('.g-folio-print__contents');
+      var contentsRects = contents ? contents.getClientRects() : [];
+      var lastSheet = contentsRects.length ? columnOf(contentsRects[contentsRects.length - 1]) : -1;
+      var roots = [];
+
+      if (contents) {
+        var contentsBlocks = [];
+        collectBlocks(contents, contentsBlocks);
+        roots.push({ selector: '.g-folio-print__contents', element: contents, blocks: contentsBlocks });
+      }
 
       // Section by section, in order; a contents page that runs to a second sheet
       // moves every later section along with it.
@@ -181,7 +293,10 @@
           return;
         }
 
-        var elements = section.getElementsByTagName('*');
+        if (!canForceColumn && columnOf(section.getClientRects()[0]) <= lastSheet) {
+          pushToNextColumn(section, box);
+        }
+
         var blocks = [];
         var column = columnOf(section.getClientRects()[0]);
         var forced = [];
@@ -192,11 +307,21 @@
         });
 
         var startSheet = function (block) {
-          block.style.breakBefore = 'column';
+          if (canForceColumn) {
+            block.style.breakBefore = 'column';
+          } else if (columnOf(block.getClientRects()[0]) <= column) {
+            pushToNextColumn(block, box);
+          }
           if (forced.indexOf(block) === -1) {
             forced.push(block);
           }
         };
+
+        // In Firefox a section can open with an empty scrap at the foot of a column,
+        // its first block already on the next.
+        if (blocks.length) {
+          column = columnOf(blocks[0].getClientRects()[0]);
+        }
 
         pages[section.id] = column;
 
@@ -224,15 +349,24 @@
         });
 
         breaks[section.id] = forced.map(function (block) {
-          return Array.prototype.indexOf.call(elements, block);
+          return getPosition(section, block);
         });
 
+        roots.push({ selector: '#' + section.id, element: section, blocks: blocks });
+        lastSheet = column;
+
         // The next section's first sheet follows this one's last, breaks included.
-        pages[section.id] = columnOf(section.getClientRects()[0]);
+        pages[section.id] = columnOf((blocks[0] || section).getClientRects()[0]);
       });
+
+      sheets = lastSheet + 1;
+
+      if (needsFeet) {
+        feet = findFeet(roots, box, columnOf);
+      }
     }
 
-    return { pages: pages, breaks: breaks };
+    return { pages: pages, breaks: breaks, feet: feet, sheets: sheets };
   }
 
   function measure() {
@@ -246,8 +380,25 @@
     });
   }
 
+  // Inside a block on the sheet, and moved down from there. It cannot be absolute: a
+  // box that passes the foot of the text area moves to the next sheet, and the foot of
+  // the sheet is further down than that. A relative offset moves only the drawing.
+  function addFoot(foot, title, total, firstSheet) {
+    var element = document.createElement('div');
+    var row = element.appendChild(document.createElement('div'));
+
+    element.className = 'g-folio-print__foot';
+    element.setAttribute('aria-hidden', 'true');
+    element.style.setProperty('--g-folio-print-foot-left', foot.left + 'px');
+    element.style.setProperty('--g-folio-print-foot-top', foot.top + 'px');
+    row.appendChild(document.createElement('span')).textContent = title;
+    row.appendChild(document.createElement('span')).textContent = (foot.sheet + firstSheet) + ' / ' + total;
+    foot.host.appendChild(element);
+  }
+
   function applyLayout(layout) {
     var firstSheet = document.querySelector('.g-folio-print__cover') ? 2 : 1;
+    var flow = document.querySelector('.g-folio-print__flow');
 
     Object.keys(layout.pages).forEach(function (id) {
       var link = document.querySelector('.g-folio-print__contents a[href="#' + id + '"]');
@@ -263,6 +414,18 @@
             elements[index].style.breakBefore = 'page';
           }
         });
+      }
+    });
+
+    // All found before any is added, as a foot moves every position after it.
+    layout.feet.forEach(function (foot) {
+      var root = document.querySelector(foot.root);
+      foot.host = root && root.getElementsByTagName('*')[foot.index];
+    });
+
+    layout.feet.forEach(function (foot) {
+      if (foot.host) {
+        addFoot(foot, flow.getAttribute('data-enrove-print-title'), layout.sheets + firstSheet - 1, firstSheet);
       }
     });
   }

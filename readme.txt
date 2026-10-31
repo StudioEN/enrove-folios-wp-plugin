@@ -4,7 +4,7 @@ Tags: ebook, newsletter, portfolio, publishing, documents
 Requires at least: 5.9
 Tested up to: 7.1
 Requires PHP: 7.1
-Stable tag: 0.6.0
+Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,7 +22,7 @@ Folios render through their own self-contained themes, not your site's WordPress
 * **A dedicated folio editor:** add, reorder and edit pages, set the cover, logo and typefaces, and preview the result before publishing.
 * **Sample content** for every theme, so a new folio starts as a finished example you can write over.
 * **Start from what you have:** copy existing posts and pages into a new or existing folio. Posts written in the classic editor are converted to blocks on the way in.
-* **Save as PDF:** the whole folio as one document in your browser's print window, with its cover, a numbered contents page and real, selectable text. Offer it to readers, folio by folio, if you like.
+* **Save as PDF:** the whole folio as one document in your browser's print window, with its cover, a contents page and real, selectable text. Offer it to readers, folio by folio, if you like.
 * **Password-protected folios**, with a reading gate styled to match the theme.
 * **Collection tags** to organise folios, plus quick edit and duplication from the All Folios list.
 * **Configurable URLs:** folios live under a base path you choose, for example `/folio/your-title/`.
@@ -78,6 +78,10 @@ A folio theme is a small folder with a manifest, a cover template, a page templa
 
 The theme fonts have not been downloaded to your site yet. Press Download Fonts on Enrove → Settings → Fonts. Folios load their fonts from your own site rather than from Google, so readers are never sent to a third party.
 
+= Which browsers can save a folio as a PDF? =
+
+Saving as a PDF uses your browser's own print window, so nothing is sent anywhere and no PDF is stored on your site. Chrome and Edge give the full layout, with page numbers in a clean footer. Firefox 126 or later gives the same layout. Safari keeps a white margin around the cover, leaves the page numbers out of the contents page, and adds page numbers only if you turn on Print headers and footers.
+
 = Where do folios live on my site? =
 
 Under a base path, `/folio/` by default. You can change it on Enrove → Settings → Routing.
@@ -95,6 +99,13 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 5. The Settings screen.
 
 == Changelog ==
+
+= 0.7.0 =
+* Save a folio as a PDF: **Save as PDF…** in the folio editor's Copy link menu, or on All Folios, opens the whole folio as one document in your browser's print window, with its cover, a contents page and real, selectable text.
+* **Let readers save as PDF**, under Publishing in the folio editor, adds a Save as PDF button to the folio's contents menu. It is off by default, and a reader only ever gets what they could already read.
+* Fixed: a Button block's label was unreadable in every theme that colours the links in its page body, and so was the button of Enrove Proposal's call-to-action block.
+* Fixed: Enrove Proposal had no style for code blocks.
+* Fixed: Enrove Newsletter's contents panel cut off a long list on a short window.
 
 = 0.6.0 =
 * Make folios from posts and pages you already have: **Import posts and pages** (in the folio editor's Add Page menu) copies them into a folio as draft pages, and **Import posts and pages…** in the theme picker starts a new folio from them.
@@ -141,6 +152,9 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 * CHANGELOG.md in the plugin folder has the full history.
 
 == Upgrade Notice ==
+
+= 0.7.0 =
+Save a folio as a PDF through your browser's print window, and offer readers the same from the folio's contents menu.
 
 = 0.6.0 =
 Make folios from the posts and pages you already have, with classic-editor posts converted to blocks on the way in.

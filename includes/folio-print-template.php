@@ -3,11 +3,9 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Required from inside a closure (Plugin's template_redirect handler), so these variables are local to it, not globals.
-
 // Reads no request data: it is handed $print_folio, which Folio_Print checked.
 
-$print_document = new \Enrove\Themes\Folio_Print($print_folio);
+$enrove_print_document = new \Enrove\Themes\Folio_Print($print_folio);
 
 // As in folio-preview-template.php: WordPress found nothing at this path and has
 // set a 404 already, and core's title tag would title the document after that.
@@ -27,7 +25,7 @@ remove_action('wp_head', '_wp_render_title_tag', 1);
 </head>
 
 <body <?php body_class('enrove g-folio-print'); ?>>
-  <?php $print_document->display(); ?>
+  <?php $enrove_print_document->display(); ?>
   <?php wp_footer(); ?>
 </body>
 

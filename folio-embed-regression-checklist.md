@@ -58,8 +58,9 @@ Run per theme, in the real print window of Chrome and of one other browser, on a
 4. Each number on the contents page matches the sheet that section starts on, and each entry links to it.
 5. Accordions are open, an embed is a link, and no block is sliced by a sheet edge. A short table stays whole with the heading above it, a long one splits between rows and repeats its head, and no column breaks a word in two.
 6. Text is selectable, links work, and the theme's fonts are embedded (download them first on Settings → Fonts).
-7. Let readers save as PDF puts a button in the contents pane, on the cover and on a page (under Show more in Enrove Proposal), with none on the cover itself or in the page footer. With a long contents list it can still be reached. Turning the option off removes it.
-8. Logged out, a draft or private folio's print address is a 404, and a locked folio shows the password gate, then the document.
+7. Firefox, current release, with Margins on Default and on None: the cover fills the sheet, no sheet is blank, every sheet after the cover has the footer with the folio's title and the right number, the contents numbers match it, and no address or date appears. Safari: nothing on the cover is clipped or black, and the bar's hint shows.
+8. Let readers save as PDF puts a button in the contents pane, on the cover and on a page (under Show more in Enrove Proposal), with none on the cover itself or in the page footer. With a long contents list it can still be reached. Turning the option off removes it.
+9. Logged out, a draft or private folio's print address is a 404, and a locked folio shows the password gate, then the document.
 
 ## Cross-Checks
 1. Regular WordPress post with same URLs still embeds correctly.

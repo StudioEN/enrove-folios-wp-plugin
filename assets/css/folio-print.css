@@ -41,6 +41,22 @@
   }
 }
 
+/* Firefox takes that percentage of the sheet's width, which leaves no margin at all. */
+@supports (-moz-appearance: none) {
+  @page {
+    margin-bottom: 22mm;
+  }
+}
+
+/* It also draws its own header and footer, the address and date among them, in any
+   top or bottom margin a sheet has, and nothing else takes them off. So a sheet has no
+   margins there, and the flow's padding does their work. See The flow. */
+@supports (-moz-appearance: none) and (zoom: 1) {
+  @page {
+    margin: 0;
+  }
+}
+
 @page g-folio-print-cover {
   margin: 0;
 
@@ -191,21 +207,57 @@ body.g-folio-print .g-folio-print__bar-button:focus-visible {
   width: 100% !important;
 }
 
+/* Firefox. A viewport unit in print is the sheet less half an inch a side, whatever
+   @page says, so 100vh stops short of the foot. A percentage of the root is the whole
+   sheet on any paper and any Margins setting, as long as nothing in the flow is held
+   to it, so the cover is taken out of the flow and leaves a slot that starts the sheet. */
+@supports (-moz-appearance: none) {
+  @media print {
+    html {
+      height: 100% !important;
+    }
+
+    .g-folio-print__cover {
+      height: 1px;
+    }
+
+    .g-folio-print__cover > * {
+      height: 100% !important;
+      left: 0 !important;
+      position: absolute !important;
+      right: 0 !important;
+      top: 0 !important;
+      width: auto !important;
+    }
+  }
+}
+
 /* Safari. WebKit takes one set of margins from the first sheet and uses it for every
    sheet, and ignores a named @page, so its cover has the same margins as the rest:
    zero margins on the first sheet would take them off every sheet. Its layout on
    paper also differs from the one the script measures, and it has no margin boxes,
    so a sheet has no number to find. No number beats a wrong one. A sheet holds less
    than its size says there, and a cover that does not fit leaves a blank sheet after
-   it: 215mm of 255mm fits, 240mm does not. The query is the test for WebKit: no other
-   engine knows this font keyword. */
+   it: 215mm of 255mm fits, 240mm does not. Media queries see a desktop there, so a
+   cover gets its desktop layout on a sheet far narrower than that, and it clips or
+   collides: the zoom lays it out at a desktop's width and scales it to the sheet. The
+   query is the test for WebKit: no other engine knows this font keyword. */
+.g-folio-print__bar-hint--firefox-old,
 .g-folio-print__bar-hint--safari {
   display: none;
 }
 
+/* Before named pages and zoom, 110 and 126. */
+@supports (-moz-appearance: none) and (not (zoom: 1)) {
+  .g-folio-print__bar-hint--firefox-old {
+    display: block;
+  }
+}
+
 @supports (font: -apple-system-body) {
   .g-folio-print__cover > * {
-    height: calc(var(--g-folio-print-height) * 0.84) !important;
+    height: calc(var(--g-folio-print-height) * 0.84 / 0.5) !important;
+    zoom: 0.5;
   }
 
   .g-folio-print__bar-hint--safari {
@@ -237,6 +289,73 @@ body.g-folio-print .g-folio-print__bar-button:focus-visible {
 @media print {
   .g-folio-print__flow {
     max-width: none;
+  }
+}
+
+/* Firefox. With clone the padding comes back on every sheet, so it does the work of
+   the margins, whatever the Margins setting says, and the foot leaves the Letter height
+   of text on any paper, like the calc in @page. The width is the one the script laid out
+   on, or a line wraps differently on Letter and a foot is out by that line. A foot is a
+   row inside a box of no width, and Firefox shrinks a document to fit whatever
+   overflows, so the flow clips. */
+@supports (-moz-appearance: none) and (zoom: 1) {
+  @media print {
+    body.g-folio-print .g-folio-print__flow {
+      box-decoration-break: clone;
+      box-sizing: content-box;
+      margin: 0 auto !important;
+      overflow-x: clip !important;
+      padding: 20mm 0 calc(var(--g-folio-print-sheet-height) - 257.4mm) !important;
+      width: var(--g-folio-print-width) !important;
+    }
+  }
+}
+
+/* The running footer where there are no margin boxes, as they would set it. The script
+   adds these to Firefox only. It starts inside a block, from where it is moved to the
+   foot of the sheet: --g-folio-print-foot-top and -left say how far the block's end is
+   from the top left of the text area, and the foot is 32.6mm up the sheet from there,
+   20mm of top margin and a line that ends 9mm from the edge. Past the foot of the sheet
+   it lands at the top of the next, wrongly numbered, so the height has to be right:
+   Firefox's 100vh is the sheet less an inch with Margins on Default, and the whole sheet
+   with None, and its width tells them apart: 210mm and 215.9mm are A4 and Letter with
+   None, and the same papers are 184.6mm and 190.5mm with Default. */
+.g-folio-print__foot {
+  display: none;
+}
+
+@media print {
+  body.g-folio-print {
+    --g-folio-print-sheet-height: calc(100vh + 25.4mm);
+  }
+
+  body.g-folio-print .g-folio-print__foot {
+    all: initial;
+    display: block;
+    flex: none;
+    height: 0;
+    left: calc(var(--g-folio-print-foot-left) / var(--g-folio-print-scale) * -1);
+    position: relative;
+    top: calc((var(--g-folio-print-sheet-height) - 32.6mm - var(--g-folio-print-foot-top)) / var(--g-folio-print-scale));
+    width: 0;
+  }
+
+  body.g-folio-print .g-folio-print__foot > div {
+    all: initial;
+    color: #666;
+    display: flex;
+    font-family: var(--g-folio-print-foot-font, sans-serif);
+    font-size: calc(8.5pt / var(--g-folio-print-scale));
+    gap: 8mm;
+    justify-content: space-between;
+    line-height: 1.2;
+    width: calc(var(--g-folio-print-width) / var(--g-folio-print-scale));
+  }
+}
+
+@media print and (min-width: 200mm) and (max-width: 216mm) {
+  body.g-folio-print {
+    --g-folio-print-sheet-height: 100vh;
   }
 }
 

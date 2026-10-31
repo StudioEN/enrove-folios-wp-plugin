@@ -197,6 +197,7 @@ class Folio_Print
       ':root {',
       '  --g-folio-print-width: ' . (float) $content_width . 'mm;',
       '  --g-folio-print-height: ' . (float) $content_height . 'mm;',
+      $stack === '' ? '' : '  --g-folio-print-foot-font: ' . $stack . ';',
       '}',
     ));
   }
@@ -218,7 +219,8 @@ class Folio_Print
       <div class="g-folio-print__bar-text">
         <p class="g-folio-print__bar-title"><?php esc_html_e('Save this folio as a PDF', 'enrove-folios'); ?></p>
         <p class="g-folio-print__bar-hint"><?php esc_html_e('In the print window, choose Save as PDF.', 'enrove-folios'); ?></p>
-        <p class="g-folio-print__bar-hint g-folio-print__bar-hint--safari"><?php esc_html_e('Safari keeps a white margin around the cover and leaves out page numbers. For the full layout, open this page in Chrome or Edge.', 'enrove-folios'); ?></p>
+        <p class="g-folio-print__bar-hint g-folio-print__bar-hint--safari"><?php esc_html_e('Safari keeps a white margin around the cover. For page numbers, turn on Print headers and footers under Show Details, or open this page in Chrome or Edge.', 'enrove-folios'); ?></p>
+        <p class="g-folio-print__bar-hint g-folio-print__bar-hint--firefox-old"><?php esc_html_e('This version of Firefox is too old for the full layout. Update it, or open this page in Chrome or Edge.', 'enrove-folios'); ?></p>
       </div>
       <div class="g-folio-print__bar-actions">
         <button type="button" class="g-folio-print__bar-button" data-enrove-print><?php esc_html_e('Print or save as PDF', 'enrove-folios'); ?></button>
@@ -235,7 +237,7 @@ class Folio_Print
       <ol class="g-folio-print__contents-list">
         <?php foreach ($this->pages as $index => $page): ?>
           <li class="g-folio-print__contents-item">
-            <a href="<?php echo esc_url('#g-folio-print-page-' . ($index + 1)); ?>"><?php echo esc_html(get_the_title($page)); ?></a>
+            <a href="<?php echo esc_url('#g-folio-print-page-' . ($index + 1)); ?>"><?php echo esc_html($page->post_title); ?></a>
           </li>
         <?php endforeach; ?>
       </ol>
@@ -258,7 +260,7 @@ class Folio_Print
       return;
     }
     ?>
-    <div class="g-folio-print__flow <?php echo esc_attr($this->page_theme->get_print_root_class()); ?>">
+    <div class="g-folio-print__flow <?php echo esc_attr($this->page_theme->get_print_root_class()); ?>" data-enrove-print-title="<?php echo esc_attr(wp_strip_all_tags($this->folio->post_title)); ?>">
       <?php if ($this->has_contents()) { $this->display_contents(); } ?>
       <?php foreach ($this->pages as $index => $page): ?>
         <section class="g-folio-print__page" id="<?php echo esc_attr('g-folio-print-page-' . ($index + 1)); ?>">

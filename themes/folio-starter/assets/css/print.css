@@ -23,3 +23,15 @@
   --fs-rail-gap: 32px;
   --fs-block: 48px;
 }
+
+/* Firefox's sheet is narrow enough for the phone layout, which turns a whole cover
+   into a band of photograph and a pale block. */
+.g-folio-print__cover .g-folio__theme-1 .g-folio__theme-content {
+  grid-template-columns: var(--fs-cover-columns);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.g-folio-print__cover .g-folio__theme-1 .g-folio__theme-background,
+.g-folio-print__cover .g-folio__theme-1 .g-folio__theme-brief {
+  grid-row: 1;
+}
