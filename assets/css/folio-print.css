@@ -38,6 +38,7 @@
     font-size: 8.5pt;
     padding-bottom: 9mm;
     vertical-align: bottom;
+    white-space: nowrap;
   }
 }
 
@@ -350,6 +351,18 @@ body.g-folio-print .g-folio-print__bar-button:focus-visible {
     justify-content: space-between;
     line-height: 1.2;
     width: calc(var(--g-folio-print-width) / var(--g-folio-print-scale));
+  }
+
+  /* One line, as a second could run past the foot of the sheet. */
+  body.g-folio-print .g-folio-print__foot > div > :first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body.g-folio-print .g-folio-print__foot > div > :last-child {
+    flex: none;
   }
 }
 

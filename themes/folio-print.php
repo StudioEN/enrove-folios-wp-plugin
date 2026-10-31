@@ -122,13 +122,15 @@ class Folio_Print
   }
 
   /**
-   * Plain text as a CSS string, for a `content` declaration.
+   * A post title as a CSS string, for a `content` declaration. A title can be
+   * stored with its entities encoded, and CSS would print them as they stand.
    *
    * @return string With its quotes.
    */
   public static function to_css_string($text)
   {
-    $text = trim(preg_replace('/[\x00-\x1F\x7F]+/', ' ', wp_strip_all_tags((string) $text)));
+    $text = html_entity_decode((string) $text, ENT_QUOTES, 'UTF-8');
+    $text = trim(preg_replace('/[\x00-\x1F\x7F]+/', ' ', wp_strip_all_tags($text)));
 
     return '"' . str_replace(array('\\', '"'), array('\\\\', '\\"'), $text) . '"';
   }
