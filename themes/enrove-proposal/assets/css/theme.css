@@ -527,8 +527,6 @@
 
 .gp-cover__lower-cta {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
   align-items: center;
   justify-content: center;
   padding: 0 0 0 clamp(1.5rem, 3vw, 3rem);
@@ -1000,6 +998,15 @@
 .gp-theme-toggle--nav {
   width: 100%;
   justify-content: center;
+}
+
+/* The same shape as the toggle under it. */
+.gp-nav__pdf-button {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -1539,12 +1546,6 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-}
-
-/* Save as PDF, when the folio offers it, across from the arrows. */
-.gp-page__footer .g-folio__pdf-link {
-  margin-right: auto;
-  order: -1;
 }
 
 /* Arrow nav (right) */

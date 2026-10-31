@@ -123,6 +123,7 @@ class Cover extends Base_Theme
             'aria_label' => __('Issue contents', 'enrove-folios'),
             'pages' => $nav['pages'],
             'show_theme_toggle' => true,
+            'theme' => $this,
         ]);
     }
 
@@ -231,7 +232,7 @@ class Cover extends Base_Theme
                     // guideline 10 allows no public credit without the site admin
                     // opting in. The empty cell keeps the footer's middle column.
                     ?>
-                    <span class="gm-cover__powerby"><?php $this->display_pdf_link(); ?></span>
+                    <span class="gm-cover__powerby" aria-hidden="true"></span>
                     <?php if (!empty($latest_pages_date)): ?>
                         <span class="gm-cover__updated">
                             <?php

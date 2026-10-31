@@ -149,8 +149,6 @@ class Cover extends Base_Theme
           </div>
         <?php endif; ?>
 
-        <?php $this->display_pdf_link(); ?>
-
         <?php
         // Credit, not rendered: "Powered by Enrove Folios". WordPress.org
         // guideline 10 allows no public credit without the site admin opting in.

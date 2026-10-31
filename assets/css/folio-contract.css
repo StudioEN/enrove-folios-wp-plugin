@@ -188,22 +188,33 @@ body.enrove .wp-block-button:not(.is-style-outline) .wp-block-button__link:not(.
 }
 
 /* ── Save as PDF ────────────────────────────────────────────────────────────
-   The link Base_Theme::display_pdf_link() prints, on a folio that offers one.
-   It sits on covers of every colour, so it takes its colour from where it is. */
-.g-folio__pdf-link {
-  color: inherit;
-  display: inline-block;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+   The button Base_Theme::display_pdf_button() prints in a theme's contents pane,
+   on a folio that offers one. Outlined, as the pane's first job is navigation.
+   The theme says where it sits and gives it its own corners. */
+.g-folio__pdf-button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--folio-accent);
+  box-sizing: border-box;
+  color: var(--folio-accent);
+  display: inline-flex;
+  font-family: var(--g-folio-body-font, var(--folio-font-body));
+  font-size: var(--folio-text-meta);
+  font-weight: 500;
+  justify-content: center;
+  line-height: 1.25;
+  min-height: 44px;
+  padding: var(--folio-space-2) var(--folio-space-4);
+  text-decoration: none;
+  transition: background-color var(--folio-dur) var(--folio-ease), color var(--folio-dur) var(--folio-ease);
 }
 
-.g-folio__pdf-link:hover {
-  opacity: 0.75;
+.g-folio__pdf-button:hover {
+  background: var(--folio-accent);
+  color: var(--folio-on-accent);
 }
 
-.g-folio__pdf-link:focus-visible {
-  outline: 2px solid currentColor;
+.g-folio__pdf-button:focus-visible {
+  outline: 2px solid var(--folio-focus);
   outline-offset: 2px;
 }

@@ -665,6 +665,9 @@ body.enrove .gn-page .g-folio__theme-page-nav-content {
   position: relative;
   display: grid;
   grid-template-columns: minmax(220px, 0.34fr) minmax(0, 0.66fr);
+  /* The last row takes up the list's height, so at the panel's limit the list
+     scrolls, where auto rows ran past the panel and were clipped. */
+  grid-template-rows: auto auto auto minmax(44px, 1fr);
   gap: clamp(20px, 2.2vw, 36px);
   max-height: min(calc(100vh - 132px), 760px);
   padding: 30px 32px 28px;
@@ -876,6 +879,32 @@ body.enrove .gn-page .g-folio__theme-page-nav-label {
 body.enrove .gn-cover .g-folio__theme-nav-label,
 body.enrove .gn-page .g-folio__theme-page-nav-label {
   color: var(--gn-cover-left-subtle);
+}
+
+/* Under the issue's details, at the foot of the left column. In the pane's ink
+   and not the accent: `.gn a` outranks the shared colours, and a palette's accent
+   can be as dark as its text, so the shared hover could be ink on ink. */
+body.enrove .gn-cover .g-folio__pdf-button,
+body.enrove .gn-page .g-folio__pdf-button {
+  grid-column: 1;
+  grid-row: 4;
+  align-self: end;
+  justify-self: start;
+  border-color: var(--gn-text);
+  color: var(--gn-text);
+  font-family: var(--gn-font-heading);
+}
+
+body.enrove .gn-cover .g-folio__pdf-button {
+  border-color: var(--gn-cover-left-text);
+  color: var(--gn-cover-left-text);
+}
+
+body.enrove .gn-cover .g-folio__pdf-button:hover,
+body.enrove .gn-page .g-folio__pdf-button:hover {
+  background: var(--gn-text);
+  border-color: var(--gn-text);
+  color: var(--gn-elevated);
 }
 
 body.enrove .gn-cover .g-folio__theme-navs,
@@ -1798,12 +1827,21 @@ body.enrove .gn-page .g-folio__theme-page-mobile-nav-back {
     top: 70px;
   }
 
+  /* A column, so the list gives up its height and scrolls: in a grid the rows
+     ran past the panel, which clips, and took Save as PDF with them. */
   body.enrove .gn-cover .g-folio__theme-nav-content,
   body.enrove .gn-page .g-folio__theme-page-nav-content {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 18px;
     max-height: min(calc(100vh - 92px), 78vh);
     padding: 64px 18px 18px;
+  }
+
+  body.enrove .gn-cover .g-folio__pdf-button,
+  body.enrove .gn-page .g-folio__pdf-button {
+    align-self: stretch;
+    flex: none;
   }
 
   body.enrove .gn-cover .g-folio__theme-nav-close,
@@ -1830,7 +1868,9 @@ body.enrove .gn-page .g-folio__theme-page-mobile-nav-back {
   body.enrove .gn-cover .g-folio__theme-nav-label,
   body.enrove .gn-page .g-folio__theme-page-nav-label,
   body.enrove .gn-cover .g-folio__theme-navs,
-  body.enrove .gn-page .g-folio__theme-page-navs {
+  body.enrove .gn-page .g-folio__theme-page-navs,
+  body.enrove .gn-cover .g-folio__pdf-button,
+  body.enrove .gn-page .g-folio__pdf-button {
     grid-column: 1;
     grid-row: auto;
   }
@@ -2126,7 +2166,7 @@ body.enrove .gn-page .g-folio__theme-page-mobile-nav-back {
 
   /* An empty spacer for the desktop grid's middle column (the credit it held
      is no longer rendered); stacked, it would only add a gap. */
-  body.enrove .gn-page .g-folio__theme-page-powerby:empty {
+  body.enrove .gn-page .g-folio__theme-page-powerby {
     display: none;
   }
 

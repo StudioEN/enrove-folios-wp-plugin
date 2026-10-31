@@ -131,6 +131,7 @@ function display_recent_navigation_pane($theme, array $args = []): void
           </a>
         <?php endforeach; ?>
       </div>
+      <?php if (method_exists($theme, 'display_pdf_button')) { $theme->display_pdf_button(); } ?>
     </div>
   </nav>
   <?php

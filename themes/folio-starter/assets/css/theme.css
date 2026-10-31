@@ -507,6 +507,8 @@ html:has(.g-folio__theme-1-page) {
   top: 0;
   bottom: 0;
   z-index: 20;
+  display: flex;
+  flex-direction: column;
   width: min(var(--fs-nav-pane), 100vw);
   padding: var(--fs-5);
   background: var(--fs-surface-tint);
@@ -530,9 +532,18 @@ html:has(.g-folio__theme-1-page) {
 /* A folio with many pages must still reach its last entry. */
 .g-folio__theme-1 .g-folio__theme-nav-content,
 .g-folio__theme-1-page .g-folio__theme-page-nav-content {
-  max-height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/* At the foot of the pane, past the end of the list however long it runs. */
+.g-folio__theme-1 .g-folio__pdf-button,
+.g-folio__theme-1-page .g-folio__pdf-button {
+  flex: none;
+  margin-top: var(--fs-3);
+  border-radius: 2px;
 }
 
 .g-folio__theme-1 .g-folio__theme-nav-name,
@@ -1205,7 +1216,7 @@ html:has(.g-folio__theme-1-page) {
 
   /* The credit that had its own row here is no longer rendered; the cell is
      an empty spacer for the desktop grid's middle column. */
-  .g-folio__theme-1-page .g-folio__theme-page-powerby:empty {
+  .g-folio__theme-1-page .g-folio__theme-page-powerby {
     display: none;
   }
 }

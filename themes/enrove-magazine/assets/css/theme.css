@@ -719,6 +719,32 @@ input:disabled,
   background-color: var(--gm-surface-alt);
 }
 
+/* The foot of the pane, which the list scrolls under. */
+.gm-nav::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: calc(84px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(transparent, var(--gm-surface) 12px);
+  pointer-events: none;
+}
+
+/* Beside the toggle, in the foot of the pane. */
+.gm-nav__pdf-button {
+  position: absolute;
+  left: calc(max(24px, env(safe-area-inset-left, 0px)) + 48px);
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 2;
+  border-radius: 6px;
+  background: var(--gm-surface);
+}
+
+/* In dark mode the accent is pale, so white on it reads as nothing. */
+.gm-nav__pdf-button:hover {
+  color: var(--gm-surface);
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    INNER PAGE
@@ -1139,10 +1165,6 @@ html {
 }
 
 /* ── Footer (prev/next navigation) ── */
-.gm-page__pdf-link {
-  color: var(--gm-text-muted);
-}
-
 .gm-page__footer {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

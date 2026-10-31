@@ -454,11 +454,6 @@ body.enrove .g-folio__theme-2-page {
   font-size: var(--ge-text-ui);
 }
 
-/* Save as PDF, when the folio offers it, on the cover's coloured card. */
-.g-folio__theme-2 .g-folio__pdf-link {
-  color: var(--ge-on-ground);
-}
-
 .g-folio__theme-2 .g-folio__theme-fields-submit {
   display: flex;
   height: 40px;
@@ -597,6 +592,14 @@ body.enrove .g-folio__theme-2-page {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/* At the foot of the pane, past the end of the list however long it runs. */
+.g-folio__theme-2 .g-folio__pdf-button,
+.g-folio__theme-2-page .g-folio__pdf-button {
+  flex: none;
+  margin-top: var(--folio-space-3);
+  border-radius: 2px;
 }
 
 .g-folio__theme-2 .g-folio__theme-nav-name {
@@ -1601,7 +1604,7 @@ body.enrove .g-folio__theme-2-page {
     padding: 32px 24px;
   }
 
-  .g-folio__theme-2-page .g-folio__theme-page-powerby:empty {
+  .g-folio__theme-2-page .g-folio__theme-page-powerby {
     display: none;
   }
 

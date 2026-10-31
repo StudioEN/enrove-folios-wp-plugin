@@ -205,6 +205,7 @@ class Cover extends Base_Theme
       'info_status'     => trim((string) ($this->proposal_meta['proposal_status'] ?? '')),
       'info_date'       => $date,
       'info_contacts'   => $this->get_contacts(),
+      'theme'           => $this,
     ]);
   }
 
@@ -364,7 +365,6 @@ class Cover extends Base_Theme
                   <a class="gp-cover__cta" href="<?php echo esc_url($first_page_url); ?>">
                     <?php echo esc_html($cta_text); ?> &rarr;
                   </a>
-                  <?php $this->display_pdf_link(); ?>
                 </div>
               <?php endif; ?>
             </div>

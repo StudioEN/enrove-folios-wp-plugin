@@ -1406,7 +1406,7 @@ class Folio extends Page
               class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" <?php checked((string) $fields->show_pdf_link, '1'); ?> />
             <label for="show_pdf_link" class="ml-2 block text-sm text-gray-900"><?php esc_html_e('Let readers save as PDF', 'enrove-folios'); ?></label>
           </div>
-          <div class="mt-1 ml-6 text-xs text-gray-500"><?php esc_html_e('Adds a Save as PDF link to the cover and to every page.', 'enrove-folios'); ?></div>
+          <div class="mt-1 ml-6 text-xs text-gray-500"><?php esc_html_e('Adds a Save as PDF button to the folio\'s contents menu, on the cover and on every page.', 'enrove-folios'); ?></div>
         </div>
         <div>
           <label for="permalink" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide"><?php esc_html_e('Permalink (read-only)', 'enrove-folios'); ?></label>

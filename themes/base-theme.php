@@ -1160,15 +1160,16 @@ abstract class Base_Theme extends Assets
   }
 
   /**
-   * The link a reader saves the folio from, on a folio whose editor turned it on
-   * (the show_pdf_link meta). Prints nothing otherwise, in the theme picker's
+   * The button a reader saves the folio from, on a folio whose editor turned it
+   * on (the show_pdf_link meta). Prints nothing otherwise, in the theme picker's
    * preview, and on paper.
    *
-   * Every theme puts this on its cover and in its page footer.
+   * Every theme puts this in its contents pane, on the cover and on every page.
+   * Public, as a navigation pane is a function that is handed the theme.
    *
    * @param string $class Extra classes.
    */
-  protected function display_pdf_link(string $class = ''): void
+  public function display_pdf_button(string $class = ''): void
   {
     $folio_id = (int) $this->get_folio_id_for_customization();
     if ($this->is_preview_mode || $this->is_print_mode || $folio_id <= 0) {
@@ -1183,7 +1184,7 @@ abstract class Base_Theme extends Assets
       return;
     }
     ?>
-    <a class="<?php echo esc_attr(trim('g-folio__pdf-link ' . $class)); ?>" href="<?php echo esc_url($url); ?>" target="_blank" rel="noopener"><?php esc_html_e('Save as PDF', 'enrove-folios'); ?></a>
+    <a class="<?php echo esc_attr(trim('g-folio__pdf-button ' . $class)); ?>" href="<?php echo esc_url($url); ?>" target="_blank" rel="noopener"><?php esc_html_e('Save as PDF', 'enrove-folios'); ?></a>
     <?php
   }
 

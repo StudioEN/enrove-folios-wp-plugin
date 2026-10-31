@@ -226,6 +226,7 @@ class Page extends Base_Theme
             'pages' => $nav['pages'],
             'current_page_id' => $nav['current_page_id'],
             'show_theme_toggle' => true,
+            'theme' => $this,
         ]);
     }
 
@@ -257,7 +258,6 @@ class Page extends Base_Theme
                 <?php endif; ?>
             </div>
         </nav>
-        <?php $this->display_pdf_link('gm-page__pdf-link'); ?>
         <?php
     }
 

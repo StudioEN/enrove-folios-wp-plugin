@@ -214,7 +214,7 @@ class Folio_Print
   private function display_bar()
   {
     ?>
-    <div class="g-folio-print__bar">
+    <div class="<?php echo esc_attr('g-folio-print__bar ' . $this->page_theme->get_print_root_class()); ?>">
       <div class="g-folio-print__bar-text">
         <p class="g-folio-print__bar-title"><?php esc_html_e('Save this folio as a PDF', 'enrove-folios'); ?></p>
         <p class="g-folio-print__bar-hint"><?php esc_html_e('In the print window, choose Save as PDF.', 'enrove-folios'); ?></p>

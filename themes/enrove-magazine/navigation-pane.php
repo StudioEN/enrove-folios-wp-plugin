@@ -75,6 +75,7 @@ function display_magazine_navigation_pane(array $args = [])
     $current_page_id = isset($args['current_page_id']) ? (int) $args['current_page_id'] : 0;
     $show_theme_toggle = !isset($args['show_theme_toggle']) || (bool) $args['show_theme_toggle'];
     $pages = isset($args['pages']) && is_array($args['pages']) ? $args['pages'] : [];
+    $theme = $args['theme'] ?? null;
 
     $valid_pages = [];
     $latest_timestamp = 0;
@@ -189,6 +190,7 @@ function display_magazine_navigation_pane(array $args = [])
             <button class="gm-theme-toggle gm-theme-toggle--nav" aria-label="<?php esc_attr_e('Switch to dark mode', 'enrove-folios'); ?>"
                 data-tooltip="<?php esc_attr_e('Switch to dark mode', 'enrove-folios'); ?>" data-label-light="<?php esc_attr_e('Switch to light mode', 'enrove-folios'); ?>" data-label-dark="<?php esc_attr_e('Switch to dark mode', 'enrove-folios'); ?>"></button>
         <?php endif; ?>
+        <?php if ($theme) { $theme->display_pdf_button('gm-nav__pdf-button'); } ?>
     </nav>
     <?php
 }

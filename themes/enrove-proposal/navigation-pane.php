@@ -22,6 +22,7 @@ function display_proposal_navigation_pane(array $args = []): void
   $info_version = isset($args['info_version']) ? trim((string) $args['info_version']) : '';
   $info_date = isset($args['info_date']) ? trim((string) $args['info_date']) : '';
   $info_contacts = isset($args['info_contacts']) && is_array($args['info_contacts']) ? $args['info_contacts'] : [];
+  $theme = $args['theme'] ?? null;
 
   $normalized_contacts = [];
   foreach ($info_contacts as $contact) {
@@ -203,6 +204,7 @@ function display_proposal_navigation_pane(array $args = []): void
             <?php endif; ?>
 
             <div class="gp-nav__info-group gp-nav__info-group--mode">
+              <?php if ($theme) { $theme->display_pdf_button('gp-nav__pdf-button'); } ?>
               <button type="button" class="gp-theme-toggle gp-theme-toggle--nav" data-gp-theme-toggle data-label-light="<?php esc_attr_e('Switch to light mode', 'enrove-folios'); ?>" data-label-dark="<?php esc_attr_e('Switch to dark mode', 'enrove-folios'); ?>"
                 aria-label="<?php echo esc_attr__('Switch colour mode', 'enrove-folios'); ?>"></button>
             </div>

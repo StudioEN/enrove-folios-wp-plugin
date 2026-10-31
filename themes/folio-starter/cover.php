@@ -56,6 +56,7 @@ class Cover extends Base_Theme
           ?>
         </div>
       </div>
+      <?php $this->display_pdf_button(); ?>
     </nav>
     <?php
   }
@@ -109,7 +110,6 @@ class Cover extends Base_Theme
             <?php endif; ?>
           </div>
           <div class="g-folio__theme-colophon">
-            <?php $this->display_pdf_link(); ?>
             <?php if (!empty($this->copyright)): ?>
               <div class="g-folio__theme-copyright">
                 <?php echo esc_html($this->copyright); ?>

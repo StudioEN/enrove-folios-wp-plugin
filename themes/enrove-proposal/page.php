@@ -268,6 +268,7 @@ class Page extends Base_Theme
       'info_status'   => $nav_meta['status'],
       'info_date'     => $nav_meta['date'],
       'info_contacts' => $nav_meta['contacts'],
+      'theme'         => $this,
     ]);
   }
 
@@ -484,7 +485,6 @@ class Page extends Base_Theme
           <span class="gp-page__footer-arrow gp-page__footer-arrow--disabled" aria-hidden="true">&rarr;</span>
         <?php endif; ?>
       </nav>
-      <?php $this->display_pdf_link(); ?>
     </footer>
     <?php
   }
