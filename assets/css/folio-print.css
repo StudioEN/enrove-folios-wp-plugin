@@ -6,24 +6,38 @@
  * page numbers by laying this same layout out on screen, in a hidden frame, so
  * the screen and the page must agree.
  *
- * Folio_Print::get_inline_css() adds the paper size, the footer's title and font,
- * and the --g-folio-print-* measurements.
+ * Folio_Print::get_inline_css() adds the footer's title and font and the
+ * --g-folio-print-* measurements. @page names no paper: the document takes the
+ * print window's, and the sheet it is laid out on fits both A4 and Letter.
  */
 
 @page {
   margin: 20mm 18mm 22mm;
 
+  /* Whatever the paper, the same height of text: a taller sheet takes the difference
+     at its foot. A block too long for a sheet splits wherever the sheet ends, so a
+     sheet of another height would move everything after it. */
+  margin-bottom: calc(100% - 257.4mm);
+
+  /* Empty, and here for its presence: with boxes of ours at the top and foot of the
+     sheet, Chrome and Edge draw no date, title or URL of their own. */
+  @top-center {
+    content: "";
+  }
+
   @bottom-left {
     color: #666;
     font-size: 8.5pt;
-    vertical-align: middle;
+    padding-bottom: 9mm;
+    vertical-align: bottom;
   }
 
   @bottom-right {
     color: #666;
     content: counter(page) " / " counter(pages);
     font-size: 8.5pt;
-    vertical-align: middle;
+    padding-bottom: 9mm;
+    vertical-align: bottom;
   }
 }
 
@@ -113,33 +127,6 @@ body.g-folio-print {
   gap: 12px 16px;
 }
 
-.g-folio-print__bar-paper {
-  display: flex;
-  gap: 4px;
-}
-
-.g-folio-print__bar-paper a {
-  border-radius: 4px;
-  color: #c3c4c7;
-  font-size: 13px;
-  padding: 4px 8px;
-  text-decoration: none;
-}
-
-.g-folio-print__bar-paper a:hover {
-  color: #fff;
-}
-
-.g-folio-print__bar-paper a[aria-current] {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-}
-
-.g-folio-print__bar-paper a:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
-}
-
 .g-folio-print__bar-button {
   background: #fff;
   border: 0;
@@ -175,7 +162,7 @@ body.g-folio-print {
 
 .g-folio-print__cover > * {
   box-sizing: border-box;
-  height: var(--g-folio-print-paper-height) !important;
+  height: 100vh !important;
   min-height: 0 !important;
   overflow: hidden;
 }

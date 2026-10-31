@@ -12,7 +12,7 @@ class Utils
    * folio by ID for drafts and previews, and the theme picker's preview.
    * WordPress parses them, so routing reads get_query_var(), never $_GET.
    */
-  const ROUTE_QUERY_VARS = array('folio_id', 'enrove_preview', 'enrove_print', 'enrove_print_paper', 'enrove_theme_preview', 'enrove_preview_view', 'enrove_preview_page');
+  const ROUTE_QUERY_VARS = array('folio_id', 'enrove_preview', 'enrove_print', 'enrove_theme_preview', 'enrove_preview_view', 'enrove_preview_page');
 
   static function can_preview_unpublished_posts()
   {

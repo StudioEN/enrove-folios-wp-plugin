@@ -27,11 +27,13 @@ class Folio_Print
   const MARGIN_SIDE = 18;
   const MARGIN_BOTTOM = 22;
 
-  /** Paper sizes in millimetres, by the name @page's size descriptor knows them. */
-  const PAPER_SIZES = array(
-    'A4' => array(210, 297),
-    'letter' => array(215.9, 279.4),
-  );
+  /**
+   * The sheet a folio is laid out on, in millimetres: as wide as A4 and as tall as US
+   * Letter, so that what fits it fits on both. @page names no paper, so the document
+   * takes the print window's, and the cover fills whichever that is.
+   */
+  const SHEET_WIDTH = 210;
+  const SHEET_HEIGHT = 279.4;
 
   /** @var \WP_Post */
   private $folio;
@@ -120,38 +122,6 @@ class Folio_Print
   }
 
   /**
-   * The paper a folio prints on: the one the reader picked in the bar, or the site's.
-   *
-   * @return string A key of PAPER_SIZES.
-   */
-  public static function get_paper_size()
-  {
-    $requested = (string) get_query_var('enrove_print_paper');
-
-    return isset(self::PAPER_SIZES[$requested]) ? $requested : self::get_default_paper_size();
-  }
-
-  /**
-   * The site's paper: US Letter where that is the usual paper, A4 everywhere else.
-   *
-   * @return string A key of PAPER_SIZES.
-   */
-  private static function get_default_paper_size()
-  {
-    $locale = get_locale();
-    $default = in_array($locale, array('en_US', 'en_CA', 'es_MX', 'fr_CA'), true) ? 'letter' : 'A4';
-
-    /**
-     * Filters the paper a folio is printed on.
-     *
-     * @param string $paper 'A4' or 'letter'.
-     */
-    $paper = (string) apply_filters('enrove_folios_print_paper_size', $default);
-
-    return isset(self::PAPER_SIZES[$paper]) ? $paper : $default;
-  }
-
-  /**
    * Plain text as a CSS string, for a `content` declaration.
    *
    * @return string With its quotes.
@@ -206,30 +176,25 @@ class Folio_Print
   }
 
   /**
-   * What the stylesheet cannot know: the paper, and the folio's title and font
-   * in the running footer. A margin box is outside the document, so it inherits
-   * neither the theme's custom properties nor the folio's font.
+   * What the stylesheet cannot know: the folio's title and font in the running
+   * footer. A margin box is outside the document, so it inherits neither the theme's
+   * custom properties nor the folio's font.
    */
   private function get_inline_css()
   {
-    $paper = self::get_paper_size();
-    list($width, $height) = self::PAPER_SIZES[$paper];
-
     $fonts = Font_Loader::resolve((int) $this->folio->ID, $this->page_theme::get_default_fonts());
     $stack = Font_Loader::sanitize_css_stack($fonts['body']['css_stack'] ?? '');
     $font = $stack === '' ? '' : 'font-family: ' . $stack . ';';
 
-    $content_width = $width - 2 * self::MARGIN_SIDE;
-    $content_height = $height - self::MARGIN_TOP - self::MARGIN_BOTTOM;
+    $content_width = self::SHEET_WIDTH - 2 * self::MARGIN_SIDE;
+    $content_height = self::SHEET_HEIGHT - self::MARGIN_TOP - self::MARGIN_BOTTOM;
 
     return implode("\n", array(
       '@page {',
-      '  size: ' . $paper . ';',
       '  @bottom-left { content: ' . self::to_css_string($this->folio->post_title) . '; ' . $font . ' }',
       '  @bottom-right { ' . $font . ' }',
       '}',
       ':root {',
-      '  --g-folio-print-paper-height: ' . (float) $height . 'mm;',
       '  --g-folio-print-width: ' . (float) $content_width . 'mm;',
       '  --g-folio-print-height: ' . (float) $content_height . 'mm;',
       '}',
@@ -248,41 +213,16 @@ class Folio_Print
    */
   private function display_bar()
   {
-    // Whether the script may pick the reader's paper: not over a reader's own
-    // choice, and not on a site that has settled on a paper with the filter.
-    $paper_is_open = (string) get_query_var('enrove_print_paper') === '' && !has_filter('enrove_folios_print_paper_size');
     ?>
-    <div class="g-folio-print__bar"<?php if ($paper_is_open) { echo ' data-enrove-paper="' . esc_attr(self::get_paper_size()) . '"'; } ?>>
+    <div class="g-folio-print__bar">
       <div class="g-folio-print__bar-text">
         <p class="g-folio-print__bar-title"><?php esc_html_e('Save this folio as a PDF', 'enrove-folios'); ?></p>
-        <p class="g-folio-print__bar-hint"><?php esc_html_e('In the print window, choose Save as PDF, and turn off Headers and footers for clean pages. White strips at the edges of the cover mean the paper differs from the one in the print window.', 'enrove-folios'); ?></p>
+        <p class="g-folio-print__bar-hint"><?php esc_html_e('In the print window, choose Save as PDF.', 'enrove-folios'); ?></p>
         <p class="g-folio-print__bar-hint g-folio-print__bar-hint--safari"><?php esc_html_e('Safari keeps a white margin around the cover and leaves out page numbers. For the full layout, open this page in Chrome or Edge.', 'enrove-folios'); ?></p>
       </div>
       <div class="g-folio-print__bar-actions">
-        <?php $this->display_paper_choice(); ?>
         <button type="button" class="g-folio-print__bar-button" data-enrove-print><?php esc_html_e('Print or save as PDF', 'enrove-folios'); ?></button>
       </div>
-    </div>
-    <?php
-  }
-
-  /**
-   * The print window fits a sheet to its own paper, and no script can read that
-   * paper, so a reader whose paper differs from this document's has to say so.
-   */
-  private function display_paper_choice()
-  {
-    $url = Utils::get_folio_print_url($this->folio->ID);
-    $current = self::get_paper_size();
-    $papers = array(
-      'A4' => __('A4', 'enrove-folios'),
-      'letter' => __('US Letter', 'enrove-folios'),
-    );
-    ?>
-    <div class="g-folio-print__bar-paper" role="group" aria-label="<?php esc_attr_e('Paper', 'enrove-folios'); ?>">
-      <?php foreach ($papers as $paper => $label): ?>
-        <a href="<?php echo esc_url(add_query_arg('enrove_print_paper', $paper, $url)); ?>"<?php if ($paper === $current) { echo ' aria-current="true"'; } ?>><?php echo esc_html($label); ?></a>
-      <?php endforeach; ?>
     </div>
     <?php
   }

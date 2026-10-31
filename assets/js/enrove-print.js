@@ -21,8 +21,6 @@
   'use strict';
 
   var MEASURE_PARAM = 'enrove_print_measure';
-  var PAPER_PARAM = 'enrove_print_paper';
-  var LETTER_REGIONS = ['US', 'CA', 'MX']; // Folio_Print goes by the same places for a site.
   var IMAGE_TIMEOUT = 15000;
   var MEASURE_TIMEOUT = 15000;
   var SLACK = 38; // px: 10mm.
@@ -96,30 +94,6 @@
     });
   }
 
-  // The print window fits a sheet to its own paper, so a sheet of another size
-  // shrinks and leaves white strips at the edges of the cover. Nothing can read that
-  // paper, but it is likelier to be the usual one where the reader is than where the
-  // site is. Reloads when they differ, and returns whether it did.
-  function followReaderPaper() {
-    var bar = document.querySelector('[data-enrove-paper]');
-    var region = new Intl.Locale(window.navigator.language).region;
-
-    if (!bar || !region) {
-      return false;
-    }
-
-    var paper = LETTER_REGIONS.indexOf(region) === -1 ? 'A4' : 'letter';
-    if (paper === bar.getAttribute('data-enrove-paper')) {
-      return false;
-    }
-
-    var url = new URL(window.location.href);
-    url.searchParams.set(PAPER_PARAM, paper);
-    window.location.replace(url.toString());
-
-    return true;
-  }
-
   function getTableRows(table) {
     return table.querySelectorAll('tbody tr, tfoot tr');
   }
@@ -140,7 +114,7 @@
         return;
       }
 
-      var canDescend = style.display === 'block' && style.breakInside !== 'avoid';
+      var canDescend = (style.display === 'block' || style.display === 'flow-root') && style.breakInside !== 'avoid';
       var hasBlockChild = canDescend && Array.prototype.some.call(child.children, function (grandchild) {
         return window.getComputedStyle(grandchild).display !== 'inline';
       });
@@ -334,10 +308,6 @@
 
   if (isMeasuring) {
     window.addEventListener('load', measure);
-    return;
-  }
-
-  if (followReaderPaper()) {
     return;
   }
 
