@@ -13,6 +13,7 @@
 - Enrove Proposal had no style for code blocks, so they ran as plain text in the page. They now sit on a tinted panel in a monospaced font.
 - Enrove Newsletter's contents panel cut off a long list on a short window, the list running past the panel's foot. It now scrolls inside the panel.
 - Enrove Proposal's pages were wider than a phone's screen, so they sat slightly zoomed out and could scroll sideways. The hover tooltips on the Previous and Next arrows at the foot of a page took up room even while hidden. They now exist only where there is a pointer to hover with.
+- Sample content had no photos on a site installed from the release zip. The file that says which photo fills each role in a theme's sample content was left out of the package, so every sample photo was stored with an empty address, and pressing Download Photos could not fill it in. It ships now, and sample content made from this version gets its photos, with their credits. A sample folio made on an earlier version keeps its empty images: create it again.
 
 ## [0.6.0] - 2026-10-23
 

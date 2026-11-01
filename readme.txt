@@ -68,7 +68,7 @@ No. A folio is rendered by its folio theme alone, as a standalone page, so it lo
 
 = Why are there no photos in the sample content? =
 
-The sample photos come from Pexels, whose licence does not allow them to be redistributed inside a plugin. Press Download Photos on Enrove → Settings → Imagery and the plugin fetches this site's own copy. Folios you have already seeded pick the photos up once they have been downloaded, except for each page's featured image, which is attached only when the sample content is created.
+The sample photos come from Pexels, whose licence does not allow them to be redistributed inside a plugin. Press Download Photos on Enrove → Settings → Imagery and the plugin fetches this site's own copy. Sample folios made on 0.7.0 or later pick the photos up once they have been downloaded, except for each page's featured image, which is attached only when the sample content is created. A sample folio made on an earlier version has no photos to pick up, so create it again.
 
 = Can I make my own folio theme? =
 
@@ -107,6 +107,7 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 * Fixed: Enrove Proposal had no style for code blocks.
 * Fixed: Enrove Newsletter's contents panel cut off a long list on a short window.
 * Fixed: Enrove Proposal's pages were wider than a phone's screen.
+* Fixed: sample content had no photos on a site installed from WordPress.org. A sample folio made on an earlier version keeps its empty images, so create it again.
 
 = 0.6.0 =
 * Make folios from posts and pages you already have: **Import posts and pages** (in the folio editor's Add Page menu) copies them into a folio as draft pages, and **Import posts and pages…** in the theme picker starts a new folio from them.
@@ -155,7 +156,7 @@ Post in the plugin's support forum on WordPress.org, or email enrove@studioen.us
 == Upgrade Notice ==
 
 = 0.7.0 =
-Save a folio as a PDF through your browser's print window, and offer readers the same from the folio's contents menu.
+Save a folio as a PDF through your browser's print window, and offer readers the same from the folio's contents menu. Sample content gets its photos back.
 
 = 0.6.0 =
 Make folios from the posts and pages you already have, with classic-editor posts converted to blocks on the way in.
