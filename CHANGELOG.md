@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [0.7.0] - 2026-10-31
+## [0.7.0] - 2026-11-01
 
 ### Added
 - A folio can be saved as a PDF. In the folio editor, Copy link is a split button whose menu holds **Save as PDF…**, and every folio on All Folios has the same action. Either opens the whole folio as one document in a new tab, with the print window on top of it and a bar above it in the folio's own colours and fonts: choose Save as PDF there. Chrome and Edge add no date or address of their own. The PDF comes from the browser, so it has real, selectable text, working links and the folio's own fonts, and the plugin ships no PDF library and calls no service. It holds the cover, full-bleed, then a contents page with page numbers and links, then every page, in the theme's own design, with the folio's title and the page number in the footer of each sheet. The contents page is left out for a folio of one page. It is always light, whatever a reader's device prefers. Accordions print open, an embedded video or map prints as a link to it, and blocks stay whole across sheets. A short table stays whole too, and a long one splits between rows and repeats its heading row on each sheet. Text is set smaller than on screen, at about 9pt, with the theme's spacing scaled to match. Chrome and Edge give the full layout. Firefox 126 or later gives the same layout, with no address or date of its own, whether Margins is on Default or None. Safari keeps a white margin around the cover, leaves the numbers off the contents page, and prints page numbers only with its Print headers and footers option. The document says so when it opens in either. The paper is whichever the print window uses: on A4 and on US Letter the cover fills the sheet and the contents page's numbers hold.
@@ -14,6 +14,11 @@
 - Enrove Newsletter's contents panel cut off a long list on a short window, the list running past the panel's foot. It now scrolls inside the panel.
 - Enrove Proposal's pages were wider than a phone's screen, so they sat slightly zoomed out and could scroll sideways. The hover tooltips on the Previous and Next arrows at the foot of a page took up room even while hidden. They now exist only where there is a pointer to hover with.
 - Sample content had no photos on a site installed from the release zip. The file that says which photo fills each role in a theme's sample content was left out of the package, so every sample photo was stored with an empty address, and pressing Download Photos could not fill it in. It ships now, and sample content made from this version gets its photos, with their credits. A sample folio made on an earlier version keeps its empty images: create it again.
+- A URL that sent one of a folio's routing parameters as an array (`?enrove_print[]=1`) logged a PHP warning. Such a value now reads as unset, and the page opens as it would without it.
+
+### Changed
+- The `folio_id` link from a page to its folio is sanitised as an integer on every write, on top of the existing checks that the user may edit that folio.
+- The Pexels API key card on Settings → Imagery and its handlers, which only a development checkout can use, moved to `pexels/key-settings.php`. The package leaves that file out, so a released plugin no longer carries the code at all. A development checkout works as before.
 
 ## [0.6.0] - 2026-10-23
 

@@ -66,6 +66,11 @@ class Content extends BaseContent
       'show_in_rest' => true,
       'single' => true,
       'type' => 'integer',
+      // Not absint(), which would turn -5 into folio 5. As in may_link_to_folio(),
+      // anything below 1 is no folio.
+      'sanitize_callback' => static function ($value) {
+        return max(0, (int) $value);
+      },
       'auth_callback' => static function ($allowed, $meta_key, $post_id) {
         return current_user_can('edit_post', (int) $post_id);
       },

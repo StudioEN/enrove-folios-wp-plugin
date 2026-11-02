@@ -55,7 +55,7 @@ class Folio_Print
    */
   public static function get_requested_folio()
   {
-    if ('1' !== (string) get_query_var('enrove_print')) {
+    if ('1' !== Utils::get_route_var('enrove_print')) {
       return null;
     }
 

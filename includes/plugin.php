@@ -207,12 +207,12 @@ class Plugin
 			return 403;
 		}
 
-		$theme_id = sanitize_key((string) get_query_var('enrove_theme_preview'));
+		$theme_id = sanitize_key(Utils::get_route_var('enrove_theme_preview'));
 		if ($theme_id === '' || !Themes_Manager::has($theme_id)) {
 			return 404;
 		}
 
-		$view = sanitize_key((string) get_query_var('enrove_preview_view'));
+		$view = sanitize_key(Utils::get_route_var('enrove_preview_view'));
 
 		return array(
 			'theme_id' => $theme_id,
@@ -294,7 +294,7 @@ class Plugin
 		add_action('template_redirect', function () {
 			// Theme picker preview: editors only, with the picker's nonce. The
 			// template reads no request data; it is handed what this checked.
-			if ((string) get_query_var('enrove_theme_preview') !== '') {
+			if (Utils::get_route_var('enrove_theme_preview') !== '') {
 				$preview = $this->read_theme_preview_request();
 				if (is_int($preview)) {
 					status_header($preview);
@@ -311,7 +311,7 @@ class Plugin
 			$current_path = Utils::get_current_path();
 			$base_slug = Utils::get_folio_base_slug();
 			$pattern = '#^/' . preg_quote($base_slug, '#') . '/#';
-			$is_query_preview = '1' === (string) get_query_var('enrove_preview');
+			$is_query_preview = '1' === Utils::get_route_var('enrove_preview');
 			$query_folio_id = absint(get_query_var('folio_id'));
 			$query_post_id = absint(get_query_var('p'));
 

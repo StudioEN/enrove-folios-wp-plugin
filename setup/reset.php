@@ -24,8 +24,8 @@ if (!defined('ABSPATH')) {
  *   conversions again over folios that do not need it;
  * - Media Library items, including sample images copied there when a folio
  *   was seeded: attachments may be used anywhere on the site;
- * - a Pexels key set in wp-config.php, the environment or a .pexels-key file,
- *   which the plugin does not own. The key stored in its own setting goes.
+ * - a Pexels key held anywhere but the plugin's own setting, which it does not
+ *   own. The key stored in that setting, which an older version could save, goes.
  *
  * @since 0.5.1
  */

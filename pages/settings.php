@@ -5,6 +5,7 @@ use Enrove\Menu\Menu_Manager;
 use Enrove\Menu\Settings_Menu_Item;
 use Enrove\Pages\Overview;
 use Enrove\Pages\Page;
+use Enrove\Pexels\Key_Settings;
 use Enrove\Themes\Themes_Manager;
 use Enrove\Utils\Request;
 use Enrove\Utils\Utils;
@@ -16,6 +17,9 @@ if (!defined('ABSPATH')) {
 class Settings extends Page
 {
   const PAGE_ID = 'enrove-settings';
+
+  /** @var Key_Settings|null Only in a development checkout; see that class. */
+  private $key_settings = null;
 
   public function get_title()
   {
@@ -54,14 +58,8 @@ class Settings extends Page
     $this->add_post_action('save_enrove_settings', 'handle_save');
     $this->add_post_action('save_enrove_collection_tag', 'handle_collection_tag_save');
     $this->add_post_action('delete_enrove_collection_tag', 'handle_collection_tag_delete');
-    // The API key only serves the curation script, which the WordPress.org
-    // package leaves out with the key and API client classes; without them
-    // these handlers are not registered, so the released plugin has no way
-    // to reach api.pexels.com.
-    if ($this->pexels_curation_available()) {
-      $this->add_post_action('save_enrove_pexels_key', 'handle_pexels_key_save');
-      $this->add_post_action('delete_enrove_pexels_key', 'handle_pexels_key_delete');
-      $this->add_post_action('test_enrove_pexels_connection', 'handle_pexels_connection_test');
+    if (class_exists(Key_Settings::class) && Key_Settings::is_available()) {
+      $this->key_settings = new Key_Settings($this);
     }
     $this->add_post_action('download_enrove_sample_photos', 'handle_sample_photos_download');
     $this->add_post_action('download_enrove_fonts', 'handle_fonts_download');
@@ -174,7 +172,7 @@ class Settings extends Page
     $this->redirect_to_settings_tab('collections', $args);
   }
 
-  private function redirect_to_imagery_tab($args = array())
+  public function redirect_to_imagery_tab($args = array())
   {
     $this->redirect_to_settings_tab('imagery', $args);
   }
@@ -195,34 +193,6 @@ class Settings extends Page
   }
 
   /**
-   * The API key, the API client and the curation script that uses them exist
-   * only in a development checkout: the WordPress.org package leaves all
-   * three out.
-   */
-  private function pexels_curation_available()
-  {
-    return is_readable(ENROVE_PATH . 'bin/curate-pexels.php')
-      && class_exists('\\Enrove\\Pexels\\Key')
-      && class_exists('\\Enrove\\Pexels\\Client');
-  }
-
-  private function get_pexels_key_source_label($source)
-  {
-    switch ($source) {
-      case 'constant':
-        return __('ENROVE_PEXELS_API_KEY in wp-config.php', 'enrove-folios');
-      case 'env':
-        return __('PEXELS_API_KEY environment variable', 'enrove-folios');
-      case 'file':
-        return __('.pexels-key file in the plugin folder', 'enrove-folios');
-      case 'option':
-        return __('This settings field', 'enrove-folios');
-    }
-
-    return __('Not configured', 'enrove-folios');
-  }
-
-  /**
    * Stash a one-shot notice for the current user (avoids putting API results in the URL).
    *
    * A failure carries the next step and the button it belongs to as well, so
@@ -233,7 +203,7 @@ class Settings extends Page
    * @param string $hint   What to do about it. Failures only.
    * @param string $anchor CSS selector for the control to point at.
    */
-  private function set_tab_notice($status, $text, $hint = '', $anchor = '')
+  public function set_tab_notice($status, $text, $hint = '', $anchor = '')
   {
     set_transient('enrove_settings_notice_' . get_current_user_id(), array(
       'status' => $status,
@@ -665,122 +635,6 @@ class Settings extends Page
   }
 
   /**
-   * Save the Pexels API key. An empty submission leaves the stored key alone.
-   */
-  public function handle_pexels_key_save()
-  {
-    check_admin_referer('enrove_save_pexels_key', 'enrove_nonce');
-
-    if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have permission to modify settings.', 'enrove-folios'));
-    }
-
-    if ($this->pexels_curation_available() && \Enrove\Pexels\Key::is_locked_by_constant()) {
-      $this->set_tab_notice(
-        'warning',
-        __('ENROVE_PEXELS_API_KEY is defined in wp-config.php, so the stored key was not changed.', 'enrove-folios'),
-        __('The constant wins over anything saved here. Remove it from wp-config.php if you want to manage the key from this screen.', 'enrove-folios'),
-        '#enrove-save-pexels-key'
-      );
-      $this->redirect_to_imagery_tab();
-    }
-
-    $submitted = isset($_POST['pexels_api_key']) ? sanitize_text_field(wp_unslash($_POST['pexels_api_key'])) : '';
-
-    if ($submitted === '') {
-      $this->set_tab_notice('info', __('No key entered — the stored key was left unchanged.', 'enrove-folios'));
-      $this->redirect_to_imagery_tab();
-    }
-
-    // update_option() cannot change the autoload flag of an existing option,
-    // so delete first and re-add with autoload explicitly off.
-    delete_option('enrove_pexels_api_key');
-    add_option('enrove_pexels_api_key', $submitted, '', 'no');
-
-    $this->set_tab_notice('success', __('Pexels API key saved.', 'enrove-folios'));
-    $this->redirect_to_imagery_tab();
-  }
-
-  /**
-   * Clear the stored Pexels API key.
-   */
-  public function handle_pexels_key_delete()
-  {
-    check_admin_referer('enrove_delete_pexels_key', 'enrove_nonce');
-
-    if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have permission to modify settings.', 'enrove-folios'));
-    }
-
-    delete_option('enrove_pexels_api_key');
-
-    $this->set_tab_notice('success', __('Stored Pexels API key removed.', 'enrove-folios'));
-    $this->redirect_to_imagery_tab();
-  }
-
-  /**
-   * Probe the Pexels API. Only ever runs from an explicit button press —
-   * never on a page load.
-   */
-  public function handle_pexels_connection_test()
-  {
-    check_admin_referer('enrove_test_pexels_connection', 'enrove_nonce');
-
-    if (!current_user_can('manage_options')) {
-      wp_die(esc_html__('You do not have permission to modify settings.', 'enrove-folios'));
-    }
-
-    if (!$this->pexels_curation_available()) {
-      $this->set_tab_notice(
-        'error',
-        __('The Pexels client is unavailable.', 'enrove-folios'),
-        __('The pexels/ helpers are missing from this copy of the plugin. Reinstall or update Enrove Folios to restore them.', 'enrove-folios'),
-        '#enrove-test-pexels-connection'
-      );
-      $this->redirect_to_imagery_tab();
-    }
-
-    $client = new \Enrove\Pexels\Client();
-
-    if (!$client->has_key()) {
-      $this->set_tab_notice(
-        'error',
-        __('No Pexels API key is configured.', 'enrove-folios'),
-        __('Paste a key into the field above and save it, then test the connection again.', 'enrove-folios'),
-        '#enrove-test-pexels-connection'
-      );
-      $this->redirect_to_imagery_tab();
-    }
-
-    $result = $client->verify();
-
-    if (is_wp_error($result)) {
-      $this->set_tab_notice(
-        'error',
-        sprintf(
-          /* translators: %s: error message returned by the Pexels API. */
-          __('Pexels rejected the request: %s', 'enrove-folios'),
-          $result->get_error_message()
-        ),
-        __('Check the key is still active in your Pexels account and paste it again. A key created moments ago can take a few minutes to work.', 'enrove-folios'),
-        '#enrove-test-pexels-connection'
-      );
-      $this->redirect_to_imagery_tab();
-    }
-
-    $remaining = is_array($result) && isset($result['remaining']) ? (int) $result['remaining'] : 0;
-    $limit = is_array($result) && isset($result['limit']) ? (int) $result['limit'] : 0;
-
-    $this->set_tab_notice('success', sprintf(
-      /* translators: 1: remaining requests, 2: hourly request limit. */
-      __('Connected to Pexels. %1$s of %2$s requests remaining this hour.', 'enrove-folios'),
-      number_format_i18n($remaining),
-      number_format_i18n($limit)
-    ));
-    $this->redirect_to_imagery_tab();
-  }
-
-  /**
    * Download the sample photos this site does not have yet. Only ever runs from
    * an explicit button press; see \Enrove\Pexels\Library for why the plugin
    * does not simply carry them.
@@ -1100,14 +954,6 @@ class Settings extends Page
   public function display_imagery_fields()
   {
     $available = $this->pexels_is_available();
-    // The API key and the curation script only matter in a development checkout.
-    // The WordPress.org package leaves them out, so neither section is shown.
-    $can_curate = $this->pexels_curation_available();
-    $locked = $can_curate ? \Enrove\Pexels\Key::is_locked_by_constant() : false;
-    $source = $can_curate ? \Enrove\Pexels\Key::source() : '';
-    $masked = $can_curate ? \Enrove\Pexels\Key::masked() : '';
-    $has_key = $source !== '';
-    $has_option_key = get_option('enrove_pexels_api_key', '') !== '';
     $notice = $this->take_tab_notice();
 
     $photos = $available ? \Enrove\Pexels\Library::status() : array('total' => 0, 'present' => 0, 'missing' => array());
@@ -1120,7 +966,7 @@ class Settings extends Page
       $credits = \Enrove\Pexels\Credits::all();
     }
 
-    // The outcome of saving, clearing or probing the key is a toast, and a
+    // The outcome of a button on this tab is a toast, and a
     // failure also leaves its reason pinned to the button that produced it.
     // The "helpers are missing" warning below stays inline: it describes the
     // standing state of this screen, not something the operator just did.
@@ -1195,105 +1041,7 @@ class Settings extends Page
   </section>
   <?php endif; ?>
 
-  <?php if ($can_curate): ?>
-  <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
-    <div>
-      <h3 class="m-0 text-sm font-semibold text-gray-800"><?php esc_html_e('Pexels API Key', 'enrove-folios'); ?></h3>
-      <p class="mt-1 mb-0 text-sm text-gray-600">
-        <?php
-        printf(
-          /* translators: %s: the curation command. */
-          esc_html__('Used only by the imagery curation script in a development checkout (%s), which picks the covers and sample photos and records where each can be downloaded from. Folios never call the Pexels API when they are viewed or edited.', 'enrove-folios'),
-          '<code>php bin/curate-pexels.php --help</code>'
-        );
-        ?>
-      </p>
-    </div>
-
-    <?php if ($locked): ?>
-    <div class="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-      <p class="m-0">
-        <?php
-        printf(
-          /* translators: %s: the wp-config.php constant name. */
-          esc_html__('%s is defined in wp-config.php and takes precedence. The field below is disabled.', 'enrove-folios'),
-          '<code>ENROVE_PEXELS_API_KEY</code>'
-        );
-        ?>
-      </p>
-    </div>
-    <?php endif; ?>
-
-    <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" class="space-y-4" autocomplete="off" data-enrove-track-changes>
-      <?php wp_nonce_field('enrove_save_pexels_key', 'enrove_nonce'); ?>
-      <input type="hidden" name="action" value="save_enrove_pexels_key" />
-
-      <div>
-        <label for="enrove-pexels-api-key" class="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-          <?php esc_html_e('API Key', 'enrove-folios'); ?>
-        </label>
-        <input
-          id="enrove-pexels-api-key"
-          type="password"
-          name="pexels_api_key"
-          value=""
-          autocomplete="new-password"
-          spellcheck="false"
-          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:text-gray-400"
-          placeholder="<?php echo esc_attr($masked !== '' ? $masked : __('Paste your Pexels API key', 'enrove-folios')); ?>"
-          <?php disabled($locked, true); ?> />
-        <p class="mt-1 mb-0 text-xs text-gray-400">
-          <?php esc_html_e('The stored key is never displayed. Leave this empty to keep the current key.', 'enrove-folios'); ?>
-        </p>
-      </div>
-
-      <div>
-        <button
-          type="submit"
-          id="enrove-save-pexels-key"
-          class="button button-primary"
-          data-enrove-save
-          data-enrove-save-idle="<?php echo esc_attr__('Paste a key into the field above to save it.', 'enrove-folios'); ?>"
-          <?php disabled($locked, true); ?>><?php esc_html_e('Save Key', 'enrove-folios'); ?></button>
-      </div>
-    </form>
-
-    <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700 space-y-1">
-      <p class="m-0">
-        <strong><?php esc_html_e('Key source:', 'enrove-folios'); ?></strong>
-        <?php echo esc_html($this->get_pexels_key_source_label($source)); ?>
-        <?php if ($masked !== ''): ?>
-        <code><?php echo esc_html($masked); ?></code>
-        <?php endif; ?>
-      </p>
-      <p class="m-0 text-xs text-gray-500">
-        <?php esc_html_e('Checked in order: wp-config.php constant, PEXELS_API_KEY environment variable, .pexels-key file, then this setting.', 'enrove-folios'); ?>
-      </p>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-        <?php wp_nonce_field('enrove_test_pexels_connection', 'enrove_nonce'); ?>
-        <input type="hidden" name="action" value="test_enrove_pexels_connection" />
-        <button type="submit" id="enrove-test-pexels-connection" class="button button-secondary" <?php disabled(!$has_key, true); ?>>
-          <?php esc_html_e('Test Connection', 'enrove-folios'); ?>
-        </button>
-      </form>
-
-      <?php if ($has_option_key): ?>
-      <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post" data-enrove-confirm="<?php esc_attr_e('Remove the stored Pexels API key?', 'enrove-folios'); ?>">
-        <?php wp_nonce_field('enrove_delete_pexels_key', 'enrove_nonce'); ?>
-        <input type="hidden" name="action" value="delete_enrove_pexels_key" />
-        <button type="submit" class="button-link delete"><?php esc_html_e('Remove Key', 'enrove-folios'); ?></button>
-      </form>
-      <?php endif; ?>
-    </div>
-
-    <p class="m-0 text-xs text-gray-500">
-      <?php esc_html_e('Testing the connection is the only action on this screen that contacts Pexels, and it only happens when you press the button.', 'enrove-folios'); ?>
-    </p>
-  </section>
-  <?php endif; ?>
+  <?php if ($this->key_settings) { $this->key_settings->display_card(); } ?>
 
   <section class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-4">
     <div>
@@ -1312,12 +1060,7 @@ class Settings extends Page
     <?php if (empty($credits)): ?>
     <div class="rounded-md border border-gray-200 bg-gray-50/50 p-3 text-sm text-gray-700">
       <p class="m-0"><?php esc_html_e('No imagery has been curated yet, so there is nothing to credit.', 'enrove-folios'); ?></p>
-      <?php if ($can_curate): ?>
-      <p class="mt-2 mb-0">
-        <?php esc_html_e('Run the curation script to download imagery and build the credits file:', 'enrove-folios'); ?>
-        <code>php bin/curate-pexels.php</code>
-      </p>
-      <?php endif; ?>
+      <?php if ($this->key_settings) { $this->key_settings->display_curation_hint(); } ?>
       <?php if ($credits_exist): ?>
       <p class="mt-2 mb-0 text-xs text-gray-500"><?php esc_html_e('A credits file exists but contains no entries.', 'enrove-folios'); ?></p>
       <?php endif; ?>
@@ -1423,11 +1166,7 @@ class Settings extends Page
         <li>
           <?php esc_html_e('Pexels images — only when an administrator chooses to download them, in the setup dialog or on the Imagery tab. The photos are fetched once from images.pexels.com into your uploads folder, and Pexels sees your server’s IP address. After that they are served from your own site.', 'enrove-folios'); ?>
         </li>
-        <?php if ($this->pexels_curation_available()): ?>
-        <li>
-          <?php esc_html_e('Pexels API — only if you add your own API key on the Imagery tab, and only when you run the image curation script or press the connection test yourself.', 'enrove-folios'); ?>
-        </li>
-        <?php endif; ?>
+        <?php if ($this->key_settings) { $this->key_settings->display_privacy_item(); } ?>
       </ul>
     </div>
   </section>

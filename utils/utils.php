@@ -14,6 +14,20 @@ class Utils
    */
   const ROUTE_QUERY_VARS = array('folio_id', 'enrove_preview', 'enrove_print', 'enrove_theme_preview', 'enrove_preview_view', 'enrove_preview_page');
 
+  /**
+   * A route's query var as text. A URL can send any of them as an array
+   * (?enrove_print[]=1), which no route takes, so that reads as unset.
+   *
+   * @param string $name
+   * @return string
+   */
+  static function get_route_var($name)
+  {
+    $value = get_query_var($name);
+
+    return is_scalar($value) ? (string) $value : '';
+  }
+
   static function can_preview_unpublished_posts()
   {
     if (is_admin() || (is_user_logged_in() && current_user_can('edit_posts'))) {
